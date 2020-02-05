@@ -1,0 +1,6 @@
+These federal state informations are based on the data from the german federar agency for cartography and geodesy, 2011 
+The shape file is available at https://www.arcgis.com/home/item.html?id=ae25571c60d94ce5b7fcbf74e27c00e0 (last check 31.01.2020)
+
+Population informations were add, wich are based on the population at the 31.12.2018. 
+This data can be found at https://de.statista.com/statistik/daten/studie/71085/umfrage/verteilung-der-einwohnerzahl-nach-bundeslaendern/
+
