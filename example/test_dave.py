@@ -24,25 +24,30 @@ This is a example file for testing dave
 start_time = timeit.default_timer()
 
 # --- testing target area
-"""
+
 # test target by plz
+#target_area  = target_area(postalcode=['34225'])
 target_area  = target_area(postalcode=['34225', '34311'])
 
 # test target by town_name
-target_area =target_area(town_name=['KaSseL'])
-target_area =target_area(town_name=['KAsSel', 'HaNNoveR'])
+#target_area =target_area(town_name=['Baunatal'])
+#target_area =target_area(town_name=['KAsSel', 'HaNNoveR'])
 
 # test target by federal state
-target_area =target_area(federal_state=['HeSsEn', 'SchleSWIg-HOLstein'])
-"""
+#target_area = target_area(federal_state=['Hessen'])
+#target_area =target_area(federal_state=['HeSsEn', 'SchleSWIg-HOLstein'])
+
 # test own shape (Hertingshausen is a part from the Town Baunatal. It has 500 relevant Buildings(for living and commercial))
-path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingshausen.shp'
-target_area = target_area(own_area=path, buffer=0)
+#path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingshausen.shp'
+#target_area = target_area(own_area=path, buffer=0)
+
+
+
 # simle plot target area
 simple_plot(target_area=target_area)
 
 # create low voltage topology:
-grid_data = create_lv_topology(target_area=target_area)
+#grid_data = create_lv_topology(target_area=target_area)
 
 
 
