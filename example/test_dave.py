@@ -27,11 +27,11 @@ start_time = timeit.default_timer()
 
 # test target by plz
 #target_area  = target_area(postalcode=['34225'])
-target_area  = target_area(postalcode=['34225', '34311'])
+#target_area  = target_area(postalcode=['34225', '34311'])
 
 # test target by town_name
 #target_area =target_area(town_name=['Baunatal'])
-#target_area =target_area(town_name=['KAsSel', 'HaNNoveR'])
+target_area =target_area(town_name=['KAsSel', 'Baunatal'])
 
 # test target by federal state
 #target_area = target_area(federal_state=['Hessen'])

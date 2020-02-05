@@ -171,7 +171,6 @@ def target_area(postalcode=None, town_name=None, federal_state=None, own_area=No
         raise SyntaxError('target area wasn`t defined')
     # combine polygons and transfer into a shaply format
     border=target.geometry.cascaded_union.convex_hull.buffer(buffer)
-    
     # Obtain data from OSM
     roads=_from_osm(target=border, roads=roads) if roads else []
     roads_plot=_from_osm(target=border, roads_plot=roads_plot) if roads_plot else []
