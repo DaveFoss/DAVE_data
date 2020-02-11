@@ -1,7 +1,9 @@
 import geopandas as gpd
 import geopandas_osm.osm as gpdosm
+from shapely.ops import cascaded_union
 
 from dave.datapool import read_postal, read_federal_states
+
 
 class target_area():
     """
@@ -21,8 +23,8 @@ class target_area():
         **buildings** (boolean, default True) - obtain informations about buildings in the target area
         **landuse** (boolean, default True) - obtain informations about the landuse of the target area
     """
-    def __init__(self, postalcode=None, town_name=None, federal_state=None, own_area=None, buffer=1E-2,
-                    roads=True, roads_plot=True, buildings=True, landuse=True):
+    def __init__(self, postalcode=None, town_name=None, federal_state=None, own_area=None,
+                 buffer=1E-2, roads=True, roads_plot=True, buildings=True, landuse=True):
         # Init input parameters
         self.postalcode = postalcode
         self.town_name = town_name
@@ -34,7 +36,7 @@ class target_area():
         self.buildings = buildings
         self.landuse = landuse
 
-    def _from_osm(self, target, target_number):
+    def _from_osm(self, target, target_number=None, target_town=None):
         """
         This function searches for data on OSM and filters the relevant paramerters for grid modeling
         """
@@ -49,7 +51,13 @@ class target_area():
             # consider only the linestring elements
             roads = roads[roads.geometry.length != 0]
             # consider only roads which intersects the target area
-            roads = roads[roads.geometry.intersects(self.target.geometry.iloc[target_number])]
+            if target_number or target_number == 0:  
+                target_area = self.target.geometry.iloc[target_number]
+            elif target_town:
+                targets = self.target[self.target.town == target_town]
+                target_area = cascaded_union(targets.geometry.tolist())
+            roads = roads[roads.geometry.intersects(target_area)]
+                
         else:
             roads = []
         # search irrelevant road informations in the target area for a better overview
@@ -63,8 +71,12 @@ class target_area():
             # consider only the linestring elements
             roads_plot = roads_plot[roads_plot.geometry.length != 0]
             # consider only roads which intersects the target area
-            roads_plot = roads_plot[roads_plot.geometry.intersects(
-                    self.target.geometry.iloc[target_number])]
+            if target_number or target_number == 0:
+                target_area = self.target.geometry.iloc[target_number]
+            elif target_town:
+                targets = self.target[self.target.town == target_town]
+                target_area = cascaded_union(targets.geometry.tolist())
+            roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
         else:
             roads_plot = []
         # search building informations in the target area
@@ -83,8 +95,12 @@ class target_area():
             # consider only the linestring elements
             buildings = buildings[buildings.geometry.length != 0]
             # consider only buildings which intersects the target area
-            buildings = buildings[buildings.geometry.intersects(
-                    self.target.geometry.iloc[target_number])]
+            if target_number or target_number == 0:
+                target_area = self.target.geometry.iloc[target_number]
+            elif target_town:
+                targets = self.target[self.target.town == target_town]
+                target_area = cascaded_union(targets.geometry.tolist())
+            buildings = buildings[buildings.geometry.intersects(target_area)]
             # create building centroid and categorize buildings
             for_living = ['apartments',
                           'detached',
@@ -125,8 +141,12 @@ class target_area():
             # consider only the linestring elements
             landuse = landuse[landuse.geometry.length != 0]
             # consider only landuses which intersects the target area
-            landuse = roads_plot[roads_plot.geometry.intersects(
-                    self.target.geometry.iloc[target_number])]
+            if target_number or target_number == 0:
+                target_area = self.target.geometry.iloc[target_number]
+            elif target_town:
+                targets = self.target[self.target.town == target_town]
+                target_area = cascaded_union(targets.geometry.tolist())
+            landuse = landuse[landuse.geometry.intersects(target_area)]
         else:
             landuse = []
         # create dictonary with all informations for this target area
@@ -151,114 +171,124 @@ class target_area():
 
     def _target_by_town_name(self):
         """
-        This function filter the postalcode informations for the target area. 
+        This function filter the postalcode informations for the target area.
         Multiple town name areas will be combinated
         """
         postal = read_postal()
         for i in range(len(self.town_name)):
-            if i==0: 
-                target=postal[postal.town==self.town_name[0].capitalize()]
+            if i == 0:
+                target = postal[postal.town == self.town_name[0].capitalize()]
             else:
-                target=target.append(postal[postal.town==self.town_name[i].capitalize()])
+                target = target.append(postal[postal.town == self.town_name[i].capitalize()])
             if target.empty:
-                raise ValueError('town name wasn`t found. Please check your input' )
+                raise ValueError('town name wasn`t found. Please check your input')
         return target
-    
+
     def _target_by_federal_state(self):
         """
-        This function filter the federal state informations for the target area. 
+        This function filter the federal state informations for the target area.
         Multiple federal state areas will be combinated
         """
         states = read_federal_states()
         for i in range(len(self.federal_state)):
             # bring name in right form
             state_name = self.federal_state[i].split('-')
-            if len(state_name)==1:
+            if len(state_name) == 1:
                 state_name = state_name[0].capitalize()
             else:
                 state_name = state_name[0].capitalize()+'-'+state_name[1].capitalize()
-            if i==0:             
-                target=states[states['name']==state_name]
+            if i == 0:
+                target = states[states['name'] == state_name]
             else:
-                target=target.append(states[states['name']==state_name])
+                target = target.append(states[states['name'] == state_name])
             if target.empty:
-                raise ValueError('federal state name wasn`t found. Please check your input' )
+                raise ValueError('federal state name wasn`t found. Please check your input')
         return target
 
-    def target(self, buffer=1E-2, roads=True, roads_plot=True, buildings=True, landuse=True):
+    def target(self):
         """
-        This function creates a dictonary with all relevant geographical informations for the target area
-    
+        This function creates a dictonary with all relevant geographical informations for the 
+        target area
+
         OPTIONAL:
             **buffer** (float, default 1E-2) - buffer for the target area
-            **roads** (boolean, default True) - obtain informations about roads which are relevant for the grid model
-            **roads_plot** (boolean, default False) - obtain informations about roads which can be nice for the visualization
-            **buildings** (boolean, default True) - obtain informations about buildings in the target area
-            **landuse** (boolean, default True) - obtain informations about the landuse of the target area
-    
+            **roads** (boolean, default True) - obtain informations about roads which are relevant 
+                                                for the grid model
+            **roads_plot** (boolean, default False) - obtain informations about roads which can be
+                                                      nice for the visualization
+            **buildings** (boolean, default True) - obtain informations about buildings in the 
+                                                    target area
+            **landuse** (boolean, default True) - obtain informations about the landuse of the 
+                                                  target area
+
         OUTPUT:
             **target area** (dict) - all relevant informations for the target area
-    
+
         EXAMPLE:
             from dave.topology import target_area
             kassel = target_area(town_name = ['Kassel']).target()
         """
-        print('------------------------')
-        print('create target area:')
+
         # check wich input parameter is given
         if self.postalcode:
-            self.target=target_area._target_by_postalcode(self)
+            self.target = target_area._target_by_postalcode(self)
         elif self.town_name:
-            self.target=target_area._target_by_town_name(self)
+            self.target = target_area._target_by_town_name(self)
         elif self.federal_state:
-            self.target=target_area._target_by_federal_state(self)
+            self.target = target_area._target_by_federal_state(self)
         elif self.own_area:
-            self.target=gpd.read_file(self.own_area)
+            self.target = gpd.read_file(self.own_area)
         else:
             raise SyntaxError('target area wasn`t defined')
-            
-            
-            
-        """
-        # combine polygons and transfer into shaply format
+
+        # create dictonary with all data for the target area(s)
         if self.town_name:
-            town_numbers = 
-            diff_targets=len(self.target['town'].drop_duplicates())
+            diff_targets = self.target['town'].drop_duplicates()
+            for i in range(0, len(diff_targets)):
+                town = self.target[self.target.town == diff_targets.iloc[i]]
+                if len(town) > 1:
+                    border = cascaded_union(town.geometry.tolist()).convex_hull
+                else:
+                    border = town.iloc[0].geometry.convex_hull
+                # Obtain data from OSM
+                target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
+                if i == 0:
+                    full_target_area = self.target_area
+                else:
+                    full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
+                    ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
+                    full_target_area['buildings']['commercial'] = full_target_area['buildings']\
+                    ['commercial'].append(self.target_area['buildings']['commercial'])
+                    full_target_area['buildings']['for_living'] = full_target_area['buildings']\
+                    ['for_living'].append(self.target_area['buildings']['for_living'])
+                    full_target_area['buildings']['other'] = full_target_area['buildings']\
+                    ['other'].append(self.target_area['buildings']['other'])
+                    full_target_area['landuse'] = full_target_area['landuse'].append(
+                            self.target_area['landuse'])
+                    full_target_area['roads'] = full_target_area['roads'].append(
+                            self.target_area['roads'])
+                    full_target_area['roads_plot'] = full_target_area['roads_plot'].append(
+                            self.target_area['roads_plot'])
         else:
-            diff_targets=0 
-        """ 
-        
-        for i in range(0, len(self.target)):
-            border=self.target.iloc[i].geometry.convex_hull.buffer(buffer)
-            # Obtain data from OSM
-            target_area._from_osm(self, target=border, target_number=i)
-            if i == 0:
-                full_target_area = self.target_area
-            else:
-                full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
-                ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
-                full_target_area['buildings']['commercial'] = full_target_area['buildings']\
-                ['commercial'].append(self.target_area['buildings']['commercial'])
-                full_target_area['buildings']['for_living'] = full_target_area['buildings']\
-                ['for_living'].append(self.target_area['buildings']['for_living'])
-                full_target_area['buildings']['other'] = full_target_area['buildings']\
-                ['other'].append(self.target_area['buildings']['other'])
-                full_target_area['landuse'] = full_target_area['landuse'].append(
-                        self.target_area['landuse'])
-                full_target_area['roads'] = full_target_area['roads'].append(
-                        self.target_area['roads'])
-                full_target_area['roads_plot'] = full_target_area['roads_plot'].append(
-                        self.target_area['roads_plot'])        
-        return full_target_area  
-    
-
-    
-    
-
-
-
-"""
-Hier muss mit rein:
- - Häuser, Straße und was sonst noch relevant von osm ist 
-
-"""
+            for i in range(0, len(self.target)):
+                border = self.target.iloc[i].geometry.convex_hull
+                # Obtain data from OSM
+                target_area._from_osm(self, target=border, target_number=i)
+                if i == 0:
+                    full_target_area = self.target_area
+                else:
+                    full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
+                    ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
+                    full_target_area['buildings']['commercial'] = full_target_area['buildings']\
+                    ['commercial'].append(self.target_area['buildings']['commercial'])
+                    full_target_area['buildings']['for_living'] = full_target_area['buildings']\
+                    ['for_living'].append(self.target_area['buildings']['for_living'])
+                    full_target_area['buildings']['other'] = full_target_area['buildings']\
+                    ['other'].append(self.target_area['buildings']['other'])
+                    full_target_area['landuse'] = full_target_area['landuse'].append(
+                            self.target_area['landuse'])
+                    full_target_area['roads'] = full_target_area['roads'].append(
+                            self.target_area['roads'])
+                    full_target_area['roads_plot'] = full_target_area['roads_plot'].append(
+                            self.target_area['roads_plot'])
+        return full_target_area
