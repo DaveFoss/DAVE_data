@@ -19,7 +19,7 @@ def plot_land(area):
 
 def simple_plot(target_area):
     """
-    This function creates a dictonary with all relevant geographical informations for the target area
+    This function plots the geographical informations in the target area
 
     INPUT:
         **target area** (dict) - all Informations about the target area

@@ -38,7 +38,8 @@ class target_area():
 
     def _from_osm(self, target, target_number=None, target_town=None):
         """
-        This function searches for data on OSM and filters the relevant paramerters for grid modeling
+        This function searches for data on OpenStreetMap (OSM) and filters the relevant paramerters
+        for grid modeling
         """
         # search relevant road informations in the target area
         if self.roads:
@@ -51,13 +52,12 @@ class target_area():
             # consider only the linestring elements
             roads = roads[roads.geometry.length != 0]
             # consider only roads which intersects the target area
-            if target_number or target_number == 0:  
+            if target_number or target_number == 0:
                 target_area = self.target.geometry.iloc[target_number]
             elif target_town:
                 targets = self.target[self.target.town == target_town]
                 target_area = cascaded_union(targets.geometry.tolist())
             roads = roads[roads.geometry.intersects(target_area)]
-                
         else:
             roads = []
         # search irrelevant road informations in the target area for a better overview
@@ -207,18 +207,18 @@ class target_area():
 
     def target(self):
         """
-        This function creates a dictonary with all relevant geographical informations for the 
+        This function creates a dictonary with all relevant geographical informations for the
         target area
 
         OPTIONAL:
             **buffer** (float, default 1E-2) - buffer for the target area
-            **roads** (boolean, default True) - obtain informations about roads which are relevant 
+            **roads** (boolean, default True) - obtain informations about roads which are relevant
                                                 for the grid model
             **roads_plot** (boolean, default False) - obtain informations about roads which can be
                                                       nice for the visualization
-            **buildings** (boolean, default True) - obtain informations about buildings in the 
+            **buildings** (boolean, default True) - obtain informations about buildings in the
                                                     target area
-            **landuse** (boolean, default True) - obtain informations about the landuse of the 
+            **landuse** (boolean, default True) - obtain informations about the landuse of the
                                                   target area
 
         OUTPUT:
