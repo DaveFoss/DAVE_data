@@ -17,7 +17,7 @@ def plot_land(area):
     ax.margins(0)
     return ax
 
-def simple_plot(target_area):
+def plot_target_area(target_area):
     """
     This function plots the geographical informations in the target area
 

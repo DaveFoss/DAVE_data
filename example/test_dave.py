@@ -3,7 +3,7 @@ import os
 import timeit
 
 from dave.topology import target_area
-from dave.plotting import simple_plot
+from dave.plotting import plot_target_area
 from dave.topology import create_lv_topology
 from dave import dave_dir
 
@@ -44,10 +44,10 @@ target_area = target_area(own_area=path, buffer=0).target()
 
 
 # simle plot target area
-simple_plot(target_area=target_area)
+plot_target_area(target_area=target_area)
 
 # create low voltage topology:
-#grid_data = create_lv_topology(target_area=target_area)
+grid_data = create_lv_topology(target_area=target_area)
 
 
 

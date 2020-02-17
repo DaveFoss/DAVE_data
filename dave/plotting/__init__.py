@@ -1,2 +1,2 @@
-from dave.plotting.simple_plot import *
+from dave.plotting.plot import *
 
