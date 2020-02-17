@@ -6,12 +6,9 @@ import pandas as pd
 import copy
 
 
-
-def nearest_road_circle(building_centroids, roads):
+def nearest_road(building_centroids, roads):
     """
-    This function finds the shortest way between a building centroid and a road. For this the Method
-    uses a circle around the building centroid and raise the radius of the circle until there is a 
-    intersection between the circle and the first road. 
+    This function finds the shortest way between the building centroids and a road via shapely function 
     
     INPUT:
         **building centroids** (GeoDataSeries) - buildings in the target area
@@ -21,16 +18,28 @@ def nearest_road_circle(building_centroids, roads):
         **building connections** (dict) - 
         
     """
-    
-    
-    #return building_connections
+    # create multistring of relevant roads and intersect radial lines with it
+    multiline_roads = shapely.ops.cascaded_union(roads.geometry)
+    # finding nearest connection between the building centroids and the roads
+    nearest_points = gpd.GeoSeries([])
+    for centroid in building_centroids:
+        # finding nearest point
+        point_near = shapely.ops.nearest_points(centroid, multiline_roads)[1]
+        building_index = building_centroids[building_centroids==centroid].index[0]
+        nearest_points[building_index]=point_near
+    building_connections = pd.concat([building_centroids, nearest_points], axis=1)
+    building_connections.columns = ['building centroid', 'nearest point']  
+    return building_connections
+
 
 def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=10):
-    """
-    This function finds the shortest way between a building centroid and a road. For this the Method
-    uses radial lines which start from the building centroid. From that there are many 
+    """ 
+    Old function, the nearest_road function is faster. 
+    
+    This function finds the shortest way between the building centroids and a road. For this the 
+    Method uses radial lines which start from the building centroid. From that there are many 
     intersections between the radial lines and the roads. At the last step the intersection point
-    with the shortest distance to the building centroid will be searched
+    with the shortest distance to the building centroid will be searched.
     
     INPUT:
         **building centroids** (GeoDataSeries) - buildings in the target area
@@ -45,6 +54,8 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
 
         
     """
+    # create multistring of relevant roads and intersect radial lines with it
+    multiline_roads = shapely.ops.cascaded_union(roads.geometry)
     # finding nearest connection between the building centroids and the roads
     nearest_points = gpd.GeoSeries([])
     for centroid in building_centroids:
@@ -53,8 +64,6 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
                                             (centroid.x,centroid.y+line_length)])
         line_rad = [affinity.rotate(line, i, (centroid.x,centroid.y)) for i in range(0,360,line_ankle)]
         multiline_rad = shapely.ops.cascaded_union(line_rad)
-        # create multistring of relevant roads and intersect radial lines with it
-        multiline_roads = shapely.ops.cascaded_union(roads.geometry)
         points_int = multiline_roads.intersection(multiline_rad)
         if not points_int:
             # if there is no intersection point set it equal the building point
@@ -62,6 +71,7 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
         # finding nearest point
         point_near = shapely.ops.nearest_points(centroid, points_int)[1]
         # write data in  series
+
         building_index = building_centroids[building_centroids==centroid].index[0]
         nearest_points[building_index]=point_near
     building_connections = pd.concat([building_centroids, nearest_points], axis=1)
@@ -88,7 +98,7 @@ def create_lv_topology(target_area):
     centroids = target_area['buildings']['building_centroids'][target_area['buildings'] \
                             ['building_centroids'].index.isin(buildings_index)]
     
-    building_connections = nearest_road_radial(building_centroids= centroids,
+    building_connections = nearest_road(building_centroids= centroids,
                                               roads= target_area['roads'])
     grid_data = copy.copy(target_area)
     grid_data['buildings']['building_connections'] = building_connections
