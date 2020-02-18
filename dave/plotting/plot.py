@@ -84,11 +84,11 @@ def plot_grid_data(grid_data):
         nearest_point = gpd.GeoSeries(list(
                 grid_data['buildings']['building_connections']['nearest_point']))
         nearest_point.plot(ax=ax, color='b', markersize=1)
-    if ~grid_data['lines_lv'].empty:
-        grid_data['lines_lv'].plot(ax=ax, color='b')
+    if ~grid_data['lines_lv']['line_buildings'].empty:
+        grid_data['lines_lv']['line_buildings'].plot(ax=ax, color='b')
     
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
-    # verschiedenen Spannungs und Druck ebenen. 
+    # verschiedenen Spannungs und Druck ebenen.
 
 
 def plot_pandapower():

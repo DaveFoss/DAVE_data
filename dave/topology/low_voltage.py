@@ -109,15 +109,16 @@ def create_lv_topology(target_area):
         line_build = shapely.geometry.LineString([connection['building_centroid'],
                                                   connection['nearest_point']])
         line_buildings[i] = line_build
-    grid_data_lv['lines_lv'] = line_buildings
+    grid_data_lv['lines_lv'] = {}
+    grid_data_lv['lines_lv']['line_buildings'] = line_buildings
     
     """
     Ablauf:
     # 1. suchen der kürzesten verbindung zwischen einem Gebäudemittelpunkt und einer Straße
     # 2. Erstellen eines Endpunktes auf der Straße für diese kürzeste Verbindung
-    3. pandapower leeres Netz erstellen
+
     4. Erstellen der relevanten gebäudeknoten und der Endknoten aus der nähesten straße funktion
-    5. erstellen einer pandapower Leitung für jede diese verbindungen (Leitung muss dann erstmal standarttyp sein)
+
     6. Erstellen der weiteren knoten bzw. umspannwerke aus OSM raussuchen
     7. Leitungsinformationen für lv von OSM beziehen
     8. Verbinden der Gebäudestiche miteinander, entlang der Straße
