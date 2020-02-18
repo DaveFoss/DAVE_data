@@ -8,7 +8,8 @@ import copy
 
 def nearest_road(building_centroids, roads):
     """
-    This function finds the shortest way between the building centroids and a road via shapely function 
+    This function finds the shortest way between the building centroids and a road via shapely 
+    function 
     
     INPUT:
         **building centroids** (GeoDataSeries) - buildings in the target area
@@ -28,7 +29,7 @@ def nearest_road(building_centroids, roads):
         building_index = building_centroids[building_centroids==centroid].index[0]
         nearest_points[building_index]=point_near
     building_connections = pd.concat([building_centroids, nearest_points], axis=1)
-    building_connections.columns = ['building centroid', 'nearest point']  
+    building_connections.columns = ['building_centroid', 'nearest_point']  
     return building_connections
 
 
@@ -75,7 +76,7 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
         building_index = building_centroids[building_centroids==centroid].index[0]
         nearest_points[building_index]=point_near
     building_connections = pd.concat([building_centroids, nearest_points], axis=1)
-    building_connections.columns = ['building centroid', 'nearest point']  
+    building_connections.columns = ['building_centroid', 'nearest_point']  
     return building_connections
 
 def create_lv_topology(target_area):
@@ -92,21 +93,28 @@ def create_lv_topology(target_area):
         **grid model** (attrdict) - PANDAPOWER attrdict
     EXAMPLE:
     """
-    # search shortest way between building centroid and road for relevant buildings
+    # copy target area data
+    grid_data_lv = copy.copy(target_area)
+    # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_index = list(target_area['buildings']['for_living'].append(target_area['buildings'] \
                            ['commercial']).index)
     centroids = target_area['buildings']['building_centroids'][target_area['buildings'] \
                             ['building_centroids'].index.isin(buildings_index)]
-    
     building_connections = nearest_road(building_centroids= centroids,
                                               roads= target_area['roads'])
-    grid_data = copy.copy(target_area)
-    grid_data['buildings']['building_connections'] = building_connections
+    grid_data_lv['buildings']['building_connections'] = building_connections
+    # create lines for building connections
+    line_buildings = gpd.GeoSeries([])
+    for i, connection in grid_data_lv['buildings']['building_connections'].iterrows():
+        line_build = shapely.geometry.LineString([connection['building_centroid'],
+                                                  connection['nearest_point']])
+        line_buildings[i] = line_build
+    grid_data_lv['lines_lv'] = line_buildings
     
     """
     Ablauf:
-    1. suchen der kürzesten verbindung zwischen einem Gebäudemittelpunkt und einer Straße
-    2. Erstellen eines Endpunktes auf der Straße für diese kürzeste Verbindung
+    # 1. suchen der kürzesten verbindung zwischen einem Gebäudemittelpunkt und einer Straße
+    # 2. Erstellen eines Endpunktes auf der Straße für diese kürzeste Verbindung
     3. pandapower leeres Netz erstellen
     4. Erstellen der relevanten gebäudeknoten und der Endknoten aus der nähesten straße funktion
     5. erstellen einer pandapower Leitung für jede diese verbindungen (Leitung muss dann erstmal standarttyp sein)
@@ -117,7 +125,7 @@ def create_lv_topology(target_area):
     """
     
     
-    return grid_data#, grid_model
+    return grid_data_lv     #, grid_model
    
   
 
