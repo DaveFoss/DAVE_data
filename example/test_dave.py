@@ -3,7 +3,7 @@ import os
 import timeit
 
 from dave.topology import target_area
-from dave.plotting import plot_target_area
+from dave.plotting import plot_target_area, plot_grid_data
 from dave.topology import create_lv_topology
 from dave import dave_dir
 
@@ -24,6 +24,8 @@ This is a example file for testing dave
 start_time = timeit.default_timer()
 
 # --- testing target area
+print('Check OSM data for target area')
+print('------------------------------')
 
 # test target by plz
 #target_area  = target_area(postalcode=['34225']).target()
@@ -41,32 +43,24 @@ start_time = timeit.default_timer()
 path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingshausen.shp'
 target_area = target_area(own_area=path, buffer=0).target()
 
-
-
-# simle plot target area
+# plot target area
 plot_target_area(target_area=target_area)
 
+
+
 # create low voltage topology:
-grid_data = create_lv_topology(target_area=target_area)
+print('create low voltage network for target area')
+print('------------------------------------------')
+grid_data_lv = create_lv_topology(target_area=target_area)
+
+# plot target area with grid data
+plot_grid_data(grid_data=grid_data_lv)
 
 
 
-# hier jetzt eine funktion für die low Voltage topology (Knoten und Leitungen)
-
-"""
-# create lines between building centroids and roads by the nearest way (in low voltage teil einbauaen mit pp.lines)
-line_buildings = gpd.GeoSeries([])
-for i, connection in grid_data['buildings']['building_conections'].iterrows():
-    line_build = shapely.geometry.LineString([connection['building centroid'], connection['nearest point']])
-    line_buildings[i] = line_build
-"""
-
-"""
-# plot nearest points
-nearest_points.plot(ax=ax, color='m')
 # plot building to raod connections
-line_buildings.plot(ax=ax, color='m')
-"""
+#line_buildings.plot(ax=ax, color='m')
+
 
 
 
