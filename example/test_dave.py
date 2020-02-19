@@ -44,7 +44,7 @@ path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingsha
 target_area = target_area(own_area=path, buffer=0).target()
 
 # plot target area
-plot_target_area(target_area=target_area)
+#plot_target_area(target_area=target_area)
 
 
 

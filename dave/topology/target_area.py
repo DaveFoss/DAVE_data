@@ -149,10 +149,12 @@ class target_area():
             landuse = landuse[landuse.geometry.intersects(target_area)]
         else:
             landuse = []
+        # create Dictonary with road informations
+        roads = {'roads': roads,
+                'roads_plot': roads_plot}
         # create dictonary with all informations for this target area
         self.target_area = {'area': self.target,
                             'roads': roads,
-                            'roads_plot': roads_plot,
                             'buildings': buildings,
                             'landuse': landuse}
 
@@ -226,7 +228,7 @@ class target_area():
 
         EXAMPLE:
             from dave.topology import target_area
-            kassel = target_area(town_name = ['Kassel']).target()
+            kassel = target_area(town_name = ['Kassel'], buffer=0).target()
         """
 
         # check wich input parameter is given
@@ -265,10 +267,10 @@ class target_area():
                     ['other'].append(self.target_area['buildings']['other'])
                     full_target_area['landuse'] = full_target_area['landuse'].append(
                             self.target_area['landuse'])
-                    full_target_area['roads'] = full_target_area['roads'].append(
-                            self.target_area['roads'])
-                    full_target_area['roads_plot'] = full_target_area['roads_plot'].append(
-                            self.target_area['roads_plot'])
+                    full_target_area['roads']['roads'] = full_target_area['roads']['roads'].append(
+                            self.target_area['roads']['roads'])
+                    full_target_area['roads']['roads_plot'] = full_target_area['roads'][
+                            'roads_plot'].append(self.target_area['roads']['roads_plot'])
         else:
             for i in range(0, len(self.target)):
                 border = self.target.iloc[i].geometry.convex_hull
@@ -287,8 +289,8 @@ class target_area():
                     ['other'].append(self.target_area['buildings']['other'])
                     full_target_area['landuse'] = full_target_area['landuse'].append(
                             self.target_area['landuse'])
-                    full_target_area['roads'] = full_target_area['roads'].append(
-                            self.target_area['roads'])
-                    full_target_area['roads_plot'] = full_target_area['roads_plot'].append(
-                            self.target_area['roads_plot'])
+                    full_target_area['roads']['roads'] = full_target_area['roads']['roads'].append(
+                            self.target_area['roads']['roads'])
+                    full_target_area['roads']['roads_plot'] = full_target_area['roads'][
+                            'roads_plot'].append(self.target_area['roads']['roads_plot'])
         return full_target_area

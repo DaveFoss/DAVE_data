@@ -34,10 +34,10 @@ def plot_target_area(target_area):
     # plot target area
     ax = plot_land(target_area['area'])
     # plot highways
-    if ~target_area['roads_plot'].empty:
-        target_area['roads_plot'].plot(ax=ax, color='k')  # these highways are only relevant for plotting
-    if ~target_area['roads'].empty:
-        target_area['roads'].plot(ax=ax, color='k')
+    if ~target_area['roads']['roads_plot'].empty:
+        target_area['roads']['roads_plot'].plot(ax=ax, color='k')  # these highways are only relevant for plotting
+    if ~target_area['roads']['roads'].empty:
+        target_area['roads']['roads'].plot(ax=ax, color='k')
     # plot buildings
     if ~target_area['buildings']['for_living'].empty:
         target_area['buildings']['for_living'].plot(ax=ax, color='g')
@@ -64,10 +64,10 @@ def plot_grid_data(grid_data):
     # plot target area
     ax = plot_land(grid_data['area'])
     # plot highways
-    if ~grid_data['roads_plot'].empty:
-        grid_data['roads_plot'].plot(ax=ax, color='k', alpha=0.2)  
-    if ~grid_data['roads'].empty:
-        grid_data['roads'].plot(ax=ax, color='k', alpha=0.2)
+    if ~grid_data['roads']['roads_plot'].empty:
+        grid_data['roads']['roads_plot'].plot(ax=ax, color='k', alpha=0.2)  
+    if ~grid_data['roads']['roads'].empty:
+        grid_data['roads']['roads'].plot(ax=ax, color='k', alpha=0.2)
     # plot buildings
     if ~grid_data['buildings']['for_living'].empty:
         grid_data['buildings']['for_living'].plot(ax=ax, color='k', alpha=0.2)

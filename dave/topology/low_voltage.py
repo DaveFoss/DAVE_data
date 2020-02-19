@@ -1,4 +1,3 @@
-import pandapower
 import geopandas as gpd
 import shapely.geometry
 from shapely import affinity
@@ -90,19 +89,20 @@ def create_lv_topology(target_area):
 
     OUTPUT:
         **grid data** (dict) - expanded target area dictonary with all informations about the grid
-        **grid model** (attrdict) - PANDAPOWER attrdict
     EXAMPLE:
     """
     # copy target area data
     grid_data_lv = copy.copy(target_area)
+    
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_index = list(target_area['buildings']['for_living'].append(target_area['buildings'] \
                            ['commercial']).index)
     centroids = target_area['buildings']['building_centroids'][target_area['buildings'] \
                             ['building_centroids'].index.isin(buildings_index)]
     building_connections = nearest_road(building_centroids= centroids,
-                                              roads= target_area['roads'])
+                                              roads= target_area['roads']['roads'])
     grid_data_lv['buildings']['building_connections'] = building_connections
+    
     # create lines for building connections
     line_buildings = gpd.GeoSeries([])
     for i, connection in grid_data_lv['buildings']['building_connections'].iterrows():
@@ -111,6 +111,8 @@ def create_lv_topology(target_area):
         line_buildings[i] = line_build
     grid_data_lv['lines_lv'] = {}
     grid_data_lv['lines_lv']['line_buildings'] = line_buildings
+    
+    # connect lines for building connection to each other
     
     """
     Ablauf:
