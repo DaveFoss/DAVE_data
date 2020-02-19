@@ -44,10 +44,11 @@ class target_area():
         # search relevant road informations in the target area
         if self.roads:
             roads = gpdosm.query_osm('way', target, recurse='down',
-                                     tags=['highway~"tertiary|unclassified|residential"'])
+                                     tags=['highway~"tertiary|unclassified|residential|living_street|footway"'])
             # define road parameters which are relevant for the grid modeling
             relevant_columns = ['geometry',
-                                'name']
+                                'name',
+                                'highway']
             roads = roads.filter(relevant_columns)
             # consider only the linestring elements
             roads = roads[roads.geometry.length != 0]

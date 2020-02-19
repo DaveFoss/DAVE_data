@@ -67,4 +67,4 @@ grid_data_lv['roads']['roads']
 
 # stop and show runtime
 stop_time = timeit.default_timer()
-print('runtime = ' + str(round((stop_time - start_time),2)) + 's')
+print('runtime = ' + str(round((stop_time - start_time)/60,2)) + 'min')
