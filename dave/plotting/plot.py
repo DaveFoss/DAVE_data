@@ -33,11 +33,13 @@ def plot_target_area(target_area):
     """
     # plot target area
     ax = plot_land(target_area['area'])
-    # plot highways
+    # plot road informations
     if ~target_area['roads']['roads_plot'].empty:
         target_area['roads']['roads_plot'].plot(ax=ax, color='k')  # these highways are only relevant for plotting
     if ~target_area['roads']['roads'].empty:
         target_area['roads']['roads'].plot(ax=ax, color='k')
+    if ~target_area['roads']['road_junctions'].empty:
+        target_area['roads']['road_junctions'].plot(ax=ax, color='r')
     # plot buildings
     if ~target_area['buildings']['for_living'].empty:
         target_area['buildings']['for_living'].plot(ax=ax, color='g')
@@ -47,7 +49,7 @@ def plot_target_area(target_area):
         target_area['buildings']['other'].plot(ax=ax, color='k')
     # plot building centroids
     if ~target_area['buildings']['building_centroids'].empty:
-        target_area['buildings']['building_centroids'].plot(ax=ax, color='r', markersize=1)
+        target_area['buildings']['building_centroids'].plot(ax=ax, color='m', markersize=1)
 
 
 def plot_grid_data(grid_data):
@@ -63,11 +65,13 @@ def plot_grid_data(grid_data):
     """
     # plot target area
     ax = plot_land(grid_data['area'])
-    # plot highways
+    # plot informations
     if ~grid_data['roads']['roads_plot'].empty:
         grid_data['roads']['roads_plot'].plot(ax=ax, color='k', alpha=0.2)  
     if ~grid_data['roads']['roads'].empty:
         grid_data['roads']['roads'].plot(ax=ax, color='k', alpha=0.2)
+    if ~grid_data['roads']['road_junctions'].empty:
+        grid_data['roads']['road_junctions'].plot(ax=ax, color='r')
     # plot buildings
     if ~grid_data['buildings']['for_living'].empty:
         grid_data['buildings']['for_living'].plot(ax=ax, color='k', alpha=0.2)

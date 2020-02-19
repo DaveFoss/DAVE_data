@@ -151,12 +151,32 @@ class target_area():
             landuse = []
         # create Dictonary with road informations
         roads = {'roads': roads,
-                'roads_plot': roads_plot}
+                 'roads_plot': roads_plot}
         # create dictonary with all informations for this target area
         self.target_area = {'area': self.target,
                             'roads': roads,
                             'buildings': buildings,
                             'landuse': landuse}
+
+    def road_junctions(self, roads):
+        """
+        This function searches junctions for the relevant roads in the target area
+        """
+        junction_points = []
+        for i, line in roads.iterrows():
+            # create multipolygon for lines without the one under consideration
+            other_lines = roads.drop([i])
+            other_lines = cascaded_union(other_lines.geometry)
+            # find line intersections
+            junctions = line.geometry.intersection(other_lines)
+            if junctions.geom_type == 'Point':
+                junction_points.append(junctions)
+            elif junctions.geom_type == 'MultiPoint':
+                for point in junctions:
+                    junction_points.append(point)
+        # delet duplicates
+        junction_points = gpd.GeoSeries(junction_points)
+        self.road_junctions = junction_points[junction_points.duplicated()]
 
     def _target_by_postalcode(self):
         """
@@ -169,7 +189,7 @@ class target_area():
                 target = postal[postal.postalcode == self.postalcode[i]]
             else:
                 target = target.append(postal[postal.postalcode == self.postalcode[i]])
-        return target
+        self.target = target
 
     def _target_by_town_name(self):
         """
@@ -184,7 +204,7 @@ class target_area():
                 target = target.append(postal[postal.town == self.town_name[i].capitalize()])
             if target.empty:
                 raise ValueError('town name wasn`t found. Please check your input')
-        return target
+        self.target = target
 
     def _target_by_federal_state(self):
         """
@@ -205,7 +225,7 @@ class target_area():
                 target = target.append(states[states['name'] == state_name])
             if target.empty:
                 raise ValueError('federal state name wasn`t found. Please check your input')
-        return target
+        self.target = target
 
     def target(self):
         """
@@ -233,17 +253,17 @@ class target_area():
 
         # check wich input parameter is given
         if self.postalcode:
-            self.target = target_area._target_by_postalcode(self)
+            target_area._target_by_postalcode(self)
         elif self.town_name:
-            self.target = target_area._target_by_town_name(self)
+            target_area._target_by_town_name(self)
         elif self.federal_state:
-            self.target = target_area._target_by_federal_state(self)
+            target_area._target_by_federal_state(self)
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
         else:
             raise SyntaxError('target area wasn`t defined')
 
-        # create dictonary with all data for the target area(s)
+        # create dictonary with all data for the target area(s) from OSM
         if self.town_name:
             diff_targets = self.target['town'].drop_duplicates()
             for i in range(0, len(diff_targets)):
@@ -285,7 +305,7 @@ class target_area():
                     ['commercial'].append(self.target_area['buildings']['commercial'])
                     full_target_area['buildings']['for_living'] = full_target_area['buildings']\
                     ['for_living'].append(self.target_area['buildings']['for_living'])
-                    full_target_area['buildings']['other'] = full_target_area['buildings']\
+                    full_target_area['buildings']['other'] = full_target_area['buildings']
                     ['other'].append(self.target_area['buildings']['other'])
                     full_target_area['landuse'] = full_target_area['landuse'].append(
                             self.target_area['landuse'])
@@ -293,4 +313,9 @@ class target_area():
                             self.target_area['roads']['roads'])
                     full_target_area['roads']['roads_plot'] = full_target_area['roads'][
                             'roads_plot'].append(self.target_area['roads']['roads_plot'])
+        # find road junctions
+        target_area.road_junctions(self, full_target_area['roads']['roads'])
+        full_target_area['roads']['road_junctions'] = self.road_junctions
+        
+        
         return full_target_area

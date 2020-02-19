@@ -14,6 +14,7 @@ import geopandas as gpd
 import geopandas_osm.osm
 import matplotlib.pyplot as plt
 import shapely.geometry
+import shapely.ops
 
 
 """
@@ -44,7 +45,7 @@ path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingsha
 target_area = target_area(own_area=path, buffer=0).target()
 
 # plot target area
-#plot_target_area(target_area=target_area)
+plot_target_area(target_area=target_area)
 
 
 
@@ -58,8 +59,8 @@ plot_grid_data(grid_data=grid_data_lv)
 
 
 
-# plot building to raod connections
-#line_buildings.plot(ax=ax, color='m')
+# test road junctions
+grid_data_lv['roads']['roads']
 
 
 
