@@ -90,6 +90,8 @@ def plot_grid_data(grid_data):
         nearest_point.plot(ax=ax, color='b', markersize=1)
     if ~grid_data['lines_lv']['line_buildings'].empty:
         grid_data['lines_lv']['line_buildings'].plot(ax=ax, color='b')
+    if ~grid_data['lines_lv']['line_connections'].empty:
+        grid_data['lines_lv']['line_connections'].plot(ax=ax, color='b')
     
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.

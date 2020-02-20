@@ -111,9 +111,40 @@ def create_lv_topology(target_area):
         line_buildings[i] = line_build
     grid_data_lv['lines_lv'] = {}
     grid_data_lv['lines_lv']['line_buildings'] = line_buildings
-    
-    # connect lines for building connection to each other
-    
+
+    # --- create line connections to connect lines for buildings and road junctions with each other
+    # define relevant nodes
+    nearest_buildin_point = gpd.GeoSeries(grid_data_lv['buildings']['building_connections']['nearest_point'])
+    road_junctions = grid_data_lv['roads']['road_junctions']
+    all_nodes = pd.concat([nearest_buildin_point, road_junctions]).drop_duplicates()
+    # search line connections
+    line_connections = []
+    for i, road in grid_data_lv['roads']['roads'].iterrows():
+        road_course = sorted(road.geometry.coords[:])
+        grid_nodes = []
+        # find nodes wich are on the considered road
+        for node in all_nodes:
+            if road.geometry.distance(node) < 1E-10:
+                grid_nodes.append(node.coords[:][0]) 
+        grid_nodes = sorted(grid_nodes)
+        # build lines to connect the nodes
+        for j in range (0,len(grid_nodes)-1):  
+            line_points = []
+            # get start point
+            line_points.append(grid_nodes[j])
+            # get points between start and end point from road course
+            for p in range(0, len(road_course)):
+                # first filter by lon range
+                if grid_nodes[j] < road_course[p] and road_course[p] < grid_nodes[j+1]:
+                    line_points.append(road_course[p])
+            # get end point
+            line_points.append(grid_nodes[j+1])
+            # create a lineString and add them to the line connection list
+            line_connection = shapely.geometry.LineString(line_points)
+            line_connections.append(line_connection)
+    line_connections = gpd.GeoSeries(line_connections)
+    grid_data_lv['lines_lv']['line_connections'] = line_connections
+
     """
     Ablauf:
     # 1. suchen der kürzesten verbindung zwischen einem Gebäudemittelpunkt und einer Straße
