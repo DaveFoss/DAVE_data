@@ -177,7 +177,7 @@ class target_area():
                     junction_points.append(point)
         # delet duplicates
         junction_points = gpd.GeoSeries(junction_points)
-        self.road_junctions = junction_points[junction_points.duplicated()]
+        self.road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
 
     def _target_by_postalcode(self):
         """
