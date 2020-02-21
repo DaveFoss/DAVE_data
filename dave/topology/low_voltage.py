@@ -78,42 +78,12 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
     building_connections.columns = ['building_centroid', 'nearest_point']  
     return building_connections
 
-def create_lv_topology(target_area):
+def line_connections(grid_data_lv):
     """
-    This function creates a dictonary with all relevant geographical informations for the target area
-
-    INPUT:
-        **target area** (dict) - all Informations about the target area
-
-    OPTIONAL:
-
-    OUTPUT:
-        **grid data** (dict) - expanded target area dictonary with all informations about the grid
-    EXAMPLE:
+    This function creates the line connections between the building lines (Points on the roads)
+    and the road junctions
     """
-    # copy target area data
-    grid_data_lv = copy.copy(target_area)
-    
-    # shortest way between building centroid and road for relevant buildings (building connections)
-    buildings_index = list(target_area['buildings']['for_living'].append(target_area['buildings'] \
-                           ['commercial']).index)
-    centroids = target_area['buildings']['building_centroids'][target_area['buildings'] \
-                            ['building_centroids'].index.isin(buildings_index)]
-    building_connections = nearest_road(building_centroids= centroids,
-                                              roads= target_area['roads']['roads'])
-    grid_data_lv['buildings']['building_connections'] = building_connections
-    
-    # create lines for building connections
-    line_buildings = gpd.GeoSeries([])
-    for i, connection in grid_data_lv['buildings']['building_connections'].iterrows():
-        line_build = shapely.geometry.LineString([connection['building_centroid'],
-                                                  connection['nearest_point']])
-        line_buildings[i] = line_build
-    grid_data_lv['lines_lv'] = {}
-    grid_data_lv['lines_lv']['line_buildings'] = line_buildings
-
-    # --- create line connections to connect lines for buildings and road junctions with each other
-    # define relevant nodes
+     # define relevant nodes
     nearest_buildin_point = gpd.GeoSeries(grid_data_lv['buildings']['building_connections']['nearest_point'])
     road_junctions = grid_data_lv['roads']['road_junctions']
     all_nodes = pd.concat([nearest_buildin_point, road_junctions]).drop_duplicates()
@@ -144,6 +114,44 @@ def create_lv_topology(target_area):
             line_connections.append(line_connection)
     line_connections = gpd.GeoSeries(line_connections)
     grid_data_lv['lines_lv']['line_connections'] = line_connections
+    
+    
+def create_lv_topology(target_area):
+    """
+    This function creates a dictonary with all relevant geographical informations for the target area
+
+    INPUT:
+        **target area** (dict) - all Informations about the target area
+
+    OPTIONAL:
+
+    OUTPUT:
+        **grid data** (dict) - expanded target area dictonary with all informations about the grid
+    EXAMPLE:
+    """
+    # copy target area data
+    grid_data_lv = copy.copy(target_area)
+    
+    # shortest way between building centroid and road for relevant buildings (building connections)
+    buildings_index = list(target_area['buildings']['for_living'].append(target_area['buildings'] \
+                           ['commercial']).index)
+    centroids = target_area['buildings']['building_centroids'][target_area['buildings']\
+                           ['building_centroids'].index.isin(buildings_index)]
+    building_connections = nearest_road(building_centroids=centroids,
+                                        roads=target_area['roads']['roads'])
+    grid_data_lv['buildings']['building_connections'] = building_connections
+
+    # create lines for building connections
+    line_buildings = gpd.GeoSeries([])
+    for i, connection in grid_data_lv['buildings']['building_connections'].iterrows():
+        line_build = shapely.geometry.LineString([connection['building_centroid'],
+                                                  connection['nearest_point']])
+        line_buildings[i] = line_build
+    grid_data_lv['lines_lv'] = {}
+    grid_data_lv['lines_lv']['line_buildings'] = line_buildings
+
+    # create line connections to connect lines for buildings and road junctions with each other
+    line_connections(grid_data_lv)
 
     """
     Ablauf:
