@@ -15,6 +15,7 @@ import geopandas_osm.osm
 import matplotlib.pyplot as plt
 import shapely.geometry
 import shapely.ops
+import pandas as pd
 
 
 """
@@ -45,9 +46,7 @@ path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingsha
 target_area = target_area(own_area=path, buffer=0).target()
 
 # plot target area
-plot_target_area(target_area=target_area)
-
-
+#plot_target_area(target_area=target_area)
 
 # create low voltage topology:
 print('create low voltage network for target area')
@@ -56,11 +55,6 @@ grid_data_lv = create_lv_topology(target_area=target_area)
 
 # plot target area with grid data
 plot_grid_data(grid_data=grid_data_lv)
-
-
-
-# test road junctions
-grid_data_lv['roads']['roads']
 
 
 

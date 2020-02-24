@@ -317,6 +317,4 @@ class target_area():
         # find road junctions
         target_area.road_junctions(self, full_target_area['roads']['roads'])
         full_target_area['roads']['road_junctions'] = self.road_junctions
-        
-        
         return full_target_area
