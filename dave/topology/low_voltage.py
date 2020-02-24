@@ -95,18 +95,27 @@ def line_connections(grid_data_lv):
         if road_course[0] > road_course[len(road_course)-1]:
             road_course = road_course[::-1]
         road_points = shapely.geometry.MultiPoint(road_course)
+        # find nodes wich are on the considered road and sort them
         grid_nodes = []
-        # find nodes wich are on the considered road
         for node in all_nodes:
             if road.geometry.distance(node) < 1E-10:
                 grid_nodes.append(node.coords[:][0])
-        grid_nodes = sorted(grid_nodes)
+        grid_nodes = sorted(grid_nodes)  # sort nodes by their longitude to find start point
+        # sort nodes by their nearest neighbor
+        grid_nodes_sort = [grid_nodes[0]]  # start node
+        node_index=0
+        while len(grid_nodes)>1:  # sort nodes by their sequenz along the road 
+            start_node = shapely.geometry.Point(grid_nodes.pop(node_index))
+            grid_nodes_points = shapely.geometry.MultiPoint(grid_nodes)
+            next_node = shapely.ops.nearest_points(start_node, grid_nodes_points)[1]
+            grid_nodes_sort.append(next_node.coords[:][0])
+            node_index = grid_nodes.index(next_node.coords[:][0])
         # build lines to connect the all grid nodes with each other
-        for j in range(0, len(grid_nodes)-1):
+        for j in range(0, len(grid_nodes_sort)-1):
             line_points = []
             # get considered grid node pair
-            start_point = shapely.geometry.Point(grid_nodes[j])
-            end_point = shapely.geometry.Point(grid_nodes[j+1])
+            start_point = shapely.geometry.Point(grid_nodes_sort[j])
+            end_point = shapely.geometry.Point(grid_nodes_sort[j+1])
             # find nearest points to them
             start_nearest = shapely.ops.nearest_points(start_point, road_points)[1]
             end_nearest = shapely.ops.nearest_points(end_point, road_points)[1]
@@ -123,10 +132,10 @@ def line_connections(grid_data_lv):
             if abs(start_point.distance(end_nearest)) > abs(start_point.distance(end_point)):
                 end_index -= 1
             # add points
-            line_points.append(grid_nodes[j])  # start point
+            line_points.append(grid_nodes_sort[j])  # start point
             for p in range(start_index, end_index+1):  # points between to follow the road course
                 line_points.append(road_course[p])
-            line_points.append(grid_nodes[j+1])  # end point
+            line_points.append(grid_nodes_sort[j+1])  # end point
             # create a lineString and add them to the line connection list
             line_connection = shapely.geometry.LineString(line_points)
             line_connections.append(line_connection)
