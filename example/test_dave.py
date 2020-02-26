@@ -5,6 +5,7 @@ import timeit
 from dave.topology import target_area
 from dave.plotting import plot_target_area, plot_grid_data
 from dave.topology import create_lv_topology
+from dave.model import create_power_grid
 from dave import dave_dir
 
 
@@ -16,6 +17,7 @@ import matplotlib.pyplot as plt
 import shapely.geometry
 import shapely.ops
 import pandas as pd
+import pandapower.plotting as pplt
 
 
 """
@@ -51,12 +53,17 @@ target_area = target_area(own_area=path, buffer=0).target()
 # create low voltage topology:
 print('create low voltage network for target area')
 print('------------------------------------------')
-grid_data_lv = create_lv_topology(target_area=target_area)
+grid_data = create_lv_topology(target_area=target_area)
 
 # plot target area with grid data
-plot_grid_data(grid_data=grid_data_lv)
+plot_grid_data(grid_data=grid_data)
 
-
+# create pandapower model
+print('create pandapower network for target area')
+print('------------------------------------------')
+power_grid = create_power_grid(grid_data)
+# plotting testweise, später mal selbst richtig machen mit angepassten farben usw. 
+pplt.simple_plot(power_grid, bus_size=0.1)
 
 
 # stop and show runtime
