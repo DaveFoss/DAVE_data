@@ -2,7 +2,6 @@ import geopandas as gpd
 import shapely.geometry
 from shapely import affinity
 import pandas as pd
-import copy
 
 
 def nearest_road(building_centroids, roads):
@@ -151,24 +150,23 @@ def create_lv_topology(target_area):
     This function creates a dictonary with all relevant geographical informations for the target area
 
     INPUT:
-        **target area** (dict) - all Informations about the target area
+        **target_area** (dict) - all Informations about the target area
 
     OPTIONAL:
 
     OUTPUT:
-        **grid data** (dict) - expanded target area dictonary with all informations about the grid
+        **grid data_lv** (dict) - expanded grid_data dictonary with all informations about the lv topology
     EXAMPLE:
     """
-    # copy target area data
-    grid_data_lv = copy.copy(target_area)
-    
+    # rename data for better difference
+    grid_data_lv = target_area
     # shortest way between building centroid and road for relevant buildings (building connections)
-    buildings_index = list(target_area['buildings']['for_living'].append(target_area['buildings'] \
+    buildings_index = list(grid_data_lv['buildings']['for_living'].append(grid_data_lv['buildings'] \
                            ['commercial']).index)
-    centroids = target_area['buildings']['building_centroids'][target_area['buildings']\
+    centroids = grid_data_lv['buildings']['building_centroids'][grid_data_lv['buildings']\
                            ['building_centroids'].index.isin(buildings_index)]
     building_connections = nearest_road(building_centroids=centroids,
-                                        roads=target_area['roads']['roads'])
+                                        roads=grid_data_lv['roads']['roads'])
     grid_data_lv['buildings']['building_connections'] = building_connections
 
     # --- create lines for building connections
