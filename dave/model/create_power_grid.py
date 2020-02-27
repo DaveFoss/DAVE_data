@@ -30,29 +30,28 @@ def create_power_grid(grid_data):
                       type='m')
     # --- create lines
     std_type = 'NAYY 4x150 SE'
-    length_km = 1  # Dieser Platzhalter muss noch ersetzt werden durch funktion die länge bestimmt (in die beiden for schleifen)
     # lv lines for buildings
-    for i, line in grid_data['lines_lv']['line_buildings'].items():
-        line_coords = line.coords[:]
+    for i, line in grid_data['lines_lv']['line_buildings'].iterrows():
+        line_coords = line.geometry.coords[:]
         start_bus = net.bus_geodata[net.bus_geodata.x == line_coords[0][0]].index[0]
         end_bus = net.bus_geodata[net.bus_geodata.x == line_coords[len(line_coords)-1][0]].index[0]
         pp.create_line(net,
                        name=f'line building {i}',
                        from_bus=start_bus,
                        to_bus=end_bus,
-                       length_km=length_km,
+                       length_km=line.length_m/1000,
                        std_type=std_type,
                        geodata=[list(coords) for coords in line_coords])
     # lv lines to connect each other
-    for i, line in grid_data['lines_lv']['line_connections'].items():
-        line_coords = line.coords[:]
+    for i, line in grid_data['lines_lv']['line_connections'].iterrows():
+        line_coords = line.geometry.coords[:]
         start_bus = net.bus_geodata[net.bus_geodata.x == line_coords[0][0]].index[0]
         end_bus = net.bus_geodata[net.bus_geodata.x == line_coords[len(line_coords)-1][0]].index[0]
         pp.create_line(net,
                        name=f'line connection {i}',
                        from_bus=start_bus,
                        to_bus=end_bus,
-                       length_km=length_km,
+                       length_km=line.length_m/1000,
                        std_type=std_type,
                        geodata=[list(coords) for coords in line_coords])
     

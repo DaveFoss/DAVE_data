@@ -139,8 +139,12 @@ def line_connections(grid_data_lv):
             # create a lineString and add them to the line connection list
             line_connection = shapely.geometry.LineString(line_points)
             line_connections.append(line_connection)
-    line_connections = gpd.GeoSeries(line_connections)
-    grid_data_lv['lines_lv']['line_connections'] = line_connections
+    line_connections = gpd.GeoSeries(line_connections, crs = 'EPSG:4326')
+    # calculate line length
+    line_connections_3035 = line_connections.to_crs(epsg=3035)  # project lines to crs with unit in meter
+    line_length = line_connections_3035.length
+    grid_data_lv['lines_lv']['line_connections'] = gpd.GeoDataFrame({'geometry':line_connections, 
+                                                                     'length_m':line_length})
     
 def create_lv_topology(target_area):
     """
@@ -167,15 +171,20 @@ def create_lv_topology(target_area):
                                         roads=target_area['roads']['roads'])
     grid_data_lv['buildings']['building_connections'] = building_connections
 
-    # create lines for building connections
-    line_buildings = gpd.GeoSeries([])
+    # --- create lines for building connections
+    line_buildings = gpd.GeoSeries([], crs = 'EPSG:4326')
     for i, connection in grid_data_lv['buildings']['building_connections'].iterrows():
         line_build = shapely.geometry.LineString([connection['building_centroid'],
                                                   connection['nearest_point']])
         line_buildings[i] = line_build
+    # calculate line length
+    #line_buildings.crs = 'EPSG:4326'
+    line_buildings_3035 = line_buildings.to_crs(epsg=3035)  # project lines to crs with unit in meter
+    line_length = line_buildings_3035.length
+    # write line informations into dict
     grid_data_lv['lines_lv'] = {}
-    grid_data_lv['lines_lv']['line_buildings'] = line_buildings
-
+    grid_data_lv['lines_lv']['line_buildings'] = gpd.GeoDataFrame({'geometry':line_buildings, 
+                                                                   'length_m':line_length})
     # create line connections to connect lines for buildings and road junctions with each other
     line_connections(grid_data_lv)
 
@@ -193,7 +202,7 @@ def create_lv_topology(target_area):
     """
     
     
-    return grid_data_lv     #, grid_model
+    return grid_data_lv
    
   
 
