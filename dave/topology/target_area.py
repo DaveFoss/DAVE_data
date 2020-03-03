@@ -1,6 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import geopandas_osm.osm as gpdosm
+import shapely.geometry
 from shapely.ops import cascaded_union
 
 from dave.datapool import read_postal, read_federal_states
@@ -81,6 +82,25 @@ class target_area():
             roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
         else:
             roads_plot = []
+        # search landuse informations in the target area
+        if self.landuse:
+            landuse = gpdosm.query_osm('way', target, recurse='down', tags=['landuse'])
+            relevant_columns = ['industrial',
+                                'landuse',
+                                'geometry',
+                                'name']
+            landuse = landuse.filter(relevant_columns)
+            # consider only the linestring elements
+            landuse = landuse[landuse.geometry.length != 0]
+            # consider only landuses which intersects the target area
+            if target_number or target_number == 0:
+                target_area = self.target.geometry.iloc[target_number]
+            elif target_town:
+                targets = self.target[self.target.town == target_town]
+                target_area = cascaded_union(targets.geometry.tolist())
+            landuse = landuse[landuse.geometry.intersects(target_area)]
+        else:
+            landuse = []
         # search building informations in the target area
         if self.buildings:
             buildings = gpdosm.query_osm('way', target, recurse='down', tags=['building'])
@@ -103,7 +123,7 @@ class target_area():
                 targets = self.target[self.target.town == target_town]
                 target_area = cascaded_union(targets.geometry.tolist())
             buildings = buildings[buildings.geometry.intersects(target_area)]
-            # create building centroid and categorize buildings
+            # create building categories
             for_living = ['apartments',
                           'detached',
                           'dormitory',
@@ -125,6 +145,17 @@ class target_area():
                           'school',
                           'supermarket',
                           'warehouse']
+            # improve building tag with landuse parameter
+            commercial_landuse = ['retail', 'commercial', 'industrial']
+            landuse_rel_index = landuse.landuse[landuse.landuse.isin(commercial_landuse)].index
+            for i, building in buildings.iterrows():
+                if building.building not in (commercial):
+                    for j in landuse_rel_index:
+                        land_poly = shapely.geometry.Polygon(landuse.iloc[j].geometry)
+                        if building.geometry.intersects(land_poly):
+                            buildings.at[i, 'building'] = landuse.iloc[j].landuse
+                            break
+            # create building centroid and categorize buildings
             buildings = {'for_living': buildings[buildings.building.isin(for_living)],
                          'commercial': buildings[buildings.building.isin(commercial)],
                          'other': buildings[~buildings.building.isin(for_living+commercial)],
@@ -132,25 +163,6 @@ class target_area():
             buildings['building_centroids'].rename('centroid')
         else:
             buildings = []
-        # search landuse informations in the target area
-        if self.landuse:
-            landuse = gpdosm.query_osm('way', target, recurse='down', tags=['landuse'])
-            relevant_columns = ['industrial',
-                                'landuse',
-                                'geometry',
-                                'name']
-            landuse = landuse.filter(relevant_columns)
-            # consider only the linestring elements
-            landuse = landuse[landuse.geometry.length != 0]
-            # consider only landuses which intersects the target area
-            if target_number or target_number == 0:
-                target_area = self.target.geometry.iloc[target_number]
-            elif target_town:
-                targets = self.target[self.target.town == target_town]
-                target_area = cascaded_union(targets.geometry.tolist())
-            landuse = landuse[landuse.geometry.intersects(target_area)]
-        else:
-            landuse = []
         # create Dictonary with road informations
         roads = {'roads': roads,
                  'roads_plot': roads_plot}
