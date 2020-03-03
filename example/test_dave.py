@@ -6,10 +6,11 @@ from dave.topology import target_area
 from dave.plotting import plot_target_area, plot_grid_data
 from dave.topology import create_lv_topology
 from dave.model import create_power_grid
-from dave import dave_dir
+
 
 
 # imports for tests:
+#from dave import dave_dir
 import dave.datapool as data
 import geopandas as gpd
 import geopandas_osm.osm
@@ -25,7 +26,7 @@ This is a example file for testing dave
 """
 
 # start runtime
-start_time = timeit.default_timer()
+_start_time = timeit.default_timer()
 
 # --- testing target area
 print('Check OSM data for target area')
@@ -44,8 +45,8 @@ print('------------------------------')
 #target_area =target_area(federal_state=['HeSsEn', 'SchleSWIg-HOLstein']).target()
 
 # test own shape (Hertingshausen is a part from the Town Baunatal. It has 500 relevant Buildings(for living and commercial))
-path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingshausen.shp'
-target_area = target_area(own_area=path, buffer=0).target()
+_path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingshausen.shp'
+target_area = target_area(own_area=_path, buffer=0).target()
 
 # plot target area
 #plot_target_area(target_area=target_area)
@@ -67,5 +68,5 @@ pplt.simple_plot(power_grid, bus_size=0.1)
 
 
 # stop and show runtime
-stop_time = timeit.default_timer()
-print('runtime = ' + str(round((stop_time - start_time)/60,2)) + 'min')
+_stop_time = timeit.default_timer()
+print('runtime = ' + str(round((_stop_time - _start_time)/60,2)) + 'min')

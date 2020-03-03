@@ -1,3 +1,4 @@
+import pandas as pd
 import geopandas as gpd
 import geopandas_osm.osm as gpdosm
 from shapely.ops import cascaded_union
@@ -154,7 +155,8 @@ class target_area():
         roads = {'roads': roads,
                  'roads_plot': roads_plot}
         # create dictonary with all informations for this target area
-        self.target_area = {'area': self.target,
+        self.target_area = {'target input': self.target_input,
+                            'area': self.target,
                             'roads': roads,
                             'buildings': buildings,
                             'landuse': landuse}
@@ -191,6 +193,14 @@ class target_area():
             else:
                 target = target.append(postal[postal.postalcode == self.postalcode[i]])
         self.target = target
+
+    def _own_area_postal(self):
+        """
+        This functions searches for the postal codes which intersects with the own area
+        """
+        postal = read_postal()
+        postal_intersection = gpd.overlay(postal, self.target, how='intersection')
+        self.own_postal = postal_intersection['postalcode'].tolist()
 
     def _target_by_town_name(self):
         """
@@ -255,12 +265,21 @@ class target_area():
         # check wich input parameter is given
         if self.postalcode:
             target_area._target_by_postalcode(self)
+            self.target_input = pd.DataFrame({'typ': 'postalcode',
+                                              'data': [self.postalcode]})
         elif self.town_name:
             target_area._target_by_town_name(self)
+            self.target_input = pd.DataFrame({'typ': 'town name',
+                                              'data': [self.town_name]})
         elif self.federal_state:
             target_area._target_by_federal_state(self)
+            self.target_input = pd.DataFrame({'typ': 'federal state',
+                                              'data': [self.federal_state]})
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
+            target_area._own_area_postal(self)
+            self.target_input = pd.DataFrame({'typ': 'own area',
+                                              'data': [self.own_postal]})
         else:
             raise SyntaxError('target area wasn`t defined')
 
