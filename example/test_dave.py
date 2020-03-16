@@ -19,6 +19,7 @@ import shapely.geometry
 import shapely.ops
 import pandas as pd
 import pandapower.plotting as pplt
+import requests
 
 
 """
@@ -52,7 +53,7 @@ target_area = target_area(own_area=_path, buffer=0).target()
 #plot_target_area(target_area=target_area)
 
 
-# create low voltage topology:
+# ---create low voltage topology:
 print('create low voltage network for target area')
 print('------------------------------------------')
 grid_data = create_lv_topology(target_area=target_area)
@@ -60,12 +61,45 @@ grid_data = create_lv_topology(target_area=target_area)
 # plot target area with grid data
 plot_grid_data(grid_data=grid_data)
 
-# create pandapower model
+# ---create pandapower model
 print('create pandapower network for target area')
 print('------------------------------------------')
 power_grid = create_power_grid(grid_data)
 # plotting testweise, später mal selbst richtig machen mit angepassten farben usw. 
-pplt.simple_plot(power_grid, bus_size=0.1)
+pplt.simple_plot(power_grid, line_width=1.5, bus_size=0.15)
+
+
+
+
+"""
+# ---test mv/lv trafos openego
+# oedb
+oep_url= 'http://oep.iks.cs.ovgu.de/'
+
+# select opsd renewable power plants
+schema='grid'
+table='ego_dp_mvlv_substation'
+where = 'version=v0.2.8'  
+
+trafo = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/?where='+where, )
+trafo.status_code
+
+# convert to dataframe
+df_pp = pd.DataFrame(trafo.json())
+
+# --- convert to geopandas with right crs
+# transform WKB to WKT / Geometry
+df_pp['geom'] = df_pp['geom'].apply(lambda x:shapely.wkb.loads(x, hex=True))
+# create geoDataFrame
+crs = {'init' :'epsg:3035'}
+gdf_pp = gpd.GeoDataFrame(df_pp, crs=crs, geometry=df_pp.geom)
+gdf_pp_4326 = gdf_pp.to_crs(epsg=4326)
+# filter trafos for target area
+trafo_intersection = gpd.overlay(gdf_pp_4326, target_area['area'], how='intersection').geometry
+
+""" 
+
+
 
 
 # stop and show runtime

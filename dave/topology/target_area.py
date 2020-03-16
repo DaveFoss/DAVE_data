@@ -151,9 +151,9 @@ class target_area():
             for i, building in buildings.iterrows():
                 if building.building not in (commercial):
                     for j in landuse_rel_index:
-                        land_poly = shapely.geometry.Polygon(landuse.iloc[j].geometry)
+                        land_poly = shapely.geometry.Polygon(landuse.loc[j].geometry)
                         if building.geometry.intersects(land_poly):
-                            buildings.at[i, 'building'] = landuse.iloc[j].landuse
+                            buildings.at[i, 'building'] = landuse.loc[j].landuse
                             break
             # create building centroid and categorize buildings
             buildings = {'for_living': buildings[buildings.building.isin(for_living)],

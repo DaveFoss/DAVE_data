@@ -6,6 +6,7 @@ import pandapower as pp
 def create_power_grid(grid_data):
     # create empty network
     net = pp.create_empty_network()
+
     # --- create busses
     vn_kv_lv = 0.4
     # lv busses for building connections
@@ -28,8 +29,9 @@ def create_power_grid(grid_data):
                       vn_kv=vn_kv_lv,
                       geodata=junction_point,
                       type='m')
+
     # --- create lines
-    std_type = 'NAYY 4x150 SE'
+    std_type = 'NAYY 4x150 SE'  # dummy value
     # lv lines for buildings
     for i, line in grid_data['lines_lv']['line_buildings'].iterrows():
         line_coords = line.geometry.coords[:]
