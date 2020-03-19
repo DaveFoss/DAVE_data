@@ -6,11 +6,12 @@ from dave.topology import target_area
 from dave.plotting import plot_target_area, plot_grid_data
 from dave.topology import create_lv_topology
 from dave.model import create_power_grid
+from dave.components import power_components
 
 
 
 # imports for tests:
-#from dave import dave_dir
+from dave import dave_dir
 import dave.datapool as data
 import geopandas as gpd
 import geopandas_osm.osm
@@ -50,7 +51,7 @@ _path = os.path.dirname(os.path.realpath(__file__))+'\\hertingshausen\\hertingsh
 target_area = target_area(own_area=_path, buffer=0).target()
 
 # plot target area
-#plot_target_area(target_area=target_area)
+plot_target_area(target_area=target_area)
 
 
 # ---create low voltage topology:
@@ -58,15 +59,48 @@ print('create low voltage network for target area')
 print('------------------------------------------')
 grid_data = create_lv_topology(target_area=target_area)
 
+
+# --- create power components:
+print('create power components for target area')
+print('---------------------------------------')
+grid_data = power_components(grid_data)
+
 # plot target area with grid data
 plot_grid_data(grid_data=grid_data)
+
 
 # ---create pandapower model
 print('create pandapower network for target area')
 print('------------------------------------------')
 power_grid = create_power_grid(grid_data)
+
+
+
 # plotting testweise, später mal selbst richtig machen mit angepassten farben usw. 
-pplt.simple_plot(power_grid, line_width=1.5, bus_size=0.15)
+#pplt.simple_plot(power_grid, line_width=1.5, bus_size=0.15)
+
+
+
+
+
+
+"""
+# select opsd renewable power plants
+# oep
+oep_url= 'http://oep.iks.cs.ovgu.de/'
+schema='supply'
+table='ego_renewable_powerplant'
+where = 'postcode=34225' #[34225,34295]'  # hierbei berücksichtigen das bei Ortsname mehrere PLZ gibt. bzw evt nach namen filtern
+#where = 'city=Kassel'
+
+conv_powerplants = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/?where='+where, )
+
+
+# convert to dataframe
+df_pp = pd.DataFrame(conv_powerplants.json())
+
+
+"""
 
 
 
@@ -96,8 +130,8 @@ gdf_pp = gpd.GeoDataFrame(df_pp, crs=crs, geometry=df_pp.geom)
 gdf_pp_4326 = gdf_pp.to_crs(epsg=4326)
 # filter trafos for target area
 trafo_intersection = gpd.overlay(gdf_pp_4326, target_area['area'], how='intersection').geometry
+"""
 
-""" 
 
 
 

@@ -1,3 +1,4 @@
 geopandas (evt. geopandas requierements auflisten)
 geopandas_osm
 matplotlib
+geopy

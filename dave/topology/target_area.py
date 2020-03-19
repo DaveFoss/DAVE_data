@@ -167,7 +167,7 @@ class target_area():
         roads = {'roads': roads,
                  'roads_plot': roads_plot}
         # create dictonary with all informations for this target area
-        self.target_area = {'target input': self.target_input,
+        self.target_area = {'target_input': self.target_input,
                             'area': self.target,
                             'roads': roads,
                             'buildings': buildings,

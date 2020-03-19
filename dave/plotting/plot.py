@@ -79,7 +79,7 @@ def plot_grid_data(grid_data):
         grid_data['buildings']['commercial'].plot(ax=ax, color='k', alpha=0.2)
     if ~grid_data['buildings']['other'].empty:
         grid_data['buildings']['other'].plot(ax=ax, color='k', alpha=0.2)
-    # plot building connections (points and lines)
+    # plot building connections (points and lines) and line connetions
     if ~grid_data['buildings']['building_connections']['building_centroid'].empty:
         centroids = gpd.GeoSeries(list(
                 grid_data['buildings']['building_connections']['building_centroid']))
@@ -87,11 +87,14 @@ def plot_grid_data(grid_data):
     if ~grid_data['buildings']['building_connections']['nearest_point'].empty:
         nearest_point = gpd.GeoSeries(list(
                 grid_data['buildings']['building_connections']['nearest_point']))
-        nearest_point.plot(ax=ax, color='b', markersize=1)
+        nearest_point.plot(ax=ax, color='b', markersize=5)
     if ~grid_data['lines_lv']['line_buildings'].empty:
         grid_data['lines_lv']['line_buildings'].plot(ax=ax, color='b')
     if ~grid_data['lines_lv']['line_connections'].empty:
         grid_data['lines_lv']['line_connections'].plot(ax=ax, color='b')
+    # plot electrical components
+    if ~grid_data['components']['renewable_powerplants'].empty:
+        grid_data['components']['renewable_powerplants'].plot(ax=ax, color='g')
     
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.
