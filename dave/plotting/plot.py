@@ -95,6 +95,8 @@ def plot_grid_data(grid_data):
     # plot electrical components
     if ~grid_data['components']['renewable_powerplants'].empty:
         grid_data['components']['renewable_powerplants'].plot(ax=ax, color='g')
+    if ~grid_data['components']['conventional_powerplants'].empty:
+        grid_data['components']['conventional_powerplants'].plot(ax=ax, color='m')
     
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.
