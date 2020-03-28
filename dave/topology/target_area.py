@@ -26,7 +26,7 @@ class target_area():
         **landuse** (boolean, default True) - obtain informations about the landuse of the target area
     """
     def __init__(self, postalcode=None, town_name=None, federal_state=None, own_area=None,
-                 buffer=1E-2, roads=True, roads_plot=True, buildings=True, landuse=True):
+                 buffer=0, roads=True, roads_plot=True, buildings=True, landuse=True):
         # Init input parameters
         self.postalcode = postalcode
         self.town_name = town_name
@@ -62,7 +62,7 @@ class target_area():
                 target_area = cascaded_union(targets.geometry.tolist())
             roads = roads[roads.geometry.intersects(target_area)]
         else:
-            roads = []
+            roads = pd.DataFrame()
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
             roads_plot = gpdosm.query_osm('way', target, recurse='down',
@@ -81,7 +81,7 @@ class target_area():
                 target_area = cascaded_union(targets.geometry.tolist())
             roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
         else:
-            roads_plot = []
+            roads_plot = pd.DataFrame()
         # search landuse informations in the target area
         if self.landuse:
             landuse = gpdosm.query_osm('way', target, recurse='down', tags=['landuse'])
@@ -100,7 +100,7 @@ class target_area():
                 target_area = cascaded_union(targets.geometry.tolist())
             landuse = landuse[landuse.geometry.intersects(target_area)]
         else:
-            landuse = []
+            landuse = pd.DataFrame()
         # search building informations in the target area
         if self.buildings:
             buildings = gpdosm.query_osm('way', target, recurse='down', tags=['building'])
@@ -162,7 +162,7 @@ class target_area():
                          'building_centroids': buildings.centroid}
             buildings['building_centroids'].rename('centroid')
         else:
-            buildings = []
+            buildings = pd.DataFrame()
         # create Dictonary with road informations
         roads = {'roads': roads,
                  'roads_plot': roads_plot}
@@ -177,21 +177,24 @@ class target_area():
         """
         This function searches junctions for the relevant roads in the target area
         """
-        junction_points = []
-        for i, line in roads.iterrows():
-            # create multipolygon for lines without the one under consideration
-            other_lines = roads.drop([i])
-            other_lines = cascaded_union(other_lines.geometry)
-            # find line intersections
-            junctions = line.geometry.intersection(other_lines)
-            if junctions.geom_type == 'Point':
-                junction_points.append(junctions)
-            elif junctions.geom_type == 'MultiPoint':
-                for point in junctions:
-                    junction_points.append(point)
-        # delet duplicates
-        junction_points = gpd.GeoSeries(junction_points)
-        self.road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
+        if self.roads:
+            junction_points = []
+            for i, line in roads.iterrows():
+                # create multipolygon for lines without the one under consideration
+                other_lines = roads.drop([i])
+                other_lines = cascaded_union(other_lines.geometry)
+                # find line intersections
+                junctions = line.geometry.intersection(other_lines)
+                if junctions.geom_type == 'Point':
+                    junction_points.append(junctions)
+                elif junctions.geom_type == 'MultiPoint':
+                    for point in junctions:
+                        junction_points.append(point)
+            # delet duplicates
+            junction_points = gpd.GeoSeries(junction_points)
+            self.road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
+        else:
+            self.road_junctions = pd.DataFrame()
 
     def _target_by_postalcode(self):
         """
@@ -235,21 +238,29 @@ class target_area():
         Multiple federal state areas will be combinated
         """
         states = read_federal_states()
-        for i in range(len(self.federal_state)):
-            # bring name in right form
-            state_name = self.federal_state[i].split('-')
-            if len(state_name) == 1:
-                state_name = state_name[0].capitalize()
-            else:
-                state_name = state_name[0].capitalize()+'-'+state_name[1].capitalize()
-            if i == 0:
-                target = states[states['name'] == state_name]
-            else:
-                target = target.append(states[states['name'] == state_name])
-            if target.empty:
-                raise ValueError('federal state name wasn`t found. Please check your input')
+        if len(self.federal_state) == 1 and  self.federal_state[0] == 'ALL':
+            # in this case all federal states will be choosen
+            target = states
+        else:
+            for i in range(len(self.federal_state)):
+                # bring name in right form
+                state_name = self.federal_state[i].split('-')
+                if len(state_name) == 1:
+                    state_name = state_name[0].capitalize()
+                else:
+                    state_name = state_name[0].capitalize()+'-'+state_name[1].capitalize()
+                if i == 0:
+                    target = states[states['name'] == state_name]
+                else:
+                    target = target.append(states[states['name'] == state_name])
+                if target.empty:
+                    raise ValueError('federal state name wasn`t found. Please check your input')
         self.target = target
-
+        # convert federal states into postal code areas for target_input
+        postal = read_postal()
+        postal_intersection = gpd.overlay(postal, self.target, how='intersection')
+        self.federal_state_postal = postal_intersection['postalcode'].tolist()
+        
     def target(self):
         """
         This function creates a dictonary with all relevant geographical informations for the
@@ -273,7 +284,9 @@ class target_area():
             from dave.topology import target_area
             kassel = target_area(town_name = ['Kassel'], buffer=0).target()
         """
-
+        # print to inform user
+        print('Check OSM data for target area')
+        print('------------------------------')
         # check wich input parameter is given
         if self.postalcode:
             target_area._target_by_postalcode(self)
@@ -286,7 +299,8 @@ class target_area():
         elif self.federal_state:
             target_area._target_by_federal_state(self)
             self.target_input = pd.DataFrame({'typ': 'federal state',
-                                              'data': [self.federal_state]})
+                                              'federal_states': [self.federal_state],
+                                              'data': [self.federal_state_postal]})
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
             target_area._own_area_postal(self)
@@ -294,7 +308,6 @@ class target_area():
                                               'data': [self.own_postal]})
         else:
             raise SyntaxError('target area wasn`t defined')
-
         # create dictonary with all data for the target area(s) from OSM
         if self.town_name:
             diff_targets = self.target['town'].drop_duplicates()
@@ -309,14 +322,15 @@ class target_area():
                 if i == 0:
                     full_target_area = self.target_area
                 else:
-                    full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
-                    ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
-                    full_target_area['buildings']['commercial'] = full_target_area['buildings']\
-                    ['commercial'].append(self.target_area['buildings']['commercial'])
-                    full_target_area['buildings']['for_living'] = full_target_area['buildings']\
-                    ['for_living'].append(self.target_area['buildings']['for_living'])
-                    full_target_area['buildings']['other'] = full_target_area['buildings']\
-                    ['other'].append(self.target_area['buildings']['other'])
+                    if isinstance(full_target_area['buildings'], pd.DataFrame) and not full_target_area['buildings'].empty:
+                        full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
+                        ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
+                        full_target_area['buildings']['commercial'] = full_target_area['buildings']\
+                        ['commercial'].append(self.target_area['buildings']['commercial'])
+                        full_target_area['buildings']['for_living'] = full_target_area['buildings']\
+                        ['for_living'].append(self.target_area['buildings']['for_living'])
+                        full_target_area['buildings']['other'] = full_target_area['buildings']\
+                        ['other'].append(self.target_area['buildings']['other'])
                     full_target_area['landuse'] = full_target_area['landuse'].append(
                             self.target_area['landuse'])
                     full_target_area['roads']['roads'] = full_target_area['roads']['roads'].append(
@@ -331,14 +345,15 @@ class target_area():
                 if i == 0:
                     full_target_area = self.target_area
                 else:
-                    full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
-                    ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
-                    full_target_area['buildings']['commercial'] = full_target_area['buildings']\
-                    ['commercial'].append(self.target_area['buildings']['commercial'])
-                    full_target_area['buildings']['for_living'] = full_target_area['buildings']\
-                    ['for_living'].append(self.target_area['buildings']['for_living'])
-                    full_target_area['buildings']['other'] = full_target_area['buildings']
-                    ['other'].append(self.target_area['buildings']['other'])
+                    if isinstance(full_target_area['buildings'], pd.DataFrame) and not full_target_area['buildings'].empty:
+                        full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
+                        ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
+                        full_target_area['buildings']['commercial'] = full_target_area['buildings']\
+                        ['commercial'].append(self.target_area['buildings']['commercial'])
+                        full_target_area['buildings']['for_living'] = full_target_area['buildings']\
+                        ['for_living'].append(self.target_area['buildings']['for_living'])
+                        full_target_area['buildings']['other'] = full_target_area['buildings']
+                        ['other'].append(self.target_area['buildings']['other'])
                     full_target_area['landuse'] = full_target_area['landuse'].append(
                             self.target_area['landuse'])
                     full_target_area['roads']['roads'] = full_target_area['roads']['roads'].append(
