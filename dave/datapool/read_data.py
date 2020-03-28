@@ -1,5 +1,6 @@
 import os
 import geopandas as gpd
+import pandas as pd
 
 from dave import dave_dir
 
@@ -14,8 +15,8 @@ def _get_data_path(filename=None, dirname=None):
 # test
 def read_postal():
     """
-    This data includes the town name, the area, the population and the geometry for all german 
-    postalcode areas
+    This data includes the town name, the area, the population and the 
+    geometry for all german postalcode areas
 
     OUTPUT:
          **postal areas** (GeodataFrame) - all german postalcode areas 
@@ -30,8 +31,8 @@ def read_postal():
 
 def read_federal_states():
     """
-    This data includes the name, the length, the area, the population and the geometry for all 
-    german federal states
+    This data includes the name, the length, the area, the population and the 
+    geometry for all german federal states
 
     OUTPUT:
          **federal_statess** (GeodataFrame) - all german federal states 
@@ -41,6 +42,30 @@ def read_federal_states():
 
          postal = data.read_federal_states()
     """
-    federalstatesger = gpd.read_file(_get_data_path('federalstatesger.shp', 'federalstatesger'))
+    federalstatesger = gpd.read_file(_get_data_path('federalstatesger.shp',
+                                                    'federalstatesger'))
     return federalstatesger
+
+def read_ehv_data():
+    """
+    This data includes the node, line and transformer informations for the 
+    german extra high voltage level based of the data from the four german tso
+    
+    OUTPUT:
+         **extra high voltage data** (dict) - Informations from the german tso 
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         postal = data.read_ehv_data()
+    """
+    ehv_data = {'ehv_nodes': pd.read(_get_data_path('ehv_nodes.p', 'ehvdata')),
+                'ehv_node_changes': pd.read(_get_data_path('ehv_node_changes.p',
+                                                           'ehvdata')),
+                'ehv_lines': pd.read(_get_data_path('ehv_lines.p', 'ehvdata')),
+                'ehv_trafos': pd.read(_get_data_path('ehv_trafos.p',
+                                                     'ehvdata'))}
+    return ehv_data
+
+
 

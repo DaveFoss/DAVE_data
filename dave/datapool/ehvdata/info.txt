@@ -1,0 +1,10 @@
+These data for extra high voltage are based on the static models from tso's:
+- 50 Hertz, state: 31.12.2017
+- Amprion, state: 26.11.2018
+- Transnet BW, state: 29.02.2020
+- Tennet, state: 31.12.2018
+
+Additionally the geocoordinates for the grid nodes were added. These informations are from OpenStreetMap. Also some other relevant OSM-parameters were added too.
+
+
+
