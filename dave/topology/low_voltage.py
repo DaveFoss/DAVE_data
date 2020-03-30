@@ -77,18 +77,18 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
     building_connections.columns = ['building_centroid', 'nearest_point']  
     return building_connections
 
-def line_connections(grid_data_lv):
+def line_connections(grid_data):
     """
     This function creates the line connections between the building lines (Points on the roads)
     and the road junctions
     """
     # define relevant nodes
-    nearest_buildin_point = gpd.GeoSeries(grid_data_lv['buildings']['building_connections']['nearest_point'])
-    road_junctions = grid_data_lv['roads']['road_junctions']
-    all_nodes = pd.concat([nearest_buildin_point, road_junctions]).drop_duplicates()
+    nearest_building_point = gpd.GeoSeries(grid_data.lv_data.lv_nodes.building_connections.nearest_point)
+    road_junctions = grid_data.roads.road_junctions
+    all_nodes = pd.concat([nearest_building_point, road_junctions]).drop_duplicates()
     # search line connections
     line_connections = []
-    for i, road in grid_data_lv['roads']['roads'].iterrows():
+    for i, road in grid_data.roads.roads.iterrows():
         road_course = road.geometry.coords[:]
         # change road direction to become a uniformly road style
         if road_course[0] > road_course[len(road_course)-1]:
@@ -143,65 +143,48 @@ def line_connections(grid_data_lv):
     # calculate line length
     line_connections_3035 = line_connections.to_crs(epsg=3035)  # project lines to crs with unit in meter
     line_length = line_connections_3035.length
-    grid_data_lv['lines_lv']['line_connections'] = gpd.GeoDataFrame({'geometry':line_connections, 
-                                                                     'length_m':line_length})
+    grid_data.lv_data.lv_lines.line_connections = grid_data.lv_data.lv_lines.line_connections.append(gpd.GeoDataFrame({'geometry':line_connections, 
+                                                                                                                       'length_m':line_length}))
     
-def create_lv_topology(target_area):
+def create_lv_topology(grid_data):
     """
-    This function creates a dictonary with all relevant geographical informations for the target area
+    This function creates a dictonary with all relevant geographical 
+    informations for the target area
 
     INPUT:
-        **target_area** (dict) - all Informations about the target area
+        **grid_data** (attrdict) - all Informations about the grid
 
     OPTIONAL:
 
     OUTPUT:
-        **grid data_lv** (dict) - expanded grid_data dictonary with all informations about the lv topology
+
     EXAMPLE:
     """
-    # rename data for better difference
-    grid_data_lv = target_area
+    # print to inform user
+    print('create low voltage network for target area')
+    print('------------------------------------------')
     # shortest way between building centroid and road for relevant buildings (building connections)
-    buildings_index = list(grid_data_lv['buildings']['for_living'].append(grid_data_lv['buildings'] \
-                           ['commercial']).index)
-    centroids = grid_data_lv['buildings']['building_centroids'][grid_data_lv['buildings']\
-                           ['building_centroids'].index.isin(buildings_index)]
+    buildings_index = list(grid_data.buildings.for_living.append(grid_data.buildings.commercial).index)
+    centroids = grid_data.buildings.building_centroids[grid_data.buildings.building_centroids.index.isin(buildings_index)]
     building_connections = nearest_road(building_centroids=centroids,
-                                        roads=grid_data_lv['roads']['roads'])
-    grid_data_lv['buildings']['building_connections'] = building_connections
+                                        roads=grid_data.roads.roads)
+    grid_data.lv_data.lv_nodes.building_connections = grid_data.lv_data.lv_nodes.building_connections.append(building_connections)
 
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries([], crs = 'EPSG:4326')
-    for i, connection in grid_data_lv['buildings']['building_connections'].iterrows():
+    for i, connection in grid_data.lv_data.lv_nodes.building_connections.iterrows():
         line_build = shapely.geometry.LineString([connection['building_centroid'],
                                                   connection['nearest_point']])
         line_buildings[i] = line_build
     # calculate line length
-    #line_buildings.crs = 'EPSG:4326'
     line_buildings_3035 = line_buildings.to_crs(epsg=3035)  # project lines to crs with unit in meter
     line_length = line_buildings_3035.length
-    # write line informations into dict
-    grid_data_lv['lines_lv'] = {}
-    grid_data_lv['lines_lv']['line_buildings'] = gpd.GeoDataFrame({'geometry':line_buildings, 
-                                                                   'length_m':line_length})
+    # write line informations into grid data
+    grid_data.lv_data.lv_lines.line_buildings = grid_data.lv_data.lv_lines.line_buildings.append(gpd.GeoDataFrame({'geometry':line_buildings, 
+                                                                                                                   'length_m':line_length}))
     # create line connections to connect lines for buildings and road junctions with each other
-    line_connections(grid_data_lv)
+    line_connections(grid_data)
 
-    """
-    Ablauf:
-    # 1. suchen der kürzesten verbindung zwischen einem Gebäudemittelpunkt und einer Straße
-    # 2. Erstellen eines Endpunktes auf der Straße für diese kürzeste Verbindung
-
-    #4. Erstellen der relevanten gebäudeknoten und der Endknoten aus der nähesten straße funktion
-
-    6. Erstellen der weiteren knoten bzw. umspannwerke aus OSM raussuchen
-    7. Leitungsinformationen für lv von OSM beziehen
-    8. Verbinden der Gebäudestiche miteinander, entlang der Straße
-    9. Externes Netz an den Übergabestellen zur mv ebene erstellen
-    """
-    
-    
-    return grid_data_lv
    
   
 

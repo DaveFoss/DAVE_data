@@ -12,6 +12,8 @@ class target_area():
     This class contains functions to define a target area and getting all relevant osm data for it
 
     INPUT:
+        **grid_data** (attrdict) - grid_data as a attrdict in dave structure
+        
         One of these parameters must be set:
         **postalcode** (List of strings) - numbers of the target postalcode areas
         **town_name** (List of strings) - names of the target towns
@@ -19,15 +21,23 @@ class target_area():
         **own_area** (string) - full path to a shape file which includes own target area (e.g. "C:/Users/name/test/test.shp")
 
     OPTIONAL:
-        **buffer** (float, default 1E-2) - buffer for the target area
+        **buffer** (float, default 0) - buffer for the target area
         **roads** (boolean, default True) - obtain informations about roads which are relevant for the grid model
         **roads_plot** (boolean, default False) - obtain informations about roads which can be nice for the visualization
         **buildings** (boolean, default True) - obtain informations about buildings in the target area
         **landuse** (boolean, default True) - obtain informations about the landuse of the target area
+        
+    OUTPUT:
+    
+    EXAMPLE:
+            from dave.topology import target_area
+            target_area(town_name = ['Kassel'], buffer=0).target()
     """
-    def __init__(self, postalcode=None, town_name=None, federal_state=None, own_area=None,
+
+    def __init__(self, grid_data, postalcode=None, town_name=None, federal_state=None, own_area=None,
                  buffer=0, roads=True, roads_plot=True, buildings=True, landuse=True):
         # Init input parameters
+        self.grid_data = grid_data
         self.postalcode = postalcode
         self.town_name = town_name
         self.federal_state = federal_state
@@ -61,8 +71,8 @@ class target_area():
                 targets = self.target[self.target.town == target_town]
                 target_area = cascaded_union(targets.geometry.tolist())
             roads = roads[roads.geometry.intersects(target_area)]
-        else:
-            roads = pd.DataFrame()
+            # write roads into grid_data
+            self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
             roads_plot = gpdosm.query_osm('way', target, recurse='down',
@@ -80,8 +90,8 @@ class target_area():
                 targets = self.target[self.target.town == target_town]
                 target_area = cascaded_union(targets.geometry.tolist())
             roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
-        else:
-            roads_plot = pd.DataFrame()
+            # write plotting roads into grid_data
+            self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
         # search landuse informations in the target area
         if self.landuse:
             landuse = gpdosm.query_osm('way', target, recurse='down', tags=['landuse'])
@@ -99,8 +109,8 @@ class target_area():
                 targets = self.target[self.target.town == target_town]
                 target_area = cascaded_union(targets.geometry.tolist())
             landuse = landuse[landuse.geometry.intersects(target_area)]
-        else:
-            landuse = pd.DataFrame()
+            # write landuse into grid_data
+            self.grid_data.landuse = self.grid_data.landuse.append(landuse)
         # search building informations in the target area
         if self.buildings:
             buildings = gpdosm.query_osm('way', target, recurse='down', tags=['building'])
@@ -155,29 +165,25 @@ class target_area():
                         if building.geometry.intersects(land_poly):
                             buildings.at[i, 'building'] = landuse.loc[j].landuse
                             break
-            # create building centroid and categorize buildings
-            buildings = {'for_living': buildings[buildings.building.isin(for_living)],
-                         'commercial': buildings[buildings.building.isin(commercial)],
-                         'other': buildings[~buildings.building.isin(for_living+commercial)],
-                         'building_centroids': buildings.centroid}
-            buildings['building_centroids'].rename('centroid')
-        else:
-            buildings = pd.DataFrame()
-        # create Dictonary with road informations
-        roads = {'roads': roads,
-                 'roads_plot': roads_plot}
-        # create dictonary with all informations for this target area
-        self.target_area = {'target_input': self.target_input,
-                            'area': self.target,
-                            'roads': roads,
-                            'buildings': buildings,
-                            'landuse': landuse}
+            # write buildings into grid_data
+            self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
+            self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
+            self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
+            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.append(buildings.centroid)
+            # rename building centroids
+            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.rename('geometry')
+        # write area informations into grid_data
+        crs = {'init': 'epsg:4326'}
+        self.grid_data.area = gpd.GeoDataFrame(self.target, 
+                                               crs=crs, 
+                                               geometry=self.target.geometry)
 
-    def road_junctions(self, roads):
+    def road_junctions(self):
         """
         This function searches junctions for the relevant roads in the target area
         """
-        if self.roads:
+        roads = self.grid_data.roads.roads
+        if not roads.empty:
             junction_points = []
             for i, line in roads.iterrows():
                 # create multipolygon for lines without the one under consideration
@@ -192,14 +198,14 @@ class target_area():
                         junction_points.append(point)
             # delet duplicates
             junction_points = gpd.GeoSeries(junction_points)
-            self.road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
-        else:
-            self.road_junctions = pd.DataFrame()
+            road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
+            # write road junctions into grid_data
+            self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
 
     def _target_by_postalcode(self):
         """
         This function filter the postalcode informations for the target area.
-        Multiple postalcode areas will be combinated
+        Multiple postalcode areas will be combinated.
         """
         postal = read_postal()
         for i in range(len(self.postalcode)):
@@ -235,7 +241,7 @@ class target_area():
     def _target_by_federal_state(self):
         """
         This function filter the federal state informations for the target area.
-        Multiple federal state areas will be combinated
+        Multiple federal state areas will be combinated.
         """
         states = read_federal_states()
         if len(self.federal_state) == 1 and  self.federal_state[0] == 'ALL':
@@ -263,51 +269,39 @@ class target_area():
         
     def target(self):
         """
-        This function creates a dictonary with all relevant geographical informations for the
-        target area
-
-        OPTIONAL:
-            **buffer** (float, default 1E-2) - buffer for the target area
-            **roads** (boolean, default True) - obtain informations about roads which are relevant
-                                                for the grid model
-            **roads_plot** (boolean, default False) - obtain informations about roads which can be
-                                                      nice for the visualization
-            **buildings** (boolean, default True) - obtain informations about buildings in the
-                                                    target area
-            **landuse** (boolean, default True) - obtain informations about the landuse of the
-                                                  target area
-
-        OUTPUT:
-            **target area** (dict) - all relevant informations for the target area
-
-        EXAMPLE:
-            from dave.topology import target_area
-            kassel = target_area(town_name = ['Kassel'], buffer=0).target()
+        This function calculate all relevant geographical informations for the
+        target area and add it to the grid_data
         """
+        
         # print to inform user
         print('Check OSM data for target area')
         print('------------------------------')
         # check wich input parameter is given
         if self.postalcode:
             target_area._target_by_postalcode(self)
-            self.target_input = pd.DataFrame({'typ': 'postalcode',
-                                              'data': [self.postalcode]})
+            target_input = pd.DataFrame({'typ': 'postalcode', 
+                                         'data': [self.postalcode]})
+            self.grid_data.target_input = target_input
         elif self.town_name:
             target_area._target_by_town_name(self)
-            self.target_input = pd.DataFrame({'typ': 'town name',
-                                              'data': [self.town_name]})
+            target_input = pd.DataFrame({'typ': 'town name',
+                                         'data': [self.town_name]})
+            self.grid_data.target_input = target_input
         elif self.federal_state:
             target_area._target_by_federal_state(self)
-            self.target_input = pd.DataFrame({'typ': 'federal state',
-                                              'federal_states': [self.federal_state],
-                                              'data': [self.federal_state_postal]})
+            target_input = pd.DataFrame({'typ': 'federal state',
+                                         'federal_states': [self.federal_state],
+                                         'data': [self.federal_state_postal]})
+            self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
             target_area._own_area_postal(self)
-            self.target_input = pd.DataFrame({'typ': 'own area',
-                                              'data': [self.own_postal]})
+            target_input = pd.DataFrame({'typ': 'own area',
+                                         'data': [self.own_postal]})
+            self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
+        
         # create dictonary with all data for the target area(s) from OSM
         if self.town_name:
             diff_targets = self.target['town'].drop_duplicates()
@@ -319,6 +313,7 @@ class target_area():
                     border = town.iloc[0].geometry.convex_hull
                 # Obtain data from OSM
                 target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
+                """
                 if i == 0:
                     full_target_area = self.target_area
                 else:
@@ -337,11 +332,13 @@ class target_area():
                             self.target_area['roads']['roads'])
                     full_target_area['roads']['roads_plot'] = full_target_area['roads'][
                             'roads_plot'].append(self.target_area['roads']['roads_plot'])
+                """
         else:
             for i in range(0, len(self.target)):
                 border = self.target.iloc[i].geometry.convex_hull
                 # Obtain data from OSM
                 target_area._from_osm(self, target=border, target_number=i)
+                """
                 if i == 0:
                     full_target_area = self.target_area
                 else:
@@ -360,7 +357,6 @@ class target_area():
                             self.target_area['roads']['roads'])
                     full_target_area['roads']['roads_plot'] = full_target_area['roads'][
                             'roads_plot'].append(self.target_area['roads']['roads_plot'])
+                """
         # find road junctions
-        target_area.road_junctions(self, full_target_area['roads']['roads'])
-        full_target_area['roads']['road_junctions'] = self.road_junctions
-        return full_target_area
+        target_area.road_junctions(self)

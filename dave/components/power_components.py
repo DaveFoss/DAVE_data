@@ -9,7 +9,6 @@ def oep_request(schema, table, where=None):
     This function is to requesting data from the open energy platform.
     The available data is to find on https://openenergy-platform.org/dataedit/schemas
     
-    
     INPUT:
         **schema** (string) - schema name of the searched data
         **table** (string) - table name of the searched data 
@@ -73,6 +72,8 @@ def renewable_powerplants(target_input, area=None):
                                               'index'])
         renewables['lon'] = renewables['lon'].astype(float)
         renewables['lat'] = renewables['lat'].astype(float)
+        renewables.rename(columns={'electrical_capacity': 'electrical_capacity_kw', 
+                                   'thermal_capacity': 'thermal_capacity_kw'})
         # find exact location by adress
         geolocator = ArcGIS(timeout=10000)  # set on None when geopy 2.0 was released
         for i, plant in renewables.iterrows():
@@ -84,10 +85,12 @@ def renewable_powerplants(target_input, area=None):
             else: 
                 pass
                 # zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes 
-                # behalten. Das aber noch abändern. 
+                # behalten, falls keine Adresse bekannt. Das aber noch abändern. 
         # convert DataFrame into a GeoDataFrame
-        renewables_geo = gpd.GeoDataFrame(renewables, geometry=gpd.points_from_xy(
-                                          renewables.lon, renewables.lat))
+        renewables_geo = gpd.GeoDataFrame(renewables,
+                                          crs = 'EPSG:4326', 
+                                          geometry=gpd.points_from_xy(
+                                                  renewables.lon, renewables.lat))
         # intersection of power plants with target_area when target is an own area
         if typ == 'own area':
             renewables_geo = gpd.overlay(renewables_geo, area, how='intersection')
@@ -126,9 +129,13 @@ def conventional_powerplants(target_input, area=None):
         conventionals = conventionals.drop(columns=['gid',
                                                     'geom',
                                                     'index'])
+        conventionals.rename(columns={'capacity': 'capacity_mw',
+                                      'chp_capacity_uba': 'chp_capacity_uba_mw'})
         # convert DataFrame into a GeoDataFrame
-        conventionals_geo = gpd.GeoDataFrame(conventionals, geometry=gpd.points_from_xy(
-                                          conventionals.lon, conventionals.lat))
+        conventionals_geo = gpd.GeoDataFrame(conventionals, 
+                                             crs = 'EPSG:4326',
+                                             geometry=gpd.points_from_xy(
+                                                     conventionals.lon, conventionals.lat))
         # intersection of power plants with target_area when target is an own area
         if typ == 'own area':
             conventionals_geo = gpd.overlay(conventionals_geo, area, how='intersection')
@@ -149,17 +156,16 @@ def loads():
 
 
 def power_components(grid_data):
-    # create dict for components in the grid data
-    grid_data['components']={}
+    print('create power components for target area')
+    print('---------------------------------------')
     # add renewable powerplants
-    renewable_data = renewable_powerplants(
-            target_input = grid_data['target_input'], area = grid_data['area'])
-    grid_data['components']['renewable_powerplants'] = renewable_data
+    renewable_data = renewable_powerplants(target_input = grid_data.target_input,
+                                           area = grid_data.area)
+    grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(renewable_data)
     # add conventional powerplants
     conventional_data = conventional_powerplants(
-            target_input = grid_data['target_input'], area = grid_data['area'])
-    grid_data['components']['conventional_powerplants'] = conventional_data
-    
-    return grid_data
+            target_input = grid_data.target_input, area = grid_data.area)
+    grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(conventional_data)
+
     
     
