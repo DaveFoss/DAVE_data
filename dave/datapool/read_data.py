@@ -59,11 +59,11 @@ def read_ehv_data():
 
          postal = data.read_ehv_data()
     """
-    ehv_data = {'ehv_nodes': pd.read(_get_data_path('ehv_nodes.p', 'ehvdata')),
-                'ehv_node_changes': pd.read(_get_data_path('ehv_node_changes.p',
+    ehv_data = {'ehv_nodes': pd.read_pickle(_get_data_path('ehv_nodes.p', 'ehvdata')),
+                'ehv_node_changes': pd.read_pickle(_get_data_path('ehv_node_changes.p',
                                                            'ehvdata')),
-                'ehv_lines': pd.read(_get_data_path('ehv_lines.p', 'ehvdata')),
-                'ehv_trafos': pd.read(_get_data_path('ehv_trafos.p',
+                'ehv_lines': pd.read_pickle(_get_data_path('ehv_lines.p', 'ehvdata')),
+                'ehv_trafos': pd.read_pickle(_get_data_path('ehv_trafos.p',
                                                      'ehvdata'))}
     return ehv_data
 

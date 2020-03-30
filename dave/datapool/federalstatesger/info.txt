@@ -4,3 +4,4 @@ The shape file is available at https://www.arcgis.com/home/item.html?id=ae25571c
 Population informations were add, wich are based on the population at the 31.12.2018. 
 This data can be found at https://de.statista.com/statistik/daten/studie/71085/umfrage/verteilung-der-einwohnerzahl-nach-bundeslaendern/
 
+Adapt the baden-württemberg polygon in the shape file, so that the substation "Schwörstadt" is within it. 
