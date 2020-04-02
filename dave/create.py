@@ -1,6 +1,6 @@
 import pandas as pd
 import geopandas as gpd
-from dave.dave_sturcture import davestructure
+from dave.dave_structure import davestructure
 from dave import __version__
 
 
@@ -20,7 +20,7 @@ def create_empty_dataset():
     # define dave structure
     grid_data = davestructure({
                  # target data
-                 'area': pd.DataFrame(),
+                 'area': gpd.GeoDataFrame([], crs=crs),
                  'target_input': pd.DataFrame(),
                  'buildings': davestructure({'building_centroids': gpd.GeoSeries([], crs=crs),
                                              'commercial': gpd.GeoDataFrame([], crs=crs),
@@ -33,7 +33,9 @@ def create_empty_dataset():
                                          }),
                  'landuse': gpd.GeoDataFrame([], crs=crs),
                  # power grid data
-                 'ehv_data': davestructure({'ehv_nodes': gpd.GeoDataFrame([], crs=crs)}),
+                 'ehv_data': davestructure({'ehv_nodes': gpd.GeoDataFrame([], crs=crs),
+                                            'ehv_lines': gpd.GeoDataFrame([], crs=crs)
+                                            }),
                  'lv_data': davestructure({'lv_nodes': davestructure({'building_connections': pd.DataFrame()
                                                                       }),
                                            'lv_lines': davestructure({'line_buildings': gpd.GeoDataFrame([], crs=crs),
