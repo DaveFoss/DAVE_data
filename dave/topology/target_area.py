@@ -15,9 +15,12 @@ class target_area():
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
         
         One of these parameters must be set:
-        **postalcode** (List of strings) - numbers of the target postalcode areas
+        **postalcode** (List of strings) - numbers of the target postalcode areas. 
+                                           it could also be choose ['ALL'] for all postalcode areas in germany
         **town_name** (List of strings) - names of the target towns
+                                          it could also be choose ['ALL'] for all citys in germany
         **federal_state** (List of strings) - names of the target federal states
+                                              it could also be choose ['ALL'] for all federal states in germany
         **own_area** (string) - full path to a shape file which includes own target area (e.g. "C:/Users/name/test/test.shp")
 
     OPTIONAL:
@@ -208,11 +211,15 @@ class target_area():
         Multiple postalcode areas will be combinated.
         """
         postal = read_postal()
-        for i in range(len(self.postalcode)):
-            if i == 0:
-                target = postal[postal.postalcode == self.postalcode[i]]
-            else:
-                target = target.append(postal[postal.postalcode == self.postalcode[i]])
+        if len(self.postalcode) == 1 and  self.postalcode[0] == 'ALL':
+            # in this case all postalcode areas will be choosen
+            target = postal
+        else:
+            for i in range(len(self.postalcode)):
+                if i == 0:
+                    target = postal[postal.postalcode == self.postalcode[i]]
+                else:
+                    target = target.append(postal[postal.postalcode == self.postalcode[i]])
         self.target = target
 
     def _own_area_postal(self):
@@ -229,13 +236,17 @@ class target_area():
         Multiple town name areas will be combinated
         """
         postal = read_postal()
-        for i in range(len(self.town_name)):
-            if i == 0:
-                target = postal[postal.town == self.town_name[0].capitalize()]
-            else:
-                target = target.append(postal[postal.town == self.town_name[i].capitalize()])
-            if target.empty:
-                raise ValueError('town name wasn`t found. Please check your input')
+        if len(self.town_name) == 1 and  self.town_name[0] == 'ALL':
+            # in this case all city names will be choosen (same case as all postalcode areas)
+            target = postal
+        else:
+            for i in range(len(self.town_name)):
+                if i == 0:
+                    target = postal[postal.town == self.town_name[0].capitalize()]
+                else:
+                    target = target.append(postal[postal.town == self.town_name[i].capitalize()])
+                if target.empty:
+                    raise ValueError('town name wasn`t found. Please check your input')
         self.target = target
 
     def _target_by_federal_state(self):
@@ -301,7 +312,6 @@ class target_area():
             self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
-        
         # create dictonary with all data for the target area(s) from OSM
         if self.town_name:
             diff_targets = self.target['town'].drop_duplicates()
@@ -313,50 +323,10 @@ class target_area():
                     border = town.iloc[0].geometry.convex_hull
                 # Obtain data from OSM
                 target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
-                """
-                if i == 0:
-                    full_target_area = self.target_area
-                else:
-                    if isinstance(full_target_area['buildings'], pd.DataFrame) and not full_target_area['buildings'].empty:
-                        full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
-                        ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
-                        full_target_area['buildings']['commercial'] = full_target_area['buildings']\
-                        ['commercial'].append(self.target_area['buildings']['commercial'])
-                        full_target_area['buildings']['for_living'] = full_target_area['buildings']\
-                        ['for_living'].append(self.target_area['buildings']['for_living'])
-                        full_target_area['buildings']['other'] = full_target_area['buildings']\
-                        ['other'].append(self.target_area['buildings']['other'])
-                    full_target_area['landuse'] = full_target_area['landuse'].append(
-                            self.target_area['landuse'])
-                    full_target_area['roads']['roads'] = full_target_area['roads']['roads'].append(
-                            self.target_area['roads']['roads'])
-                    full_target_area['roads']['roads_plot'] = full_target_area['roads'][
-                            'roads_plot'].append(self.target_area['roads']['roads_plot'])
-                """
         else:
             for i in range(0, len(self.target)):
                 border = self.target.iloc[i].geometry.convex_hull
                 # Obtain data from OSM
                 target_area._from_osm(self, target=border, target_number=i)
-                """
-                if i == 0:
-                    full_target_area = self.target_area
-                else:
-                    if isinstance(full_target_area['buildings'], pd.DataFrame) and not full_target_area['buildings'].empty:
-                        full_target_area['buildings']['building_centroids'] = full_target_area['buildings']\
-                        ['building_centroids'].append(self.target_area['buildings']['building_centroids'])
-                        full_target_area['buildings']['commercial'] = full_target_area['buildings']\
-                        ['commercial'].append(self.target_area['buildings']['commercial'])
-                        full_target_area['buildings']['for_living'] = full_target_area['buildings']\
-                        ['for_living'].append(self.target_area['buildings']['for_living'])
-                        full_target_area['buildings']['other'] = full_target_area['buildings']
-                        ['other'].append(self.target_area['buildings']['other'])
-                    full_target_area['landuse'] = full_target_area['landuse'].append(
-                            self.target_area['landuse'])
-                    full_target_area['roads']['roads'] = full_target_area['roads']['roads'].append(
-                            self.target_area['roads']['roads'])
-                    full_target_area['roads']['roads_plot'] = full_target_area['roads'][
-                            'roads_plot'].append(self.target_area['roads']['roads_plot'])
-                """
         # find road junctions
         target_area.road_junctions(self)
