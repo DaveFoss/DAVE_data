@@ -22,8 +22,16 @@ class target_area():
         **federal_state** (List of strings) - names of the target federal states
                                               it could also be choose ['ALL'] for all federal states in germany
         **own_area** (string) - full path to a shape file which includes own target area (e.g. "C:/Users/name/test/test.shp")
+        
+        
 
     OPTIONAL:
+        **power_levels** (list, default ['ALL']) - this parameter defines which power levels should be considered
+                                                   options: 'EHV','HV','MV','LV'. There could be choose: one level, more 
+                                                   than one level or 'ALL' for all levels
+        **gas_levels** (list, default ['ALL']) - this parameter defines which gas levels should be considered
+                                                 options: 'HP','MP','LP'. There could be choose: one level, more 
+                                                 than one level or 'ALL' for all levels
         **buffer** (float, default 0) - buffer for the target area
         **roads** (boolean, default True) - obtain informations about roads which are relevant for the grid model
         **roads_plot** (boolean, default False) - obtain informations about roads which can be nice for the visualization
@@ -37,8 +45,10 @@ class target_area():
             target_area(town_name = ['Kassel'], buffer=0).target()
     """
 
-    def __init__(self, grid_data, postalcode=None, town_name=None, federal_state=None, own_area=None,
-                 buffer=0, roads=True, roads_plot=True, buildings=True, landuse=True):
+    def __init__(self, grid_data, postalcode=None, town_name=None, 
+                 federal_state=None, own_area=None, power_levels = ['ALL'], 
+                 gas_levels = ['ALL'], buffer=0, roads=True, roads_plot=True, 
+                 buildings=True, landuse=True):
         # Init input parameters
         self.grid_data = grid_data
         self.postalcode = postalcode
@@ -50,6 +60,8 @@ class target_area():
         self.roads_plot = roads_plot
         self.buildings = buildings
         self.landuse = landuse
+        self.power_levels = power_levels
+        self.gas_levels = gas_levels
 
     def _from_osm(self, target, target_number=None, target_town=None):
         """
@@ -291,24 +303,32 @@ class target_area():
         if self.postalcode:
             target_area._target_by_postalcode(self)
             target_input = pd.DataFrame({'typ': 'postalcode', 
-                                         'data': [self.postalcode]})
+                                         'data': [self.postalcode],
+                                         'power_levels': self.power_levels,
+                                         'gas_level': self.gas_levels})
             self.grid_data.target_input = target_input
         elif self.town_name:
             target_area._target_by_town_name(self)
             target_input = pd.DataFrame({'typ': 'town name',
-                                         'data': [self.town_name]})
+                                         'data': [self.town_name],
+                                         'power_levels': self.power_levels,
+                                         'gas_level': self.gas_levels})
             self.grid_data.target_input = target_input
         elif self.federal_state:
             target_area._target_by_federal_state(self)
             target_input = pd.DataFrame({'typ': 'federal state',
                                          'federal_states': [self.federal_state],
-                                         'data': [self.federal_state_postal]})
+                                         'data': [self.federal_state_postal],
+                                         'power_levels': [self.power_levels],
+                                         'gas_level': [self.gas_levels]})
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
             target_area._own_area_postal(self)
             target_input = pd.DataFrame({'typ': 'own area',
-                                         'data': [self.own_postal]})
+                                         'data': [self.own_postal],
+                                         'power_levels': self.power_levels,
+                                         'gas_level': self.gas_levels})
             self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
