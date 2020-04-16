@@ -13,6 +13,12 @@ class target_area():
 
     INPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
+        **power_levels** (list) - this parameter defines which power levels should be considered
+                                                   options: 'EHV','HV','MV','LV', []. There could be choose: one level, more 
+                                                   than one level or [] for empty levels
+        **gas_levels** (list) - this parameter defines which gas levels should be considered
+                                                 options: 'HP','MP','LP', []. There could be choose one level, more 
+                                                 than one level or [] for empty levels
         
         One of these parameters must be set:
         **postalcode** (List of strings) - numbers of the target postalcode areas. 
@@ -26,12 +32,6 @@ class target_area():
         
 
     OPTIONAL:
-        **power_levels** (list, default ['ALL']) - this parameter defines which power levels should be considered
-                                                   options: 'EHV','HV','MV','LV'. There could be choose: one level, more 
-                                                   than one level or 'ALL' for all levels
-        **gas_levels** (list, default ['ALL']) - this parameter defines which gas levels should be considered
-                                                 options: 'HP','MP','LP'. There could be choose: one level, more 
-                                                 than one level or 'ALL' for all levels
         **buffer** (float, default 0) - buffer for the target area
         **roads** (boolean, default True) - obtain informations about roads which are relevant for the grid model
         **roads_plot** (boolean, default False) - obtain informations about roads which can be nice for the visualization
@@ -45,9 +45,9 @@ class target_area():
             target_area(town_name = ['Kassel'], buffer=0).target()
     """
 
-    def __init__(self, grid_data, postalcode=None, town_name=None, 
-                 federal_state=None, own_area=None, power_levels = ['ALL'], 
-                 gas_levels = ['ALL'], buffer=0, roads=True, roads_plot=True, 
+    def __init__(self, grid_data, power_levels, 
+                 gas_levels, postalcode=None, town_name=None, 
+                 federal_state=None, own_area=None, buffer=0, roads=True, roads_plot=True, 
                  buildings=True, landuse=True):
         # Init input parameters
         self.grid_data = grid_data
@@ -71,7 +71,7 @@ class target_area():
         # search relevant road informations in the target area
         if self.roads:
             roads = gpdosm.query_osm('way', target, recurse='down',
-                                     tags=['highway~"tertiary|unclassified|residential|living_street|footway"'])
+                                     tags=['highway~"secondary|tertiary|unclassified|residential|living_street|footway"'])
             # define road parameters which are relevant for the grid modeling
             relevant_columns = ['geometry',
                                 'name',
@@ -91,7 +91,7 @@ class target_area():
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
             roads_plot = gpdosm.query_osm('way', target, recurse='down',
-                                          tags=['highway~"motorway|trunk|primary|secondary"'])
+                                          tags=['highway~"motorway|trunk|primary"'])
             # define road parameters which are relevant for the grid modeling
             relevant_columns = ['geometry',
                                 'name']
@@ -240,7 +240,10 @@ class target_area():
         """
         postal = read_postal()
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
-        self.own_postal = postal_intersection['postalcode'].tolist()
+        postal_list = postal_intersection['postalcode'].tolist()
+        postal_filtered = []
+        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered] 
+        self.own_postal = postal_filtered
 
     def _target_by_town_name(self):
         """
@@ -288,7 +291,11 @@ class target_area():
         # convert federal states into postal code areas for target_input
         postal = read_postal()
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
-        self.federal_state_postal = postal_intersection['postalcode'].tolist()
+        postal_list = postal_intersection['postalcode'].tolist()
+        # filter duplicated postal codes
+        postal_filtered = []
+        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered] 
+        self.federal_state_postal = postal_filtered
         
     def target(self):
         """
@@ -327,8 +334,8 @@ class target_area():
             target_area._own_area_postal(self)
             target_input = pd.DataFrame({'typ': 'own area',
                                          'data': [self.own_postal],
-                                         'power_levels': self.power_levels,
-                                         'gas_level': self.gas_levels})
+                                         'power_levels': [self.power_levels],
+                                         'gas_level': [self.gas_levels]})
             self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
