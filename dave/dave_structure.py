@@ -17,15 +17,19 @@ class davestructure(ADict):
     def __repr__(self):  # pragma: no cover
         r = 'This dave dataset includes the following parameter tables:'
         for tb in list(self.keys()):
-            if not tb.startswith("_") and isinstance(self[tb], pd.DataFrame) and len(self[tb]) > 0:
+            if isinstance(self[tb], pd.DataFrame) and not self[tb].empty:
                 length = len(self[tb])
                 r += f'\n   - {tb} ({length} {"elements" if length > 1 else "element"})'
-            if not tb.startswith('_') and isinstance(self[tb], davestructure):
+            if isinstance(self[tb], davestructure):
                 r += f'\n   - {tb}:'
                 for utb in list(self[tb].keys()):
-                    if not utb.startswith("_") and isinstance(self[tb][utb], pd.DataFrame) and len(self[tb][utb]) > 0:
+                    if isinstance(self[tb][utb], pd.DataFrame) and not self[tb][utb].empty:
                         length = len(self[tb][utb])
                         r += f'\n\t   - {utb} ({length} {"elements" if length > 1 else "element"})'
+                    if isinstance(self[tb][utb], davestructure):
+                        r += f'\n\t   - {utb}:'
+                        for uutb in list(self[tb][utb].keys()):
+                            if isinstance(self[tb][utb][uutb], pd.DataFrame) and not self[tb][utb][uutb].empty:
+                                length = len(self[tb][utb][uutb])
+                                r += f'\n\t\t   - {uutb} ({length} {"elements" if length > 1 else "element"})'
         return r
-
-
