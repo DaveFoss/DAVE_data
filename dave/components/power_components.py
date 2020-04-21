@@ -338,9 +338,11 @@ def transformators(grid_data):
             trafo_point = Point(trafo.geometry[0].coords[:][0][0], trafo.geometry[0].coords[:][0][1])
             hv_trafos.at[trafo.name, 'geometry'] = trafo_point
         # check for transformer in the target area
-        
         hv_trafos = gpd.overlay(hv_trafos, grid_data.area, how='intersection')
-        hv_trafos = hv_trafos.drop(columns=['name', 'length_m', 'area_km2', 'population'])
+        if not hv_trafos.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            hv_trafos = hv_trafos.drop(columns=remove_columns)
         # check if there is no ehv level or hv level. in this case the missing nodes for the transformator must be procured from OEP
         if ('EHV' in grid_data.target_input.power_levels[0] and grid_data.hv_data.hv_nodes.empty) \
            or ('HV' in grid_data.target_input.power_levels[0] and grid_data.ehv_data.ehv_nodes.empty):
@@ -355,8 +357,11 @@ def transformators(grid_data):
                                                       'v_nom': 'voltage_kv'})
             ehvhv_buses = ehvhv_buses[ehvhv_buses.ego_scn_name == 'Status Quo']
             ehvhv_buses = gpd.overlay(ehvhv_buses, grid_data.area, how='intersection')
-            ehvhv_buses = ehvhv_buses.drop(columns=['name', 'length_m', 'area_km2', 'population'])
-        # search for line voltage and create missing nodes
+            if not ehvhv_buses.empty:
+                remove_columns = grid_data.area.keys().tolist()
+                remove_columns.remove('geometry')
+                ehvhv_buses = ehvhv_buses.drop(columns=remove_columns)
+        # search for trafo voltage and create missing nodes
         for i, trafo in hv_trafos.iterrows():
             if 'EHV' in grid_data.target_input.power_levels[0]:
                 ehv_bus0 = grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus0]
@@ -422,11 +427,10 @@ def loads():
 def power_components(grid_data):
     #""" rausnehmen für Spannungsebenen größer LV solange noch keine Unterteilung/aggregation da ist, da es sonst sehr lange dauert
     # add renewable powerplants
-    renewable_powerplants(grid_data)
+    #renewable_powerplants(grid_data)
     # add conventional powerplants
     #conventional_powerplants(grid_data)
     #"""
     # add transformers
     transformators(grid_data)
-    
     

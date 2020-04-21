@@ -88,6 +88,7 @@ def create_ehv_topology(grid_data):
     ehv_substations = gpd.overlay(ehv_substations, grid_data.area, how='intersection')
     # consider data only if there are more than one node in the target area
     if len(ehv_substations) > 1:
+        ehv_substations['voltage_level'] = 1
         grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(ehv_substations)
     # --- create ehv nodes
     # read ehv/hv node data from OpenEnergyPlatform and adapt names
@@ -104,7 +105,10 @@ def create_ehv_topology(grid_data):
     ehv_buses = ehvhv_buses[(ehvhv_buses.voltage_kv.isin([380, 220])) & 
                             (ehvhv_buses.ego_scn_name == 'Status Quo')]
     ehv_buses = gpd.overlay(ehv_buses, grid_data.area, how='intersection')
-    ehv_buses = ehv_buses.drop(columns=['name', 'length_m', 'area_km2', 'population'])
+    if not ehv_buses.empty:
+        remove_columns = grid_data.area.keys().tolist()
+        remove_columns.remove('geometry')
+        ehv_buses = ehv_buses.drop(columns=remove_columns)
     # consider data only if there are more than one node in the target area
     if len(ehv_buses) > 1:
         # search for the substations where the ehv nodes are within
@@ -116,10 +120,10 @@ def create_ehv_topology(grid_data):
                     break
         # read ehv tso data
         ehv_data = read_ehv_data()
-        # search for the nearest point for each tso ehv node in ego ehv nodes
+        # search for the tso ehv nodes in ego ehv nodes
         for i, node in ehv_data['ehv_nodes'].iterrows():
             if node.osm_id:
-                # search for the matching ego ehv substation
+                # search for the matching ego ehv substation for the tso ehv node
                 node_osm_id = 'w'+node.osm_id
                 substation = ehv_substations[ehv_substations.osm_id == node_osm_id]
                 if not substation.empty:
@@ -129,13 +133,14 @@ def create_ehv_topology(grid_data):
                         ehv_buses.at[index, 'tso_name'] = node['name'].replace('_380','').replace('_220','')
                         ehv_buses.at[index, 'tso'] = node['tso']
             else:
-                # search for tso connection points in ego ehv nodes
+                # search for tso connection points in ego ehv nodes by a minimal distance
                 for j, bus in ehv_buses.iterrows():
                     distance = node.geometry.distance(bus.geometry)
                     if distance < 2E-03:
                         ehv_buses.at[bus.name, 'tso_name'] = node['name']
                         ehv_buses.at[bus.name, 'tso'] = node['tso']
                         break
+        ehv_buses['voltage_level'] = 1
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_buses)
         # create ehv lines
         ehv_lines = oep_request(schema='grid', 
@@ -153,10 +158,12 @@ def create_ehv_topology(grid_data):
         ehv_lines = ehv_lines[(ehv_lines.bus0.isin(ehv_bus_ids)) & 
                               (ehv_lines.bus1.isin(ehv_bus_ids)) & 
                               (ehv_lines.ego_scn_name == 'Status Quo')]
+        ehv_lines['voltage_level'] = 1
         # search for line voltage
         for i, line in ehv_lines.iterrows():
             ehv_bus_index = ehv_buses[ehv_buses.ego_bus_id == line.bus0].index[0]
             ehv_lines.at[line.name, 'voltage_kv'] = ehv_buses.loc[ehv_bus_index].voltage_kv
+            ehv_lines.at[i, 'voltage_level'] = 1
         grid_data.ehv_data.ehv_lines = grid_data.ehv_data.ehv_lines.append(ehv_lines)
                    
     

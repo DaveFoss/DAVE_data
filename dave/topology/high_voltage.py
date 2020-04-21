@@ -33,7 +33,11 @@ def create_hv_topology(grid_data):
     hv_buses = ehvhv_buses[(ehvhv_buses.voltage_kv == 110) & 
                            (ehvhv_buses.ego_scn_name == 'Status Quo')]
     hv_buses = gpd.overlay(hv_buses, grid_data.area, how='intersection')
-    hv_buses = hv_buses.drop(columns=['name', 'length_m', 'area_km2', 'population'])
+    if not hv_buses.empty:
+        remove_columns = grid_data.area.keys().tolist()
+        remove_columns.remove('geometry')
+        hv_buses = hv_buses.drop(columns=remove_columns)
+    hv_buses['voltage_level'] = 3
     # consider data only if there are more than one node in the target area
     if len(hv_buses) > 1:
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
@@ -53,4 +57,5 @@ def create_hv_topology(grid_data):
         hv_lines = hv_lines[(hv_lines.bus0.isin(hv_bus_ids)) & 
                             (hv_lines.bus1.isin(hv_bus_ids)) & 
                             (hv_lines.ego_scn_name == 'Status Quo')]
+        hv_lines['voltage_level'] = 3
         grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)
