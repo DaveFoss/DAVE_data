@@ -89,6 +89,12 @@ def create_ehv_topology(grid_data):
     # consider data only if there are more than one node in the target area
     if len(ehv_substations) > 1:
         ehv_substations['voltage_level'] = 1
+        # add dave name
+        ehv_substations.insert(0, 'dave_name', None)
+        ehv_substations = ehv_substations.reset_index(drop=True)
+        for i, sub in ehv_substations.iterrows():
+            ehv_substations.at[sub.name, 'dave_name'] = f'substation_1_{i}'
+        # add ehv substations to grid data
         grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(ehv_substations)
     # --- create ehv nodes
     # read ehv/hv node data from OpenEnergyPlatform and adapt names
@@ -141,8 +147,14 @@ def create_ehv_topology(grid_data):
                         ehv_buses.at[bus.name, 'tso'] = node['tso']
                         break
         ehv_buses['voltage_level'] = 1
+        # add dave name
+        ehv_buses.insert(0, 'dave_name', None)
+        ehv_buses = ehv_buses.reset_index(drop=True)
+        for i, bus in ehv_buses.iterrows():
+            ehv_buses.at[bus.name, 'dave_name'] = f'node_1_{i}'
+        # add ehv nodes to grid data
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_buses)
-        # create ehv lines
+        # --- create ehv lines
         ehv_lines = oep_request(schema='grid', 
                                 table='ego_pf_hv_line', 
                                 where='version=v0.4.6',
@@ -164,6 +176,12 @@ def create_ehv_topology(grid_data):
             ehv_bus_index = ehv_buses[ehv_buses.ego_bus_id == line.bus0].index[0]
             ehv_lines.at[line.name, 'voltage_kv'] = ehv_buses.loc[ehv_bus_index].voltage_kv
             ehv_lines.at[i, 'voltage_level'] = 1
+        # add dave name
+        ehv_lines.insert(0, 'dave_name', None)
+        ehv_lines = ehv_lines.reset_index(drop=True)
+        for i, line in ehv_lines.iterrows():
+            ehv_lines.at[line.name, 'dave_name'] = f'line_1_{i}'
+        # add ehv lines to grid data
         grid_data.ehv_data.ehv_lines = grid_data.ehv_data.ehv_lines.append(ehv_lines)
                    
     

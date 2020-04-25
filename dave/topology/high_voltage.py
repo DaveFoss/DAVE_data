@@ -20,7 +20,7 @@ def create_hv_topology(grid_data):
     # print to inform user
     print('create high voltage topology for target area')
     print('--------------------------------------------')
-    # hv nodes
+    # --- create hv nodes
     ehvhv_buses = oep_request(schema='grid', 
                               table='ego_pf_hv_bus', 
                               where='version=v0.4.6',
@@ -40,8 +40,14 @@ def create_hv_topology(grid_data):
     hv_buses['voltage_level'] = 3
     # consider data only if there are more than one node in the target area
     if len(hv_buses) > 1:
+        # add dave name
+        hv_buses.insert(0, 'dave_name', None)
+        hv_buses = hv_buses.reset_index(drop=True)
+        for i, bus in hv_buses.iterrows():
+            hv_buses.at[bus.name, 'dave_name'] = f'node_3_{i}'
+        # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
-        # create hv lines
+        # --- create hv lines
         hv_lines = oep_request(schema='grid', 
                         table='ego_pf_hv_line', 
                         where='version=v0.4.6',
@@ -58,4 +64,10 @@ def create_hv_topology(grid_data):
                             (hv_lines.bus1.isin(hv_bus_ids)) & 
                             (hv_lines.ego_scn_name == 'Status Quo')]
         hv_lines['voltage_level'] = 3
+        # add dave name
+        hv_lines.insert(0, 'dave_name', None)
+        hv_lines = hv_lines.reset_index(drop=True)
+        for i, line in hv_lines.iterrows():
+            hv_lines.at[line.name, 'dave_name'] = f'line_3_{i}'
+        # add hv lines to grid data
         grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)
