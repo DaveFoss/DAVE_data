@@ -47,11 +47,8 @@ def create_empty_dataset():
                  'hv_data': davestructure({'hv_nodes': gpd.GeoDataFrame([], crs=crs),
                                            'hv_lines': gpd.GeoDataFrame([], crs=crs)
                                             }),
-                 'lv_data': davestructure({'lv_nodes': davestructure({'building_connections': pd.DataFrame()
-                                                                      }),
-                                           'lv_lines': davestructure({'line_buildings': gpd.GeoDataFrame([], crs=crs),
-                                                                      'line_connections': gpd.GeoDataFrame([], crs=crs)
-                                                                      })
+                 'lv_data': davestructure({'lv_nodes': gpd.GeoDataFrame([], crs=crs),
+                                           'lv_lines': gpd.GeoDataFrame([], crs=crs)
                                            }),
                  'components_power':davestructure({'renewable_powerplants':gpd.GeoDataFrame([], crs=crs),
                                                    'conventional_powerplants': gpd.GeoDataFrame([], crs=crs),
@@ -170,106 +167,108 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     # --- create desired power grid levels
     if power_levels ==  ['EHV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels, 
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
                     buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_ehv_topology(grid_data)
+        power_components(grid_data)
     elif power_levels == ['HV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels, 
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
                     buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_hv_topology(grid_data)
     elif power_levels == ['MV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
-                    buffer=0, roads=False, roads_plot=False,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
+                    buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_mv_topology(grid_data)
     elif power_levels == ['LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_lv_topology(grid_data)
+        power_components(grid_data)
     elif power_levels == ['EHV', 'HV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
-                    buffer=0, roads=False, roads_plot=False,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
+                    buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_ehv_topology(grid_data)
         create_hv_topology(grid_data)
         power_components(grid_data)
     elif power_levels == ['EHV', 'MV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
-                    buffer=0, roads=False, roads_plot=False,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
+                    buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_ehv_topology(grid_data)
         create_mv_topology(grid_data)
     elif power_levels == ['EHV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_ehv_topology(grid_data)
         create_lv_topology(grid_data)
     elif power_levels == ['HV', 'MV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
-                    buffer=0, roads=False, roads_plot=False,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
+                    buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_hv_topology(grid_data)
         create_mv_topology(grid_data)
     elif power_levels == ['HV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_hv_topology(grid_data)
         create_lv_topology(grid_data)
     elif power_levels == ['MV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_mv_topology(grid_data)
         create_lv_topology(grid_data)
     elif power_levels == ['EHV', 'HV', 'MV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
-                    buffer=0, roads=False, roads_plot=False,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
+                    federal_state=federal_state, own_area=own_area, 
+                    buffer=0, roads=False, roads_plot=False, 
                     buildings=False, landuse=False).target()
         create_ehv_topology(grid_data)
         create_hv_topology(grid_data)
         create_mv_topology(grid_data)
     elif power_levels == ['EHV', 'HV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_ehv_topology(grid_data)
@@ -277,9 +276,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         create_lv_topology(grid_data)
     elif power_levels == ['EHV', 'MV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_ehv_topology(grid_data)
@@ -287,9 +286,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         create_lv_topology(grid_data)
     elif power_levels == ['HV', 'MV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_hv_topology(grid_data)
@@ -297,9 +296,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         create_lv_topology(grid_data)
     elif power_levels == ['EHV', 'HV', 'MV', 'LV']:
         # create topology
-        target_area(grid_data, postalcode=postalcode, town_name=town_name,
+        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
+                    postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area,
-                    power_levels = power_levels, gas_levels = gas_levels,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
         create_ehv_topology(grid_data)
@@ -334,6 +333,14 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         plot_grid_data(grid_data)
     # convert into pandapower and pandapipes
     if convert and power_levels:
-        create_power_grid(grid_data)
+        net_power = create_power_grid(grid_data)
+    else:
+        net_power = None
     if convert and gas_levels:
         pass # hier noch create pandapipes funktion rein
+    
+    # return
+    if net_power:     
+        return grid_data, net_power
+    else:
+        return grid_data

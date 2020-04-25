@@ -102,8 +102,8 @@ def plot_grid_data(grid_data):
     roads_plot = grid_data.roads.roads_plot
     roads = grid_data.roads.roads
     road_junctions = grid_data.roads.road_junctions
-    line_buildings = grid_data.lv_data.lv_lines.line_buildings
-    line_connections = grid_data.lv_data.lv_lines.line_connections
+    lv_lines = grid_data.lv_data.lv_lines
+
     ehv_nodes = grid_data.ehv_data.ehv_nodes
     ehv_substations = grid_data.ehv_data.ehv_substations
     ehv_lines = grid_data.ehv_data.ehv_lines
@@ -114,7 +114,7 @@ def plot_grid_data(grid_data):
     buildings_for_living = grid_data.buildings.for_living
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
-    building_connections = grid_data.lv_data.lv_nodes.building_connections
+    lv_nodes = grid_data.lv_data.lv_nodes
     # check if there is any data in target area otherwise plot only the area
     data = [roads_plot, 
             roads, 
@@ -122,9 +122,8 @@ def plot_grid_data(grid_data):
             buildings_for_living, 
             buildings_commercial, 
             buildings_other, 
-            building_connections,
-            line_buildings, 
-            line_connections, 
+            lv_nodes,
+            lv_lines,
             renewable_plants, 
             conventional_plants,  
             ehv_nodes,
@@ -143,7 +142,7 @@ def plot_grid_data(grid_data):
     else:
         # plot target area
         ax = plot_land(grid_data['area'])
-        # plot informations
+        # plot road informations
         if not roads_plot.empty:
             roads_plot.plot(ax=ax, color='k', alpha=0.2)  
         if not roads.empty:
@@ -156,18 +155,10 @@ def plot_grid_data(grid_data):
         if not buildings_other.empty:
             buildings_other.plot(ax=ax, color='k', alpha=0.2)
         # plot lv topology
-        # building connections (points and lines) and line connetions
-        if not building_connections.empty:
-            if not building_connections.building_centroid.empty:
-                centroids = gpd.GeoSeries(list(building_connections.building_centroid))
-                centroids.plot(ax=ax, color='b', markersize=1)
-            if not building_connections.nearest_point.empty:
-                nearest_point = gpd.GeoSeries(list(building_connections.nearest_point))
-                nearest_point.plot(ax=ax, color='b', markersize=5)
-        if not line_buildings.empty:
-            line_buildings.plot(ax=ax, color='b', label='LV lines')
-        if not line_connections.empty:
-            line_connections.plot(ax=ax, color='b')
+        if not lv_nodes.empty:
+            lv_nodes.plot(ax=ax, color='b', label='LV Nodes')
+        if not lv_lines.empty:
+            lv_lines.plot(ax=ax, color='b', label='LV lines')
         # plot electrical components
         if not renewable_plants.empty:
             renewable_plants.plot(ax=ax, color='g')
@@ -192,6 +183,8 @@ def plot_grid_data(grid_data):
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
         # legende
         ax.legend()
+        # titel
+        plt.title('Grid Data')
         
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.
