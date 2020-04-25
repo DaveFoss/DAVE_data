@@ -5,3 +5,4 @@ dave_dir = os.path.dirname(os.path.realpath(__file__))
 
 from dave.create import *
 from dave.dave_structure import*
+from dave.voronoi import*
