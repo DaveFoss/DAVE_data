@@ -1,39 +1,50 @@
 import geopandas as gpd
+import pandas as pd
 from geopy.geocoders import ArcGIS
 from shapely.geometry import Point, MultiPoint
 from shapely.ops import nearest_points
 import numpy as np
 
+
 from dave.datapool import oep_request
 from dave.voronoi import voronoi
 
-def aggregate_plants(plants_voronoi):
+def aggregate_plants(grid_data, plants_aggr):
     """
-    This function aggregates power plants with the same energy source in a voronoi area
+    This function aggregates power plants with the same energy source which are connected to the same trafo
     
     INPUT:
-        **plants_voronoi** (DataFrame) - all power plants that sould be aggregate after voronoi analysis
+        **grid_data** (dict) - all Informations about the target area
+        **plants_aggr** (DataFrame) - all power plants that sould be aggregate after voronoi analysis
     """
-    # create list of all diffrent voronoi areas
-    voronoi_ids = plants_voronoi.voronoi_id.tolist()
-    voronoi_areas = []
-    for vid in voronoi_ids:
-        if vid not in voronoi_areas:
-            voronoi_areas.append(vid)
-    voronoi_areas.sort()
-    # iterate through the voronoi areas to aggregate the power plants with the same energy source
-    aggregated_plants =  pd.DataFrame()
+    # create list of all diffrent connection transformers
+    connection_trafos = plants_aggr.connection_trafo_dave_name.tolist()
+    trafo_names = []
+    for tname in connection_trafos:
+        if tname not in trafo_names:
+            trafo_names.append(tname)
+    trafo_names.sort()
+    # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'gas','hydro', 'solar', 'wind']
-    for voronoi in voronoi_areas:
-        plants_area = plants_voronoi[plants_voronoi.voronoi_id == voronoi]
-        for source in energy_sources:
-            plant_source = plants_area[plants_area.generation_type == source]
-            if not plant_source.empty:
-                plant_entry = pd.DataFrame({'aggregated': 'yes', 
-                                            'electrical_capacity_kw': plant_source.electrical_capacity_kw.sum(),
-                                            'generation_type': source,
-                                            'voltage_level':plant_source.voltage_level})
-                aggregated_plants.append()
+    for trafo_name in trafo_names:
+        plants_area = plants_aggr[plants_aggr.connection_trafo_dave_name == trafo_name]
+        for esource in energy_sources:
+            plant_esource = plants_area[plants_area.generation_type == esource]
+            if not plant_esource.empty:
+                sources = plant_esource.source.tolist()
+                sources_diff = []
+                for source in sources:
+                    if source not in sources_diff:
+                        sources_diff.append(source)
+                plant_power = pd.to_numeric(plant_esource.electrical_capacity_kw, downcast='float')
+                plant_df = gpd.GeoDataFrame({'aggregated': 'level 7 plants',  
+                                             'electrical_capacity_kw': plant_power.sum(),
+                                             'generation_type': esource,
+                                             'voltage_level': plant_esource.voltage_level.iloc[0],
+                                             'source': [sources_diff],
+                                             'geometry': [plant_esource.connection_node.iloc[0]],
+                                             'connection_trafo_dave_name': plant_esource.connection_trafo_dave_name.iloc[0]})
+                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(plant_df)
             
 
 def renewable_lines(grid_data):
@@ -145,13 +156,11 @@ def renewable_powerplants(grid_data):
         # nodes for level 7 plants (LV)
         if 'LV' in grid_data.target_input.power_levels[0]:
             # In this case the Level 7 plants are assign to the nearest lv node
-            building_centroids = grid_data.lv_data.lv_nodes.building_connections.building_centroid
-            nearest_point = grid_data.lv_data.lv_nodes.building_connections.nearest_point
-            lv_grid_nodes = building_centroids.append(nearest_point) 
-            voronoi_polygons = voronoi(lv_grid_nodes)
+            voronoi_polygons = voronoi(grid_data.lv_data.lv_nodes[['dave_name', 'geometry']])
             intersection = gpd.sjoin(renewables_lv, voronoi_polygons, how='inner', op='intersects')
             intersection = intersection.drop(columns=['index_right'])
-            intersection = intersection.rename(columns={'centroid': 'connection_bus'})
+            intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                        'dave_name': 'connection_node_dave_name'})
             grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
             
             # hier müsste theoretisch noch berücksichtigt werden das bio anlagen nicht einem hausknoten zugeordnet werden (also nearest road analyse)
@@ -263,7 +272,12 @@ def renewable_powerplants(grid_data):
                     # In diesem Fall hat die Anlage keine Koordinaten. 
                     # Überlegen wie man ihr dennoch einen Knoten zuordnen könnte
             grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(renewables_ehv)
-            
+        
+        # add dave name
+        grid_data.components_power.renewable_powerplants.insert(0, 'dave_name', None)
+        grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.reset_index(drop=True)
+        for i, plant in grid_data.components_power.renewable_powerplants.iterrows():
+            grid_data.components_power.renewable_powerplants.at[plant.name, 'dave_name'] = f'ren_powerplant_{voltage_level}_{i}'    
 
         
         
