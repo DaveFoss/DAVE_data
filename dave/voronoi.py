@@ -10,7 +10,7 @@ def voronoi(points):
     This function calculates the voronoi diagram for given points within germany
     
     INPUT:
-        **points** (GeoSeries) - all nodes for voronoi analysis as Point objects in a GeoSeries
+        **voronoi_points** (GeoDataFrame) - all nodes for voronoi analysis 
 
     OUTPUT:
         **voronoi polygons** (GeoDataFrame) - all voronoi areas for the given points
@@ -18,7 +18,7 @@ def voronoi(points):
     EXAMPLE:
     """
     # define points for voronoi centroids
-    voronoi_centroids = [[point.x, point.y] for i, point in points.iteritems()]
+    voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
     voronoi_points = np.array(voronoi_centroids)
     # define maximum points that lying outside germany
     points_boundary = [[5.58613450984361304, 55.11274402414650808], 
@@ -37,12 +37,15 @@ def voronoi(points):
     polygons = np.array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
     voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs='EPSG:4326')
-    # search voronoi centroids
+    # search voronoi centroids and dave name
     voronoi_polygons['centroid'] = None
+    voronoi_polygons['dave_name'] = None
     for i, polygon in voronoi_polygons.iterrows(): 
-        for j, point in points.iteritems():
-            if polygon.geometry.contains(point):
-                voronoi_polygons.at[polygon.name, 'centroid'] = point
+        for j, point in points.iterrows():
+            if polygon.geometry.contains(point.geometry):
+                voronoi_polygons.at[polygon.name, 'centroid'] = point.geometry
+                if not points.dave_name.empty:
+                    voronoi_polygons.at[polygon.name, 'dave_name'] = point.dave_name
                 break
             
     return voronoi_polygons
