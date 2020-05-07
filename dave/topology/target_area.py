@@ -1,10 +1,10 @@
 import pandas as pd
 import geopandas as gpd
-import geopandas_osm.osm as gpdosm
 import shapely.geometry
 from shapely.ops import cascaded_union
 
-from dave.datapool import read_postal, read_federal_states
+from dave.datapool import read_postal, read_federal_states, query_osm
+
 
 
 class target_area():
@@ -70,8 +70,8 @@ class target_area():
         """
         # search relevant road informations in the target area
         if self.roads:
-            roads = gpdosm.query_osm('way', target, recurse='down',
-                                     tags=['highway~"secondary|tertiary|unclassified|residential|living_street|footway"'])
+            roads = query_osm('way', target, recurse='down',
+                              tags=['highway~"secondary|tertiary|unclassified|residential|living_street|footway"'])
             # define road parameters which are relevant for the grid modeling
             relevant_columns = ['geometry',
                                 'name',
@@ -90,8 +90,8 @@ class target_area():
             self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
-            roads_plot = gpdosm.query_osm('way', target, recurse='down',
-                                          tags=['highway~"motorway|trunk|primary"'])
+            roads_plot = query_osm('way', target, recurse='down',
+                                   tags=['highway~"motorway|trunk|primary"'])
             # define road parameters which are relevant for the grid modeling
             relevant_columns = ['geometry',
                                 'name']
@@ -109,7 +109,7 @@ class target_area():
             self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
         # search landuse informations in the target area
         if self.landuse:
-            landuse = gpdosm.query_osm('way', target, recurse='down', tags=['landuse'])
+            landuse = query_osm('way', target, recurse='down', tags=['landuse'])
             relevant_columns = ['industrial',
                                 'landuse',
                                 'geometry',
@@ -128,7 +128,7 @@ class target_area():
             self.grid_data.landuse = self.grid_data.landuse.append(landuse)
         # search building informations in the target area
         if self.buildings:
-            buildings = gpdosm.query_osm('way', target, recurse='down', tags=['building'])
+            buildings = query_osm('way', target, recurse='down', tags=['building'])
             # define building parameters which are relevant for the grid modeling
             relevant_columns = ['addr:housenumber',
                                 'addr:street',
@@ -311,15 +311,15 @@ class target_area():
             target_area._target_by_postalcode(self)
             target_input = pd.DataFrame({'typ': 'postalcode', 
                                          'data': [self.postalcode],
-                                         'power_levels': self.power_levels,
-                                         'gas_level': self.gas_levels})
+                                         'power_levels': [self.power_levels],
+                                         'gas_level': [self.gas_levels]})
             self.grid_data.target_input = target_input
         elif self.town_name:
             target_area._target_by_town_name(self)
             target_input = pd.DataFrame({'typ': 'town name',
                                          'data': [self.town_name],
-                                         'power_levels': self.power_levels,
-                                         'gas_level': self.gas_levels})
+                                         'power_levels': [self.power_levels],
+                                         'gas_level': [self.gas_levels]})
             self.grid_data.target_input = target_input
         elif self.federal_state:
             target_area._target_by_federal_state(self)
@@ -339,7 +339,7 @@ class target_area():
             self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
-        # create dictonary with all data for the target area(s) from OSM
+        # create borders for target area, load osm-data and write into grid data
         if self.town_name:
             diff_targets = self.target['town'].drop_duplicates()
             for i in range(0, len(diff_targets)):
