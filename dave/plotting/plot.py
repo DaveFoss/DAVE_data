@@ -1,7 +1,9 @@
+import os
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import pandas as pd
 
+from dave import dave_output_dir
 
 def plot_land(area, only_area=False):
     """
@@ -19,7 +21,7 @@ def plot_land(area, only_area=False):
         ax.axis('off')
         area.plot(color='k', alpha=0.1, ax=ax)
     else:
-        fig = plt.figure(frameon=False, figsize=(18, 12))
+        fig = plt.figure(frameon=False, figsize=(100, 100))
         ax = fig.add_subplot(1, 1, 1)
         ax.axis('off')
         ax = area.plot(color='k', alpha=0.1, ax=ax)
@@ -85,6 +87,11 @@ def plot_target_area(grid_data):
             building_centroids.plot(ax=ax, color='m', markersize=1, label='Building Centroids')
         # legende
         ax.legend()
+        # titel
+        plt.title('Target Area')
+        # save plot in the dave output folder
+        file_path = dave_output_dir + '\\target_area.svg'
+        plt.savefig(file_path,dpi=300)
 
 
 def plot_grid_data(grid_data):
@@ -176,15 +183,20 @@ def plot_grid_data(grid_data):
             ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
             if not ehv_lines_220.empty:
                 ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV lines')
+        """
         # plot hv topology
         if not hv_nodes.empty:
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
         if not hv_lines.empty:
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
+        """
         # legende
         ax.legend()
         # titel
         plt.title('Grid Data')
+        # save plot in the dave output folder
+        file_path = dave_output_dir + '\\grid_data.svg'
+        plt.savefig(file_path,dpi=300)
         
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.

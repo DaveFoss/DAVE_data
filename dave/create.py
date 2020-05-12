@@ -1,9 +1,11 @@
+import os
 import pandas as pd
 import geopandas as gpd
 
 # imports from dave
 from dave.dave_structure import davestructure
 from dave import __version__
+from dave import dave_output_dir
 from dave.topology import target_area, create_ehv_topology, create_hv_topology, create_mv_topology, create_lv_topology
 from dave.plotting import plot_target_area, plot_grid_data
 from dave.components import power_components
@@ -197,8 +199,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     federal_state=federal_state, own_area=own_area,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
-        create_lv_topology(grid_data)
-        power_components(grid_data)
+        #create_lv_topology(grid_data)
+        #power_components(grid_data)
     elif power_levels == ['EHV', 'HV']:
         # create topology
         target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
@@ -308,6 +310,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     else:
         print('no voltage level was choosen or their is a failure in the input value.')
         print(f'the input for the power levels was: {power_levels}')
+        print('---------------------------------------------------')
     
     # --- create desired gas grid levels
     if gas_levels == ['HP']:
@@ -327,6 +330,15 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     else:
         print('no gas level was choosen or their is a failure in the input value.')
         print(f'the input for the gas levels was: {gas_levels}')
+        print('-----------------------------------------------')
+        
+    # create dave output folder on desktop for plotting and converted models
+    if plot or convert:
+        print('Save plots and converted grid models at the following path:')
+        print(dave_output_dir)
+        print('-----------------------------------------------------------------------')
+        if not os.path.exists(dave_output_dir):
+            os.makedirs(dave_output_dir)
     # plot informations
     if plot:
         plot_target_area(grid_data)
@@ -340,7 +352,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         pass # hier noch create pandapipes funktion rein
     
     # return
-    if net_power:     
+    if net_power: # hier noch ein elif rein für net_gas    
         return grid_data, net_power
     else:
         return grid_data

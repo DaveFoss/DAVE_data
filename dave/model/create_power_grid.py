@@ -1,6 +1,8 @@
 import pandapower as pp
 import math
 
+from dave import dave_output_dir
+
 # hier wird das Stromnetzmodell anhand der grid_data erstellt. ruaskommen soll dan fertiges pp netz als pickel(oder json?)
 
 # hier noch if abfragen bei den einzelnen komponenten hin zur abfrage ob empty. 
@@ -40,6 +42,7 @@ def create_power_grid(grid_data):
                                           name=bus.dave_name)
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
+            net.bus.at[bus_id, 'tso_name'] = bus.tso_name
     # create lines
     if not grid_data.ehv_data.ehv_lines.empty:
         for i, line in grid_data.ehv_data.ehv_lines.iterrows():
@@ -221,8 +224,11 @@ def create_power_grid(grid_data):
     # --- create loads
     
     # ---create generators
+            
+            
+    # save grid model in the dave output folder
+    file_path = dave_output_dir + '\\dave_power_grid.p'
+    pp.to_pickle(net, file_path)
     
     
-    
-    # save in any path
     return net
