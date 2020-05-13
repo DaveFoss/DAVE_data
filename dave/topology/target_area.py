@@ -109,9 +109,8 @@ class target_area():
             self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
         # search landuse informations in the target area
         if self.landuse:
-            landuse = query_osm('way', target, recurse='down', tags=['landuse'])
-            relevant_columns = ['industrial',
-                                'landuse',
+            landuse = query_osm('way', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
+            relevant_columns = ['landuse',
                                 'geometry',
                                 'name']
             landuse = landuse.filter(relevant_columns)
@@ -123,7 +122,22 @@ class target_area():
             elif target_town:
                 targets = self.target[self.target.town == target_town]
                 target_area = cascaded_union(targets.geometry.tolist())
+            # filter landuses that touches the target area
             landuse = landuse[landuse.geometry.intersects(target_area)]
+            # convert geometry to polygon
+            for i, land in landuse.iterrows():
+                landuse.at[land.name, 'geometry'] = shapely.geometry.Polygon(land.geometry)
+            # intersect landuses with the target area
+            landuse = landuse.to_crs(epsg=4326)
+            landuse = gpd.overlay(landuse, self.grid_data.area, how='intersection')
+            if not landuse.empty:
+                remove_columns = self.grid_data.area.keys().tolist()
+                remove_columns.remove('geometry')
+                landuse = landuse.drop(columns=remove_columns)
+            # calculate polygon area in km²
+            landuse_3035 = landuse.to_crs(epsg=3035)  # project landuse to crs with unit in meter
+            landuse_area = landuse_3035.area/1E06
+            landuse['area_km2'] = landuse_area
             # write landuse into grid_data
             self.grid_data.landuse = self.grid_data.landuse.append(landuse)
         # search building informations in the target area
@@ -171,15 +185,17 @@ class target_area():
                           'supermarket',
                           'warehouse']
             # improve building tag with landuse parameter
-            commercial_landuse = ['retail', 'commercial', 'industrial']
-            landuse_rel_index = landuse.landuse[landuse.landuse.isin(commercial_landuse)].index
+            landuse_retail = cascaded_union(landuse[landuse.landuse == 'retail'].geometry)
+            landuse_industrial = cascaded_union(landuse[landuse.landuse == 'industrial'].geometry)
+            landuse_commercial = cascaded_union(landuse[landuse.landuse == 'commercial'].geometry)
             for i, building in buildings.iterrows():
                 if building.building not in (commercial):
-                    for j in landuse_rel_index:
-                        land_poly = shapely.geometry.Polygon(landuse.loc[j].geometry)
-                        if building.geometry.intersects(land_poly):
-                            buildings.at[i, 'building'] = landuse.loc[j].landuse
-                            break
+                    if building.geometry.intersects(landuse_retail):
+                        buildings.at[i, 'building'] = 'retail'
+                    elif building.geometry.intersects(landuse_industrial):
+                        buildings.at[i, 'building'] = 'industrial'
+                    elif building.geometry.intersects(landuse_commercial):
+                        buildings.at[i, 'building'] = 'commercial'
             # write buildings into grid_data
             self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
             self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
@@ -187,11 +203,7 @@ class target_area():
             self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.append(buildings.centroid)
             # rename building centroids
             self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.rename('geometry')
-        # write area informations into grid_data
-        crs = {'init': 'epsg:4326'}
-        self.grid_data.area = gpd.GeoDataFrame(self.target, 
-                                               crs=crs, 
-                                               geometry=self.target.geometry)
+        
 
     def road_junctions(self):
         """
@@ -200,6 +212,7 @@ class target_area():
         roads = self.grid_data.roads.roads
         if not roads.empty:
             junction_points = []
+            """
             for i, line in roads.iterrows():
                 # create multipolygon for lines without the one under consideration
                 other_lines = roads.drop([i])
@@ -211,9 +224,11 @@ class target_area():
                 elif junctions.geom_type == 'MultiPoint':
                     for point in junctions:
                         junction_points.append(point)
+            """
             # delet duplicates
             junction_points = gpd.GeoSeries(junction_points)
-            road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
+            #road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
+            road_junctions = junction_points
             # write road junctions into grid_data
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
 
@@ -302,7 +317,6 @@ class target_area():
         This function calculate all relevant geographical informations for the
         target area and add it to the grid_data
         """
-        
         # print to inform user
         print('Check OSM data for target area')
         print('------------------------------')
@@ -339,6 +353,8 @@ class target_area():
             self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
+        # write area informations into grid_data
+        self.grid_data.area = self.grid_data.area.append(self.target)
         # create borders for target area, load osm-data and write into grid data
         if self.town_name:
             diff_targets = self.target['town'].drop_duplicates()
@@ -356,4 +372,6 @@ class target_area():
                 # Obtain data from OSM
                 target_area._from_osm(self, target=border, target_number=i)
         # find road junctions
+        print('road_junctions')
         target_area.road_junctions(self)
+        print('fin road junctions')
