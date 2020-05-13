@@ -183,13 +183,11 @@ def plot_grid_data(grid_data):
             ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
             if not ehv_lines_220.empty:
                 ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV lines')
-        """
         # plot hv topology
         if not hv_nodes.empty:
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
         if not hv_lines.empty:
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
-        """
         # legende
         ax.legend()
         # titel
@@ -200,6 +198,41 @@ def plot_grid_data(grid_data):
         
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.
+
+
+def plot_landuse(grid_data):
+    """
+    This function plots the landuses in the target area 
+
+    INPUT:
+        **grid_data** (dict) - all Informations about the target area and the grid
+
+    OUTPUT:
+
+    EXAMPLE:
+    """
+    if not grid_data.landuse.empty:
+        landuse_residential = grid_data.landuse[grid_data.landuse.landuse == 'residential']
+        landuse_industrial = grid_data.landuse[grid_data.landuse.landuse == 'industrial']
+        landuse_commercial = grid_data.landuse[grid_data.landuse.landuse.isin(['commercial', 'retail'])]
+        # plot target area
+        ax = plot_land(grid_data['area'])
+        # plot landuses
+        if not landuse_residential.empty:
+            landuse_residential.plot(ax=ax, color='b', label='Residential')
+        if not landuse_industrial.empty:
+            landuse_industrial.plot(ax=ax, color='r', label='Industrial')
+        if not landuse_commercial.empty:
+            landuse_commercial.plot(ax=ax, color='g', label='Commercial')
+        # legende
+        ax.legend()
+        # titel
+        plt.title('Landuse')
+        # save plot in the dave output folder
+        file_path = dave_output_dir + '\\landuse.svg'
+        plt.savefig(file_path,dpi=300)
+    # hier einen plot für die Landnutzung in der Target area erstellen, wobei diese unterschiedliche farben haben
+    # hierbei vielleicht in die Legende auch die Prozentzahl hinter das jeweilige
 
 def plot_erzeuger():
     # hier eine Plotting funktion die nur die Erzeuger im Zielgebiet aufzeigt und 
