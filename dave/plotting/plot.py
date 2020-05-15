@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import pandas as pd
+import contextily as ctx
 
 from dave import dave_output_dir
 
@@ -21,10 +22,10 @@ def plot_land(area, only_area=False):
         ax.axis('off')
         area.plot(color='k', alpha=0.1, ax=ax)
     else:
-        fig = plt.figure(frameon=False, figsize=(100, 100))
+        fig = plt.figure(frameon=False, figsize=(50, 50))
         ax = fig.add_subplot(1, 1, 1)
         ax.axis('off')
-        ax = area.plot(color='k', alpha=0.1, ax=ax)
+        ax = area.plot(color='k', alpha=0.0, ax=ax)
         ax.margins(0)
         return ax
 
@@ -66,7 +67,7 @@ def plot_target_area(grid_data):
         plot_land(grid_data['area'], only_area = True)
     else:
         # plot target area
-        ax = plot_land(grid_data['area'])
+        ax = plot_land(grid_data['area'])        
         # plot road informations
         if not roads_plot.empty:
             # these highways are only relevant for plotting
@@ -92,6 +93,7 @@ def plot_target_area(grid_data):
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\target_area.svg'
         plt.savefig(file_path,dpi=300)
+    
 
 
 def plot_grid_data(grid_data):
@@ -110,7 +112,7 @@ def plot_grid_data(grid_data):
     roads = grid_data.roads.roads
     road_junctions = grid_data.roads.road_junctions
     lv_lines = grid_data.lv_data.lv_lines
-
+    lv_nodes = grid_data.lv_data.lv_nodes
     ehv_nodes = grid_data.ehv_data.ehv_nodes
     ehv_substations = grid_data.ehv_data.ehv_substations
     ehv_lines = grid_data.ehv_data.ehv_lines
@@ -121,7 +123,6 @@ def plot_grid_data(grid_data):
     buildings_for_living = grid_data.buildings.for_living
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
-    lv_nodes = grid_data.lv_data.lv_nodes
     # check if there is any data in target area otherwise plot only the area
     data = [roads_plot, 
             roads, 
@@ -195,11 +196,99 @@ def plot_grid_data(grid_data):
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\grid_data.svg'
         plt.savefig(file_path,dpi=300)
-        
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
     # verschiedenen Spannungs und Druck ebenen.
 
+def plot_grid_data_osm(grid_data):
+    """
+    This function plots primary the grid data with a osm map in the background
 
+    INPUT:
+        **grid_data** (dict) - all Informations about the target area and the grid
+
+    OUTPUT:
+
+    EXAMPLE:
+    """
+    lv_nodes = grid_data.lv_data.lv_nodes
+    lv_lines = grid_data.lv_data.lv_lines
+    ehv_nodes = grid_data.ehv_data.ehv_nodes
+    ehv_substations = grid_data.ehv_data.ehv_substations
+    ehv_lines = grid_data.ehv_data.ehv_lines
+    hv_nodes = grid_data.hv_data.hv_nodes
+    hv_lines = grid_data.hv_data.hv_lines
+    renewable_plants = grid_data.components_power.renewable_powerplants
+    conventional_plants = grid_data.components_power.conventional_powerplants
+    # check if there is any data in target area otherwise plot only the area
+    data = [lv_nodes,
+            lv_lines,
+            renewable_plants, 
+            conventional_plants,  
+            ehv_nodes,
+            ehv_substations,
+            ehv_lines,
+            hv_nodes,
+            hv_lines]
+    data_check = pd.concat(data)
+    if data_check.empty:
+        data_empty = True
+    else:
+        data_empty = False
+    if data_empty:
+        # plot target area
+        plot_land(grid_data['area'], only_area = True) 
+    else:
+        # plot target area
+        test = grid_data['area'].to_crs(epsg=3857)
+        ax = plot_land(test)
+       # ax = plot_land(grid_data['area'])
+        # plot lv topology
+        if not lv_nodes.empty:
+            lv_nodes = lv_nodes.to_crs(epsg=3857)
+            lv_nodes.plot(ax=ax, color='b', label='LV Nodes')
+        if not lv_lines.empty:
+            lv_lines = lv_lines.to_crs(epsg=3857)
+            lv_lines.plot(ax=ax, color='b', label='LV lines')
+        # plot electrical components
+        if not renewable_plants.empty:
+            renewable_plants.plot(ax=ax, color='g')
+        if not conventional_plants.empty:
+            conventional_plants.plot(ax=ax, color='m')
+        # plot ehv topology
+        if not ehv_nodes.empty:
+            ehv_nodes = ehv_nodes.to_crs(epsg=3857)
+            ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')
+        if not ehv_substations.empty:
+            ehv_substations = ehv_substations.to_crs(epsg=3857)
+            ehv_substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
+        if not ehv_lines.empty:
+            ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
+            if not ehv_lines_380.empty:
+                ehv_lines_380 = ehv_lines_380.to_crs(epsg=3857)
+                ehv_lines_380.plot(ax=ax, color='red', zorder=3, label='380 kV lines')
+            ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
+            if not ehv_lines_220.empty:
+                ehv_lines_220 = ehv_lines_220.to_crs(epsg=3857)
+                ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV lines')
+        # plot hv topology
+        if not hv_nodes.empty:
+            hv_nodes = hv_nodes.to_crs(epsg=3857)
+            hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
+        if not hv_lines.empty:
+            hv_lines = hv_lines.to_crs(epsg=3857)
+            hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
+        # legende
+        ax.legend()
+        # titel
+        plt.title('Grid Data OSM')
+        #ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+        ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
+        # save plot in the dave output folder
+        file_path = dave_output_dir + '\\grid_data.svg'
+        plt.savefig(file_path,format='svg',dpi=300)
+    # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
+    # verschiedenen Spannungs und Druck ebenen.
+    
 def plot_landuse(grid_data):
     """
     This function plots the landuses in the target area 
