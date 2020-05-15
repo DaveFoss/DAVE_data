@@ -125,13 +125,20 @@ class target_area():
             # filter landuses that touches the target area
             landuse = landuse[landuse.geometry.intersects(target_area)]
             # convert geometry to polygon
+            landuse_drop = []
             for i, land in landuse.iterrows():
-                landuse.at[land.name, 'geometry'] = shapely.geometry.Polygon(land.geometry)
+                if len(land.geometry.coords[:]) > 2:
+                    landuse.at[land.name, 'geometry'] = shapely.geometry.Polygon(land.geometry)
+                else:
+                    landuse_drop.append(land.name)
+            # drop landuses with wrong geometry
+            landuse = landuse.drop(landuse_drop)
             # intersect landuses with the target area
             landuse = landuse.to_crs(epsg=4326)
-            landuse = gpd.overlay(landuse, self.grid_data.area, how='intersection')
+            area = self.grid_data.area.rename(columns={'name': 'bundesland'})
+            landuse = gpd.overlay(landuse, area, how='intersection')
             if not landuse.empty:
-                remove_columns = self.grid_data.area.keys().tolist()
+                remove_columns = area.keys().tolist()
                 remove_columns.remove('geometry')
                 landuse = landuse.drop(columns=remove_columns)
             # calculate polygon area in km²
