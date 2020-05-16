@@ -7,7 +7,7 @@ from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir
 from dave.topology import target_area, create_ehv_topology, create_hv_topology, create_mv_topology, create_lv_topology
-from dave.plotting import plot_target_area, plot_grid_data
+from dave.plotting import plot_target_area, plot_grid_data, plot_landuse
 from dave.components import power_components
 from dave.model import create_power_grid
 
@@ -52,7 +52,8 @@ def create_empty_dataset():
                  'lv_data': davestructure({'lv_nodes': gpd.GeoDataFrame([], crs=crs),
                                            'lv_lines': gpd.GeoDataFrame([], crs=crs)
                                            }),
-                 'components_power':davestructure({'renewable_powerplants':gpd.GeoDataFrame([], crs=crs),
+                 'components_power':davestructure({'loads':gpd.GeoDataFrame([], crs=crs),
+                                                   'renewable_powerplants':gpd.GeoDataFrame([], crs=crs),
                                                    'conventional_powerplants': gpd.GeoDataFrame([], crs=crs),
                                                    'transformers':davestructure({'ehv_ehv': gpd.GeoDataFrame([], crs=crs),
                                                                                  'ehv_hv': gpd.GeoDataFrame([], crs=crs),
@@ -173,7 +174,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area, 
                     buffer=0, roads=False, roads_plot=False, 
-                    buildings=False, landuse=False).target()
+                    buildings=False, landuse=True).target()
         create_ehv_topology(grid_data)
         power_components(grid_data)
     elif power_levels == ['HV']:
@@ -199,7 +200,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     federal_state=federal_state, own_area=own_area,
                     buffer=0, roads=True, roads_plot=True,
                     buildings=True, landuse=True).target()
-        #create_lv_topology(grid_data)
+        create_lv_topology(grid_data)
         #power_components(grid_data)
     elif power_levels == ['EHV', 'HV']:
         # create topology
@@ -343,6 +344,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     if plot:
         plot_target_area(grid_data)
         plot_grid_data(grid_data)
+        plot_landuse(grid_data)
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
