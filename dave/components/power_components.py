@@ -384,7 +384,7 @@ def conventional_powerplants(grid_data):
                 conventionals = data
             else: 
                 conventionals = conventionals.append(data)
-    # prepare the DataFrame of the renewable plants
+    # prepare the DataFrame of the conventional plants
     if not conventionals.empty:
         conventionals = conventionals.reset_index()
         conventionals = conventionals.drop(columns=['gid',
@@ -430,8 +430,10 @@ def conventional_powerplants(grid_data):
 
 def transformators(grid_data):
     """
-    This function collects the transformers
-    EHV and HV level are based on ego_pf_hv_transformer from OEP
+    This function collects the transformers.
+    EHV/EHV and EHV/HV trafos are based on ego_pf_hv_transformer from OEP
+    HV/MV trafos are based on 
+    MV/LV trafos are based on 
     """
     print('create transformers for target area')
     print('-----------------------------------')
@@ -482,58 +484,93 @@ def transformators(grid_data):
                 ehv_bus1 = grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1]
                 if not ehv_bus0.empty:
                     ehv_bus_index0 = ehv_bus0.index[0]
-                    hv_trafos.at[trafo.name, 'voltage_kv_us'] = grid_data.ehv_data.ehv_nodes.loc[ehv_bus_index0].voltage_kv
+                    hv_trafos.at[trafo.name, 'voltage_kv_lv'] = grid_data.ehv_data.ehv_nodes.loc[ehv_bus_index0].voltage_kv
                 if not ehv_bus1.empty:
                     ehv_bus_index1 = ehv_bus1.index[0]
-                    hv_trafos.at[trafo.name, 'voltage_kv_os'] = grid_data.ehv_data.ehv_nodes.loc[ehv_bus_index1].voltage_kv
+                    hv_trafos.at[trafo.name, 'voltage_kv_hv'] = grid_data.ehv_data.ehv_nodes.loc[ehv_bus_index1].voltage_kv
                 if ('HV' not in grid_data.target_input.power_levels[0]) and (ehv_bus0.empty):
                     hv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([110])]
                     hv_bus0 = hv_buses[hv_buses.ego_bus_id == trafo.bus0]
                     if not hv_bus0.empty:
                         hv_bus_index0 = hv_bus0.index[0]
-                        hv_trafos.at[trafo.name, 'voltage_kv_us'] = hv_buses.loc[hv_bus_index0].voltage_kv
+                        hv_trafos.at[trafo.name, 'voltage_kv_lv'] = hv_buses.loc[hv_bus_index0].voltage_kv
                         # check if node allready exsist, otherwise create them
                         if grid_data.hv_data.hv_nodes.empty:
                             grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
                         else:
                             if grid_data.hv_data.hv_nodes[grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0].empty:
                                 grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
+                                
             if 'HV' in grid_data.target_input.power_levels[0]:
                 hv_bus0 = grid_data.hv_data.hv_nodes[grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0]
                 if not hv_bus0.empty:
                     hv_bus_index0 = hv_bus0.index[0]
-                    hv_trafos.at[trafo.name, 'voltage_kv_us'] = grid_data.hv_data.hv_nodes.loc[hv_bus_index0].voltage_kv
+                    hv_trafos.at[trafo.name, 'voltage_kv_lv'] = grid_data.hv_data.hv_nodes.loc[hv_bus_index0].voltage_kv
                 if ('EHV' not in grid_data.target_input.power_levels[0]) and (not hv_bus0.empty):
                     ehv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([380, 220])]
                     ehv_bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1]
                     if not ehv_bus1.empty:
                         ehv_bus_index1 = ehv_bus1.index[0]
-                        hv_trafos.at[trafo.name, 'voltage_kv_os'] = ehv_buses.loc[ehv_bus_index1].voltage_kv
+                        hv_trafos.at[trafo.name, 'voltage_kv_hv'] = ehv_buses.loc[ehv_bus_index1].voltage_kv
                         # check if node allready exsist, otherwise create them
                         if grid_data.ehv_data.ehv_nodes.empty:
                             grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
                         else:
                             if grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1].empty:
                                 grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
+        # add dave name for nodes which are created for the transformers
+        if 'dave_name' not in grid_data.hv_data.hv_nodes.keys():
+            hv_buses = grid_data.hv_data.hv_nodes
+            grid_data.hv_data.hv_nodes.insert(0, 'dave_name', None)
+            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.reset_index(drop=True)
+            for i, bus in grid_data.hv_data.hv_nodes.iterrows():
+                grid_data.hv_data.hv_nodes.at[bus.name, 'dave_name'] = f'node_3_{i}'
+        if 'dave_name' not in grid_data.ehv_data.ehv_nodes.keys():
+            # add dave name
+            grid_data.ehv_data.ehv_nodes.insert(0, 'dave_name', None)
+            grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.reset_index(drop=True)
+            for i, bus in grid_data.ehv_data.ehv_nodes.iterrows():
+                grid_data.ehv_data.ehv_nodes.at[bus.name, 'dave_name'] = f'node_1_{i}'
         # write transformator data in grid data and decied the grid level depending on voltage level
         if not hv_trafos.empty:                        
             if 'EHV' in grid_data.target_input.power_levels[0]:
-                ehv_ehv_trafos = hv_trafos[hv_trafos.voltage_kv_us.isin([380, 220])]
+                ehv_ehv_trafos = hv_trafos[hv_trafos.voltage_kv_lv.isin([380, 220])]
                 ehv_ehv_trafos['voltage_level'] = 1
-                # add dave name
+                # add dave name for trafo and connection buses
                 ehv_ehv_trafos.insert(0, 'dave_name', None)
+                ehv_ehv_trafos.insert(1, 'bus_hv', None)
+                ehv_ehv_trafos.insert(2, 'bus_lv', None)
                 ehv_ehv_trafos = ehv_ehv_trafos.reset_index(drop=True)
                 for i, trafo in ehv_ehv_trafos.iterrows():
                     ehv_ehv_trafos.at[trafo.name, 'dave_name'] = f'trafo_1_{i}'
+                    # search for bus dave name and replace ego id
+                    ehv_buses = grid_data.ehv_data.ehv_nodes
+                    bus0_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
+                    bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
+                    ehv_ehv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
+                    ehv_ehv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
+                # drop columns with ego_id
+                ehv_ehv_trafos = ehv_ehv_trafos.drop(columns=['bus0', 'bus1'])                 
                 # add ehv/ehv trafos to grid data
                 grid_data.components_power.transformers.ehv_ehv = grid_data.components_power.transformers.ehv_ehv.append(ehv_ehv_trafos)
-            ehv_hv_trafos = hv_trafos[hv_trafos.voltage_kv_us == 110]
+            ehv_hv_trafos = hv_trafos[hv_trafos.voltage_kv_lv == 110]
             ehv_hv_trafos['voltage_level'] = 2
-            # add dave name
+            # add dave name trafo and connection buses
             ehv_hv_trafos.insert(0, 'dave_name', None)
+            ehv_hv_trafos.insert(1, 'bus_hv', None)
+            ehv_hv_trafos.insert(2, 'bus_lv', None)
             ehv_hv_trafos = ehv_hv_trafos.reset_index(drop=True)
             for i, trafo in ehv_hv_trafos.iterrows():
                 ehv_hv_trafos.at[trafo.name, 'dave_name'] = f'trafo_2_{i}'
+                # search for bus dave name and replace ego id
+                ehv_buses = grid_data.ehv_data.ehv_nodes
+                hv_buses = grid_data.hv_data.hv_nodes
+                bus0_name = hv_buses[hv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
+                bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
+                ehv_hv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
+                ehv_hv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
+            # change column name
+            ehv_hv_trafos = ehv_hv_trafos.drop(columns=['bus0', 'bus1'])
             # add ehv/ehv trafos to grid data
             grid_data.components_power.transformers.ehv_hv = grid_data.components_power.transformers.ehv_hv.append(ehv_hv_trafos)
 
@@ -547,8 +584,82 @@ def transformators(grid_data):
         pass
         # muss noch geschrieben werden 
 
-def loads():
-    pass
+def loads(grid_data):
+    """
+    This function creates loads by osm landuse polygons in the target area an assigne them to a suitable node
+    on the considered voltage level by voronoi analysis
+    """
+    print('create loads for target area')
+    print('----------------------------')
+    # define avarage values
+    residential_load = 2  # in MW/km²
+    industrial_load = 10  # in MW/km²
+    commercial_load = 3  # in MW/km²
+    
+    # create loads on grid level 7 (LV)
+    if 'LV' in grid_data.target_input.power_levels[0]:
+        pass 
+        # andere funktion als über Landnutzujng, aggregation und Voronoi, da direkt den Häusern zuordnen
+    # create loads on grid level 6 (MV/LV)
+    elif 'MV' in grid_data.target_input.power_levels[0]:
+        pass
+        # hierbei zuordnung der LAsten an den MV-LV KNoten mittels LAndnutzung, aggregation und Voronoi
+    # create loads on grid level 4 (HV/MV)
+    elif 'HV' in grid_data.target_input.power_levels[0]:
+        pass
+        # hierbei zuordnung der LAsten an den HV-MV KNoten mittels LAndnutzung, aggregation und Voronoi
+    # create loads on grid level 2 (EHV/HV)
+    elif 'EHV' in grid_data.target_input.power_levels[0]:
+        # In this case the loads are assigned to the nearest ehv/hv-transformer
+        voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                   'geometry']])
+        intersection = gpd.overlay(grid_data.landuse, voronoi_polygons, how='intersection')
+        intersection = intersection.drop(columns=['area_km2'])
+        # calculate area from intersected polygons
+        intersection_3035 = intersection.to_crs(epsg=3035)  # project landuse to crs with unit in meter
+        intersection_area = intersection_3035.area/1E06
+        intersection['area_km2'] = intersection_area
+        # --- calculate consumption for the diffrent landuses in every single voronoi polygon
+        # create list of all diffrent connection transformers
+        connection_trafos = intersection.dave_name.tolist()
+        trafo_names = []
+        for tname in connection_trafos:
+            if tname not in trafo_names:
+                trafo_names.append(tname)
+        trafo_names.sort()
+        # iterate trough diffrent transformers and calulate the diffrent landuse consumptions
+        trafos = grid_data.components_power.transformers.ehv_hv
+        for trafo_name in trafo_names:
+            # search trafo bus
+            trafo_bus_lv = trafos[trafos.dave_name == trafo_name].iloc[0].bus_lv
+            landuse_polygons = intersection[intersection.dave_name == trafo_name]
+            # categorize landuse polygons and add to grid_data
+            for loadtype in ['residential', 'industrial', 'commercial']:
+                if loadtype == 'residential':
+                    residential_polygons = landuse_polygons[landuse_polygons.landuse == 'residential']
+                    area = residential_polygons.area_km2.sum()
+                    p_mw = residential_load*area
+                elif loadtype == 'industrial':
+                    industrial_polygons = landuse_polygons[landuse_polygons.landuse == 'industrial']
+                    area = industrial_polygons.area_km2.sum()
+                    p_mw = industrial_load*area
+                elif loadtype == 'commercial':
+                    commercial_polygons = landuse_polygons[landuse_polygons.landuse.isin(['commercial', 'retail'])]
+                    area = commercial_polygons.area_km2.sum()
+                    p_mw = commercial_load*area
+                if p_mw != 0:
+                    load_df = gpd.GeoDataFrame({'bus_name': trafo_bus_lv,
+                                                'p_mw': p_mw,
+                                                'landuse': loadtype,
+                                                'trafo_name': trafo_name,
+                                                'area_km2': area,
+                                                'voltage_level': [2]})
+                grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
+    # add dave name
+    grid_data.components_power.loads.insert(0, 'dave_name', None)
+    grid_data.components_power.loads = grid_data.components_power.loads.reset_index(drop=True)
+    for i, load in grid_data.components_power.loads.iterrows():
+        grid_data.components_power.loads.at[load.name, 'dave_name'] = f'load_{load.voltage_level}_{i}'
 
 
 def power_components(grid_data):
@@ -559,6 +670,8 @@ def power_components(grid_data):
     #renewable_powerplants(grid_data)
     # add conventional powerplants
     #conventional_powerplants(grid_data)
+    # add loads
+    loads(grid_data)
     #"""
     
     
