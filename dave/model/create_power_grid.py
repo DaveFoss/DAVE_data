@@ -164,8 +164,8 @@ def create_power_grid(grid_data):
     if not grid_data.components_power.transformers.ehv_ehv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_ehv.iterrows():
             trafo_geometry = trafo.geometry.coords[:][0]
-            hv_bus = net.bus[net.bus.ego_bus_id == trafo.bus1].index[0]
-            lv_bus = net.bus[net.bus.ego_bus_id == trafo.bus0].index[0]
+            hv_bus = net.bus[net.bus.ego_bus_id == trafo.bus_hv].index[0]
+            lv_bus = net.bus[net.bus.ego_bus_id == trafo.bus_lv].index[0]
             
             # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
             # aber wie? wenn ich nur r,x,b, gegeben habe
@@ -173,8 +173,8 @@ def create_power_grid(grid_data):
                                                   hv_bus=hv_bus, 
                                                   lv_bus=lv_bus, 
                                                   sn_mva=trafo.s_nom_mva, 
-                                                  vn_hv_kv=trafo.voltage_kv_os, 
-                                                  vn_lv_kv=trafo.voltage_kv_us, 
+                                                  vn_hv_kv=trafo.voltage_kv_hv, 
+                                                  vn_lv_kv=trafo.voltage_kv_lv, 
                                                   vkr_percent=0,  # dummy value
                                                   vk_percent=10,  # dummy value
                                                   pfe_kw=0,  # dummy value accepted as ideal
@@ -192,8 +192,8 @@ def create_power_grid(grid_data):
     if not grid_data.components_power.transformers.ehv_hv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
             trafo_geometry = trafo.geometry.coords[:][0]
-            hv_bus = net.bus[net.bus.ego_bus_id == trafo.bus1].index[0]
-            lv_bus = net.bus[net.bus.ego_bus_id == trafo.bus0].index[0]
+            hv_bus = net.bus[net.bus.ego_bus_id == trafo.bus_hv].index[0]
+            lv_bus = net.bus[net.bus.ego_bus_id == trafo.bus_lv].index[0]
             
             # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
             # aber wie? wenn ich nur r,x,b, gegeben habe
@@ -201,8 +201,8 @@ def create_power_grid(grid_data):
                                                   hv_bus=hv_bus, 
                                                   lv_bus=lv_bus, 
                                                   sn_mva=trafo.s_nom_mva, 
-                                                  vn_hv_kv=trafo.voltage_kv_os, 
-                                                  vn_lv_kv=trafo.voltage_kv_us, 
+                                                  vn_hv_kv=trafo.voltage_kv_hv, 
+                                                  vn_lv_kv=trafo.voltage_kv_lv, 
                                                   vkr_percent=0,  # dummy value 
                                                   vk_percent=10,   # dummy value
                                                   pfe_kw=0,  # dummy value accepted as ideal
