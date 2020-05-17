@@ -9,13 +9,14 @@ import numpy as np
 from dave.datapool import oep_request
 from dave.voronoi import voronoi
 
-def aggregate_plants(grid_data, plants_aggr, aggregate_name=None):
+def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
     """
-    This function aggregates power plants with the same energy source which are connected to the same trafo
+    This function aggregates renewables power plants with the same energy source which are connected 
+    to the same trafo
     
     INPUT:
         **grid_data** (dict) - all Informations about the target area
-        **plants_aggr** (DataFrame) - all power plants that sould be aggregate after voronoi analysis
+        **plants_aggr** (DataFrame) - all renewable power plants that sould be aggregate after voronoi analysis
     OPTIONAL:
         **aggregate_name** (string) - the original voltage level of the aggregated power plants 
     """
@@ -47,7 +48,42 @@ def aggregate_plants(grid_data, plants_aggr, aggregate_name=None):
                                              'geometry': [plant_esource.connection_node.iloc[0]],
                                              'connection_trafo_dave_name': plant_esource.connection_trafo_dave_name.iloc[0]})
                 grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(plant_df)
-            
+                
+def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
+    """
+    This function aggregates conventionals power plants with the same energy source which are connected 
+    to the same trafo
+    
+    INPUT:
+        **grid_data** (dict) - all Informations about the target area
+        **plants_aggr** (DataFrame) - all conventional power plants that sould be aggregate after voronoi analysis
+    OPTIONAL:
+        **aggregate_name** (string) - the original voltage level of the aggregated power plants 
+    """
+    # create list of all diffrent connection transformers
+    connection_trafos = plants_aggr.connection_trafo_dave_name.tolist()
+    trafo_names = []
+    for tname in connection_trafos:
+        if tname not in trafo_names:
+            trafo_names.append(tname)
+    trafo_names.sort()
+    # iterate through the trafo_names to aggregate the power plants with the same energy source
+    energy_sources = ['biomass', 'coal', 'gas', 'gas_mine', 'lignite', 'multiple_non_renewable', 
+                      'oil', 'other_non_renewable', 'pumped_storage', 'reservoir', 'run_of_river', 
+                      'uranium', 'waste']
+    for trafo_name in trafo_names:
+        plants_area = plants_aggr[plants_aggr.connection_trafo_dave_name == trafo_name]
+        for esource in energy_sources:
+            plant_esource = plants_area[plants_area.fuel == esource]
+            if not plant_esource.empty:
+                plant_power = pd.to_numeric(plant_esource.capacity_mw, downcast='float')
+                plant_df = gpd.GeoDataFrame({'aggregated': aggregate_name,  
+                                             'electrical_capacity_mw': plant_power.sum(),
+                                             'fuel': esource,
+                                             'voltage_level': plant_esource.voltage_level.iloc[0],
+                                             'geometry': [plant_esource.connection_node.iloc[0]],
+                                             'connection_trafo_dave_name': plant_esource.connection_trafo_dave_name.iloc[0]})
+                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(plant_df)
 
 def renewable_lines(grid_data):
     pass
@@ -137,8 +173,8 @@ def renewable_powerplants(grid_data):
         # convert DataFrame into a GeoDataFrame
         renewables_geo = gpd.GeoDataFrame(renewables,
                                           crs = 'EPSG:4326', 
-                                          geometry=gpd.points_from_xy(
-                                                  renewables.lon, renewables.lat))
+                                          geometry=gpd.points_from_xy(renewables.lon, 
+                                                                      renewables.lat))
         # intersection of power plants with target_area when target is an own area
         if typ == 'own area':
             renewables_geo = gpd.overlay(renewables_geo, grid_data.area, how='intersection')
@@ -191,7 +227,7 @@ def renewable_powerplants(grid_data):
                                                   'connection_node',
                                                   'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry to the connection node and write them into grid data
-                plants_aggregated = aggregate_plants(grid_data, intersection_rel, aggregate_name= 'level 7 plants')
+                plants_aggregated = aggregate_plants_ren(grid_data, intersection_rel, aggregate_name= 'level 7 plants')
 
         # nodes for level 6 plants (MV/LV)
         if not renewables_mv_lv.empty:
@@ -220,7 +256,7 @@ def renewable_powerplants(grid_data):
                                                   'connection_node',
                                                   'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry to the connection node and write them into grid data
-                plants_aggregated = aggregate_plants(grid_data, intersection_rel, aggregate_name= 'level 6 plants')
+                aggregate_plants_ren(grid_data, intersection_rel, aggregate_name= 'level 6 plants')
 
         # nodes for level 5 plants (MV)
         if not renewables_mv.empty:
@@ -249,7 +285,7 @@ def renewable_powerplants(grid_data):
                                                   'connection_node',
                                                   'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry to the connection node and write them into grid data
-                plants_aggregated = aggregate_plants(grid_data, intersection_rel, aggregate_name= 'level 5 plants')
+                aggregate_plants_ren(grid_data, intersection_rel, aggregate_name= 'level 5 plants')
                     
         # nodes for level 4 plants (HV/MV)
         if not renewables_hv_mv.empty:
@@ -275,7 +311,7 @@ def renewable_powerplants(grid_data):
                                                   'connection_node',
                                                   'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry to the connection node and write them into grid data
-                plants_aggregated = aggregate_plants(grid_data, intersection_rel, aggregate_name= 'level 4 plants')
+                aggregate_plants_ren(grid_data, intersection_rel, aggregate_name= 'level 4 plants')
                     
         # nodes for level 3 plants (HV)
         if not renewables_hv.empty:
@@ -307,7 +343,7 @@ def renewable_powerplants(grid_data):
                                                   'connection_node',
                                                   'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry to the connection node and write them into grid data
-                plants_aggregated = aggregate_plants(grid_data, intersection_rel, aggregate_name= 'level 3 plants')
+                aggregate_plants_ren(grid_data, intersection_rel, aggregate_name= 'level 3 plants')
                     
         # nodes for level 2 plants (EHV/HV)
         if not renewables_ehv_hv.empty:
@@ -354,9 +390,6 @@ def conventional_lines(grid_data):
 
     
 def conventional_powerplants(grid_data):
-    # hier muss noch eine Fallunterscheidung gemacht werden, welche Spannungsebene in den inzput daten gewählt wurden
-    # Das evt mit einem Case PArameter machen der dann der Funktion übergeben wird
-    # Je nach dem müssen einige Erzeuger dann aggregiert werden
     """
     This function collects the generators based on ego_conventional_powerplant from OEP
     """
@@ -390,8 +423,27 @@ def conventional_powerplants(grid_data):
         conventionals = conventionals.drop(columns=['gid',
                                                     'geom',
                                                     'index'])
-        conventionals.rename(columns={'capacity': 'capacity_mw',
-                                      'chp_capacity_uba': 'chp_capacity_uba_mw'})
+        conventionals = conventionals.rename(columns={'capacity': 'capacity_mw',
+                                                      'chp_capacity_uba': 'chp_capacity_uba_mw'})
+        # prepare power plant voltage parameter for processing
+        for i, plant in conventionals.iterrows():
+            if plant.voltage == None:
+                conventionals.at[plant.name, 'voltage'] = 'None'
+            elif plant.voltage in ['HS', '10 und 110', '110/6']:
+                conventionals.at[plant.name, 'voltage'] = '110'
+            elif plant.voltage in ['MS', 'MSP', '10kV, 25kV', 'Mai 25']:
+                conventionals.at[plant.name, 'voltage'] = '20'
+            elif plant.voltage == '220 / 110 / 10':
+                conventionals.at[plant.name, 'voltage'] = '220'
+            elif plant.voltage == '30 auf 6':
+                conventionals.at[plant.name, 'voltage'] = '30'
+            elif plant.voltage == '6\n20':
+                conventionals.at[plant.name, 'voltage'] = 'Werknetz'
+            
+        # drop plants with no voltage specification, plants at factory networks and shutdowned plants
+        drop_plants = conventionals[conventionals.voltage.isin(['Werknetz', 'None'])].index.to_list()
+        drop_plants = drop_plants + conventionals[conventionals.status == 'shutdown'].index.to_list()
+        conventionals = conventionals.drop(drop_plants)
         # add voltage level
         for i, plant in conventionals.iterrows():
             if plant.voltage == 'HS':
@@ -408,6 +460,18 @@ def conventional_powerplants(grid_data):
                 conventionals.at[i, 'voltage_level'] = 5
             elif int(plant.voltage) <= 0.4:
                 conventionals.at[i, 'voltage_level'] = 7
+        # add voltage level
+        for i, plant in conventionals.iterrows():
+            if plant.voltage == 'HS/MS':
+                conventionals.at[i, 'voltage_level'] = 4
+            elif int(plant.voltage) >= 220:
+                conventionals.at[i, 'voltage_level'] = 1
+            elif (int(plant.voltage) < 220) and (int(plant.voltage) >= 60):
+                conventionals.at[i, 'voltage_level'] = 3
+            elif (int(plant.voltage) < 60) and (int(plant.voltage) >= 1):
+                conventionals.at[i, 'voltage_level'] = 5
+            elif int(plant.voltage) < 1:
+                conventionals.at[i, 'voltage_level'] = 7
         # restrict plants to considered power levels
         if 'EHV' in grid_data.target_input.power_levels[0]:
             conventionals = conventionals
@@ -420,13 +484,203 @@ def conventional_powerplants(grid_data):
         # convert DataFrame into a GeoDataFrame
         conventionals_geo = gpd.GeoDataFrame(conventionals, 
                                              crs = 'EPSG:4326',
-                                             geometry=gpd.points_from_xy(
-                                                     conventionals.lon, conventionals.lat))
+                                             geometry=gpd.points_from_xy(conventionals.lon, 
+                                                                         conventionals.lat))
         # intersection of power plants with target_area when target is an own area
         if typ == 'own area':
             conventionals_geo = gpd.overlay(conventionals_geo, grid_data.area, how='intersection')
+        # --- node assignment with case distinction depending on considered power levels
+        # divide the plants in the target area according to their voltage level
+        conventionals_lv = conventionals_geo[conventionals_geo.voltage_level==7]
+        conventionals_mv_lv = conventionals_geo[conventionals_geo.voltage_level==6]
+        conventionals_mv = conventionals_geo[conventionals_geo.voltage_level==5]
+        conventionals_hv_mv = conventionals_geo[conventionals_geo.voltage_level==4]
+        conventionals_hv = conventionals_geo[conventionals_geo.voltage_level==3]
+        conventionals_ehv_hv = conventionals_geo[conventionals_geo.voltage_level==2]
+        conventionals_ehv = conventionals_geo[conventionals_geo.voltage_level==1]
+        
+        # nodes for level 7 plants (LV)
+        if not conventionals_lv.empty:
+            if 'LV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 7 plants are assigned to the nearest lv node
+                voronoi_polygons = voronoi(grid_data.lv_data.lv_nodes[['dave_name', 'geometry']])
+                intersection = gpd.sjoin(conventionals_lv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_node_dave_name'})
+                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                
+                # hier müsste theoretisch noch berücksichtigt werden das die anlagen nicht einem hausknoten zugeordnet werden (also nearest road analyse)
+                # außerdem müsste bei weiten distancen eine Leitung gezogen werden
+                
+            # find next higher and considered voltage level to assigne the lv-plants
+            elif 'MV' in grid_data.target_input.power_levels[0]:
+                pass
+                #In diesem Fall die Erzeuger mittels voronoi und Aggregation den MV/LV TRafos zuordnen
+            elif 'HV' in grid_data.target_input.power_levels[0]:
+                pass
+                # In diesem Fall die Erzeuger mittels voronoi und Aggregation den HV/MV TRafos zuordnen
+            elif 'EHV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 7 plants are aggregated and assigned to the nearest ehv/hv-transformer
+                voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                           'geometry']])
+                intersection = gpd.sjoin(conventionals_lv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_trafo_dave_name'})
+                # change voltage level to the new connection level
+                intersection.voltage_level = 2
+                # select only data which is relevant after aggregation
+                intersection_rel =  intersection[['capacity_mw',
+                                                  'voltage_level',
+                                                  'fuel',
+                                                  'connection_node',
+                                                  'connection_trafo_dave_name']]
+                # aggregated power plants, set geometry to the connection node and write them into grid data
+                aggregate_plants_con(grid_data, intersection_rel, aggregate_name= 'level 7 plants')
+        
+        # nodes for level 6 plants (MV/LV)
+        if not conventionals_mv_lv.empty:
+            if ('LV' in grid_data.target_input.power_levels[0]) or ('MV' in grid_data.target_input.power_levels[0]):
+                pass
+                #In diesem Fall die Erzeuger mittels voronoi den MV/LV TRafos zuordnen
+            # find next higher and considered voltage level to assigne the mvlv-plants
+            elif 'HV' in grid_data.target_input.power_levels[0]:
+                pass
+                # In diesem Fall die Erzeuger mittels voronoi und Aggregation den HV/MV TRafos zuordnen
+            elif 'EHV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 6 plants are aggregated and assigned to the nearest ehv/hv-transformer
+                voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                           'geometry']])
+                intersection = gpd.sjoin(conventionals_mv_lv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_trafo_dave_name'})
+                # change voltage level to the new connection level
+                intersection.voltage_level = 2
+                # select only data which is relevant after aggregation
+                intersection_rel =  intersection[['capacity_mw',
+                                                  'voltage_level',
+                                                  'fuel',
+                                                  'connection_node',
+                                                  'connection_trafo_dave_name']]
+                # aggregated power plants, set geometry to the connection node and write them into grid data
+                aggregate_plants_con(grid_data, intersection_rel, aggregate_name= 'level 6 plants')
 
-    grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(conventionals_geo)
+        # nodes for level 5 plants (MV)
+        if not conventionals_mv.empty:
+            if 'MV' in grid_data.target_input.power_levels[0]:
+                pass
+                #In diesem Fall die Erzeuger dem nächsten MV KNoten zuordnen
+            # find next higher and considered voltage level to assigne the mv-plants
+            elif 'HV' in grid_data.target_input.power_levels[0]:
+                pass
+                # In diesem Fall die Erzeuger mittels voronoi und Aggregation den HV/MV TRafos zuordnen
+            elif 'EHV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 5 plants are aggregated and assigned to the nearest ehv/hv-transformer
+                voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                           'geometry']])
+                intersection = gpd.sjoin(conventionals_mv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_trafo_dave_name'})
+                # change voltage level to the new connection level
+                intersection.voltage_level = 2
+                # select only data which is relevant after aggregation
+                intersection_rel =  intersection[['capacity_mw',
+                                                  'voltage_level',
+                                                  'fuel',
+                                                  'connection_node',
+                                                  'connection_trafo_dave_name']]
+                # aggregated power plants, set geometry to the connection node and write them into grid data
+                aggregate_plants_con(grid_data, intersection_rel, aggregate_name= 'level 5 plants')
+
+        # nodes for level 4 plants (HV/MV)
+        if not conventionals_hv_mv.empty:
+            if ('MV' in grid_data.target_input.power_levels[0]) or ('HV' in grid_data.target_input.power_levels[0]):
+                pass
+                #In diesem Fall die Erzeuger mittels voronoi den HV/MV TRafos zuordnen
+            # find next higher and considered voltage level to assigne the hvmv-plants
+            elif 'EHV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 4 plants are aggregated and assigned to the nearest ehv/hv-transformer
+                voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                           'geometry']])
+                intersection = gpd.sjoin(conventionals_hv_mv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_trafo_dave_name'})
+                # change voltage level to the new connection level
+                intersection.voltage_level = 2
+                # select only data which is relevant after aggregation
+                intersection_rel =  intersection[['capacity_mw',
+                                                  'voltage_level',
+                                                  'fuel',
+                                                  'connection_node',
+                                                  'connection_trafo_dave_name']]
+                # aggregated power plants, set geometry to the connection node and write them into grid data
+                aggregate_plants_con(grid_data, intersection_rel, aggregate_name= 'level 4 plants')
+
+        # nodes for level 3 plants (HV)
+        if not conventionals_hv.empty:
+            if 'HV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 3 plants are assigned to the nearest hv node
+                voronoi_polygons = voronoi(grid_data.hv_data.hv_nodes[['dave_name', 
+                                                                       'geometry']])
+                intersection = gpd.sjoin(conventionals_hv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_node_dave_name'})
+                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+            # find next higher and considered voltage level to assigne the hv-plants
+            elif 'EHV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 3 plants are aggregated and assigned to the nearest ehv/hv-transformer
+                voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                           'geometry']])
+                intersection = gpd.sjoin(conventionals_hv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_trafo_dave_name'})
+                # change voltage level to the new connection level
+                intersection.voltage_level = 2
+                # select only data which is relevant after aggregation
+                intersection_rel =  intersection[['capacity_mw',
+                                                  'voltage_level',
+                                                  'fuel',
+                                                  'connection_node',
+                                                  'connection_trafo_dave_name']]
+                # aggregated power plants, set geometry to the connection node and write them into grid data
+                aggregate_plants_con(grid_data, intersection_rel, aggregate_name= 'level 3 plants')
+
+        # nodes for level 2 plants (EHV/HV)
+        if not conventionals_ehv_hv.empty:
+            if ('HV' in grid_data.target_input.power_levels[0]) or ('EHV' in grid_data.target_input.power_levels[0]):
+                # In this case the Level 2 plants are assigned to the nearest ehv/hv-transformer
+                voronoi_polygons = voronoi(grid_data.components_power.transformers.ehv_hv[['dave_name', 
+                                                                                           'geometry']])
+                intersection = gpd.sjoin(conventionals_ehv_hv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_node_dave_name'})
+                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+
+        # nodes for level 1 plants (EHV)
+        if not conventionals_ehv.empty:
+            if 'EHV' in grid_data.target_input.power_levels[0]:
+                # In this case the Level 1 plants are assigned to the nearest ehv node
+                voronoi_polygons = voronoi(grid_data.ehv_data.ehv_nodes[['dave_name', 
+                                                                         'geometry']])
+                intersection = gpd.sjoin(conventionals_ehv, voronoi_polygons, how='inner', op='intersects')
+                intersection = intersection.drop(columns=['index_right'])
+                intersection = intersection.rename(columns={'centroid': 'connection_node', 
+                                                            'dave_name': 'connection_node_dave_name'})
+                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+
+        # add dave name
+        grid_data.components_power.conventional_powerplants.insert(0, 'dave_name', None)
+        grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.reset_index(drop=True)
+        for i, plant in grid_data.components_power.conventional_powerplants.iterrows():
+            voltage_level = int(plant.voltage_level)
+            grid_data.components_power.conventional_powerplants.at[plant.name, 'dave_name'] = f'con_powerplant_{voltage_level}_{i}'
 
 def transformators(grid_data):
     """
@@ -668,10 +922,10 @@ def power_components(grid_data):
     #""" rausnehmen für Spannungsebenen größer LV solange noch keine Unterteilung/aggregation da ist, da es sonst sehr lange dauert
     # add renewable powerplants
     #renewable_powerplants(grid_data)
-    # add conventional powerplants
-    #conventional_powerplants(grid_data)
+    #add conventional powerplants
+    conventional_powerplants(grid_data)
     # add loads
-    loads(grid_data)
+    #loads(grid_data)
     #"""
     
     
