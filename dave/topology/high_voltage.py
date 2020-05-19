@@ -38,6 +38,7 @@ def create_hv_topology(grid_data):
         remove_columns.remove('geometry')
         hv_buses = hv_buses.drop(columns=remove_columns)
     hv_buses['voltage_level'] = 3
+    hv_buses = hv_buses.drop(columns=(['current_type', 'v_mag_pu_min', 'v_mag_pu_max', 'geom']))
     # consider data only if there are more than one node in the target area
     if len(hv_buses) > 1:
         # add dave name
