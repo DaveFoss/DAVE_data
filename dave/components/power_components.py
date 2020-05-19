@@ -1,6 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 from geopy.geocoders import ArcGIS
+import shapely
 from shapely.geometry import Point, MultiPoint
 from shapely.ops import nearest_points
 import numpy as np
@@ -707,7 +708,7 @@ def transformators(grid_data):
     """
     This function collects the transformers.
     EHV/EHV and EHV/HV trafos are based on ego_pf_hv_transformer from OEP
-    HV/MV trafos are based on 
+    HV/MV trafos are based on ego_dp_hvmv_substation from OEP
     MV/LV trafos are based on 
     """
     print('create transformers for target area')
@@ -851,8 +852,135 @@ def transformators(grid_data):
 
     # --- create hv/mv trafos
     if 'HV' in grid_data.target_input.power_levels[0] or 'MV' in grid_data.target_input.power_levels[0]:
-        pass
-        # muss noch geschrieben werden
+        # read transformator data from OEP, filter relevant parameters and rename paramter names
+        substations = oep_request(schema='grid', 
+                                  table='ego_dp_hvmv_substation', 
+                                  where='version=v0.4.5',
+                                  geometry='polygon')  # take substation polygon to get the full area
+        substations = substations.rename(columns={'version': 'ego_version',
+                                                  'subst_id': 'ego_subst_id',
+                                                  'voltage': 'voltage_kv',
+                                                  'ags_0': 'Gemeindeschluessel'})
+        substations = substations.drop(columns = ['point', 'polygon', 'power_type', 'substation', 
+                                                  'frequency', 'ref', 'dbahn', 'status', 'otg_id', 
+                                                  'geom'])
+        # filter substations with point as geometry
+        drop_substations = []
+        for i, sub in substations.iterrows():
+            if (type(sub.geometry) == shapely.geometry.point.Point) or (type(sub.geometry) == shapely.geometry.linestring.LineString):
+                drop_substations.append(sub.name)
+        substations = substations.drop(drop_substations)
+        # check for substations in the target area
+        substations = gpd.overlay(substations, grid_data.area, how='intersection')
+        if not substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            substations = substations.drop(columns=remove_columns)
+        # --- prepare hv nodes for the transformers
+        # check if the hv already nodes exist, otherwise create them
+        if grid_data.hv_data.hv_nodes.empty:
+            # --- in this case the missing hv nodes for the transformator must be procured from OEP
+            # read hv node data from OpenEnergyPlatform and adapt names
+            hv_nodes = oep_request(schema='grid', 
+                                   table='ego_pf_hv_bus', 
+                                   where='version=v0.4.6',
+                                   geometry='geom')
+            hv_nodes = hv_nodes.rename(columns={'version': 'ego_version', 
+                                                'scn_name': 'ego_scn_name',
+                                                'bus_id': 'ego_bus_id',
+                                                'v_nom': 'voltage_kv'})
+            # filter nodes which are on the hv level, current exsist and within the target area
+            hv_nodes = hv_nodes[(hv_nodes.voltage_kv == 110) & 
+                                (hv_nodes.ego_scn_name == 'Status Quo')]
+            hv_nodes = gpd.overlay(hv_nodes, grid_data.area, how='intersection')
+            if not hv_nodes.empty:
+                remove_columns = grid_data.area.keys().tolist()
+                remove_columns.remove('geometry')
+                hv_nodes = hv_nodes.drop(columns=remove_columns)
+            hv_nodes['voltage_level'] = 3
+            hv_nodes = hv_nodes.drop(columns=(['current_type', 'v_mag_pu_min', 'v_mag_pu_max', 'geom']))
+            # add dave name
+            hv_nodes.insert(0, 'dave_name', None)
+            hv_nodes = hv_buses.reset_index(drop=True)
+            for i, bus in hv_nodes.iterrows():
+                hv_nodes.at[bus.name, 'dave_name'] = f'node_3_{i}'
+        else:
+            hv_nodes =  grid_data.hv_data.hv_nodes
+        # check for hv nodes within hv/mv substations
+        substations_keys = substations.keys().tolist()
+        substations_keys.remove('ego_subst_id')
+        substations_keys.remove('geometry')
+        substations_reduced = substations.drop(columns = (substations_keys))
+        hv_nodes = gpd.overlay(hv_nodes, substations_reduced, how='intersection')
+        # add relevant hv nodes if they don't exist before
+        if grid_data.hv_data.hv_nodes.empty:
+            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_nodes)
+        # --- prepare mv nodes for the transformers
+        # check for mv nodes within hv/mv substations if they were created in mv topology function
+        # Otherwise create missing mv nodes
+        if grid_data.mv_data.mv_nodes.empty:
+            # --- in this case the missing mv nodes for the transformers must be created
+            for i, sub in substations.iterrows():
+                mv_node_df = gpd.GeoDataFrame({'ego_version': sub.ego_version,
+                                               'voltage_kv': [20],
+                                               'voltage_level': [5],
+                                               'ego_subst_id': sub.ego_subst_id,
+                                               'geometry': [sub.geometry.centroid]})
+                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_node_df)
+            # add dave name
+            grid_data.mv_data.mv_nodes.insert(0, 'dave_name', None)
+            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.reset_index(drop=True)
+            for i, load in grid_data.mv_data.mv_nodes.iterrows():
+                grid_data.mv_data.mv_nodes.at[load.name, 'dave_name'] = f'node_5_{i}'
+            mv_nodes = grid_data.mv_data.mv_nodes
+        else:
+             # check for hv nodes within hv/mv substations
+            substations_keys = substations.keys().tolist()
+            substations_keys.remove('ego_subst_id')
+            substations_keys.remove('geometry')
+            substations_reduced = substations.drop(columns = (substations_keys))
+            mv_nodes = gpd.overlay(grid_data.mv_data.mv_nodes, substations_reduced, how='intersection')
+        # create hv/mv transfromers
+        for i, sub in substations.iterrows():
+            if sub.ego_subst_id in hv_nodes.ego_subst_id.tolist():
+                bus_hv = hv_nodes[hv_nodes.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
+            else:
+                # find closest hv node to the substation
+                multipoints_hv = MultiPoint(hv_nodes.geometry.tolist())
+                nearest_point = shapely.ops.nearest_points(sub.geometry.centroid, multipoints_hv)[1]
+                for i, node in hv_nodes.iterrows():
+                    if nearest_point == node.geometry:
+                        bus_hv = node.dave_name
+                        break
+            if sub.ego_subst_id in mv_nodes.ego_subst_id.tolist():
+                bus_lv = mv_nodes[mv_nodes.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
+            else:
+                # find closest mv node to the substation
+                multipoints_hv = MultiPoint(hv_nodes.geometry.tolist())
+                nearest_point = shapely.ops.nearest_points(sub.geometry.centroid, multipoints_hv)[1]
+                for i, node in hv_nodes.iterrows():
+                    if nearest_point == node.geometry:
+                        bus_hv = node.dave_name
+                        break
+            trafo_df = gpd.GeoDataFrame({'bus_hv': bus_hv,
+                                         'bus_lv': bus_lv,
+                                         'voltage_kv_hv': [110],
+                                         'voltage_kv_lv': [20],
+                                         'voltage_level': [4],
+                                         'ego_version': sub.ego_version,
+                                         'ego_subst_id': sub.ego_subst_id,
+                                         'osm_id': sub.osm_id,
+                                         'osm_www': sub.osm_www,
+                                         'substation_name': sub.subst_name,
+                                         'operator': sub.operator,
+                                         'Gemeindeschluessel': sub.Gemeindeschluessel,
+                                         'geometry': [sub.geometry.centroid]})
+            grid_data.components_power.transformers.hv_mv = grid_data.components_power.transformers.hv_mv.append(trafo_df)
+        # add dave name
+        grid_data.components_power.transformers.hv_mv.insert(0, 'dave_name', None)
+        grid_data.components_power.transformers.hv_mv = grid_data.components_power.transformers.hv_mv.reset_index(drop=True)
+        for i, load in grid_data.components_power.transformers.hv_mv.iterrows():
+            grid_data.components_power.transformers.hv_mv.at[load.name, 'dave_name'] = f'trafo_4_{i}'
     
     # --- create mv/lv trafos
     if 'MV' in grid_data.target_input.power_levels[0] or 'LV' in grid_data.target_input.power_levels[0]:
@@ -942,11 +1070,11 @@ def power_components(grid_data):
     transformators(grid_data)
     #""" rausnehmen für Spannungsebenen größer LV solange noch keine Unterteilung/aggregation da ist, da es sonst sehr lange dauert
     # add renewable powerplants
-    renewable_powerplants(grid_data)
+    #renewable_powerplants(grid_data)
     #add conventional powerplants
-    conventional_powerplants(grid_data)
+    #conventional_powerplants(grid_data)
     # add loads
-    loads(grid_data)
+    #loads(grid_data)
     #"""
     
     
