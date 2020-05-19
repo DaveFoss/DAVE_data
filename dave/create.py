@@ -49,6 +49,9 @@ def create_empty_dataset():
                  'hv_data': davestructure({'hv_nodes': gpd.GeoDataFrame([], crs=crs),
                                            'hv_lines': gpd.GeoDataFrame([], crs=crs)
                                             }),
+                 'mv_data': davestructure({'mv_nodes': gpd.GeoDataFrame([], crs=crs),
+                                           'mv_lines': gpd.GeoDataFrame([], crs=crs)
+                                            }),
                  'lv_data': davestructure({'lv_nodes': gpd.GeoDataFrame([], crs=crs),
                                            'lv_lines': gpd.GeoDataFrame([], crs=crs)
                                            }),
@@ -211,7 +214,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     buildings=False, landuse=False).target()
         create_ehv_topology(grid_data)
         create_hv_topology(grid_data)
-        power_components(grid_data)
+        #power_components(grid_data)
     elif power_levels == ['EHV', 'MV']:
         # create topology
         target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
