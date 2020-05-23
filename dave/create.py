@@ -9,7 +9,7 @@ from dave import dave_output_dir
 from dave.topology import target_area, create_ehv_topology, create_hv_topology, create_mv_topology, create_lv_topology
 from dave.plotting import plot_target_area, plot_grid_data, plot_landuse
 from dave.components import power_components
-from dave.model import create_power_grid
+from dave.model import create_power_grid, power_processing, create_gas_grid, gas_processing
 
 
 
@@ -186,8 +186,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area, 
                     buffer=0, roads=False, roads_plot=False, 
-                    buildings=False, landuse=False).target()
+                    buildings=False, landuse=True).target()
         create_hv_topology(grid_data)
+        power_components(grid_data)
     elif power_levels == ['MV']:
         # create topology
         target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
@@ -211,10 +212,10 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     postalcode=postalcode, town_name=town_name,
                     federal_state=federal_state, own_area=own_area, 
                     buffer=0, roads=False, roads_plot=False, 
-                    buildings=False, landuse=False).target()
+                    buildings=False, landuse=True).target()
         create_ehv_topology(grid_data)
         create_hv_topology(grid_data)
-        #power_components(grid_data)
+        power_components(grid_data)
     elif power_levels == ['EHV', 'MV']:
         # create topology
         target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels, 
@@ -351,13 +352,20 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
+        net_power = power_processing(net_power)
     else:
         net_power = None
     if convert and gas_levels:
-        pass # hier noch create pandapipes funktion rein
-    
+        net_gas = create_gas_grid(grid_data)
+        net_gas = gas_processing(net_gas)
+    else:
+        net_gas = None
     # return
-    if net_power: # hier noch ein elif rein für net_gas    
+    if net_power and net_gas:
+        return grid_data, net_power, net_gas
+    elif net_power:   
         return grid_data, net_power
+    elif net_gas:
+        return grid_data, net_gas
     else:
         return grid_data
