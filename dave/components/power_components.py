@@ -851,9 +851,11 @@ def transformators(grid_data):
                         hv_trafos.at[trafo.name, 'voltage_kv_lv'] = hv_buses.loc[hv_bus_index0].voltage_kv
                         # check if node allready exsist, otherwise create them
                         if grid_data.hv_data.hv_nodes.empty:
+                            hv_bus0['voltage_level'] = 3
                             grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
                         else:
                             if grid_data.hv_data.hv_nodes[grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0].empty:
+                                hv_bus0['voltage_level'] = 3
                                 grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
                                 
             if 'HV' in grid_data.target_input.power_levels[0]:
@@ -869,9 +871,11 @@ def transformators(grid_data):
                         hv_trafos.at[trafo.name, 'voltage_kv_hv'] = ehv_buses.loc[ehv_bus_index1].voltage_kv
                         # check if node allready exsist, otherwise create them
                         if grid_data.ehv_data.ehv_nodes.empty:
+                            ehv_bus1['voltage_level'] = 1
                             grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
                         else:
                             if grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1].empty:
+                                ehv_bus1['voltage_level'] = 1
                                 grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
         # add dave name for nodes which are created for the transformers
         if 'dave_name' not in grid_data.hv_data.hv_nodes.keys():
@@ -1166,7 +1170,6 @@ def loads(grid_data):
 def power_components(grid_data):
     # add transformers
     transformators(grid_data)
-    #""" rausnehmen für Spannungsebenen größer LV solange noch keine Unterteilung/aggregation da ist, da es sonst sehr lange dauert
     # add renewable powerplants
     renewable_powerplants(grid_data)
     #add conventional powerplants
