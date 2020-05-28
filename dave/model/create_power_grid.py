@@ -1,5 +1,5 @@
 import pandapower as pp
-import math
+
 
 from dave import __version__
 from dave import dave_output_dir
@@ -51,18 +51,22 @@ def create_power_grid(grid_data):
     # create lines
     if not grid_data.ehv_data.ehv_lines.empty:
         for i, line in grid_data.ehv_data.ehv_lines.iterrows():
-            line_coords = line.geometry[0].coords[:]
-            c_nf = float(line.b)/(2*math.pi*float(line.frequency))*1E09
-            from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
-            to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
+            if line.source == 'OEP':
+                line_coords = line.geometry[0].coords[:]
+                from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
+                to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
+            elif line.source == 'tso data':
+                line_coords = line.geometry.coords[:]
+                from_bus = net.bus[net.bus.tso_name == line.bus0].index[0]
+                to_bus = net.bus[net.bus.tso_name == line.bus1].index[0]
             pp.create_line_from_parameters(net, 
                                            from_bus=from_bus,
                                            to_bus=to_bus,
                                            length_km=line.length_km,
-                                           r_ohm_per_km=float(line.r)/line.length_km,
-                                           x_ohm_per_km=float(line.x)/line.length_km,
-                                           c_nf_per_km=c_nf/line.length_km,
-                                           max_i_ka= ((float(line.s_nom_mva)*1E06)/(line.voltage_kv*1E03))*1E-03,
+                                           r_ohm_per_km=line.r_ohm_per_km,
+                                           x_ohm_per_km=line.x_ohm_per_km,
+                                           c_nf_per_km=line.c_nf_per_km,
+                                           max_i_ka= line.max_i_ka,
                                            name=line.dave_name,
                                            type='ol',
                                            geodata=[list(coords) for coords in line_coords],
@@ -94,17 +98,16 @@ def create_power_grid(grid_data):
     if not grid_data.hv_data.hv_lines.empty:
         for i, line in grid_data.hv_data.hv_lines.iterrows():
             line_coords = line.geometry[0].coords[:]
-            c_nf = float(line.b)/(2*math.pi*float(line.frequency))*1E09
             from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
             to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
             pp.create_line_from_parameters(net, 
                                            from_bus=from_bus,
                                            to_bus=to_bus,
                                            length_km=line.length_km,
-                                           r_ohm_per_km=float(line.r)/line.length_km,
-                                           x_ohm_per_km=float(line.x)/line.length_km,
-                                           c_nf_per_km=c_nf/line.length_km,
-                                           max_i_ka= ((float(line.s_nom_mva)*1E06)/110E03)*1E-03,
+                                           r_ohm_per_km=line.r_ohm_per_km,
+                                           x_ohm_per_km=line.x_ohm_per_km,
+                                           c_nf_per_km=line.c_nf_per_km,
+                                           max_i_ka= line.max_i_ka,
                                            name=line.dave_name,
                                            type='ol',
                                            geodata=[list(coords) for coords in line_coords],
@@ -185,7 +188,6 @@ def create_power_grid(grid_data):
     net.trafo['geometry'] = None
     if not grid_data.components_power.transformers.ehv_ehv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_ehv.iterrows():
-            trafo_geometry = trafo.geometry.coords[:][0]
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
             
@@ -216,7 +218,6 @@ def create_power_grid(grid_data):
     # create ehv/hv transformers
     if not grid_data.components_power.transformers.ehv_hv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
-            trafo_geometry = trafo.geometry.coords[:][0]
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
             
@@ -248,7 +249,6 @@ def create_power_grid(grid_data):
     if not grid_data.components_power.transformers.hv_mv.empty:
         std_type = '63 MVA 110/20 kV'
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
-            trafo_geometry = trafo.geometry.coords[:][0]
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
             pp.create_transformer(net,
@@ -342,6 +342,6 @@ def create_power_grid(grid_data):
     
     # save grid model in the dave output folder                   
     file_path = dave_output_dir + '\\dave_power_grid.p'
-    pp.to_pickle(net_power, file_path)
+    pp.to_pickle(net, file_path)
     
     return net

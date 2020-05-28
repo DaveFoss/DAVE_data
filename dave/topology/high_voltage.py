@@ -1,4 +1,5 @@
 import geopandas as gpd
+import math
 
 from dave.datapool import oep_request
 
@@ -54,16 +55,42 @@ def create_hv_topology(grid_data):
                         where='version=v0.4.6',
                         geometry='geom')
         hv_lines = hv_lines.rename(columns={'version': 'ego_version', 
-                                             'subst_id': 'ego_subst_id',
-                                             'scn_name': 'ego_scn_name',
-                                             'line_id': 'ego_line_id',
-                                             'length': 'length_km',
-                                             's_nom': 's_nom_mva'})
+                                            'subst_id': 'ego_subst_id',
+                                            'scn_name': 'ego_scn_name',
+                                            'line_id': 'ego_line_id',
+                                            'length': 'length_km',
+                                            's_nom': 's_nom_mva',
+                                            'r': 'r_ohm',
+                                            'x': 'x_ohm',
+                                            'g': 'g_s',
+                                            'b': 'b_s'})
         # filter lines which are on the hv level by check if both endpoints are on the hv level
         hv_bus_ids = hv_buses.ego_bus_id.tolist()
         hv_lines = hv_lines[(hv_lines.bus0.isin(hv_bus_ids)) & 
                             (hv_lines.bus1.isin(hv_bus_ids)) & 
                             (hv_lines.ego_scn_name == 'Status Quo')]
+        # --- add additional line parameter
+        r_column_index = hv_lines.columns.get_loc('r_ohm')
+        hv_lines.insert(r_column_index+1, 'r_ohm_per_km', None)
+        x_column_index = hv_lines.columns.get_loc('x_ohm')
+        hv_lines.insert(x_column_index+1, 'x_ohm_per_km', None)
+        b_column_index = hv_lines.columns.get_loc('b_s')
+        hv_lines.insert(b_column_index+1, 'c_nf_per_km', None)
+        hv_lines.insert(b_column_index+1, 'c_nf', None)
+        # add voltage
+        hv_lines['voltage_kv'] = 110
+        for i, line in hv_lines.iterrows():
+            # calculate and add r,x,c per km
+            hv_lines.at[line.name, 'r_ohm_per_km'] = float(line.r_ohm)/line.length_km
+            hv_lines.at[line.name, 'x_ohm_per_km'] = float(line.x_ohm)/line.length_km
+            c_nf = float(line.b_s)/(2*math.pi*float(line.frequency))*1E09
+            hv_lines.at[line.name, 'c_nf'] = c_nf
+            hv_lines.at[line.name, 'c_nf_per_km'] = c_nf/line.length_km
+            # calculate and add max i
+            hv_lines.at[line.name, 'max_i_ka'] = ((float(line.s_nom_mva)*1E06)/(line.voltage_kv*1E03))*1E-03
+        # add oep as source
+        hv_lines['source'] = 'OEP'
+        # add voltage level
         hv_lines['voltage_level'] = 3
         # add dave name
         hv_lines.insert(0, 'dave_name', None)
