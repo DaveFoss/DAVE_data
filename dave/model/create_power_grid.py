@@ -211,6 +211,8 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
             net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
+            net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
+            net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
     # create ehv/hv transformers
     if not grid_data.components_power.transformers.ehv_hv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
@@ -240,6 +242,8 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
             net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
+            net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
+            net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
     # create hv/mv transformers
     if not grid_data.components_power.transformers.hv_mv.empty:
         std_type = '63 MVA 110/20 kV'

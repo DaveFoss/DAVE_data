@@ -902,8 +902,12 @@ def transformators(grid_data):
                     ehv_buses = grid_data.ehv_data.ehv_nodes
                     bus0_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
                     bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
+                    subst_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].subst_name
+                    tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].tso_name
                     ehv_ehv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
                     ehv_ehv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
+                    ehv_ehv_trafos.at[trafo.name, 'substation_name'] = subst_name
+                    ehv_ehv_trafos.at[trafo.name, 'tso_name'] = tso_name
                 # drop columns with ego_id
                 ehv_ehv_trafos = ehv_ehv_trafos.drop(columns=['bus0', 'bus1'])                 
                 # add ehv/ehv trafos to grid data
@@ -922,8 +926,12 @@ def transformators(grid_data):
                 hv_buses = grid_data.hv_data.hv_nodes
                 bus0_name = hv_buses[hv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
                 bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
+                subst_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].subst_name
+                tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].tso_name
                 ehv_hv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
                 ehv_hv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
+                ehv_hv_trafos.at[trafo.name, 'substation_name'] = subst_name
+                ehv_hv_trafos.at[trafo.name, 'tso_name'] = tso_name
             # change column name
             ehv_hv_trafos = ehv_hv_trafos.drop(columns=['bus0', 'bus1'])
             # add ehv/ehv trafos to grid data
