@@ -1,5 +1,5 @@
 import pandapower as pp
-
+from shapely import geometry, ops
 
 from dave import __version__
 from dave import dave_output_dir
@@ -51,12 +51,18 @@ def create_power_grid(grid_data):
     # create lines
     if not grid_data.ehv_data.ehv_lines.empty:
         for i, line in grid_data.ehv_data.ehv_lines.iterrows():
+            # get line geometry coordinates
+            if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
+                merged_line = ops.linemerge(line.geometry)
+                line_coords = merged_line.coords[:]
+            else:
+                line_coords = line.geometry.coords[:]
+            # get bus indexes from oep lines
             if line.source == 'OEP':
-                line_coords = line.geometry[0].coords[:]
                 from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
                 to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
+            # get bus indexes from tso data lines
             elif line.source == 'tso data':
-                line_coords = line.geometry.coords[:]
                 from_bus = net.bus[net.bus.tso_name == line.bus0].index[0]
                 to_bus = net.bus[net.bus.tso_name == line.bus1].index[0]
             pp.create_line_from_parameters(net, 
@@ -75,6 +81,7 @@ def create_power_grid(grid_data):
             line_id = pp.get_element_index(net, 
                                            element='line', 
                                            name=line.dave_name)
+            net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
             net.line.at[line_id, 'ego_version'] = line.ego_version
@@ -97,7 +104,13 @@ def create_power_grid(grid_data):
     # create lines 
     if not grid_data.hv_data.hv_lines.empty:
         for i, line in grid_data.hv_data.hv_lines.iterrows():
-            line_coords = line.geometry[0].coords[:]
+            # get line geometry coordinates
+            if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
+                merged_line = ops.linemerge(line.geometry)
+                line_coords = merged_line.coords[:]
+            else:
+                line_coords = line.geometry.coords[:]
+            # get bus indexes for lines
             from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
             to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
             pp.create_line_from_parameters(net, 
@@ -116,6 +129,7 @@ def create_power_grid(grid_data):
             line_id = pp.get_element_index(net, 
                                            element='line',
                                            name=line.dave_name)
+            net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
             net.line.at[line_id, 'ego_version'] = line.ego_version
