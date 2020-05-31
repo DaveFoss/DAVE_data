@@ -41,8 +41,8 @@ def create_power_grid(grid_data):
                           vn_kv=bus.voltage_kv,
                           geodata=bus.geometry.coords[:][0])
             # additional Informations
-            bus_id = pp.get_element_index(net, 
-                                          element='bus', 
+            bus_id = pp.get_element_index(net,
+                                          element='bus',
                                           name=bus.dave_name)
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
@@ -57,29 +57,24 @@ def create_power_grid(grid_data):
                 line_coords = merged_line.coords[:]
             else:
                 line_coords = line.geometry.coords[:]
-            # get bus indexes from oep lines
-            if line.source == 'OEP':
-                from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
-                to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
-            # get bus indexes from tso data lines
-            elif line.source == 'tso data':
-                from_bus = net.bus[net.bus.tso_name == line.bus0].index[0]
-                to_bus = net.bus[net.bus.tso_name == line.bus1].index[0]
-            pp.create_line_from_parameters(net, 
+            # get bus indexes for the line buses
+            from_bus = pp.get_element_index(net, element='bus', name=line.bus0)
+            to_bus = pp.get_element_index(net, element='bus', name=line.bus1)
+            pp.create_line_from_parameters(net,
                                            from_bus=from_bus,
                                            to_bus=to_bus,
                                            length_km=line.length_km,
                                            r_ohm_per_km=line.r_ohm_per_km,
                                            x_ohm_per_km=line.x_ohm_per_km,
                                            c_nf_per_km=line.c_nf_per_km,
-                                           max_i_ka= line.max_i_ka,
+                                           max_i_ka=line.max_i_ka,
                                            name=line.dave_name,
                                            type='ol',
                                            geodata=[list(coords) for coords in line_coords],
                                            parallel=line.cables/3)
             # additional Informations
-            line_id = pp.get_element_index(net, 
-                                           element='line', 
+            line_id = pp.get_element_index(net,
+                                           element='line',
                                            name=line.dave_name)
             net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
@@ -95,24 +90,27 @@ def create_power_grid(grid_data):
                           vn_kv=bus.voltage_kv,
                           geodata=bus.geometry.coords[:][0])
             # additional Informations
-            bus_id = pp.get_element_index(net, 
+            bus_id = pp.get_element_index(net,
                                           element='bus',
                                           name=bus.dave_name)
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
-    # create lines 
+    # create lines
     if not grid_data.hv_data.hv_lines.empty:
         for i, line in grid_data.hv_data.hv_lines.iterrows():
             # get line geometry coordinates
             if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
                 merged_line = ops.linemerge(line.geometry)
-                line_coords = merged_line.coords[:]
+                if isinstance(merged_line, geometry.multilinestring.MultiLineString):
+                    line_coords = merged_line[0].coords[:]
+                else:
+                    line_coords = merged_line.coords[:]
             else:
                 line_coords = line.geometry.coords[:]
             # get bus indexes for lines
-            from_bus = net.bus[net.bus.ego_bus_id == line.bus0].index[0]
-            to_bus = net.bus[net.bus.ego_bus_id == line.bus1].index[0]
+            from_bus = pp.get_element_index(net, element='bus', name=line.bus0)
+            to_bus = pp.get_element_index(net, element='bus', name=line.bus1)
             pp.create_line_from_parameters(net, 
                                            from_bus=from_bus,
                                            to_bus=to_bus,

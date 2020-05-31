@@ -69,7 +69,7 @@ def create_hv_topology(grid_data):
         hv_lines = hv_lines[(hv_lines.bus0.isin(hv_bus_ids)) & 
                             (hv_lines.bus1.isin(hv_bus_ids)) & 
                             (hv_lines.ego_scn_name == 'Status Quo')]
-        # --- add additional line parameter
+        # --- add additional line parameter and change bus names
         r_column_index = hv_lines.columns.get_loc('r_ohm')
         hv_lines.insert(r_column_index+1, 'r_ohm_per_km', None)
         x_column_index = hv_lines.columns.get_loc('x_ohm')
@@ -79,6 +79,8 @@ def create_hv_topology(grid_data):
         hv_lines.insert(b_column_index+1, 'c_nf', None)
         # add voltage
         hv_lines['voltage_kv'] = 110
+        bus0_new = []
+        bus1_new = []
         for i, line in hv_lines.iterrows():
             # calculate and add r,x,c per km
             hv_lines.at[line.name, 'r_ohm_per_km'] = float(line.r_ohm)/line.length_km
@@ -88,6 +90,13 @@ def create_hv_topology(grid_data):
             hv_lines.at[line.name, 'c_nf_per_km'] = c_nf/line.length_km
             # calculate and add max i
             hv_lines.at[line.name, 'max_i_ka'] = ((float(line.s_nom_mva)*1E06)/(line.voltage_kv*1E03))*1E-03
+            # change line bus names from ego id to dave name
+            bus0_dave = hv_buses[hv_buses.ego_bus_id == line.bus0].iloc[0].dave_name
+            bus1_dave = hv_buses[hv_buses.ego_bus_id == line.bus1].iloc[0].dave_name
+            bus0_new.append(bus0_dave)
+            bus1_new.append(bus1_dave)
+        hv_lines['bus0'] = bus0_new
+        hv_lines['bus1'] = bus1_new
         # add oep as source
         hv_lines['source'] = 'OEP'
         # add voltage level
