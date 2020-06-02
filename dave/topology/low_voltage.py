@@ -143,10 +143,12 @@ def line_connections(grid_data):
     # calculate line length
     line_connections_3035 = line_connections.to_crs(epsg=3035)  # project lines to crs with unit in meter
     line_length = line_connections_3035.length
-    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(gpd.GeoDataFrame({'geometry':line_connections,
+    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(gpd.GeoDataFrame({'geometry': line_connections,
                                                                                      'line_type': 'line_connections',
-                                                                                     'length_m':line_length,
-                                                                                     'voltage_level': 7}))
+                                                                                     'length_m': line_length,
+                                                                                     'voltage_kv': 0.4,
+                                                                                     'voltage_level': 7,
+                                                                                     'source': 'dave internal'}))
     
 def create_lv_topology(grid_data):
     """
@@ -174,18 +176,23 @@ def create_lv_topology(grid_data):
     # add lv nodes to grid data
     building_nodes_df = gpd.GeoDataFrame({'geometry': building_connections.building_centroid, 
                                           'node_type': 'building_centroid', 
-                                          'voltage_level': 7})
+                                          'voltage_level': 7,
+                                          'voltage_kv': 0.4,
+                                          'source': 'dave internal'})
     building_nodes_df = building_nodes_df.append(gpd.GeoDataFrame({'geometry': building_connections.nearest_point, 
                                                                    'node_type': 'nearest_point', 
-                                                                   'voltage_level': 7}))
+                                                                   'voltage_level': 7,
+                                                                   'voltage_kv': 0.4,
+                                                                   'source': 'dave internal'}))
     # add dave name
     building_nodes_df.insert(0, 'dave_name', None)
     building_nodes_df = building_nodes_df.reset_index(drop=True)
     for i, node in building_nodes_df.iterrows():
         building_nodes_df.at[node.name, 'dave_name'] = f'node_7_{i}'
-    # add ehv nodes to grid data
+        
+    # add lv nodes to grid data
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
-
+    grid_data.lv_data.lv_nodes.crs = 'EPSG:4326'
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries([], crs = 'EPSG:4326')
     for i, connection in building_connections.iterrows():
@@ -196,10 +203,14 @@ def create_lv_topology(grid_data):
     line_buildings_3035 = line_buildings.to_crs(epsg=3035)  # project lines to crs with unit in meter
     line_length = line_buildings_3035.length
     # write line informations into grid data
-    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(gpd.GeoDataFrame({'geometry':line_buildings, 
-                                                                                     'line_type': 'line_buildings', 
-                                                                                     'length_m':line_length, 
-                                                                                     'voltage_level': 7}))
+    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(gpd.GeoDataFrame({'geometry': line_buildings,
+                                                                                     'line_type': 'line_buildings',
+                                                                                     'length_m': line_length,
+                                                                                     'voltage_kv': 0.4,
+                                                                                     'voltage_level': 7,
+                                                                                     'source': 'dave internal'}))
+    # set crs
+    grid_data.lv_data.lv_lines.crs = 'EPSG:4326'
     # create line connections to connect lines for buildings and road junctions with each other
     line_connections(grid_data)
     # add dave name for lv_lines
@@ -207,7 +218,16 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.reset_index(drop=True)
     for i, line in grid_data.lv_data.lv_lines.iterrows():
         grid_data.lv_data.lv_lines.at[line.name, 'dave_name'] = f'line_7_{i}'
-
-   
-  
-
+    # get line bus names for each line and add to line data
+    lv_nodes = grid_data.lv_data.lv_nodes
+    for i, line in grid_data.lv_data.lv_lines.iterrows():
+        line_coords_from = line.geometry.coords[:][0]
+        line_coords_to = line.geometry.coords[:][len(line.geometry.coords[:])-1]
+        from_bus = lv_nodes[lv_nodes.geometry.x == line_coords_from[0]]
+        if len(from_bus) > 1:
+            from_bus = from_bus[from_bus.geometry.y == line_coords_from[1]]
+        to_bus = lv_nodes[lv_nodes.geometry.x == line_coords_to[0]]
+        if len(to_bus) > 1:
+            to_bus = to_bus[to_bus.geometry.y == line_coords_to[1]]
+        grid_data.lv_data.lv_lines.at[line.name, 'from_bus'] = from_bus.iloc[0].dave_name
+        grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = to_bus.iloc[0].dave_name
