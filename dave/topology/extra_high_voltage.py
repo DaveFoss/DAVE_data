@@ -167,6 +167,8 @@ def create_ehv_topology(grid_data):
             ehv_lines.at[line.name, 'c_nf_per_km'] = c_nf/line.length_km
             # calculate and add max i
             ehv_lines.at[line.name, 'max_i_ka'] = ((float(line.s_nom_mva)*1E06)/(line.voltage_kv*1E03))*1E-03
+            # parallel lines
+            ehv_lines.at[line.name, 'parallel'] = line.cables/3
         # add oep as source
         ehv_lines['source'] = 'OEP'
         # add missing tso ehv lines which are not in the ego line data
@@ -180,9 +182,9 @@ def create_ehv_topology(grid_data):
                 # search for the buses with the right voltage level
                 from_bus = ehv_buses[ehv_buses.tso_name == line.from_bus]
                 to_bus = ehv_buses[ehv_buses.tso_name == line.to_bus]
-                if len(from_bus) >1:
+                if len(from_bus) > 1:
                     from_bus = from_bus[from_bus.voltage_kv == line.vn_kv]
-                if len(to_bus) >1:
+                if len(to_bus) > 1:
                     to_bus = to_bus[to_bus.voltage_kv == line.vn_kv]
                 geometry = LineString([from_bus.iloc[0].geometry, to_bus.iloc[0].geometry])
                 ehv_lines = ehv_lines.append(gpd.GeoDataFrame({'bus0': from_bus.iloc[0].dave_name,
@@ -199,7 +201,8 @@ def create_ehv_topology(grid_data):
                                                                'geometry': [geometry],
                                                                'voltage_kv': line.vn_kv,
                                                                'max_i_ka': line.max_i_ka,
-                                                               'source': 'tso data'}))
+                                                               'source': 'tso data',
+                                                               'parallel': 1}))
         # add voltage level
         ehv_lines['voltage_level'] = 1
         # add dave name
