@@ -6,6 +6,7 @@ import contextily as ctx
 
 from dave import dave_output_dir
 
+
 def plot_land(area, only_area=False):
     """
     This funcition plots the polygon of the target area, which can be used for the background.
@@ -25,7 +26,7 @@ def plot_land(area, only_area=False):
         fig = plt.figure(frameon=False, figsize=(50, 50))
         ax = fig.add_subplot(1, 1, 1)
         ax.axis('off')
-        ax = area.plot(color='k', alpha=0.0, ax=ax)
+        ax = area.plot(color='k', alpha=0.1, ax=ax)
         ax.margins(0)
         return ax
 
@@ -50,12 +51,12 @@ def plot_target_area(grid_data):
     buildings_other = grid_data.buildings.other
     building_centroids = grid_data.buildings.building_centroids
     # check if there is any data in target area, otherwise plot only the area
-    data = [roads_plot, 
-            roads, 
-            road_junctions, 
-            buildings_for_living, 
-            buildings_commercial, 
-            buildings_other, 
+    data = [roads_plot,
+            roads,
+            road_junctions,
+            buildings_for_living,
+            buildings_commercial,
+            buildings_other,
             building_centroids]
     data_check = pd.concat(data)
     if data_check.empty:
@@ -92,14 +93,13 @@ def plot_target_area(grid_data):
         plt.title('Target Area')
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\target_area.svg'
-        plt.savefig(file_path,dpi=300)
-    
+        plt.savefig(file_path, dpi=300)
 
 
 def plot_grid_data(grid_data):
     """
-    This function plots primary the grid data and auxillary greyed out the 
-    geographical informations in the target area 
+    This function plots primary the grid data and auxillary greyed out the
+    geographical informations in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
@@ -118,6 +118,8 @@ def plot_grid_data(grid_data):
     ehv_lines = grid_data.ehv_data.ehv_lines
     hv_nodes = grid_data.hv_data.hv_nodes
     hv_lines = grid_data.hv_data.hv_lines
+    hp_junctions = grid_data.hp_data.hp_junctions
+    hp_pipes = grid_data.hp_data.hp_pipes
     renewable_plants = grid_data.components_power.renewable_powerplants
     conventional_plants = grid_data.components_power.conventional_powerplants
     buildings_for_living = grid_data.buildings.for_living
@@ -138,7 +140,9 @@ def plot_grid_data(grid_data):
             ehv_substations,
             ehv_lines,
             hv_nodes,
-            hv_lines]
+            hv_lines,
+            hp_junctions,
+            hp_pipes]
     data_check = pd.concat(data)
     if data_check.empty:
         data_empty = True
@@ -189,15 +193,21 @@ def plot_grid_data(grid_data):
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
         if not hv_lines.empty:
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
+        # plot hp topology
+        if not hp_junctions.empty:
+            hp_junctions.plot(ax=ax, color='k', markersize=6, label='HP Junctions')
+        if not hp_pipes.empty:
+            hp_pipes.plot(ax=ax, color='green', zorder=1, label='HP Pipes')
         # legende
         ax.legend()
         # titel
         plt.title('Grid Data')
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\grid_data.svg'
-        plt.savefig(file_path,dpi=300)
-    # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
+        plt.savefig(file_path, dpi=300)
+    # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die
     # verschiedenen Spannungs und Druck ebenen.
+
 
 def plot_grid_data_osm(grid_data):
     """
@@ -281,7 +291,9 @@ def plot_grid_data_osm(grid_data):
         ax.legend()
         # titel
         plt.title('Grid Data OSM')
+        # plot background osm
         #ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+        # plot background osm stamen design 
         ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\grid_data.svg'
