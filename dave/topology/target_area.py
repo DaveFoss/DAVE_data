@@ -217,27 +217,57 @@ class target_area():
         This function searches junctions for the relevant roads in the target area
         """
         roads = self.grid_data.roads.roads
+
+        # # old approach
+        # if not roads.empty:
+        #     junction_points = []
+        #     for i, line in roads.iterrows():
+        #         # create multipolygon for lines without the one under consideration
+        #         other_lines = roads.drop([i])
+        #         # save remaining roads for next iterationstep
+        #         roads = other_lines
+        #         other_lines = cascaded_union(other_lines.geometry)
+        #         # find line intersections
+        #         junctions = line.geometry.intersection(other_lines)
+        #         if junctions.geom_type == 'Point':
+        #             junction_points.append(junctions)
+        #         elif junctions.geom_type == 'MultiPoint':
+        #             for point in junctions:
+        #                 junction_points.append(point)
+        #     # delet duplicates
+        #     junction_points = gpd.GeoSeries(junction_points)
+        #     #road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
+        #     road_junctions = junction_points
+        #     # write road junctions into grid_data
+        #     self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
+
         if not roads.empty:
             junction_points = []
-            """
-            for i, line in roads.iterrows():
-                # create multipolygon for lines without the one under consideration
-                other_lines = roads.drop([i])
-                other_lines = cascaded_union(other_lines.geometry)
-                # find line intersections
-                junctions = line.geometry.intersection(other_lines)
+            while len(roads) > 1:
+                # considered line 
+                line_geometry = roads.iloc[0].geometry
+                # check considering line surroundings for other lines with possible intersection points
+                line_surr = line_geometry.buffer(1E-04)
+                lines_rel = roads[roads.geometry.crosses(line_surr)]
+                other_lines = cascaded_union(lines_rel.geometry)
+                # find line intersections between considered line and other lines
+                junctions = line_geometry.intersection(other_lines)
                 if junctions.geom_type == 'Point':
                     junction_points.append(junctions)
                 elif junctions.geom_type == 'MultiPoint':
                     for point in junctions:
                         junction_points.append(point)
-            """
+                # set new roads quantity for the next iterationstep
+                roads = roads.drop([0])
+                roads = roads.reset_index(drop=True)
             # delet duplicates
             junction_points = gpd.GeoSeries(junction_points)
-            #road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
-            road_junctions = junction_points
+            road_junctions = junction_points.drop_duplicates()
             # write road junctions into grid_data
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
+
+
+
 
     def _target_by_postalcode(self):
         """
@@ -379,6 +409,4 @@ class target_area():
                 # Obtain data from OSM
                 target_area._from_osm(self, target=border, target_number=i)
         # find road junctions
-        print('road_junctions')
         target_area.road_junctions(self)
-        print('fin road junctions')
