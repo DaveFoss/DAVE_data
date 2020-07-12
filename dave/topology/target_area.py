@@ -209,8 +209,6 @@ class target_area():
             self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
             self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.append(buildings.centroid)
             # rename building centroids
-            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.rename('geometry')
-        
 
     def road_junctions(self):
         """
