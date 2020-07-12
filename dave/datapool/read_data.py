@@ -1,6 +1,7 @@
 import os
 import geopandas as gpd
 import pandas as pd
+from shapely.wkb import loads
 
 from dave import dave_dir
 
@@ -13,6 +14,18 @@ def _get_data_path(filename=None, dirname=None):
         return os.path.join(dave_dir, 'datapool', dirname, filename)
     else:
         return os.path.join(dave_dir, 'datapool', dirname)
+
+
+def _convert_geometry(data_df):
+    """
+    This function converts geometry of a data frame from WKB to WKT format
+    """
+    data_df['geom'] = None  # create empty column, otherwise ther'e could be problems with add geoemtry
+    for i, data in data_df.iterrows():
+        data_df.at[i, 'geom'] = loads(data.geometry)
+    data_df = data_df.drop(columns=['geometry'])
+    data_df = data_df.rename(columns={"geom": "geometry"})
+    return data_df
 
 
 def read_postal():
@@ -28,7 +41,9 @@ def read_postal():
 
          postal = data.read_postal()
     """
-    postalger = gpd.read_file(_get_data_path('postalger.shp', 'postalger'))
+    postalger = pd.read_hdf(_get_data_path('postalger.h5', 'data'))
+    postalger = _convert_geometry(postalger)  # convert geometry
+    postalger = gpd.GeoDataFrame(postalger, crs="EPSG:4326")
     return postalger
 
 
@@ -45,8 +60,9 @@ def read_federal_states():
 
          postal = data.read_federal_states()
     """
-    federalstatesger = gpd.read_file(_get_data_path('federalstatesger.shp',
-                                                    'federalstatesger'))
+    federalstatesger = pd.read_hdf(_get_data_path('federalstatesger.h5', 'data'))
+    federalstatesger = _convert_geometry(federalstatesger)  # convert geometry
+    federalstatesger = gpd.GeoDataFrame(federalstatesger, crs="EPSG:4326")
     return federalstatesger
 
 
@@ -64,10 +80,16 @@ def read_ehv_data():
          ehv_data = data.read_ehv_data()
     """
     # read data
-    ehv_nodes = pd.read_pickle(_get_data_path('ehv_nodes.p', 'ehvdata')).to_crs(epsg=4326)
-    ehv_node_changes = pd.read_pickle(_get_data_path('ehv_node_changes.p', 'ehvdata'))
-    ehv_lines = pd.read_pickle(_get_data_path('ehv_lines.p', 'ehvdata'))
-    ehv_trafos = pd.read_pickle(_get_data_path('ehv_trafos.p', 'ehvdata'))
+    ehv_data = pd.HDFStore(_get_data_path('ehv_data.h5', 'data'))
+    # get the individual Data Frames
+    ehv_nodes = ehv_data.get('/ehv_nodes')
+    ehv_nodes = _convert_geometry(ehv_nodes)
+    ehv_nodes = gpd.GeoDataFrame(ehv_nodes, crs="EPSG:4326")
+    ehv_node_changes = ehv_data.get('/ehv_node_changes')
+    ehv_lines = ehv_data.get('/ehv_lines')
+    ehv_trafos = ehv_data.get('/ehv_trafos')
+    # close file
+    ehv_data.close()
     # create dictonary
     ehv_data = {'ehv_nodes': ehv_nodes,
                 'ehv_node_changes': ehv_node_changes,
@@ -78,7 +100,7 @@ def read_ehv_data():
 
 def read_hp_data():
     """
-    This data includes informations for the german high pressure gas grid based on the publication 
+    This data includes informations for the german high pressure gas grid based on the publication
     "Electricity, Heat, and Gas Sector Data for Modeling the German System".
     
     The reference year for the data is 2015.
@@ -91,26 +113,34 @@ def read_hp_data():
 
          hp_data = data.read_hp_data()
     """
-    # read data
-    hp_nodes = gpd.read_file(_get_data_path('nodes.shp', 'hpdata')).to_crs(epsg=4326)
-    hp_pipelines = gpd.read_file(_get_data_path('pipelines.shp', 'hpdata')).to_crs(epsg=4326)
-    hp_pipelines = hp_pipelines.rename(columns={'LENGTH': 'LENGTH_km',
-                                                'DIAMETER': 'DIAMETER_mm',
-                                                'PRESSURE': 'PRESSURE_bar',
-                                                'DIAM_EST': 'DIAM_EST_mm',
-                                                'PRESS_EST': 'PRESS_EST_bar',
-                                                'CAPACITY': 'CAPACITY_gwh_per_d'})
-    hp_production = gpd.read_file(_get_data_path('production.shp', 'hpdata')).to_crs(epsg=4326)
-    hp_production = hp_production.rename(columns={'PROD_QGIS_': 'MAX_CAPACITY_gwh_th_per_d'})
-    hp_industry = gpd.read_file(_get_data_path('industry.shp', 'hpdata')).to_crs(epsg=4326)
-    hp_storages = gpd.read_file(_get_data_path('storages.shp', 'hpdata')).to_crs(epsg=4326)
-    hp_storages = hp_storages.rename(columns={'MAX_INJECT': 'MAX_INJECT_gwh_th_per_d',
-                                              'MAX_WITHDR': 'MAX_WITHDR_gwh_th_per_d'})
-    hp_gas_demand_total = gpd.read_file(_get_data_path('gas_demand_total.shp', 'hpdata')).to_crs(epsg=4326)
-    hp_gas_demand_total = hp_gas_demand_total.rename(columns={'POWER_PLAN': 'POWER_PLANT_tj',
-                                                              'HOUSEHOLD': 'HOUSEHOLD_tj',
-                                                              'INDUSTRY': 'INDUSTRY_tj',
-                                                              'TOTAL': 'TOTAL_tj'})
+    # --- read data
+    hp_data = pd.HDFStore(_get_data_path('hp_data.h5', 'data'))
+    # nodes
+    hp_nodes = hp_data.get('/nodes')
+    hp_nodes = _convert_geometry(hp_nodes)
+    hp_nodes = gpd.GeoDataFrame(hp_nodes, crs="EPSG:31468").to_crs(epsg=4326)
+    # pipelines
+    hp_pipelines = hp_data.get('/pipelines')
+    hp_pipelines = _convert_geometry(hp_pipelines)
+    hp_pipelines = gpd.GeoDataFrame(hp_pipelines, crs="EPSG:31468").to_crs(epsg=4326)
+    # production
+    hp_production = hp_data.get('/production')
+    hp_production = _convert_geometry(hp_production)
+    hp_production = gpd.GeoDataFrame(hp_production, crs="EPSG:31468").to_crs(epsg=4326)
+    # industry
+    hp_industry = hp_data.get('/industry')
+    hp_industry = _convert_geometry(hp_industry)
+    hp_industry = gpd.GeoDataFrame(hp_industry, crs="EPSG:31468").to_crs(epsg=4326)
+    # storgae
+    hp_storages = hp_data.get('/storages')
+    hp_storages = _convert_geometry(hp_storages)
+    hp_storages = gpd.GeoDataFrame(hp_storages, crs="EPSG:31468").to_crs(epsg=4326)
+    # gas demand total
+    hp_gas_demand_total = hp_data.get('/gas_demand_total')
+    hp_gas_demand_total = _convert_geometry(hp_gas_demand_total)
+    hp_gas_demand_total = gpd.GeoDataFrame(hp_gas_demand_total, crs="EPSG:31468").to_crs(epsg=4326)
+    # close file
+    hp_data.close()
     # create dictonary
     hp_data = {'hp_nodes': hp_nodes,
                'hp_pipelines': hp_pipelines,

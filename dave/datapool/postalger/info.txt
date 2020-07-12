@@ -1,5 +1,0 @@
-These postalcode informations are based on the data from the website https://www.suche-postleitzahl.org/downloads. Some data was adapt to fix missing informations. 
-
-The parameter 'area' was calculated by the qgis software. 
-
-The informations about the population are based on the census from the year 2011, wich was released in 2015 by the german federal statistical office  

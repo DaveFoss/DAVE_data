@@ -1,6 +1,0 @@
-These gas grid informations for the high pressure level are based on the data from the publication "Electricity, Heat, and Gas Sector Data for Modeling the German System". 
-This Paper is available at https://www.diw.de/de/diw_01.c.574115.de/publikationen/data_documentation/2017_0092/electricity__heat_and_gas_sector_data_for_modelling_the_german_system.html  (last check 31.05.2020)
-
-The Shape files are available at https://zenodo.org/record/1044463#.XsfjVMBCRhF (last check 31.05.2020)
-
-The reference year for the data is 2015

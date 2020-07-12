@@ -3,8 +3,6 @@ import pandas as pd
 import requests
 import shapely
 
-from dave import dave_dir
-
 
 def oep_request(schema, table, where=None, geometry=None):
     """
@@ -29,7 +27,7 @@ def oep_request(schema, table, where=None, geometry=None):
     if where:
         request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/?where='+where, )
     else:
-        request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table, )
+        request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/', )
     # convert data to dataframe
     if request.status_code == 200:  #200 is the code of a successful request
         # if request is empty their will be an JSONDecodeError

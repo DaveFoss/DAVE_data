@@ -178,7 +178,7 @@ def read_osm(content, render=True, **kwargs):
 
     """
     doc = ET.fromstring(content)
-
+    
     nodes = read_nodes(doc)
     waynodes, waytags = read_ways(doc)
     relmembers, reltags = read_relations(doc)
@@ -187,7 +187,6 @@ def read_osm(content, render=True, **kwargs):
     
     if render:
         data = render_to_gdf(data, **kwargs)
-
     return data
 
 
@@ -290,7 +289,6 @@ def read_relations(doc):
 
     relmembers = _dict_to_dataframe(relmembers)
     reltags = _dict_to_dataframe(reltags)
-
     return relmembers, reltags
 
 
@@ -326,7 +324,8 @@ def render_ways(nodes, waynodes, waytags):
     def wayline(df):
         #df = df.sort_index(by='index')[['lon', 'lat']]  # for older pandas version
         df = df.sort_values(by='index')[['lon', 'lat']]
-        return LineString(df.values)
+        if len(df) > 1:
+            return LineString(df.values)
 
     # Group the ways and create a LineString for each one.  way_lines is a
     # Series where the index is the way id and the value is the LineString.
