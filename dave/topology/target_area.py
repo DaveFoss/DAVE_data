@@ -1,6 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import shapely.geometry
+import time
 from shapely.ops import cascaded_union
 
 from dave.datapool import read_postal, read_federal_states, query_osm
@@ -68,6 +69,8 @@ class target_area():
         This function searches for data on OpenStreetMap (OSM) and filters the relevant paramerters
         for grid modeling
         """
+        # add time delay because osm doesn't alowed more than 1 request per second.
+        time_delay = 1
         # search relevant road informations in the target area
         if self.roads:
             roads = query_osm('way', target, recurse='down',
@@ -88,6 +91,8 @@ class target_area():
             roads = roads[roads.geometry.intersects(target_area)]
             # write roads into grid_data
             self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
+            # add time delay
+            time.sleep(time_delay)
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
             roads_plot = query_osm('way', target, recurse='down',
@@ -107,6 +112,8 @@ class target_area():
             roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
             # write plotting roads into grid_data
             self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
+            # add time delay
+            time.sleep(time_delay)
         # search landuse informations in the target area
         if self.landuse:
             landuse = query_osm('way', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
@@ -147,6 +154,8 @@ class target_area():
             landuse['area_km2'] = landuse_area
             # write landuse into grid_data
             self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+            # add time delay
+            time.sleep(time_delay)
         # search building informations in the target area
         if self.buildings:
             buildings = query_osm('way', target, recurse='down', tags=['building'])
@@ -209,6 +218,9 @@ class target_area():
             self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
             self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.append(buildings.centroid)
             # rename building centroids
+            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.rename('geometry')
+            # add time delay
+            time.sleep(time_delay)
 
     def road_junctions(self):
         """
@@ -264,16 +276,13 @@ class target_area():
             # write road junctions into grid_data
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
 
-
-
-
     def _target_by_postalcode(self):
         """
         This function filter the postalcode informations for the target area.
         Multiple postalcode areas will be combinated.
         """
         postal = read_postal()
-        if len(self.postalcode) == 1 and  self.postalcode[0] == 'ALL':
+        if len(self.postalcode) == 1 and self.postalcode[0] == 'ALL':
             # in this case all postalcode areas will be choosen
             target = postal
         else:
@@ -292,7 +301,7 @@ class target_area():
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
         postal_list = postal_intersection['postalcode'].tolist()
         postal_filtered = []
-        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered] 
+        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered]
         self.own_postal = postal_filtered
 
     def _target_by_town_name(self):
@@ -301,7 +310,7 @@ class target_area():
         Multiple town name areas will be combinated
         """
         postal = read_postal()
-        if len(self.town_name) == 1 and  self.town_name[0] == 'ALL':
+        if len(self.town_name) == 1 and self.town_name[0] == 'ALL':
             # in this case all city names will be choosen (same case as all postalcode areas)
             target = postal
         else:
@@ -320,7 +329,7 @@ class target_area():
         Multiple federal state areas will be combinated.
         """
         states = read_federal_states()
-        if len(self.federal_state) == 1 and  self.federal_state[0] == 'ALL':
+        if len(self.federal_state) == 1 and self.federal_state[0] == 'ALL':
             # in this case all federal states will be choosen
             target = states
         else:
@@ -392,15 +401,21 @@ class target_area():
         self.grid_data.area = self.grid_data.area.append(self.target)
         # create borders for target area, load osm-data and write into grid data
         if self.town_name:
-            diff_targets = self.target['town'].drop_duplicates()
-            for i in range(0, len(diff_targets)):
-                town = self.target[self.target.town == diff_targets.iloc[i]]
-                if len(town) > 1:
-                    border = cascaded_union(town.geometry.tolist()).convex_hull
-                else:
-                    border = town.iloc[0].geometry.convex_hull
+            if self.town_name[0] == 'ALL':
+                convex_hull = self.target.geometry.convex_hull
+                border = cascaded_union(convex_hull).convex_hull
                 # Obtain data from OSM
-                target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
+                target_area._from_osm(self, target=border)
+            else:
+                diff_targets = self.target['town'].drop_duplicates()
+                for i in range(0, len(diff_targets)):
+                    town = self.target[self.target.town == diff_targets.iloc[i]]
+                    if len(town) > 1:
+                        border = cascaded_union(town.geometry.tolist()).convex_hull
+                    else:
+                        border = town.iloc[0].geometry.convex_hull
+                    # Obtain data from OSM
+                    target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
         else:
             for i in range(0, len(self.target)):
                 border = self.target.iloc[i].geometry.convex_hull
