@@ -401,21 +401,15 @@ class target_area():
         self.grid_data.area = self.grid_data.area.append(self.target)
         # create borders for target area, load osm-data and write into grid data
         if self.town_name:
-            if self.town_name[0] == 'ALL':
-                convex_hull = self.target.geometry.convex_hull
-                border = cascaded_union(convex_hull).convex_hull
+            diff_targets = self.target['town'].drop_duplicates()
+            for i in range(0, len(diff_targets)):
+                town = self.target[self.target.town == diff_targets.iloc[i]]
+                if len(town) > 1:
+                    border = cascaded_union(town.geometry.tolist()).convex_hull
+                else:
+                    border = town.iloc[0].geometry.convex_hull
                 # Obtain data from OSM
-                target_area._from_osm(self, target=border)
-            else:
-                diff_targets = self.target['town'].drop_duplicates()
-                for i in range(0, len(diff_targets)):
-                    town = self.target[self.target.town == diff_targets.iloc[i]]
-                    if len(town) > 1:
-                        border = cascaded_union(town.geometry.tolist()).convex_hull
-                    else:
-                        border = town.iloc[0].geometry.convex_hull
-                    # Obtain data from OSM
-                    target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
+                target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
         else:
             for i in range(0, len(self.target)):
                 border = self.target.iloc[i].geometry.convex_hull
