@@ -97,7 +97,7 @@ def create_ehv_topology(grid_data):
         ehv_buses['source'] = 'OEP'
         # add missing tso ehv nodes which are not in the ego node data
         ehv_buses_tso_names = ehv_buses.tso_name.to_list()
-        ehv_buses_tso = gpd.overlay(ehv_data['ehv_nodes'], grid_data.area, how='intersection')
+        ehv_buses_tso = gpd.overlay(ehv_data['ehv_nodes'], grid_data.area.drop(columns=['name']), how='intersection')
         for i, tso_bus in ehv_buses_tso.iterrows():
             if tso_bus['name'].replace('_380', '').replace('_220', '') not in ehv_buses_tso_names:
                 tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
