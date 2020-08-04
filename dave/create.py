@@ -10,6 +10,7 @@ from dave.topology import *  # target_area, create_ehv_topology, create_hv_topol
 from dave.plotting import *
 from dave.components import *
 from dave.model import *
+from dave.datapool import *
 
 
 def create_empty_dataset():
@@ -174,7 +175,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
             gas_levels[i] = 'MP'
         if gas_levels[i] == 2:
             gas_levels[i] = 'LP'
-            
+
     # --- create target area informations
     if ('LV' in power_levels) or ('LP' in gas_levels):
         target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
@@ -188,7 +189,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                     federal_state=federal_state, own_area=own_area,
                     buffer=0, roads=False, roads_plot=False,
                     buildings=False, landuse=True).target()
-        
+
     # --- create desired power grid levels
     if power_levels == ['EHV']:
         # create topology
@@ -201,7 +202,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         create_mv_topology(grid_data)
     elif power_levels == ['LV']:
         # create topology
-        create_lv_topology(grid_data)
+        #create_lv_topology(grid_data)
+        pass
     elif power_levels == ['EHV', 'HV']:
         # create topology
         create_ehv_topology(grid_data)
@@ -287,7 +289,6 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     # create gas grid components
     if gas_levels:
         gas_components(grid_data)
-        
     # create dave output folder on desktop for plotting and converted models
     if plot or convert:
         print('Save plots and converted grid models at the following path:')
@@ -295,6 +296,10 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         print('-----------------------------------------------------------------------')
         if not os.path.exists(dave_output_dir):
             os.makedirs(dave_output_dir)
+    # save DaVe dataset to archiv and give it back to output folder
+    print('Save DaVe dataset to archiv')
+    print('---------------------------')
+    to_archiv(grid_data)
     # plot informations
     if plot:
         plot_target_area(grid_data)
