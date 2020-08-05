@@ -4,7 +4,8 @@ import shapely.geometry
 import time
 from shapely.ops import cascaded_union
 
-from dave.datapool import read_postal, read_federal_states, query_osm
+from dave.datapool import *  #read_postal, read_federal_states, query_osm
+
 
 
 
@@ -70,7 +71,7 @@ class target_area():
         for grid modeling
         """
         # add time delay because osm doesn't alowed more than 1 request per second.
-        time_delay = 1
+        time_delay = 5
         # search relevant road informations in the target area
         if self.roads:
             roads = query_osm('way', target, recurse='down',
@@ -291,6 +292,8 @@ class target_area():
                     target = postal[postal.postalcode == self.postalcode[i]]
                 else:
                     target = target.append(postal[postal.postalcode == self.postalcode[i]])
+            # sort federal state names
+            self.postalcode.sort()
         self.target = target
 
     def _own_area_postal(self):
@@ -314,13 +317,20 @@ class target_area():
             # in this case all city names will be choosen (same case as all postalcode areas)
             target = postal
         else:
+            names_right = []
             for i in range(len(self.town_name)):
                 if i == 0:
-                    target = postal[postal.town == self.town_name[0].capitalize()]
+                    town_name = self.town_name[0].capitalize()
+                    target = postal[postal.town == town_name]
                 else:
-                    target = target.append(postal[postal.town == self.town_name[i].capitalize()])
+                    town_name = self.town_name[i].capitalize()
+                    target = target.append(postal[postal.town == town_name])
+                names_right.append(town_name)
                 if target.empty:
                     raise ValueError('town name wasn`t found. Please check your input')
+            # sort federal state names
+            names_right.sort()
+            self.town_name = names_right
         self.target = target
 
     def _target_by_federal_state(self):
@@ -333,6 +343,7 @@ class target_area():
             # in this case all federal states will be choosen
             target = states
         else:
+            names_right = []
             for i in range(len(self.federal_state)):
                 # bring name in right form
                 state_name = self.federal_state[i].split('-')
@@ -340,12 +351,16 @@ class target_area():
                     state_name = state_name[0].capitalize()
                 else:
                     state_name = state_name[0].capitalize()+'-'+state_name[1].capitalize()
+                names_right.append(state_name)
                 if i == 0:
                     target = states[states['name'] == state_name]
                 else:
                     target = target.append(states[states['name'] == state_name])
                 if target.empty:
                     raise ValueError('federal state name wasn`t found. Please check your input')
+            # sort federal state names
+            names_right.sort()
+            self.federal_state = names_right
         self.target = target
         # convert federal states into postal code areas for target_input
         postal = read_postal()
@@ -370,14 +385,14 @@ class target_area():
             target_input = pd.DataFrame({'typ': 'postalcode', 
                                          'data': [self.postalcode],
                                          'power_levels': [self.power_levels],
-                                         'gas_level': [self.gas_levels]})
+                                         'gas_levels': [self.gas_levels]})
             self.grid_data.target_input = target_input
         elif self.town_name:
             target_area._target_by_town_name(self)
             target_input = pd.DataFrame({'typ': 'town name',
                                          'data': [self.town_name],
                                          'power_levels': [self.power_levels],
-                                         'gas_level': [self.gas_levels]})
+                                         'gas_levels': [self.gas_levels]})
             self.grid_data.target_input = target_input
         elif self.federal_state:
             target_area._target_by_federal_state(self)
@@ -385,7 +400,7 @@ class target_area():
                                          'federal_states': [self.federal_state],
                                          'data': [self.federal_state_postal],
                                          'power_levels': [self.power_levels],
-                                         'gas_level': [self.gas_levels]})
+                                         'gas_levels': [self.gas_levels]})
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
@@ -393,27 +408,38 @@ class target_area():
             target_input = pd.DataFrame({'typ': 'own area',
                                          'data': [self.own_postal],
                                          'power_levels': [self.power_levels],
-                                         'gas_level': [self.gas_levels]})
+                                         'gas_levels': [self.gas_levels]})
             self.grid_data.target_input = target_input
         else:
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        # create borders for target area, load osm-data and write into grid data
-        if self.town_name:
-            diff_targets = self.target['town'].drop_duplicates()
-            for i in range(0, len(diff_targets)):
-                town = self.target[self.target.town == diff_targets.iloc[i]]
-                if len(town) > 1:
-                    border = cascaded_union(town.geometry.tolist()).convex_hull
-                else:
-                    border = town.iloc[0].geometry.convex_hull
-                # Obtain data from OSM
-                target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
+        
+        # check if requested model is already in the archiv
+        if not self.grid_data.target_input.iloc [0].typ=='own area':
+            file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
         else:
-            for i in range(0, len(self.target)):
-                border = self.target.iloc[i].geometry.convex_hull
-                # Obtain data from OSM
-                target_area._from_osm(self, target=border, target_number=i)
-        # find road junctions
-        target_area.road_junctions(self)
+            file_exists = False
+            file_name = 'None'
+        if not file_exists:
+            # create borders for target area, load osm-data and write into grid data
+            if self.town_name:
+                diff_targets = self.target['town'].drop_duplicates()
+                for i in range(0, len(diff_targets)):
+                    town = self.target[self.target.town == diff_targets.iloc[i]]
+                    if len(town) > 1:
+                        border = cascaded_union(town.geometry.tolist()).convex_hull
+                    else:
+                        border = town.iloc[0].geometry.convex_hull
+                    # Obtain data from OSM
+                    target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i])
+            else:
+                for i in range(0, len(self.target)):
+                    border = self.target.iloc[i].geometry.convex_hull
+                    # Obtain data from OSM
+                    target_area._from_osm(self, target=border, target_number=i)
+            # find road junctions
+            target_area.road_junctions(self)
+            return file_exists, file_name
+        else: 
+            return file_exists, file_name

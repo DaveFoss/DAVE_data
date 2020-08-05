@@ -124,8 +124,6 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     Evt. noch power_levels gegen voltage_levels tauschen (das müsste aber in alle Skripten geprüft werden)
     Evt. noch gas_levels gegen pressure_levels tauschen (das müsste aber in alle Skripten geprüft werden)
     """
-   
-
     # create empty datastructure
     grid_data = create_empty_dataset()
 
@@ -178,117 +176,118 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     # --- create target area informations
     if ('LV' in power_levels) or ('LP' in gas_levels):
-        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                    postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    buffer=0, roads=True, roads_plot=True,
-                    buildings=True, landuse=True).target()
+        file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
+                                postalcode=postalcode, town_name=town_name,
+                                federal_state=federal_state, own_area=own_area,
+                                buffer=0, roads=True, roads_plot=True,
+                                buildings=True, landuse=True).target()
     else:
-        target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                    postalcode=postalcode, town_name=town_name,
-                    federal_state=federal_state, own_area=own_area,
-                    buffer=0, roads=False, roads_plot=False,
-                    buildings=False, landuse=True).target()
-
-    # --- create desired power grid levels
-    if power_levels == ['EHV']:
-        # create topology
-        create_ehv_topology(grid_data)
-    elif power_levels == ['HV']:
-        # create topology
-        create_hv_topology(grid_data)
-    elif power_levels == ['MV']:
-        # create topology
-        create_mv_topology(grid_data)
-    elif power_levels == ['LV']:
-        # create topology
-        #create_lv_topology(grid_data)
-        pass
-    elif power_levels == ['EHV', 'HV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_hv_topology(grid_data)
-    elif power_levels == ['EHV', 'MV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_mv_topology(grid_data)
-    elif power_levels == ['EHV', 'LV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_lv_topology(grid_data)
-    elif power_levels == ['HV', 'MV']:
-        # create topology
-        create_hv_topology(grid_data)
-        create_mv_topology(grid_data)
-    elif power_levels == ['HV', 'LV']:
-        # create topology
-        create_hv_topology(grid_data)
-        create_lv_topology(grid_data)
-    elif power_levels == ['MV', 'LV']:
-        # create topology
-        create_mv_topology(grid_data)
-        create_lv_topology(grid_data)
-    elif power_levels == ['EHV', 'HV', 'MV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_hv_topology(grid_data)
-        create_mv_topology(grid_data)
-    elif power_levels == ['EHV', 'HV', 'LV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_hv_topology(grid_data)
-        create_lv_topology(grid_data)
-    elif power_levels == ['EHV', 'MV', 'LV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_mv_topology(grid_data)
-        create_lv_topology(grid_data)
-    elif power_levels == ['HV', 'MV', 'LV']:
-        # create topology
-        create_hv_topology(grid_data)
-        create_mv_topology(grid_data)
-        create_lv_topology(grid_data)
-    elif power_levels == ['EHV', 'HV', 'MV', 'LV']:
-        # create topology
-        create_ehv_topology(grid_data)
-        create_hv_topology(grid_data)
-        create_mv_topology(grid_data)
-        create_lv_topology(grid_data)
-    else:
-        print('no voltage level was choosen or their is a failure in the input value.')
-        print(f'the input for the power levels was: {power_levels}')
-        print('---------------------------------------------------')
-    # create power grid components
-    if power_levels:
-        power_components(grid_data)
-
-    # --- create desired gas grid levels
-    if gas_levels == ['HP']:
-        create_hp_topology(grid_data)
-    elif gas_levels == ['MP']:
-        create_mp_topology(grid_data)
-    elif gas_levels == ['LP']:
-        create_lp_topology(grid_data)
-    elif gas_levels == ['HP', 'MP']:
-        create_hp_topology(grid_data)
-        create_mp_topology(grid_data)
-    elif gas_levels == ['HP', 'LP']:
-        create_hp_topology(grid_data)
-        create_lp_topology(grid_data)
-    elif gas_levels == ['MP', 'LP']:
-        create_mp_topology(grid_data)
-        create_lp_topology(grid_data)
-    elif gas_levels == ['HP', 'MP', 'LP']:
-        create_hp_topology(grid_data)
-        create_mp_topology(grid_data)
-        create_lp_topology(grid_data)
-    else:
-        print('no gas level was choosen or their is a failure in the input value.')
-        print(f'the input for the gas levels was: {gas_levels}')
-        print('-----------------------------------------------')
-    # create gas grid components
-    if gas_levels:
-        gas_components(grid_data)
+        file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
+                                postalcode=postalcode, town_name=town_name,
+                                federal_state=federal_state, own_area=own_area,
+                                buffer=0, roads=False, roads_plot=False,
+                                buildings=False, landuse=True).target()
+    if not file_exists:
+        # --- create desired power grid levels
+        if power_levels == ['EHV']:
+            # create topology
+            create_ehv_topology(grid_data)
+        elif power_levels == ['HV']:
+            # create topology
+            create_hv_topology(grid_data)
+        elif power_levels == ['MV']:
+            # create topology
+            create_mv_topology(grid_data)
+        elif power_levels == ['LV']:
+            # create topology
+            #create_lv_topology(grid_data)
+            pass
+        elif power_levels == ['EHV', 'HV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_hv_topology(grid_data)
+        elif power_levels == ['EHV', 'MV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_mv_topology(grid_data)
+        elif power_levels == ['EHV', 'LV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_lv_topology(grid_data)
+        elif power_levels == ['HV', 'MV']:
+            # create topology
+            create_hv_topology(grid_data)
+            create_mv_topology(grid_data)
+        elif power_levels == ['HV', 'LV']:
+            # create topology
+            create_hv_topology(grid_data)
+            create_lv_topology(grid_data)
+        elif power_levels == ['MV', 'LV']:
+            # create topology
+            create_mv_topology(grid_data)
+            create_lv_topology(grid_data)
+        elif power_levels == ['EHV', 'HV', 'MV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_hv_topology(grid_data)
+            create_mv_topology(grid_data)
+        elif power_levels == ['EHV', 'HV', 'LV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_hv_topology(grid_data)
+            create_lv_topology(grid_data)
+        elif power_levels == ['EHV', 'MV', 'LV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_mv_topology(grid_data)
+            create_lv_topology(grid_data)
+        elif power_levels == ['HV', 'MV', 'LV']:
+            # create topology
+            create_hv_topology(grid_data)
+            create_mv_topology(grid_data)
+            create_lv_topology(grid_data)
+        elif power_levels == ['EHV', 'HV', 'MV', 'LV']:
+            # create topology
+            create_ehv_topology(grid_data)
+            create_hv_topology(grid_data)
+            create_mv_topology(grid_data)
+            create_lv_topology(grid_data)
+        else:
+            print('no voltage level was choosen or their is a failure in the input value.')
+            print(f'the input for the power levels was: {power_levels}')
+            print('---------------------------------------------------')
+        # create power grid components
+        """
+        if power_levels:
+            power_components(grid_data)
+        """
+        # --- create desired gas grid levels
+        if gas_levels == ['HP']:
+            create_hp_topology(grid_data)
+        elif gas_levels == ['MP']:
+            create_mp_topology(grid_data)
+        elif gas_levels == ['LP']:
+            create_lp_topology(grid_data)
+        elif gas_levels == ['HP', 'MP']:
+            create_hp_topology(grid_data)
+            create_mp_topology(grid_data)
+        elif gas_levels == ['HP', 'LP']:
+            create_hp_topology(grid_data)
+            create_lp_topology(grid_data)
+        elif gas_levels == ['MP', 'LP']:
+            create_mp_topology(grid_data)
+            create_lp_topology(grid_data)
+        elif gas_levels == ['HP', 'MP', 'LP']:
+            create_hp_topology(grid_data)
+            create_mp_topology(grid_data)
+            create_lp_topology(grid_data)
+        else:
+            print('no gas level was choosen or their is a failure in the input value.')
+            print(f'the input for the gas levels was: {gas_levels}')
+            print('-----------------------------------------------')
+        # create gas grid components
+        if gas_levels:
+            gas_components(grid_data)
     # create dave output folder on desktop for plotting and converted models
     if plot or convert:
         print('Save plots and converted grid models at the following path:')
@@ -297,9 +296,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         if not os.path.exists(dave_output_dir):
             os.makedirs(dave_output_dir)
     # save DaVe dataset to archiv and give it back to output folder
-    print('Save DaVe dataset to archiv')
-    print('---------------------------')
-    to_archiv(grid_data)
+    if not grid_data.target_input.iloc[0].typ == 'own area':
+        print('Save DaVe dataset to archiv')
+        print('---------------------------')
+        to_archiv(grid_data)
+
     # plot informations
     if plot:
         plot_target_area(grid_data)
@@ -325,3 +326,4 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         return grid_data, net_gas
     else:
         return grid_data
+    
