@@ -288,6 +288,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         # create gas grid components
         if gas_levels:
             gas_components(grid_data)
+    else:
+        # read dataset from archiv
+        grid_data = from_archiv(f'{file_name}.h5')
     # create dave output folder on desktop for plotting and converted models
     if plot or convert:
         print('Save plots and converted grid models at the following path:')
