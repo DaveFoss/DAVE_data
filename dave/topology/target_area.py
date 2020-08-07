@@ -71,7 +71,7 @@ class target_area():
         for grid modeling
         """
         # add time delay because osm doesn't alowed more than 1 request per second.
-        time_delay = 5
+        time_delay = 30
         # search relevant road informations in the target area
         if self.roads:
             roads = query_osm('way', target, recurse='down',
@@ -438,6 +438,14 @@ class target_area():
                     border = self.target.iloc[i].geometry.convex_hull
                     # Obtain data from OSM
                     target_area._from_osm(self, target=border, target_number=i)
+            # reset index for all osm data
+            self.grid_data.roads.roads = self.grid_data.roads.roads.reset_index(drop=True)
+            self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.reset_index(drop=True)
+            self.grid_data.landuse = self.grid_data.landuse.reset_index(drop=True)
+            self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.reset_index(drop=True)
+            self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.reset_index(drop=True)
+            self.grid_data.buildings.other = self.grid_data.buildings.other.reset_index(drop=True)
+            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.reset_index(drop=True)
             # find road junctions
             target_area.road_junctions(self)
             return file_exists, file_name
