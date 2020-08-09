@@ -73,7 +73,7 @@ def create_ehv_topology(grid_data):
                     break
         # read ehv tso data
         ehv_data = read_ehv_data()
-        # assign tso ehv nodes to the ego ehv nodes
+        # assign tso ehv node names to the ego ehv nodes
         for i, node in ehv_data['ehv_nodes'].iterrows():
             if node.osm_id:
                 # search for the matching ego ehv substation for the tso ehv node
@@ -90,14 +90,18 @@ def create_ehv_topology(grid_data):
                 for j, bus in ehv_buses.iterrows():
                     distance = node.geometry.distance(bus.geometry)
                     if distance < 2E-03:
-                        ehv_buses.at[bus.name, 'tso_name'] = node['name']
+                        ehv_buses.at[bus.name, 'tso_name'] = node['name'].replace('_380', '').replace('_220', '')
                         ehv_buses.at[bus.name, 'tso'] = node['tso']
                         break
         # add oep as source
         ehv_buses['source'] = 'OEP'
         # add missing tso ehv nodes which are not in the ego node data
         ehv_buses_tso_names = ehv_buses.tso_name.to_list()
-        ehv_buses_tso = gpd.overlay(ehv_data['ehv_nodes'], grid_data.area.drop(columns=['name']), how='intersection')
+        if 'name' in grid_data.area.keys():
+            area = grid_data.area.drop(columns=['name'])
+        else:
+            area = grid_data.area
+        ehv_buses_tso = gpd.overlay(ehv_data['ehv_nodes'], area, how='intersection')
         for i, tso_bus in ehv_buses_tso.iterrows():
             if tso_bus['name'].replace('_380', '').replace('_220', '') not in ehv_buses_tso_names:
                 tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
@@ -112,7 +116,6 @@ def create_ehv_topology(grid_data):
         ehv_buses['voltage_level'] = 1
         # add dave name
         ehv_buses.insert(0, 'dave_name', None)
-        ehv_buses = ehv_buses.reset_index(drop=True)
         for i, bus in ehv_buses.iterrows():
             ehv_buses.at[bus.name, 'dave_name'] = f'node_1_{i}'
         # add ehv nodes to grid data
@@ -174,35 +177,35 @@ def create_ehv_topology(grid_data):
         # add missing tso ehv lines which are not in the ego line data
         ehv_buses_from_tso = ehv_buses[ehv_buses.source == 'tso data'].tso_name.tolist()
         for i, line in ehv_data['ehv_lines'].iterrows():
-            from_bus = line.from_bus
-            to_bus = line.to_bus
+            from_bus = line.from_bus_voltage.replace('_380', '').replace('_220', '')
+            to_bus = line.to_bus_voltage.replace('_380', '').replace('_220', '')
             if ((from_bus in ehv_buses_from_tso) and (to_bus in ehv_buses_tso_names)) or ((to_bus in ehv_buses_from_tso) and (from_bus in ehv_buses_tso_names)):
                 g_s = line.g_us*1E-06 if str(line.g_us) != 'nan' else line.g_us
                 b_s = line.b_us*1E-06 if str(line.b_us) != 'nan' else line.b_us
                 # search for the buses with the right voltage level
-                from_bus = ehv_buses[ehv_buses.tso_name == line.from_bus]
-                to_bus = ehv_buses[ehv_buses.tso_name == line.to_bus]
-                if len(from_bus) > 1:
-                    from_bus = from_bus[from_bus.voltage_kv == line.vn_kv]
-                if len(to_bus) > 1:
-                    to_bus = to_bus[to_bus.voltage_kv == line.vn_kv]
-                geometry = LineString([from_bus.iloc[0].geometry, to_bus.iloc[0].geometry])
-                ehv_lines = ehv_lines.append(gpd.GeoDataFrame({'bus0': from_bus.iloc[0].dave_name,
-                                                               'bus1': to_bus.iloc[0].dave_name,
-                                                               'x_ohm': line.x_ohm,
-                                                               'x_ohm_per_km': line.x_ohm_per_km,
-                                                               'r_ohm': line.r_ohm,
-                                                               'r_ohm_per_km': line.r_ohm_per_km,
-                                                               'g_s': g_s,
-                                                               'b_s': b_s,
-                                                               'c_nf': line.c_uf,
-                                                               'c_nf_per_km': line.c_nf_per_km,
-                                                               'length_km': line.length_km,
-                                                               'geometry': [geometry],
-                                                               'voltage_kv': line.vn_kv,
-                                                               'max_i_ka': line.max_i_ka,
-                                                               'source': 'tso data',
-                                                               'parallel': 1}))
+                from_bus = ehv_buses[ehv_buses.tso_name == from_bus]
+                to_bus = ehv_buses[ehv_buses.tso_name == to_bus]
+                # find the bus with the right voltage
+                from_bus = from_bus[from_bus.voltage_kv == line.vn_kv]
+                to_bus = to_bus[to_bus.voltage_kv == line.vn_kv]
+                if (not from_bus.empty) and (not to_bus.empty):
+                    geometry = LineString([from_bus.iloc[0].geometry, to_bus.iloc[0].geometry])
+                    ehv_lines = ehv_lines.append(gpd.GeoDataFrame({'bus0': from_bus.iloc[0].dave_name,
+                                                                   'bus1': to_bus.iloc[0].dave_name,
+                                                                   'x_ohm': line.x_ohm,
+                                                                   'x_ohm_per_km': line.x_ohm_per_km,
+                                                                   'r_ohm': line.r_ohm,
+                                                                   'r_ohm_per_km': line.r_ohm_per_km,
+                                                                   'g_s': g_s,
+                                                                   'b_s': b_s,
+                                                                   'c_nf': line.c_uf,
+                                                                   'c_nf_per_km': line.c_nf_per_km,
+                                                                   'length_km': line.length_km,
+                                                                   'geometry': [geometry],
+                                                                   'voltage_kv': line.vn_kv,
+                                                                   'max_i_ka': line.max_i_ka,
+                                                                   'source': 'tso data',
+                                                                   'parallel': 1}))
         # add voltage level
         ehv_lines['voltage_level'] = 1
         # add dave name
