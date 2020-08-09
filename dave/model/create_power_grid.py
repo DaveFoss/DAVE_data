@@ -1,7 +1,7 @@
 import pandapower as pp
 from shapely import geometry, ops
 
-from dave import __version__
+
 from dave import dave_output_dir
 
 
@@ -30,11 +30,12 @@ def create_power_grid(grid_data):
     # create empty network
     net = pp.create_empty_network()
     # add dave version
-    net['dave_version'] = __version__
+    net['dave_version'] = grid_data.dave_version
 
     # --- create extra high voltage topology
     # create buses
     if not grid_data.ehv_data.ehv_nodes.empty:
+        net.bus['tso_name'] = None
         for i, bus in grid_data.ehv_data.ehv_nodes.iterrows():
             pp.create_bus(net,
                           name=bus.dave_name,
@@ -55,7 +56,13 @@ def create_power_grid(grid_data):
             # get line geometry coordinates
             if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
                 merged_line = ops.linemerge(line.geometry)
-                line_coords = merged_line.coords[:]
+                # sometimes line merge can not merge the lines correctly
+                if isinstance(merged_line, geometry.multilinestring.MultiLineString):
+                    line_coords = []
+                    for i in range(0, len(merged_line)):
+                        line_coords += merged_line[i].coords[:]
+                else:
+                    line_coords = merged_line.coords[:]
             else:
                 line_coords = line.geometry.coords[:]
             # get bus indexes for the line buses
@@ -105,8 +112,11 @@ def create_power_grid(grid_data):
             # get line geometry coordinates
             if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
                 merged_line = ops.linemerge(line.geometry)
+                # sometimes line merge can not merge the lines correctly
                 if isinstance(merged_line, geometry.multilinestring.MultiLineString):
-                    line_coords = merged_line[0].coords[:]
+                    line_coords = []
+                    for i in range(0, len(merged_line)):
+                        line_coords += merged_line[i].coords[:]
                 else:
                     line_coords = merged_line.coords[:]
             else:
@@ -185,7 +195,7 @@ def create_power_grid(grid_data):
             line_coords = line.geometry.coords[:]
             pp.create_line(net,
                            name=line.dave_name,
-                           from_bus=p.get_element_index(net, element='bus', name=line.from_bus),
+                           from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
                            to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
                            length_km=line.length_m/1000,
                            std_type=std_type,
@@ -355,8 +365,6 @@ def create_power_grid(grid_data):
                        bus=ext_bus,
                        name=f'ext_grid_{voltage_level}_0')
     
-    # save grid model in the dave output folder                   
-    file_path = dave_output_dir + '\\dave_power_grid.p'
-    pp.to_pickle(net, file_path)
+    
     
     return net
