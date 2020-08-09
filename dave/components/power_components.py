@@ -1030,10 +1030,12 @@ def transformators(grid_data):
                         # check if node allready exsist, otherwise create them
                         if grid_data.hv_data.hv_nodes.empty:
                             hv_bus0['voltage_level'] = 3
+                            hv_bus0['source'] = 'OEP'
                             grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
                         else:
                             if grid_data.hv_data.hv_nodes[grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0].empty:
                                 hv_bus0['voltage_level'] = 3
+                                hv_bus0['source'] = 'OEP'
                                 grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
                                 
             if 'HV' in grid_data.target_input.power_levels[0]:
@@ -1050,10 +1052,12 @@ def transformators(grid_data):
                         # check if node allready exsist, otherwise create them
                         if grid_data.ehv_data.ehv_nodes.empty:
                             ehv_bus1['voltage_level'] = 1
+                            ehv_bus1['source'] = 'OEP'
                             grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
                         else:
                             if grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1].empty:
                                 ehv_bus1['voltage_level'] = 1
+                                ehv_bus1['source'] = 'OEP'
                                 grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
         # add dave name for nodes which are created for the transformers
         if 'dave_name' not in grid_data.hv_data.hv_nodes.keys():
@@ -1168,6 +1172,7 @@ def transformators(grid_data):
                 remove_columns.remove('geometry')
                 hv_nodes = hv_nodes.drop(columns=remove_columns)
             hv_nodes['voltage_level'] = 3
+            hv_nodes['source'] = 'OEP'
             hv_nodes = hv_nodes.drop(columns=(['current_type', 'v_mag_pu_min', 'v_mag_pu_max', 'geom']))
             # add dave name
             hv_nodes.insert(0, 'dave_name', None)
