@@ -33,6 +33,24 @@ def power_processing(net_power, min_vm_pu=0.95, max_vm_pu=1.05, max_line_loading
         for line_index in lines:
             pp.create_replacement_switch_for_branch(net_power, element='line', idx=line_index)
         pp.drop_lines(net_power, lines=lines)
+    # correct invalid values
+    if 'invalid_values' in diagnostic.keys():
+        if 'gen' in diagnostic['invalid_values'].keys():
+            for gen in diagnostic['invalid_values']['gen']:
+                if (gen[1] == 'p_mw') and (gen[2] == 'nan'):
+                    net_power.gen.at[gen[0], 'p_mw'] = 0
+        if 'line' in diagnostic['invalid_values'].keys():
+            drop_lines = []
+            for line in diagnostic['invalid_values']['line']:
+                if (line[1] == 'length_km') and (line[2] == 0):
+                    pp.create_replacement_switch_for_branch(net_power, element='line', idx=line[0])
+                    drop_lines.append(line[0])
+            pp.drop_lines(net_power, lines=drop_lines)
+                
+        
+        
+        
+        
     # run network diagnostic
     diagnostic = pp.diagnostic(net_power, report_style='None')
     # clean up overloads
@@ -62,10 +80,5 @@ def power_processing(net_power, min_vm_pu=0.95, max_vm_pu=1.05, max_line_loading
     # hierbei muss bei den loads, sgens und gens controllable definiert sein und deren grenzen
     # schaune ob ich das optimierte netz dann abspeichern kann
     
-    
-    
-    # save grid model in the dave output folder                   das noch in create verschieben??
-    file_path = dave_output_dir + '\\dave_power_grid.json'
-    pp.to_json(net_power, file_path)
-    
+
     return net_power
