@@ -177,7 +177,7 @@ def create_power_grid(grid_data):
             net.bus.at[bus_id, 'node_type'] = bus.node_type
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
-
+    """
     # lv buses for road junctions
     if not grid_data.roads.road_junctions.empty:
         for i, junction in grid_data.roads.road_junctions.items():
@@ -187,6 +187,7 @@ def create_power_grid(grid_data):
                           vn_kv=junction.voltage_kv,
                           geodata=junction_point,
                           type='m')
+    """
     # create lines
     std_type = 'NAYY 4x150 SE'  # dummy value, must be changed
     # lv lines for buildings
@@ -197,7 +198,7 @@ def create_power_grid(grid_data):
                            name=line.dave_name,
                            from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
                            to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
-                           length_km=line.length_m/1000,
+                           length_km=line.length_km,
                            std_type=std_type,
                            geodata=[list(coords) for coords in line_coords])
             # additional Informations
@@ -309,7 +310,8 @@ def create_power_grid(grid_data):
                                            element='sgen',
                                            name=plant.dave_name)
             net.sgen.at[sgen_id, 'geometry'] = plant.geometry
-            net.sgen.at[sgen_id, 'aggregated'] = plant.aggregated
+            if 'aggregated' in plant.keys():
+                net.sgen.at[sgen_id, 'aggregated'] = plant.aggregated
             net.sgen.at[sgen_id, 'voltage_level'] = plant.voltage_level
             net.sgen.at[sgen_id, 'source'] = plant.source
     # create conventional powerplants
@@ -350,6 +352,9 @@ def create_power_grid(grid_data):
     # --- create ext_grid
     # place external grid at the first bus on the highest considered voltage level
     if 'EHV' in grid_data.target_input.power_levels[0]:
+        # hier schauen ob ein akw im gebiet ist und dann das als ext grid nehmen
+        # ansonsten ansonsten das großte conventionelle nehmen
+        # wenn kein con power plant existiert, dann an knoten[0]
         first_bus = grid_data.ehv_data.ehv_nodes.iloc[0].dave_name
         voltage_level = 1
     elif 'HV' in grid_data.target_input.power_levels[0]:
