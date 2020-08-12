@@ -177,17 +177,6 @@ def create_power_grid(grid_data):
             net.bus.at[bus_id, 'node_type'] = bus.node_type
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
-    """
-    # lv buses for road junctions
-    if not grid_data.roads.road_junctions.empty:
-        for i, junction in grid_data.roads.road_junctions.items():
-            junction_point = junction.coords[:][0]
-            pp.create_bus(net,
-                          name=f'road junction {i}',
-                          vn_kv=junction.voltage_kv,
-                          geodata=junction_point,
-                          type='m')
-    """
     # create lines
     std_type = 'NAYY 4x150 SE'  # dummy value, must be changed
     # lv lines for buildings
@@ -329,7 +318,8 @@ def create_power_grid(grid_data):
                                           element='gen',
                                           name=plant.dave_name)
             net.gen.at[gen_id, 'geometry'] = plant.geometry
-            net.gen.at[gen_id, 'aggregated'] = plant.aggregated
+            if 'aggregated' in plant.keys():
+                net.gen.at[gen_id, 'aggregated'] = plant.aggregated
             net.gen.at[gen_id, 'voltage_level'] = plant.voltage_level
 
     # --- create loads
