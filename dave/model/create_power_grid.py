@@ -329,7 +329,7 @@ def create_power_grid(grid_data):
             net.gen.at[gen_id, 'geometry'] = plant.geometry
             net.gen.at[gen_id, 'aggregated'] = plant.aggregated
             net.gen.at[gen_id, 'voltage_level'] = plant.voltage_level
-    
+
     # --- create loads
     if not grid_data.components_power.loads.empty:
         for i, load in grid_data.components_power.loads.iterrows():
@@ -337,10 +337,11 @@ def create_power_grid(grid_data):
             pp.create_load(net,
                            bus=load_bus,
                            p_mw=load.p_mw,
+                           q_mvar=load.q_mvar,
                            name=load.dave_name,
                            type=load.landuse)
             # additional Informations
-            load_id = pp.get_element_index(net, 
+            load_id = pp.get_element_index(net,
                                            element='load',
                                            name=load.dave_name)
             net.load.at[load_id, 'area_km2'] = load.area_km2

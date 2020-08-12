@@ -289,20 +289,20 @@ def power_plant_lines(grid_data):
                     lv_lines = grid_data.lv_data.lv_lines
                     last_line_name = lv_lines.iloc[len(lv_lines)-1].dave_name
                     number = int(last_line_name.replace('line_7_',''))+1
-                    
-                    
-                    # line neighbor muss noch angepasst werden auf from und to bus aus lv_lines
-                    line_neighbor = lv_lines[(lv_lines.bus0 == bus_origin.dave_name) | (lv_lines.bus1 == bus_origin.dave_name)].iloc[0]
-                    
                     dave_name_line_aux = f'line_7_{number}'
-                    # Diese Parameter müssen noch angepasst werden wenn lv neu berechnet wird
-                    auxillary_line = gpd.GeoDataFrame({'dave_name': dave_name_line_aux,
-                                                      'length_km': distance/1000,
-                                                      'geometry': [line_geometry],
-                                                      'voltage_kv': line_neighbor.voltage_kv,
-                                                      'voltage_level': line_neighbor.voltage_level,
-                                                      'source': 'dave internal'})
-                    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(auxillary_line).reset_index(drop=True)
+                    # check if there is a line neighbor
+                    # line neighbor muss noch angepasst werden auf from und to bus aus lv_lines
+                    line_neighbor = lv_lines[(lv_lines.bus0 == bus_origin.dave_name) | (lv_lines.bus1 == bus_origin.dave_name)]
+                    if not line_neighbor.empty:
+                        line_neighbor = line_neighbor.iloc[0]
+                        # Diese Parameter müssen noch angepasst werden wenn lv neu berechnet wird
+                        auxillary_line = gpd.GeoDataFrame({'dave_name': dave_name_line_aux,
+                                                          'length_km': distance/1000,
+                                                          'geometry': [line_geometry],
+                                                          'voltage_kv': line_neighbor.voltage_kv,
+                                                          'voltage_level': line_neighbor.voltage_level,
+                                                          'source': 'dave internal'})
+                        grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(auxillary_line).reset_index(drop=True)
                 
 
 def renewable_powerplants(grid_data):
@@ -1270,10 +1270,14 @@ def loads(grid_data):
     """
     print('create loads for target area')
     print('----------------------------')
-    # define avarage values
+    # define avarage load values
     residential_load = 2  # in MW/km²
     industrial_load = 10  # in MW/km²
     commercial_load = 3  # in MW/km²
+    # set power factor for loads
+    cos_phi_residential = 0.95  # induktiv
+    cos_phi_industrial = 0.75  # induktiv
+    cos_phi_commercial = 0.75  # induktiv
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
@@ -1328,17 +1332,21 @@ def loads(grid_data):
                     residential_polygons = landuse_polygons[landuse_polygons.landuse == 'residential']
                     area = residential_polygons.area_km2.sum()
                     p_mw = residential_load*area
+                    q_mvar = p_mw*math.sin(math.acos(cos_phi_residential))/cos_phi_residential
                 elif loadtype == 'industrial':
                     industrial_polygons = landuse_polygons[landuse_polygons.landuse == 'industrial']
                     area = industrial_polygons.area_km2.sum()
                     p_mw = industrial_load*area
+                    q_mvar = p_mw*math.sin(math.acos(cos_phi_industrial))/cos_phi_industrial
                 elif loadtype == 'commercial':
                     commercial_polygons = landuse_polygons[landuse_polygons.landuse.isin(['commercial', 'retail'])]
                     area = commercial_polygons.area_km2.sum()
                     p_mw = commercial_load*area
+                    q_mvar = p_mw*math.sin(math.acos(cos_phi_commercial))/cos_phi_commercial
                 if p_mw != 0:
                     load_df = gpd.GeoDataFrame({'bus': trafo_bus_lv,
                                                 'p_mw': p_mw,
+                                                'q_mvar': q_mvar,
                                                 'landuse': loadtype,
                                                 'trafo_name': trafo_name,
                                                 'area_km2': area,
