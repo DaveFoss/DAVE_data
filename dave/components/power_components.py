@@ -292,7 +292,7 @@ def power_plant_lines(grid_data):
                     dave_name_line_aux = f'line_7_{number}'
                     # check if there is a line neighbor
                     # line neighbor muss noch angepasst werden auf from und to bus aus lv_lines
-                    line_neighbor = lv_lines[(lv_lines.bus0 == bus_origin.dave_name) | (lv_lines.bus1 == bus_origin.dave_name)]
+                    line_neighbor = lv_lines[(lv_lines.from_bus == bus_origin.dave_name) | (lv_lines.to_bus == bus_origin.dave_name)]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
                         # Diese Parameter müssen noch angepasst werden wenn lv neu berechnet wird
@@ -301,7 +301,10 @@ def power_plant_lines(grid_data):
                                                           'geometry': [line_geometry],
                                                           'voltage_kv': line_neighbor.voltage_kv,
                                                           'voltage_level': line_neighbor.voltage_level,
-                                                          'source': 'dave internal'})
+                                                          'line_type': 'power plant line',
+                                                          'source': 'dave internal', 
+                                                          'from_bus': dave_name_bus_aux,
+                                                          'to_bus': bus_origin.dave_name})
                         grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(auxillary_line).reset_index(drop=True)
                 
 
