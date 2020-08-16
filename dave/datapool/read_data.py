@@ -160,3 +160,31 @@ def read_hp_data():
                'hp_storages': hp_storages,
                'hp_gas_demand_total': hp_gas_demand_total}
     return hp_data
+
+
+def read_household_consumption():
+    """
+    This data includes informations for the german high pressure gas grid based on the publication
+    "Electricity, Heat, and Gas Sector Data for Modeling the German System".
+    
+    The reference year for the data is 2015.
+
+    OUTPUT:
+         **high pressure data** (dict) - Informations for the german high pressure gas grid
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         hp_data = data.read_hp_data()
+    """
+    # --- read data
+    consumption_data = pd.HDFStore(get_data_path('household_power_consumption.h5', 'data'))
+    # consumption avarage
+    household_consumptions = consumption_data.get('/household_consumptions')
+    household_sizes = consumption_data.get('/household_sizes')
+    # close file
+    consumption_data.close()
+    # create dictonary
+    consumption_data = {'household_consumptions': household_consumptions,
+                        'household_sizes': household_sizes}
+    return consumption_data
