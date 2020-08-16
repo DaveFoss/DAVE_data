@@ -2,12 +2,13 @@ import geopandas as gpd
 import pandas as pd
 from geopy.geocoders import ArcGIS
 import shapely
-from shapely.geometry import Point, MultiPoint, LineString
-from shapely.ops import nearest_points
+from shapely.geometry import Point, MultiPoint, LineString, Polygon
+from shapely.ops import nearest_points, polygonize, cascaded_union
 import numpy as np
+import math
 
 
-from dave.datapool import oep_request
+from dave.datapool import *
 from dave.voronoi import voronoi
 
 def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
@@ -1266,6 +1267,20 @@ def transformators(grid_data):
         # muss noch geschrieben werden
 
 
+def get_household_power(household_size):
+    # set power factor
+    cos_phi_residential = 0.95  # induktiv
+    # set hours per year
+    h_per_a = 8760
+    # read consumption data
+    consumption_data = read_household_consumption()
+    household_consumptions = consumption_data['household_consumptions']
+    household_consumption = household_consumptions[household_consumptions['Personen pro Haushalt']==household_size]
+    p_mw = (household_consumption.iloc[0]['Durchschnitt  [kwh/a]']/1000)/h_per_a
+    q_mvar = p_mw*math.sin(math.acos(cos_phi_residential))/cos_phi_residential
+    return p_mw, q_mvar
+
+
 def loads(grid_data):
     """
     This function creates loads by osm landuse polygons in the target area an assigne them to a suitable node
@@ -1285,8 +1300,148 @@ def loads(grid_data):
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
     if 'LV' in power_levels:
-        pass
-        # andere funktion als über Landnutzung, aggregation und Voronoi, da direkt den Häusern zuordnen
+
+        # get lv building nodes
+        building_nodes = grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == 'building_centroid']
+        # create lv loads for residential
+        buildings_residential = grid_data.buildings.for_living
+        federal_states = read_federal_states()
+        federal_states = federal_states.rename(columns={'name': 'federal state'})
+        drop_columns = federal_states.keys().drop('federal state').drop('geometry')
+        # intersect buildings with federal state areas to get the suitable federal state
+        buildings_feds = gpd.overlay(buildings_residential, federal_states, how='intersection')
+        buildings_feds = buildings_feds.drop(columns=drop_columns)
+        # read consumption data
+        consumption_data = read_household_consumption()
+        # get population for the diffrent areas
+        if grid_data.target_input.iloc[0].typ in ['postalcode', 'town name', 'federal state']:
+            population_area = grid_data.area              
+        else:  
+            # --- Case for own shape as input data
+            # calculate proportions of postal area for grid area
+            postals = read_postal()
+            postal_own_intersection = gpd.overlay(postals, grid_data.area, how='intersection')
+            postal_own_intersection = postal_own_intersection.rename(columns={'population': 'population_origin'})
+            postal_own_landuse = gpd.overlay(grid_data.landuse, postal_own_intersection, how='intersection')
+            for i, postal in postal_own_intersection.iterrows():
+                pop_plz = postal.population_origin
+                # --- calculate full plz residential area
+                border = postals[postals.postalcode == postal.postalcode].iloc[0].geometry.convex_hull
+                # Obtain data from OSM
+                plz_residential = query_osm('way', border, recurse='down', tags=['landuse~"residential"'])
+                # filter non Linestring objects
+                drop_objects = []
+                for j, obj in plz_residential.iterrows():
+                    if not isinstance(obj.geometry, shapely.geometry.linestring.LineString): 
+                        drop_objects.append(obj.name)
+                plz_residential = plz_residential.drop(drop_objects)
+                plz_residential = cascaded_union(list(polygonize(plz_residential.geometry)))
+                # calculate plz  residential area for grid area
+                plz_own_landuse = postal_own_landuse[postal_own_landuse.postalcode == postal.postalcode]
+                plz_own_residential = plz_own_landuse[plz_own_landuse.landuse == 'residential']
+                plz_own_residential = cascaded_union(plz_own_residential.geometry.to_list())
+                # calculate population for proportion of postal area 
+                pop_own = (plz_own_residential.area/plz_residential.area)*pop_plz
+                postal_own_intersection.at[i, 'population'] = round(pop_own)
+            population_area = postal_own_intersection
+        for i, area in population_area.iterrows():
+            if area.population != 0:
+                # filter buildings for considered area
+                buildings_area = buildings_feds[buildings_feds.geometry.within(area.geometry)]
+                buildings_idx = buildings_area.index.to_list()
+                buildings_idx_first = buildings_area.index.to_list()  # this will be reduced later
+                federal_state = buildings_area.iloc[0]['federal state']
+                household_sizes = consumption_data['household_sizes']
+                sizes_feds = household_sizes[household_sizes.Bundesland == federal_state].iloc[0]
+                # household weights for considered federal state 
+                w_1P = sizes_feds['Anteil 1 Person [%]']/100
+                w_2P = sizes_feds['Anteil 2 Personen [%]']/100
+                w_3P = sizes_feds['Anteil 3 Personen [%]']/100
+                w_4P = sizes_feds['Anteil 4 Personen [%]']/100
+                w_5P = sizes_feds['Anteil 5 Personen und mehr [%]']/100
+                # distribute the whole population over teh considered area 
+                pop_distribute= area.population
+                # construct random generator
+                rng = np.random.default_rng()
+                while pop_distribute != 0:
+                    if pop_distribute > 5:
+                        # select houshold size, weighted randomly 
+                        household_size = rng.choice([1, 2, 3, 4, 5],
+                                                      1,
+                                                      p=[w_1P, w_2P, w_3P, w_4P,w_5P])[0]
+                    else: 
+                        # selcet  the rest of population
+                        if pop_distribute != 0:
+                            household_size = pop_distribute  
+                    # get power values for household
+                    p_mw, q_mvar = get_household_power(household_size=household_size)
+                    # reduce population to distribute
+                    pop_distribute -= household_size
+                    # --- select building in grid area
+                    # first every building needs a load
+                    if len(buildings_idx_first) != 0:
+                        building_idx = buildings_idx_first[0]
+                        buildings_idx_first.remove(building_idx)
+                    # distribution for the rest loads makes no matter so selected randomly
+                    else:
+                        building_idx = rng.choice(buildings_idx, 1)[0]
+                    # search for suitable grid node
+                    building_geom = Polygon(buildings_area.loc[building_idx].geometry)
+                    lv_node = building_nodes[building_nodes.geometry.within(building_geom)].iloc[0]
+                    # create residential load
+                    load_df = gpd.GeoDataFrame({'bus': lv_node.dave_name,
+                                                'p_mw': p_mw,
+                                                'q_mvar': q_mvar,
+                                                'landuse': 'residential',
+                                                'voltage_level': [7]})
+                    grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
+        # create lv loads for industrial
+        industrial_polygons = grid_data.landuse[grid_data.landuse.landuse == 'industrial']
+        industrial_load_full = industrial_polygons.area_km2.sum()*industrial_load  # in MW
+        industrial_buildings = grid_data.buildings.commercial[grid_data.buildings.commercial.building == 'industrial']
+        industrial_polygons_sum = cascaded_union(np.array(list(polygonize(industrial_buildings.geometry))))
+        industrial_area_full = industrial_polygons_sum.area
+        for i, industrial_poly in industrial_buildings.iterrows():
+            building_poly = list(polygonize(industrial_poly.geometry))[0]
+            # check for builing bus for load connection
+            building_point = grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.geometry.within(building_poly)]
+            if not building_point.empty:
+                bus_name = building_point.iloc[0].dave_name
+                building_area = building_poly.area
+                load_proportion = building_area/industrial_area_full
+                p_mw = industrial_load_full*load_proportion
+                q_mvar = p_mw*math.sin(math.acos(cos_phi_industrial))/cos_phi_industrial
+                if p_mw != 0:
+                    load_df = gpd.GeoDataFrame({'bus': bus_name,
+                                                'p_mw': p_mw,
+                                                'q_mvar': q_mvar,
+                                                'landuse': 'industrial',
+                                                'voltage_level': [7]})
+                    grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
+        # create lv loads for commercial
+        commercial_polygons = grid_data.landuse[grid_data.landuse.landuse == 'commercial']
+        commercial_load_full = commercial_polygons.area_km2.sum()*commercial_load  # in MW
+        commercial_buildings = grid_data.buildings.commercial[grid_data.buildings.commercial.building != 'industrial']
+        commercial_polygons_sum = cascaded_union(np.array(list(polygonize(commercial_buildings.geometry))))
+        commercial_area_full = commercial_polygons_sum.area
+        for i, commercial_poly in commercial_buildings.iterrows():
+            building_poly = list(polygonize(commercial_poly.geometry))[0]
+            # check for builing bus for load connection
+            building_point = grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.geometry.within(building_poly)]
+            if not building_point.empty:
+                bus_name = building_point.iloc[0].dave_name
+                building_area = building_poly.area
+                load_proportion = building_area/commercial_area_full
+                p_mw = commercial_load_full*load_proportion
+                q_mvar = p_mw*math.sin(math.acos(cos_phi_commercial))/cos_phi_commercial
+                if p_mw != 0:
+                    load_df = gpd.GeoDataFrame({'bus': bus_name,
+                                                'p_mw': p_mw,
+                                                'q_mvar': q_mvar,
+                                                'landuse': 'commercial',
+                                                'voltage_level': [7]})
+                    grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
+    # create loads for non grid level 7
     elif ('MV' in power_levels) or ('HV' in power_levels) or ('EHV' in power_levels):
         # create loads on grid level 6 (MV/LV)
         if 'MV' in power_levels:
@@ -1366,7 +1521,7 @@ def power_components(grid_data):
     # add transformers
     transformators(grid_data)
     # add renewable powerplants
-    renewable_powerplants(grid_data)
+    #renewable_powerplants(grid_data)
     # add conventional powerplants
     conventional_powerplants(grid_data)
     # create lines for power plants with a grid node far away
