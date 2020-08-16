@@ -71,7 +71,7 @@ class target_area():
         for grid modeling
         """
         # add time delay because osm doesn't alowed more than 1 request per second.
-        time_delay = 30
+        time_delay = 60
         # search relevant road informations in the target area
         if self.roads:
             roads = query_osm('way', target, recurse='down',
@@ -404,6 +404,7 @@ class target_area():
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
+            self.target = self.target.drop(columns=['id'])
             target_area._own_area_postal(self)
             target_input = pd.DataFrame({'typ': 'own area',
                                          'data': [self.own_postal],
@@ -414,6 +415,7 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
+        # add population data to grid_data
         
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc [0].typ=='own area':
