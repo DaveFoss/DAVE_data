@@ -49,7 +49,8 @@ def plot_target_area(grid_data):
     buildings_for_living = grid_data.buildings.for_living
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
-    building_centroids = grid_data.buildings.building_centroids
+    buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
+    building_centroids = buildings_all.centroid
     # check if there is any data in target area, otherwise plot only the area
     data = [roads_plot,
             roads,
@@ -173,9 +174,9 @@ def plot_grid_data(grid_data):
             lv_lines.plot(ax=ax, color='b', label='LV lines')
         # plot electrical components
         if not renewable_plants.empty:
-            renewable_plants.plot(ax=ax, color='g')
+            renewable_plants.plot(ax=ax, color='g',label='renewable power plants')
         if not conventional_plants.empty:
-            conventional_plants.plot(ax=ax, color='m')
+            conventional_plants.plot(ax=ax, color='m',label='conventional power plants')
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')

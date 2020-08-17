@@ -31,8 +31,7 @@ def create_empty_dataset():
                  # target data
                  'area': gpd.GeoDataFrame([], crs=crs),
                  'target_input': pd.DataFrame(),
-                 'buildings': davestructure({'building_centroids': gpd.GeoSeries([], crs=crs),
-                                             'commercial': gpd.GeoDataFrame([], crs=crs),
+                 'buildings': davestructure({'commercial': gpd.GeoDataFrame([], crs=crs),
                                              'for_living': gpd.GeoDataFrame([], crs=crs),
                                              'other': gpd.GeoDataFrame([], crs=crs)
                                              }),
@@ -177,16 +176,16 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     # --- create target area informations
     if ('LV' in power_levels) or ('LP' in gas_levels):
         file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                                postalcode=postalcode, town_name=town_name,
-                                federal_state=federal_state, own_area=own_area,
-                                buffer=0, roads=True, roads_plot=True,
-                                buildings=True, landuse=True).target()
+                                             postalcode=postalcode, town_name=town_name,
+                                             federal_state=federal_state, own_area=own_area,
+                                             buffer=0, roads=True, roads_plot=True,
+                                             buildings=True, landuse=True).target()
     else:
         file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                                postalcode=postalcode, town_name=town_name,
-                                federal_state=federal_state, own_area=own_area,
-                                buffer=0, roads=False, roads_plot=False,
-                                buildings=False, landuse=True).target()
+                                             postalcode=postalcode, town_name=town_name,
+                                             federal_state=federal_state, own_area=own_area,
+                                             buffer=0, roads=False, roads_plot=False,
+                                             buildings=False, landuse=True).target()
     if not file_exists:
         # --- create desired power grid levels
         if power_levels == ['EHV']:
@@ -200,8 +199,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
             create_mv_topology(grid_data)
         elif power_levels == ['LV']:
             # create topology
-            #create_lv_topology(grid_data)
-            pass
+            create_lv_topology(grid_data)
         elif power_levels == ['EHV', 'HV']:
             # create topology
             create_ehv_topology(grid_data)
@@ -257,10 +255,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
             print(f'the input for the power levels was: {power_levels}')
             print('---------------------------------------------------')
         # create power grid components
-        """
         if power_levels:
             power_components(grid_data)
-        """
         # --- create desired gas grid levels
         if gas_levels == ['HP']:
             create_hp_topology(grid_data)
@@ -291,6 +287,15 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     else:
         # read dataset from archiv
         grid_data = from_archiv(f'{file_name}.h5')
+            
+    """ # Vorrübergehend aus für testzwecke
+    # save DaVe dataset to archiv and give it back to output folder
+    if not grid_data.target_input.iloc[0].typ == 'own area':
+        print('Save DaVe dataset to archiv')
+        print('---------------------------')
+        to_archiv(grid_data)
+      
+    """
     # create dave output folder on desktop for plotting and converted models
     if plot or convert:
         print('Save plots and converted grid models at the following path:')
@@ -298,21 +303,20 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         print('-----------------------------------------------------------------------')
         if not os.path.exists(dave_output_dir):
             os.makedirs(dave_output_dir)
-    # save DaVe dataset to archiv and give it back to output folder
-    if not grid_data.target_input.iloc[0].typ == 'own area':
-        print('Save DaVe dataset to archiv')
-        print('---------------------------')
-        to_archiv(grid_data)
-
+            
     # plot informations
     if plot:
         plot_target_area(grid_data)
         plot_grid_data(grid_data)
         plot_landuse(grid_data)
+        
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power)
+        # save grid model in the dave output folder                   
+        #file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
+        #pp.to_json(net, file_path)
     else:
         net_power = None
     if convert and gas_levels:
@@ -320,6 +324,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         net_gas = gas_processing(net_gas)
     else:
         net_gas = None
+        
     # return
     if net_power and net_gas:
         return grid_data, net_power, net_gas

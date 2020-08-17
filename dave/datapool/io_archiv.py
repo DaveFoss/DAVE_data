@@ -9,7 +9,7 @@ from dave.datapool import get_data_path, convert_geometry_to_wkb, convert_geomet
 
 def _convert_from_archiv_data(archiv_file, key):
     data = archiv_file.get(key)
-    if not data.empty:
+    if not data.empty and ('geometry' in data.keys()):
         data = convert_geometry_to_wkt(data)
     data = gpd.GeoDataFrame(data)
     return data
@@ -17,7 +17,7 @@ def _convert_from_archiv_data(archiv_file, key):
 
 def _convert_to_archiv_data(data_key):
     data = copy.deepcopy(data_key)
-    if not data.empty:
+    if (not data.empty) and ('geometry' in data.keys()):
         data = convert_geometry_to_wkb(data)
     data = pd.DataFrame(data)
     return data
@@ -108,13 +108,6 @@ def to_archiv(grid_data):
         # target input
         archiv_file.put('/target_input', grid_data.target_input)
         # buildings
-        building_centroids = copy.deepcopy(grid_data.buildings.building_centroids)
-        if not building_centroids.empty:
-            building_centroids = pd.DataFrame({'geometry': building_centroids})
-            building_centroids = convert_geometry_to_wkb(building_centroids)
-        else: 
-            building_centroids = pd.DataFrame([])
-        archiv_file.put('/buildings/building_centroids', building_centroids)
         commercial = _convert_to_archiv_data(grid_data.buildings.commercial)
         archiv_file.put('/buildings/commercial', commercial)
         for_living = _convert_to_archiv_data(grid_data.buildings.for_living)
@@ -222,11 +215,6 @@ def from_archiv(dataset_name):
         # target input
         grid_data.target_input = grid_data.target_input.append(archiv_file.get('/target_input'))
         # buildings
-        building_centroids = _convert_from_archiv_data(archiv_file, '/buildings/building_centroids')
-        if not building_centroids.empty:
-            building_centroids = building_centroids['geometry']
-            building_centroids = gpd.GeoSeries(building_centroids, crs=crs)
-            grid_data.buildings.building_centroids = grid_data.buildings.building_centroids.append(building_centroids)
         commercial = _convert_from_archiv_data(archiv_file, '/buildings/commercial')
         commercial = gpd.GeoDataFrame(commercial, crs=crs)
         grid_data.buildings.commercial = grid_data.buildings.commercial.append(commercial)

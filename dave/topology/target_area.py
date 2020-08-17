@@ -217,9 +217,6 @@ class target_area():
             self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
             self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
             self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
-            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.append(buildings.centroid)
-            # rename building centroids
-            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.rename('geometry')
             # add time delay
             time.sleep(time_delay)
 
@@ -415,10 +412,8 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        # add population data to grid_data
-        
         # check if requested model is already in the archiv
-        if not self.grid_data.target_input.iloc [0].typ=='own area':
+        if not self.grid_data.target_input.iloc [0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
         else:
             file_exists = False
@@ -447,7 +442,6 @@ class target_area():
             self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.reset_index(drop=True)
             self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.reset_index(drop=True)
             self.grid_data.buildings.other = self.grid_data.buildings.other.reset_index(drop=True)
-            self.grid_data.buildings.building_centroids = self.grid_data.buildings.building_centroids.reset_index(drop=True)
             # find road junctions
             target_area.road_junctions(self)
             return file_exists, file_name

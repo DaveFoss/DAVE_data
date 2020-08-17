@@ -14,7 +14,7 @@ def nearest_road(building_centroids, roads):
         **roads** (GeoDataFrame) - relevant roads in the target area
 
     OUTPUT:
-        **building connections** (dict) - 
+        **building connections** (dict) -
 
     """
     # create multistring of relevant roads and intersect radial lines with it
@@ -32,26 +32,24 @@ def nearest_road(building_centroids, roads):
 
 
 def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=10):
-    """ 
-    Old function, the nearest_road function is faster. 
-    
-    This function finds the shortest way between the building centroids and a road. For this the 
-    Method uses radial lines which start from the building centroid. From that there are many 
+    """
+    Old function, the nearest_road function is faster.
+
+    This function finds the shortest way between the building centroids and a road. For this the
+    Method uses radial lines which start from the building centroid. From that there are many
     intersections between the radial lines and the roads. At the last step the intersection point
     with the shortest distance to the building centroid will be searched.
-    
+
     INPUT:
         **building centroids** (GeoDataSeries) - buildings in the target area
         **roads** (GeoDataFrame) - relevant roads in the target area
-    
+
     OPTIONAL:
         **line length** (float, default 2E-3) - defines the length auf the radial lines
         **line amkle** (float, default 10) - defines ankle between the radial lines
-    
+
     OUTPUT:
         **building connections** (DataFrame) - DataFrame includes the shortest connection to a road for each building centroid
-
-        
     """
     # create multistring of relevant roads and intersect radial lines with it
     multiline_roads = shapely.ops.cascaded_union(roads.geometry)
@@ -74,8 +72,9 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
         building_index = building_centroids[building_centroids == centroid].index[0]
         nearest_points[building_index] = point_near
     building_connections = pd.concat([building_centroids, nearest_points], axis=1)
-    building_connections.columns = ['building_centroid', 'nearest_point']  
+    building_connections.columns = ['building_centroid', 'nearest_point']
     return building_connections
+
 
 def line_connections(grid_data):
     """
@@ -139,7 +138,7 @@ def line_connections(grid_data):
                 # create a lineString and add them to the line connection list
                 line_connection = shapely.geometry.LineString(line_points)
                 line_connections.append(line_connection)
-    line_connections = gpd.GeoSeries(line_connections, crs = 'EPSG:4326')
+    line_connections = gpd.GeoSeries(line_connections, crs='EPSG:4326')
     # calculate line length
     line_connections_3035 = line_connections.to_crs(epsg=3035)  # project lines to crs with unit in meter
     line_length = line_connections_3035.length
@@ -149,7 +148,8 @@ def line_connections(grid_data):
                                                                                      'voltage_kv': 0.4,
                                                                                      'voltage_level': 7,
                                                                                      'source': 'dave internal'}))
-    
+
+
 def create_lv_topology(grid_data):
     """
     This function creates a dictonary with all relevant geographical 
@@ -169,8 +169,8 @@ def create_lv_topology(grid_data):
     print('------------------------------------------')
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
-    buildings_index = list(grid_data.buildings.for_living.append(grid_data.buildings.commercial).index)
-    centroids = grid_data.buildings.building_centroids[grid_data.buildings.building_centroids.index.isin(buildings_index)]
+    buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)
+    centroids = buildings_rel.reset_index(drop=True).centroid
     building_connections = nearest_road(building_centroids=centroids,
                                         roads=grid_data.roads.roads)
     # delet duplicates in nearest road points
@@ -182,7 +182,6 @@ def create_lv_topology(grid_data):
                                           'voltage_level': 7,
                                           'voltage_kv': 0.4,
                                           'source': 'dave internal'})
-    
     building_nodes_df = building_nodes_df.append(gpd.GeoDataFrame({'geometry': building_nearest,
                                                                    'node_type': 'nearest_point',
                                                                    'voltage_level': 7,
