@@ -7,9 +7,9 @@ from shapely.ops import nearest_points, polygonize, cascaded_union
 import numpy as np
 import math
 
-
 from dave.datapool import *
 from dave.voronoi import voronoi
+from dave.settings import dave_settings
 
 def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
     """
@@ -979,7 +979,7 @@ def transformators(grid_data):
         # read transformator data from OEP, filter current exsist ones and rename paramter names
         hv_trafos = oep_request(schema='grid', 
                                   table='ego_pf_hv_transformer', 
-                                  where='version=v0.4.6',
+                                  where=dave_settings()['ehvhv_trans_ver'],
                                   geometry='geom')
         hv_trafos = hv_trafos.rename(columns={'version': 'ego_version', 
                                               'scn_name': 'ego_scn_name',
@@ -1002,7 +1002,7 @@ def transformators(grid_data):
             # read ehv/hv node data from OpenEnergyPlatform and adapt names
             ehvhv_buses = oep_request(schema='grid', 
                                       table='ego_pf_hv_bus', 
-                                      where='version=v0.4.6',
+                                      where=dave_settings()['hv_buses_ver'],
                                       geometry='geom')
             ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version', 
                                                       'scn_name': 'ego_scn_name',
@@ -1117,12 +1117,10 @@ def transformators(grid_data):
                 hv_buses = grid_data.hv_data.hv_nodes
                 bus0_name = hv_buses[hv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
                 bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
-                subst_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].subst_name
-                tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].tso_name
+                #tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].tso_name
                 ehv_hv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
                 ehv_hv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
-                ehv_hv_trafos.at[trafo.name, 'substation_name'] = subst_name
-                ehv_hv_trafos.at[trafo.name, 'tso_name'] = tso_name
+                #ehv_hv_trafos.at[trafo.name, 'tso_name'] = tso_name
             # change column name
             ehv_hv_trafos = ehv_hv_trafos.drop(columns=['bus0', 'bus1'])
             # add ehv/ehv trafos to grid data
@@ -1133,7 +1131,7 @@ def transformators(grid_data):
         # read transformator data from OEP, filter relevant parameters and rename paramter names
         substations = oep_request(schema='grid', 
                                   table='ego_dp_hvmv_substation', 
-                                  where='version=v0.4.5',
+                                  where=dave_settings()['hvmv_sub_ver'],
                                   geometry='polygon')  # take substation polygon to get the full area
         substations = substations.rename(columns={'version': 'ego_version',
                                                   'subst_id': 'ego_subst_id',
@@ -1161,7 +1159,7 @@ def transformators(grid_data):
             # read hv node data from OpenEnergyPlatform and adapt names
             hv_nodes = oep_request(schema='grid', 
                                    table='ego_pf_hv_bus', 
-                                   where='version=v0.4.6',
+                                   where=dave_settings()['hv_buses_ver'],
                                    geometry='geom')
             hv_nodes = hv_nodes.rename(columns={'version': 'ego_version', 
                                                 'scn_name': 'ego_scn_name',
@@ -1180,7 +1178,7 @@ def transformators(grid_data):
             hv_nodes = hv_nodes.drop(columns=(['current_type', 'v_mag_pu_min', 'v_mag_pu_max', 'geom']))
             # add dave name
             hv_nodes.insert(0, 'dave_name', None)
-            hv_nodes = hv_buses.reset_index(drop=True)
+            hv_nodes = hv_nodes.reset_index(drop=True)
             for i, bus in hv_nodes.iterrows():
                 hv_nodes.at[bus.name, 'dave_name'] = f'node_3_{i}'
         else:
@@ -1263,8 +1261,9 @@ def transformators(grid_data):
 
     # --- create mv/lv trafos
     if 'MV' in grid_data.target_input.power_levels[0] or 'LV' in grid_data.target_input.power_levels[0]:
+        # read transformator data from OEP, filter relevant parameters and rename paramter names
         pass
-        # muss noch geschrieben werden
+        
 
 
 def get_household_power(household_size):
@@ -1300,7 +1299,6 @@ def loads(grid_data):
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
     if 'LV' in power_levels:
-
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == 'building_centroid']
         # create lv loads for residential
@@ -1387,7 +1385,16 @@ def loads(grid_data):
                         building_idx = rng.choice(buildings_idx, 1)[0]
                     # search for suitable grid node
                     building_geom = Polygon(buildings_area.loc[building_idx].geometry)
-                    lv_node = building_nodes[building_nodes.geometry.within(building_geom)].iloc[0]
+                    building_node = building_nodes[building_nodes.geometry.within(building_geom)]
+                    if not building_node.empty:
+                        lv_node = building_node.iloc[0]
+                    else: 
+                        # check the case that the building centroid is outside building boundary
+                        building_centroid = building_geom.centroid
+                        centroid_distance = building_nodes.distance(building_centroid)
+                        if centroid_distance.min() < 1E-04:
+                            building_node_idx = centroid_distance[centroid_distance == centroid_distance.min()].index[0]
+                            lv_node = building_nodes.loc[building_node_idx]
                     # create residential load
                     load_df = gpd.GeoDataFrame({'bus': lv_node.dave_name,
                                                 'p_mw': p_mw,
@@ -1521,10 +1528,12 @@ def power_components(grid_data):
     # add transformers
     transformators(grid_data)
     # add renewable powerplants
-    #renewable_powerplants(grid_data)
+    """
+    renewable_powerplants(grid_data)
     # add conventional powerplants
     conventional_powerplants(grid_data)
     # create lines for power plants with a grid node far away
     power_plant_lines(grid_data)
     # add loads
     loads(grid_data)
+    """

@@ -2,8 +2,8 @@ import geopandas as gpd
 from shapely.geometry import LineString
 import math
 
-from dave.datapool import read_ehv_data
-from dave.datapool import oep_request
+from dave.datapool import read_ehv_data, oep_request
+from dave.settings import dave_settings
 
 
 def create_ehv_topology(grid_data):
@@ -27,7 +27,7 @@ def create_ehv_topology(grid_data):
     # read ehv substation data from OpenEnergyPlatform and adapt names
     ehv_substations = oep_request(schema='grid',
                                   table='ego_dp_ehv_substation',
-                                  where='version=v0.4.5',
+                                  where=dave_settings()['ehv_sub_ver'],
                                   geometry='polygon')
     ehv_substations = ehv_substations.rename(columns={'version': 'ego_version',
                                                       'subst_id': 'ego_subst_id',
@@ -47,7 +47,7 @@ def create_ehv_topology(grid_data):
     # read ehv/hv node data from OpenEnergyPlatform and adapt names
     ehvhv_buses = oep_request(schema='grid',
                               table='ego_pf_hv_bus',
-                              where='version=v0.4.6',
+                              where=dave_settings()['hv_buses_ver'],
                               geometry='geom')
     ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
                                               'scn_name': 'ego_scn_name',
@@ -123,7 +123,7 @@ def create_ehv_topology(grid_data):
         # --- create ehv lines
         ehv_lines = oep_request(schema='grid',
                                 table='ego_pf_hv_line',
-                                where='version=v0.4.6',
+                                where=dave_settings()['hv_line_ver'],
                                 geometry='geom')
         ehv_lines = ehv_lines.rename(columns={'version': 'ego_version',
                                               'subst_id': 'ego_subst_id',

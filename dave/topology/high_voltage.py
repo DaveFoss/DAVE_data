@@ -2,6 +2,7 @@ import geopandas as gpd
 import math
 
 from dave.datapool import oep_request
+from dave.settings import dave_settings
 
 
 def create_hv_topology(grid_data):
@@ -24,7 +25,7 @@ def create_hv_topology(grid_data):
     # --- create hv nodes
     ehvhv_buses = oep_request(schema='grid',
                               table='ego_pf_hv_bus',
-                              where='version=v0.4.6',
+                              where=dave_settings()['hv_buses_ver'],
                               geometry='geom')
     ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
                                               'scn_name': 'ego_scn_name',
@@ -54,7 +55,7 @@ def create_hv_topology(grid_data):
         # --- create hv lines
         hv_lines = oep_request(schema='grid',
                                table='ego_pf_hv_line',
-                               where='version=v0.4.6',
+                               where=dave_settings()['hv_line_ver'],
                                geometry='geom')
         hv_lines = hv_lines.rename(columns={'version': 'ego_version', 
                                             'subst_id': 'ego_subst_id',
