@@ -1,5 +1,6 @@
 import pandapower as pp
 from shapely import geometry, ops
+import pandas as pd
 
 
 from dave import dave_output_dir
@@ -47,7 +48,8 @@ def create_power_grid(grid_data):
                                           name=bus.dave_name)
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
-            net.bus.at[bus_id, 'tso_name'] = bus.tso_name
+            if 'tso_name' in bus.index:
+                net.bus.at[bus_id, 'tso_name'] = bus.tso_name
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
     # create lines
@@ -258,7 +260,8 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
             net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
-            net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
+            if 'substation_name' in trafo.index:
+                net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
             net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
     # create hv/mv transformers
     if not grid_data.components_power.transformers.hv_mv.empty:
@@ -342,24 +345,57 @@ def create_power_grid(grid_data):
     # --- create ext_grid
     # place external grid at the first bus on the highest considered voltage level
     if 'EHV' in grid_data.target_input.power_levels[0]:
+        """
+        # check for convolutional power plants with big capacity
+        con_rel = net.gen.loc[pd.isnull(net.gen.aggregated)]
+        con_100 = con_rel[con_rel['p_mw']>=100]
+        for i, con in con_100.iterrows()
+        
+        
         # hier schauen ob ein akw im gebiet ist und dann das als ext grid nehmen
-        # ansonsten ansonsten das großte conventionelle nehmen
+        # ansonsten das großte conventionelle nehmen
+        # oder sagen das ab gewisser größe 100MW? alle Kraftwerke ein ext grid sind
         # wenn kein con power plant existiert, dann an knoten[0]
         first_bus = grid_data.ehv_data.ehv_nodes.iloc[0].dave_name
         voltage_level = 1
+        """
+        pass
     elif 'HV' in grid_data.target_input.power_levels[0]:
-        first_bus = grid_data.hv_data.hv_nodes.iloc[0].dave_name 
-        voltage_level = 3
+        for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
+            ext_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
+            dave_name = f'ext_grid_2_{i}'
+            pp.create_ext_grid(net,
+                               bus=ext_bus,
+                               name=dave_name)
+            # additional Informations
+            ext_id = pp.get_element_index(net,
+                                           element='ext_grid',
+                                           name=dave_name)
+            net.ext_grid.at[ext_id, 'voltage_level'] = 2
     elif 'MV' in grid_data.target_input.power_levels[0]:
-        first_bus = grid_data.mv_data.mv_nodes.iloc[0].dave_name
-        voltage_level = 5
+        for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
+            ext_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
+            dave_name = f'ext_grid_4_{i}'
+            pp.create_ext_grid(net,
+                               bus=ext_bus,
+                               name=dave_name)
+            # additional Informations
+            ext_id = pp.get_element_index(net,
+                                           element='ext_grid',
+                                           name=dave_name)
+            net.ext_grid.at[ext_id, 'voltage_level'] = 4
     elif 'LV' in grid_data.target_input.power_levels[0]:
-        first_bus = grid_data.lv_data.lv_nodes.iloc[0].dave_name 
-        voltage_level = 7
-    ext_bus = net.bus[net.bus['name'] == first_bus].index[0]
-    pp.create_ext_grid(net,
-                       bus=ext_bus,
-                       name=f'ext_grid_{voltage_level}_0')
+        for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
+            ext_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
+            dave_name = f'ext_grid_6_{i}'
+            pp.create_ext_grid(net,
+                               bus=ext_bus,
+                               name=dave_name)
+            # additional Informations
+            ext_id = pp.get_element_index(net,
+                                           element='ext_grid',
+                                           name=dave_name)
+            net.ext_grid.at[ext_id, 'voltage_level'] = 6
     
     
     
