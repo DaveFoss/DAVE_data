@@ -6,6 +6,7 @@ from shapely.geometry import Point, MultiPoint, LineString, Polygon
 from shapely.ops import nearest_points, polygonize, cascaded_union
 import numpy as np
 import math
+import copy
 
 from dave.datapool import *
 from dave.voronoi import voronoi
@@ -1153,7 +1154,7 @@ def transformators(grid_data):
             remove_columns.remove('geometry')
             substations = substations.drop(columns=remove_columns)
         # --- prepare hv nodes for the transformers
-        # check if the hv already nodes exist, otherwise create them
+        # check if the hv nodes already exist, otherwise create them
         if grid_data.hv_data.hv_nodes.empty:
             # --- in this case the missing hv nodes for the transformator must be procured from OEP
             # read hv node data from OpenEnergyPlatform and adapt names
@@ -1176,50 +1177,48 @@ def transformators(grid_data):
             hv_nodes['voltage_level'] = 3
             hv_nodes['source'] = 'OEP'
             hv_nodes = hv_nodes.drop(columns=(['current_type', 'v_mag_pu_min', 'v_mag_pu_max', 'geom']))
-            # add dave name
-            hv_nodes.insert(0, 'dave_name', None)
-            hv_nodes = hv_nodes.reset_index(drop=True)
-            for i, bus in hv_nodes.iterrows():
-                hv_nodes.at[bus.name, 'dave_name'] = f'node_3_{i}'
-        else:
-            hv_nodes =  grid_data.hv_data.hv_nodes
-        # check for hv nodes within hv/mv substations
-        substations_keys = substations.keys().tolist()
-        substations_keys.remove('ego_subst_id')
-        substations_keys.remove('geometry')
-        substations_reduced = substations.drop(columns = (substations_keys))
-        hv_nodes = gpd.overlay(hv_nodes, substations_reduced, how='intersection')
-        # add relevant hv nodes if they don't exist before
-        if grid_data.hv_data.hv_nodes.empty:
-            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_nodes)
-        # --- prepare mv nodes for the transformers
-        # check for mv nodes within hv/mv substations if they were created in mv topology function
-        # Otherwise create missing mv nodes
-        if grid_data.mv_data.mv_nodes.empty:
-            # --- in this case the missing mv nodes for the transformers must be created
-            for i, sub in substations.iterrows():
-                mv_node_df = gpd.GeoDataFrame({'ego_version': sub.ego_version,
-                                               'voltage_kv': [20],
-                                               'voltage_level': [5],
-                                               'ego_subst_id': sub.ego_subst_id,
-                                               'geometry': [sub.geometry.centroid]})
-                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_node_df)
-            # add dave name
-            grid_data.mv_data.mv_nodes.insert(0, 'dave_name', None)
-            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.reset_index(drop=True)
-            for i, load in grid_data.mv_data.mv_nodes.iterrows():
-                grid_data.mv_data.mv_nodes.at[load.name, 'dave_name'] = f'node_5_{i}'
-            mv_nodes = grid_data.mv_data.mv_nodes
-        else:
             # check for hv nodes within hv/mv substations
             substations_keys = substations.keys().tolist()
             substations_keys.remove('ego_subst_id')
             substations_keys.remove('geometry')
             substations_reduced = substations.drop(columns = (substations_keys))
-            mv_nodes = gpd.overlay(grid_data.mv_data.mv_nodes, substations_reduced, how='intersection')
+            hv_nodes = gpd.overlay(hv_nodes, substations_reduced, how='intersection')
+            # add dave name
+            hv_nodes.insert(0, 'dave_name', None)
+            hv_nodes = hv_nodes.reset_index(drop=True)
+            for i, bus in hv_nodes.iterrows():
+                hv_nodes.at[bus.name, 'dave_name'] = f'node_3_{i}'
+            # add mv nodes to grid data
+            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_nodes)
+            
+        else:
+            hv_nodes =  grid_data.hv_data.hv_nodes
+        # --- prepare mv nodes for the transformers
+        # check for mv nodes within hv/mv substations if they were created in mv topology function
+        # Otherwise create missing mv nodes
+        if grid_data.mv_data.mv_nodes.empty:
+            # --- in this case the missing mv nodes for the transformers must be created
+            mv_nodes = copy.deepcopy(substations)
+            mv_nodes['node_type'] = 'hvmv_substation'
+            # consider data only if there are more than one node in the target area
+            if len(mv_nodes) > 1:
+                mv_nodes['voltage_level'] = 5
+                mv_nodes['voltage_kv'] = 20
+                # add oep as source
+                mv_nodes['source'] = 'OEP'
+                # add dave name
+                mv_nodes.insert(0, 'dave_name', None)
+                mv_nodes = mv_nodes.reset_index(drop=True)
+                for i, bus in mv_nodes.iterrows():
+                    mv_nodes.at[bus.name, 'dave_name'] = f'node_5_{i}'
+                # add mv nodes to grid data
+                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_nodes)
+        else:
+            mv_nodes =  grid_data.mv_data.mv_nodes
         # create hv/mv transfromers
         for i, sub in substations.iterrows():
-            if sub.ego_subst_id in hv_nodes.ego_subst_id.tolist():
+            # get hv bus
+            if ('ego_subst_id' in hv_nodes.keys()) and (sub.ego_subst_id in hv_nodes.ego_subst_id.tolist()):
                 bus_hv = hv_nodes[hv_nodes.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
             else:
                 # find closest hv node to the substation
@@ -1229,16 +1228,19 @@ def transformators(grid_data):
                     if nearest_point == node.geometry:
                         bus_hv = node.dave_name
                         break
-            if sub.ego_subst_id in mv_nodes.ego_subst_id.tolist():
-                bus_lv = mv_nodes[mv_nodes.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
+            # get lv bus
+            mv_nodes_hvmv = mv_nodes[mv_nodes.node_type == 'hvmv_substation']
+            if (not mv_nodes_hvmv.empty) and (sub.ego_subst_id in mv_nodes_hvmv.ego_subst_id.tolist()):
+                bus_lv = mv_nodes_hvmv[mv_nodes_hvmv.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
             else:
                 # find closest mv node to the substation
-                multipoints_hv = MultiPoint(hv_nodes.geometry.tolist())
+                multipoints_hv = MultiPoint(mv_nodes.geometry.tolist())
                 nearest_point = shapely.ops.nearest_points(sub.geometry.centroid, multipoints_hv)[1]
                 for i, node in hv_nodes.iterrows():
                     if nearest_point == node.geometry:
-                        bus_hv = node.dave_name
+                        bus_lv = node.dave_name
                         break
+            # create transformer
             trafo_df = gpd.GeoDataFrame({'bus_hv': bus_hv,
                                          'bus_lv': bus_lv,
                                          'voltage_kv_hv': [110],
@@ -1256,14 +1258,119 @@ def transformators(grid_data):
         # add dave name
         grid_data.components_power.transformers.hv_mv.insert(0, 'dave_name', None)
         grid_data.components_power.transformers.hv_mv = grid_data.components_power.transformers.hv_mv.reset_index(drop=True)
-        for i, load in grid_data.components_power.transformers.hv_mv.iterrows():
-            grid_data.components_power.transformers.hv_mv.at[load.name, 'dave_name'] = f'trafo_4_{i}'
+        for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
+            grid_data.components_power.transformers.hv_mv.at[trafo.name, 'dave_name'] = f'trafo_4_{i}'
 
     # --- create mv/lv trafos
     if 'MV' in grid_data.target_input.power_levels[0] or 'LV' in grid_data.target_input.power_levels[0]:
-        # read transformator data from OEP, filter relevant parameters and rename paramter names
-        pass
+        # get transformator data from OEP
+        substations = oep_request(schema='grid', 
+                                  table='ego_dp_mvlv_substation', 
+                                  where=dave_settings()['mvlv_sub_ver'],
+                                  geometry='geom')
+        substations = substations.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy',
+                                                 'subst_cnt']))
+        substations = substations.rename(columns={'version': 'ego_version',
+                                                  'mvlv_subst_id': 'ego_subst_id'})
+        # change wrong crs from oep
+        substations.crs = 'EPSG:3035'
+        substations = substations.to_crs(epsg=4326)
+        # filter trafos for target area
+        substations = gpd.overlay(substations, grid_data.area, how='intersection')
+        if not substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            substations = substations.drop(columns=remove_columns)
+        # --- prepare mv nodes for the transformers
+        # check if the mv nodes already exist, otherwise create them
+        if grid_data.mv_data.mv_nodes.empty:
+            # --- in this case the missing mv nodes for the transformator must be created and add to grid data
+            mv_buses = copy.deepcopy(substations)
+            mv_buses['node_type'] = 'mvlv_substation'
+            # consider data only if there are more than one node in the target area
+            if len(mv_buses) > 1:
+                mv_buses['voltage_level'] = 5
+                mv_buses['voltage_kv'] = 20
+                # add oep as source
+                mv_buses['source'] = 'OEP'
+                # add dave name
+                mv_buses.insert(0, 'dave_name', None)
+                mv_buses = mv_buses.reset_index(drop=True)
+                for i, bus in mv_buses.iterrows():
+                    mv_buses.at[bus.name, 'dave_name'] = f'node_5_{i}'
+                # add mv nodes to grid data
+                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
+        else:
+            mv_buses =  grid_data.mv_data.mv_nodes
+        # --- prepare lv nodes for the transformers
+        # check if the lv nodes already exist, otherwise create them
+        if grid_data.lv_data.lv_nodes.empty:
+            # --- in this case the missing lv nodes for the transformator must be created and add to grid data
+            lv_buses = copy.deepcopy(substations)
+            lv_buses['node_type'] = 'mvlv_substation'
+            # consider data only if there are more than one node in the target area
+            if len(lv_buses) > 1:
+                lv_buses['voltage_level'] = 7
+                lv_buses['voltage_kv'] = 0.4
+                # add oep as source
+                lv_buses['source'] = 'OEP'
+                # add dave name
+                lv_buses.insert(0, 'dave_name', None)
+                lv_buses = lv_buses.reset_index(drop=True)
+                for i, bus in lv_buses.iterrows():
+                    lv_buses.at[bus.name, 'dave_name'] = f'node_7_{i}'
+                # add mv nodes to grid data
+                grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
+        else:
+            lv_buses =  grid_data.lv_data.lv_nodes
+        # create mv/lv transfromers
+        for i, sub in substations.iterrows():
+            # get hv bus
+            mv_buses_mvlv = mv_buses[mv_buses.node_type == 'mvlv_substation']
+            if (not mv_buses_mvlv.empty) and (sub.ego_subst_id in mv_buses.ego_subst_id.tolist()):
+                bus_hv = mv_buses[mv_buses.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
+            else:
+                # find closest mv node to the substation
+                multipoints_mv = MultiPoint(mv_buses.geometry.tolist())
+                nearest_point = shapely.ops.nearest_points(sub.geometry, multipoints_mv)[1]
+                for i, node in mv_buses.iterrows():
+                    if nearest_point == node.geometry:
+                        bus_hv = node.dave_name
+                        break
+            # get lv bus
+            if ('ego_subst_id' in lv_buses.keys()) and (sub.ego_subst_id in lv_buses.ego_subst_id.tolist()):
+                bus_lv = lv_buses[lv_buses.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
+            else:
+                # find closest lv node to the substation
+                multipoints_lv = MultiPoint(lv_buses.geometry.tolist())
+                nearest_point = shapely.ops.nearest_points(sub.geometry, multipoints_lv)[1]
+                for i, node in lv_buses.iterrows():
+                    if nearest_point == node.geometry:
+                        bus_lv = node.dave_name
+                        break
+            # create transformer
+            trafo_df = gpd.GeoDataFrame({'bus_hv': bus_hv,
+                                         'bus_lv': bus_lv,
+                                         'voltage_kv_hv': [20],
+                                         'voltage_kv_lv': [0.4],
+                                         'voltage_level': [6],
+                                         'ego_version': sub.ego_version,
+                                         'ego_subst_id': sub.ego_subst_id,
+                                         'geometry': [sub.geometry]})
+            grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
+        # add dave name
+        grid_data.components_power.transformers.mv_lv.insert(0, 'dave_name', None)
+        grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.reset_index(drop=True)
+        for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
+            grid_data.components_power.transformers.mv_lv.at[trafo.name, 'dave_name'] = f'trafo_6_{i}'
+                
+
+
         
+        # lv_nodes find closest node, hierbei wenn distanz mehr als 50 m dann leitung erstellen auf lv ebene. 
+        # schauen ob bereits ein KNoten existiert (distance <=10E-05?) da die bei mv ebene schon erstellt werden, 
+        # ansonsonsten knoten erstellen an dem trafo und mit dem nächsten knoten verbinden + Leitung
+        # diese zusätzzliche Leitung auch bei hv/mv trafos mit rein
 
 
 def get_household_power(household_size):
@@ -1526,14 +1633,12 @@ def loads(grid_data):
 
 def power_components(grid_data):
     # add transformers
-    transformators(grid_data)
+    #transformators(grid_data)
     # add renewable powerplants
-    """
     renewable_powerplants(grid_data)
     # add conventional powerplants
-    conventional_powerplants(grid_data)
+    #conventional_powerplants(grid_data)
     # create lines for power plants with a grid node far away
-    power_plant_lines(grid_data)
+    #power_plant_lines(grid_data)
     # add loads
-    loads(grid_data)
-    """
+    #loads(grid_data)
