@@ -19,6 +19,7 @@ def create_mv_topology(grid_data):
 
     EXAMPLE:
     """
+    """
     # print to inform user
     print('create medium voltage network for target area')
     print('---------------------------------------------')
@@ -29,7 +30,9 @@ def create_mv_topology(grid_data):
                              table='ego_dp_mvlv_substation',
                              where=dave_settings()['mvlv_sub_ver'],
                              geometry='geom')
-    mvlv_buses = mvlv_buses.rename(columns={'version': 'ego_version'})
+    mvlv_buses = mvlv_buses.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']))
+    mvlv_buses = mvlv_buses.rename(columns={'version': 'ego_version',
+                                            'mvlv_subst_id': 'ego_subst_id'})
     # change wrong crs from oep
     mvlv_buses.crs = 'EPSG:3035'
     mvlv_buses = mvlv_buses.to_crs(epsg=4326)
@@ -39,17 +42,18 @@ def create_mv_topology(grid_data):
         remove_columns = grid_data.area.keys().tolist()
         remove_columns.remove('geometry')
         mvlv_buses = mvlv_buses.drop(columns=remove_columns)
-    mvlv_buses = mvlv_buses.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']))
+    
     mvlv_buses['node_type'] = 'mvlv_substation'
     # nodes for hv/mv trafos us side
     hvmv_buses = oep_request(schema='grid', 
                              table='ego_dp_hvmv_substation', 
-                             where='version=v0.4.5',
+                             where=dave_settings()['hvmv_sub_ver'],
                              geometry='point')
-    hvmv_buses = hvmv_buses.rename(columns={'version': 'ego_version'})
+    hvmv_buses = hvmv_buses.rename(columns={'version': 'ego_version',
+                                            'subst_id': 'ego_subst_id'})
     # filter trafos for target area
     hvmv_buses = gpd.overlay(hvmv_buses, grid_data.area, how='intersection')
-    if not mvlv_buses.empty:
+    if not hvmv_buses.empty:
         remove_columns = grid_data.area.keys().tolist()
         remove_columns.remove('geometry')
         hvmv_buses = hvmv_buses.drop(columns=remove_columns)
@@ -85,11 +89,12 @@ def create_mv_topology(grid_data):
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
-        """
+    """
+    """
         # merge related lines
         for i, bus in mv_buses.iterrows():
             if 
-            """
+    """
     
     
     
