@@ -179,7 +179,7 @@ def create_ehv_topology(grid_data):
         for i, line in ehv_data['ehv_lines'].iterrows():
             from_bus = line.from_bus_voltage.replace('_380', '').replace('_220', '')
             to_bus = line.to_bus_voltage.replace('_380', '').replace('_220', '')
-            if ((from_bus in ehv_buses_from_tso) and (to_bus in ehv_buses_tso_names)) or ((to_bus in ehv_buses_from_tso) and (from_bus in ehv_buses_tso_names)):
+            if ((from_bus in ehv_buses_from_tso) and (to_bus in ehv_buses_tso_names)) or ((to_bus in ehv_buses_from_tso) and (from_bus in ehv_buses_tso_names)) or ((from_bus in ehv_buses_from_tso) and (to_bus in ehv_buses_from_tso)) :
                 g_s = line.g_us*1E-06 if str(line.g_us) != 'nan' else line.g_us
                 b_s = line.b_us*1E-06 if str(line.b_us) != 'nan' else line.b_us
                 # search for the buses with the right voltage level
