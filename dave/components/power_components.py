@@ -265,25 +265,16 @@ def power_plant_lines(grid_data):
                     number = int(last_line_name.replace('line_5_', ''))+1
                     dave_name_line_aux = f'line_5_{number}'
                     # check if there is a line neighbor
-                    line_neighbor = mv_lines[(mv_lines.bus0 == bus_origin.dave_name) | (mv_lines.bus1 == bus_origin.dave_name)]
+                    line_neighbor = mv_lines[(mv_lines.from_bus == bus_origin.dave_name) | (mv_lines.to_bus == bus_origin.dave_name)]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
                         # Diese Parameter müssen evt noch angepasst werden wenn die MV Line Daten bekannt sind
                         auxillary_line = gpd.GeoDataFrame({'dave_name': dave_name_line_aux,
-                                                           'bus0': dave_name_bus_aux,
-                                                           'bus1': bus_origin.dave_name,
-                                                           'x_ohm': line_neighbor.x_ohm_per_km/distance,
-                                                           'x_ohm_per_km': line_neighbor.x_ohm_per_km,
-                                                           'r_ohm': line_neighbor.r_ohm_per_km/distance,
-                                                           'r_ohm_per_km': line_neighbor.r_ohm_per_km,
-                                                           'c_nf': line_neighbor.c_nf_per_km/distance,
-                                                           'c_nf_per_km': line_neighbor.c_nf_per_km,
-                                                           's_nom_mva': line_neighbor.s_nom_mva,
+                                                           'from_bus': dave_name_bus_aux,
+                                                           'to_bus': bus_origin.dave_name,
                                                            'length_km': distance/1000,
                                                            'geometry': [line_geometry],
                                                            'voltage_kv': line_neighbor.voltage_kv,
-                                                           'max_i_ka': line_neighbor.max_i_ka,
-                                                           'parallel': line_neighbor.parallel,
                                                            'voltage_level': line_neighbor.voltage_level,
                                                            'source': 'dave internal'})
                         grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(auxillary_line).reset_index(drop=True)
@@ -403,7 +394,6 @@ def renewable_powerplants(grid_data):
         renewables_ehv = renewables_geo[renewables_geo.voltage_level == 1]
         # define power_levels
         power_levels = grid_data.target_input.power_levels[0]
-        
         # --- nodes for level 7 plants (LV)
         if not renewables_lv.empty:
             if 'LV' in power_levels:
@@ -739,7 +729,6 @@ def conventional_powerplants(grid_data):
         conventionals_ehv = conventionals_geo[conventionals_geo.voltage_level == 1]
         # define power_levels
         power_levels = grid_data.target_input.power_levels[0]
-
         # --- nodes for level 7 plants (LV)
         if not conventionals_lv.empty:
             if 'LV' in power_levels:
@@ -1623,7 +1612,7 @@ def loads(grid_data):
                                                 'trafo_name': trafo_name,
                                                 'area_km2': area,
                                                 'voltage_level': [voltage_level]})
-                grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
+                    grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
     # add dave name
     grid_data.components_power.loads.insert(0, 'dave_name', None)
     grid_data.components_power.loads = grid_data.components_power.loads.reset_index(drop=True)
@@ -1633,12 +1622,12 @@ def loads(grid_data):
 
 def power_components(grid_data):
     # add transformers
-    #transformators(grid_data)
+    transformators(grid_data)
     # add renewable powerplants
     renewable_powerplants(grid_data)
     # add conventional powerplants
-    #conventional_powerplants(grid_data)
+    conventional_powerplants(grid_data)
     # create lines for power plants with a grid node far away
-    #power_plant_lines(grid_data)
+    power_plant_lines(grid_data)
     # add loads
-    #loads(grid_data)
+    loads(grid_data)
