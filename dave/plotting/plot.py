@@ -50,7 +50,10 @@ def plot_target_area(grid_data):
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
     buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
-    building_centroids = buildings_all.centroid
+    if not buildings_all.empty:
+        building_centroids = buildings_all.centroid
+    else:
+        building_centroids = gpd.GeoSeries([], crs='EPSG:4326')
     # check if there is any data in target area, otherwise plot only the area
     data = [roads_plot,
             roads,
@@ -114,6 +117,8 @@ def plot_grid_data(grid_data):
     road_junctions = grid_data.roads.road_junctions
     lv_lines = grid_data.lv_data.lv_lines
     lv_nodes = grid_data.lv_data.lv_nodes
+    mv_lines = grid_data.mv_data.mv_lines
+    mv_nodes = grid_data.mv_data.mv_nodes
     ehv_nodes = grid_data.ehv_data.ehv_nodes
     ehv_substations = grid_data.ehv_data.ehv_substations
     ehv_lines = grid_data.ehv_data.ehv_lines
@@ -135,6 +140,8 @@ def plot_grid_data(grid_data):
             buildings_other, 
             lv_nodes,
             lv_lines,
+            mv_lines,
+            mv_nodes,
             renewable_plants, 
             conventional_plants,  
             ehv_nodes,
@@ -172,11 +179,18 @@ def plot_grid_data(grid_data):
             lv_nodes.plot(ax=ax, color='b', label='LV Nodes')
         if not lv_lines.empty:
             lv_lines.plot(ax=ax, color='b', label='LV lines')
+        # plot mv topology
+        if not mv_nodes.empty:
+            mv_nodes.plot(ax=ax, color='b', label='MV Nodes')
+        if not mv_lines.empty:
+            mv_lines.plot(ax=ax, color='b', label='MV lines')
+        """
         # plot electrical components
         if not renewable_plants.empty:
             renewable_plants.plot(ax=ax, color='g',label='renewable power plants')
         if not conventional_plants.empty:
             conventional_plants.plot(ax=ax, color='m',label='conventional power plants')
+        """
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')
@@ -193,7 +207,7 @@ def plot_grid_data(grid_data):
         if not hv_nodes.empty:
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
         if not hv_lines.empty:
-            hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
+            hv_lines.plot(ax=ax, color='k', markersize=6, label='HV Lines')
         # plot hp topology
         if not hp_junctions.empty:
             hp_junctions.plot(ax=ax, color='k', markersize=6, label='HP Junctions')
