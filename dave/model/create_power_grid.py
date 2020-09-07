@@ -8,7 +8,6 @@ from dave import dave_output_dir
 
 # hier wird das Stromnetzmodell anhand der grid_data erstellt. ruaskommen soll dan fertiges pp netz als pickel(oder json?)
 
-# hier noch if abfragen bei den einzelnen komponenten hin zur abfrage ob empty. 
 
 # voltage_level sollte auch in dem pandapower modell mit eingetragen werden. 
 
@@ -285,6 +284,24 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
 
     # create mv/lv transformers
+    if not grid_data.components_power.transformers.mv_lv.empty:
+        std_type = '0.63 MVA 20/0.4 kV'
+        for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
+            hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
+            lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
+            pp.create_transformer(net,
+                                  hv_bus=hv_bus,
+                                  lv_bus=lv_bus,
+                                  std_type=std_type,
+                                  name=trafo.dave_name)
+            # additional Informations
+            trafo_id = pp.get_element_index(net,
+                                            element='trafo',
+                                            name=trafo.dave_name)
+            net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
+            net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
+            net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
+            net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
     
     # ---create generators
     # create renewable powerplants
@@ -339,13 +356,29 @@ def create_power_grid(grid_data):
             load_id = pp.get_element_index(net,
                                            element='load',
                                            name=load.dave_name)
-            net.load.at[load_id, 'area_km2'] = load.area_km2
+            if 'area_km2' in load.keys():
+                net.load.at[load_id, 'area_km2'] = load.area_km2
             net.load.at[load_id, 'voltage_level'] = load.voltage_level
 
     # --- create ext_grid
     # place external grid at the first bus on the highest considered voltage level
     if 'EHV' in grid_data.target_input.power_levels[0]:
+        # check for convolutional power plant with uranium as energy source
+        uranium_idx = net.gen[net.gen.type == 'uranium'].index
+        if not uranium_idx.empty: 
+            for idx in uranium_idx:
+                # create ext grid
+                power_plant = net.gen.loc[idx]
+                pp.create_ext_grid(net,
+                                   bus=power_plant.bus,
+                                   vm_pu=1.0,
+                                   max_p_mw=power_plant.p_mw,
+                                   min_p_mw=50)            
+            # del gen
+            net.gen = net.gen.drop([idx])
         """
+        Noch überlegen was ich mache wenn kein AKW in dem Gebiet ist
+        
         # check for convolutional power plants with big capacity
         con_rel = net.gen.loc[pd.isnull(net.gen.aggregated)]
         con_100 = con_rel[con_rel['p_mw']>=100]
