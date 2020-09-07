@@ -84,7 +84,7 @@ def create_empty_dataset():
 
 def create_grid(postalcode=None, town_name=None, federal_state=None,
                 own_area=None, power_levels=['ALL'], gas_levels=['ALL'],
-                plot=True, convert=True):
+                plot=True, convert=True, opt_model=True):
     """
     This is the main function of dave. This function generates automaticly grid
     models for power and gas networks in the defined target area
@@ -107,7 +107,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                                                  options: 'HP','MP','LP'. There could be choose: one level, more
                                                  than one level or 'ALL' for all levels
         **plot** (boolean, default True) - if this value is true dave creates plottings automaticly
-        *convert** (boolean, default True) _ if this value is true dave will be convert the grid automaticly to pandapower and pandapipes
+        **convert** (boolean, default True) - if this value is true dave will be convert the grid automaticly to pandapower and pandapipes
+        **opt_model** (boolean, default True) - if this value is true dave will be use the optimal power flow calculation to get no boundary violations
 
     OUTPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
@@ -180,6 +181,12 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                                              federal_state=federal_state, own_area=own_area,
                                              buffer=0, roads=True, roads_plot=True,
                                              buildings=True, landuse=True).target()
+    elif ('MV' in power_levels) or ('MP' in gas_levels):
+        file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
+                                             postalcode=postalcode, town_name=town_name,
+                                             federal_state=federal_state, own_area=own_area,
+                                             buffer=0, roads=True, roads_plot=True,
+                                             buildings=False, landuse=True).target()
     else:
         file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
                                              postalcode=postalcode, town_name=town_name,
@@ -313,7 +320,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
-        net_power = power_processing(net_power)
+        net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder                   
         #file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
         #pp.to_json(net, file_path)
