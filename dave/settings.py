@@ -10,7 +10,7 @@ def dave_settings():
                 'hvmv_sub_ver':    'version=v0.4.5',
                 'mvlv_sub_ver':    'version=v0.4.5',
                 # osm time delay (because osm doesn't alowed more than 1 request per second)
-                'osm_time_delay' = 60,  # in seconds
+                'osm_time_delay': 60,  # in seconds
                 
                 # --- assumptions at grid generating:
                 # mv level
