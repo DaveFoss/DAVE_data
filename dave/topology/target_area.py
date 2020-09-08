@@ -4,9 +4,8 @@ import shapely.geometry
 import time
 from shapely.ops import cascaded_union
 
-from dave.datapool import *  #read_postal, read_federal_states, query_osm
-
-
+from dave.datapool import *
+from dave.settings import dave_settings
 
 
 class target_area():
@@ -16,20 +15,24 @@ class target_area():
     INPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
         **power_levels** (list) - this parameter defines which power levels should be considered
-                                                   options: 'EHV','HV','MV','LV', []. There could be choose: one level, more 
-                                                   than one level or [] for empty levels
+                                                   options: 'EHV','HV','MV','LV', []. There could 
+                                                   be choose: one level, more than one level or [] 
+                                                   for empty levels
         **gas_levels** (list) - this parameter defines which gas levels should be considered
-                                                 options: 'HP','MP','LP', []. There could be choose one level, more 
-                                                 than one level or [] for empty levels
+                                                 options: 'HP','MP','LP', []. There could be choose
+                                                 one level, more than one level or [] for empty levels
         
         One of these parameters must be set:
         **postalcode** (List of strings) - numbers of the target postalcode areas. 
-                                           it could also be choose ['ALL'] for all postalcode areas in germany
+                                           it could also be choose ['ALL'] for all postalcode areas
+                                           in germany
         **town_name** (List of strings) - names of the target towns
                                           it could also be choose ['ALL'] for all citys in germany
         **federal_state** (List of strings) - names of the target federal states
-                                              it could also be choose ['ALL'] for all federal states in germany
-        **own_area** (string) - full path to a shape file which includes own target area (e.g. "C:/Users/name/test/test.shp")
+                                              it could also be choose ['ALL'] for all federal states
+                                              in germany
+        **own_area** (string) - full path to a shape file which includes own target area
+                                (e.g. "C:/Users/name/test/test.shp")
         
         
 
@@ -71,7 +74,7 @@ class target_area():
         for grid modeling
         """
         # add time delay because osm doesn't alowed more than 1 request per second.
-        time_delay = 60
+        time_delay = dave_settings()['osm_time_delay']
         # search relevant road informations in the target area
         if self.roads:
             roads = query_osm('way', target, recurse='down',
@@ -401,7 +404,8 @@ class target_area():
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
-            self.target = self.target.drop(columns=['id'])
+            if 'id' in self.target.keys():
+                self.target = self.target.drop(columns=['id'])
             target_area._own_area_postal(self)
             target_input = pd.DataFrame({'typ': 'own area',
                                          'data': [self.own_postal],

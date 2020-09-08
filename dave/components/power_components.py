@@ -1119,17 +1119,17 @@ def transformators(grid_data):
     # --- create hv/mv trafos
     if 'HV' in grid_data.target_input.power_levels[0] or 'MV' in grid_data.target_input.power_levels[0]:
         # read transformator data from OEP, filter relevant parameters and rename paramter names
-        substations = oep_request(schema='grid', 
-                                  table='ego_dp_hvmv_substation', 
+        substations = oep_request(schema='grid',
+                                  table='ego_dp_hvmv_substation',
                                   where=dave_settings()['hvmv_sub_ver'],
                                   geometry='polygon')  # take substation polygon to get the full area
         substations = substations.rename(columns={'version': 'ego_version',
                                                   'subst_id': 'ego_subst_id',
                                                   'voltage': 'voltage_kv',
                                                   'ags_0': 'Gemeindeschluessel'})
-        substations = substations.drop(columns = ['point', 'polygon', 'power_type', 'substation', 
-                                                  'frequency', 'ref', 'dbahn', 'status', 'otg_id', 
-                                                  'geom'])
+        substations = substations.drop(columns=['point', 'polygon', 'power_type', 'substation',
+                                                'frequency', 'ref', 'dbahn', 'status', 'otg_id',
+                                                'geom'])
         # filter substations with point as geometry
         drop_substations = []
         for i, sub in substations.iterrows():
@@ -1147,16 +1147,16 @@ def transformators(grid_data):
         if grid_data.hv_data.hv_nodes.empty:
             # --- in this case the missing hv nodes for the transformator must be procured from OEP
             # read hv node data from OpenEnergyPlatform and adapt names
-            hv_nodes = oep_request(schema='grid', 
-                                   table='ego_pf_hv_bus', 
+            hv_nodes = oep_request(schema='grid',
+                                   table='ego_pf_hv_bus',
                                    where=dave_settings()['hv_buses_ver'],
                                    geometry='geom')
-            hv_nodes = hv_nodes.rename(columns={'version': 'ego_version', 
+            hv_nodes = hv_nodes.rename(columns={'version': 'ego_version',
                                                 'scn_name': 'ego_scn_name',
                                                 'bus_id': 'ego_bus_id',
                                                 'v_nom': 'voltage_kv'})
             # filter nodes which are on the hv level, current exsist and within the target area
-            hv_nodes = hv_nodes[(hv_nodes.voltage_kv == 110) & 
+            hv_nodes = hv_nodes[(hv_nodes.voltage_kv == 110) &
                                 (hv_nodes.ego_scn_name == 'Status Quo')]
             hv_nodes = gpd.overlay(hv_nodes, grid_data.area, how='intersection')
             if not hv_nodes.empty:
@@ -1170,7 +1170,7 @@ def transformators(grid_data):
             substations_keys = substations.keys().tolist()
             substations_keys.remove('ego_subst_id')
             substations_keys.remove('geometry')
-            substations_reduced = substations.drop(columns = (substations_keys))
+            substations_reduced = substations.drop(columns=(substations_keys))
             hv_nodes = gpd.overlay(hv_nodes, substations_reduced, how='intersection')
             # add dave name
             hv_nodes.insert(0, 'dave_name', None)
@@ -1179,9 +1179,9 @@ def transformators(grid_data):
                 hv_nodes.at[bus.name, 'dave_name'] = f'node_3_{i}'
             # add mv nodes to grid data
             grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_nodes)
-            
+
         else:
-            hv_nodes =  grid_data.hv_data.hv_nodes
+            hv_nodes = grid_data.hv_data.hv_nodes
         # --- prepare mv nodes for the transformers
         # check for mv nodes within hv/mv substations if they were created in mv topology function
         # Otherwise create missing mv nodes
@@ -1192,7 +1192,7 @@ def transformators(grid_data):
             # consider data only if there are more than one node in the target area
             if len(mv_nodes) > 1:
                 mv_nodes['voltage_level'] = 5
-                mv_nodes['voltage_kv'] = 20
+                mv_nodes['voltage_kv'] = dave_settings()['mv_voltage']
                 # add oep as source
                 mv_nodes['source'] = 'OEP'
                 # add dave name
@@ -1203,7 +1203,7 @@ def transformators(grid_data):
                 # add mv nodes to grid data
                 grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_nodes)
         else:
-            mv_nodes =  grid_data.mv_data.mv_nodes
+            mv_nodes = grid_data.mv_data.mv_nodes
         # create hv/mv transfromers
         for i, sub in substations.iterrows():
             # get hv bus
@@ -1233,7 +1233,7 @@ def transformators(grid_data):
             trafo_df = gpd.GeoDataFrame({'bus_hv': bus_hv,
                                          'bus_lv': bus_lv,
                                          'voltage_kv_hv': [110],
-                                         'voltage_kv_lv': [20],
+                                         'voltage_kv_lv': [dave_settings()['mv_voltage']],
                                          'voltage_level': [4],
                                          'ego_version': sub.ego_version,
                                          'ego_subst_id': sub.ego_subst_id,
@@ -1279,7 +1279,7 @@ def transformators(grid_data):
             # consider data only if there are more than one node in the target area
             if len(mv_buses) > 1:
                 mv_buses['voltage_level'] = 5
-                mv_buses['voltage_kv'] = 20
+                mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
                 # add oep as source
                 mv_buses['source'] = 'OEP'
                 # add dave name
@@ -1290,7 +1290,7 @@ def transformators(grid_data):
                 # add mv nodes to grid data
                 grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         else:
-            mv_buses =  grid_data.mv_data.mv_nodes
+            mv_buses = grid_data.mv_data.mv_nodes
         # --- prepare lv nodes for the transformers
         # check if the lv nodes already exist, otherwise create them
         if grid_data.lv_data.lv_nodes.empty:
@@ -1311,7 +1311,7 @@ def transformators(grid_data):
                 # add mv nodes to grid data
                 grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
         else:
-            lv_buses =  grid_data.lv_data.lv_nodes
+            lv_buses = grid_data.lv_data.lv_nodes
         # create mv/lv transfromers
         for i, sub in substations.iterrows():
             # get hv bus
@@ -1340,7 +1340,7 @@ def transformators(grid_data):
             # create transformer
             trafo_df = gpd.GeoDataFrame({'bus_hv': bus_hv,
                                          'bus_lv': bus_lv,
-                                         'voltage_kv_hv': [20],
+                                         'voltage_kv_hv': [dave_settings()['mv_voltage']],
                                          'voltage_kv_lv': [0.4],
                                          'voltage_level': [6],
                                          'ego_version': sub.ego_version,
@@ -1364,33 +1364,31 @@ def transformators(grid_data):
 
 def get_household_power(household_size):
     # set power factor
-    cos_phi_residential = 0.95  # induktiv
-    # set hours per year
-    h_per_a = 8760
+    cos_phi_residential = dave_settings()['cos_phi_residential']
     # read consumption data
     consumption_data = read_household_consumption()
     household_consumptions = consumption_data['household_consumptions']
-    household_consumption = household_consumptions[household_consumptions['Personen pro Haushalt']==household_size]
-    p_mw = (household_consumption.iloc[0]['Durchschnitt  [kwh/a]']/1000)/h_per_a
+    household_consumption = household_consumptions[household_consumptions['Personen pro Haushalt'] == household_size]
+    p_mw = (household_consumption.iloc[0]['Durchschnitt  [kwh/a]']/1000)/dave_settings()['h_per_a']
     q_mvar = p_mw*math.sin(math.acos(cos_phi_residential))/cos_phi_residential
     return p_mw, q_mvar
 
 
 def loads(grid_data):
     """
-    This function creates loads by osm landuse polygons in the target area an assigne them to a suitable node
-    on the considered voltage level by voronoi analysis
+    This function creates loads by osm landuse polygons in the target area an assigne them to a 
+    suitable node on the considered voltage level by voronoi analysis
     """
     print('create loads for target area')
     print('----------------------------')
     # define avarage load values
-    residential_load = 2  # in MW/km²
-    industrial_load = 10  # in MW/km²
-    commercial_load = 3  # in MW/km²
+    residential_load = dave_settings()['residential_load']
+    industrial_load = dave_settings()['industrial_load']
+    commercial_load = dave_settings()['commercial_load']
     # set power factor for loads
-    cos_phi_residential = 0.95  # induktiv
-    cos_phi_industrial = 0.75  # induktiv
-    cos_phi_commercial = 0.75  # induktiv
+    cos_phi_residential = dave_settings()['cos_phi_residential']
+    cos_phi_industrial = dave_settings()['cos_phi_industrial']
+    cos_phi_commercial = dave_settings()['cos_phi_commercial']
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
@@ -1409,8 +1407,8 @@ def loads(grid_data):
         consumption_data = read_household_consumption()
         # get population for the diffrent areas
         if grid_data.target_input.iloc[0].typ in ['postalcode', 'town name', 'federal state']:
-            population_area = grid_data.area              
-        else:  
+            population_area = grid_data.area
+        else:
             # --- Case for own shape as input data
             # calculate proportions of postal area for grid area
             postals = read_postal()
@@ -1426,7 +1424,7 @@ def loads(grid_data):
                 # filter non Linestring objects
                 drop_objects = []
                 for j, obj in plz_residential.iterrows():
-                    if not isinstance(obj.geometry, shapely.geometry.linestring.LineString): 
+                    if not isinstance(obj.geometry, shapely.geometry.linestring.LineString):
                         drop_objects.append(obj.name)
                 plz_residential = plz_residential.drop(drop_objects)
                 plz_residential = cascaded_union(list(polygonize(plz_residential.geometry)))
@@ -1447,26 +1445,26 @@ def loads(grid_data):
                 federal_state = buildings_area.iloc[0]['federal state']
                 household_sizes = consumption_data['household_sizes']
                 sizes_feds = household_sizes[household_sizes.Bundesland == federal_state].iloc[0]
-                # household weights for considered federal state 
+                # household weights for considered federal state
                 w_1P = sizes_feds['Anteil 1 Person [%]']/100
                 w_2P = sizes_feds['Anteil 2 Personen [%]']/100
                 w_3P = sizes_feds['Anteil 3 Personen [%]']/100
                 w_4P = sizes_feds['Anteil 4 Personen [%]']/100
                 w_5P = sizes_feds['Anteil 5 Personen und mehr [%]']/100
-                # distribute the whole population over teh considered area 
+                # distribute the whole population over teh considered area
                 pop_distribute= area.population
                 # construct random generator
                 rng = np.random.default_rng()
                 while pop_distribute != 0:
                     if pop_distribute > 5:
-                        # select houshold size, weighted randomly 
+                        # select houshold size, weighted randomly
                         household_size = rng.choice([1, 2, 3, 4, 5],
-                                                      1,
-                                                      p=[w_1P, w_2P, w_3P, w_4P,w_5P])[0]
-                    else: 
+                                                    1,
+                                                    p=[w_1P, w_2P, w_3P, w_4P, w_5P])[0]
+                    else:
                         # selcet  the rest of population
                         if pop_distribute != 0:
-                            household_size = pop_distribute  
+                            household_size = pop_distribute
                     # get power values for household
                     p_mw, q_mvar = get_household_power(household_size=household_size)
                     # reduce population to distribute
@@ -1484,7 +1482,7 @@ def loads(grid_data):
                     building_node = building_nodes[building_nodes.geometry.within(building_geom)]
                     if not building_node.empty:
                         lv_node = building_node.iloc[0]
-                    else: 
+                    else:
                         # check the case that the building centroid is outside building boundary
                         building_centroid = building_geom.centroid
                         centroid_distance = building_nodes.distance(building_centroid)

@@ -65,7 +65,7 @@ def create_mv_topology(grid_data):
     mv_buses = mvlv_buses.append(hvmv_buses)
     if len(mv_buses) > 1:
         mv_buses['voltage_level'] = 5
-        mv_buses['voltage_kv'] = 20
+        mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
         # add oep as source
         mv_buses['source'] = 'OEP'
         # add dave name
@@ -186,7 +186,7 @@ def create_mv_topology(grid_data):
             # line dave name
             mv_lines.at[line.name, 'dave_name'] = f'line_5_{i}'
             # additional informations
-            mv_lines.at[line.name, 'voltage_kv'] = 20
+            mv_lines.at[line.name, 'voltage_kv'] = dave_settings()['mv_voltage']
             mv_lines.at[line.name, 'voltage_level'] = 5
             mv_lines.at[line.name, 'source'] = 'dave internal'
         # add mv nodes to grid data

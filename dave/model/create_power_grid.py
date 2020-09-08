@@ -2,14 +2,8 @@ import pandapower as pp
 from shapely import geometry, ops
 import pandas as pd
 
-
 from dave import dave_output_dir
-
-
-# hier wird das Stromnetzmodell anhand der grid_data erstellt. ruaskommen soll dan fertiges pp netz als pickel(oder json?)
-
-
-# voltage_level sollte auch in dem pandapower modell mit eingetragen werden. 
+from dave.settings import dave_settings
 
 
 def create_power_grid(grid_data):
@@ -161,6 +155,8 @@ def create_power_grid(grid_data):
                                           name=bus.dave_name)
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
+    # create lines
+    
 
     # --- create low voltage topology
     # create buses
@@ -179,8 +175,6 @@ def create_power_grid(grid_data):
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
     # create lines
-    std_type = 'NAYY 4x150 SE'  # dummy value, must be changed
-    # lv lines for buildings
     if not grid_data.lv_data.lv_lines.empty:
         for i, line in grid_data.lv_data.lv_lines.iterrows():
             line_coords = line.geometry.coords[:]
@@ -189,7 +183,7 @@ def create_power_grid(grid_data):
                            from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
                            to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
                            length_km=line.length_km,
-                           std_type=std_type,
+                           std_type=dave_settings()['lv_line_std_type'],
                            geodata=[list(coords) for coords in line_coords])
             # additional Informations
             line_id = pp.get_element_index(net,
@@ -215,10 +209,10 @@ def create_power_grid(grid_data):
                                                   sn_mva=trafo.s_nom_mva,
                                                   vn_hv_kv=trafo.voltage_kv_hv,
                                                   vn_lv_kv=trafo.voltage_kv_lv,
-                                                  vkr_percent=0,  # dummy value
-                                                  vk_percent=10,  # dummy value
-                                                  pfe_kw=0,  # dummy value accepted as ideal
-                                                  i0_percent=0,  # dummy value accepted as ideal
+                                                  vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
+                                                  vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
+                                                  pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
+                                                  i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
                                                   shift_degree=trafo.phase_shift,
                                                   name=trafo.dave_name)
             # additional Informations
@@ -245,10 +239,10 @@ def create_power_grid(grid_data):
                                                   sn_mva=trafo.s_nom_mva,
                                                   vn_hv_kv=trafo.voltage_kv_hv,
                                                   vn_lv_kv=trafo.voltage_kv_lv,
-                                                  vkr_percent=0,  # dummy value 
-                                                  vk_percent=10,   # dummy value
-                                                  pfe_kw=0,  # dummy value accepted as ideal
-                                                  i0_percent=0,  # dummy value accepted as ideal
+                                                  vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
+                                                  vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
+                                                  pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
+                                                  i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
                                                   shift_degree=trafo.phase_shift,
                                                   name=trafo.dave_name)
             # additional Informations
@@ -264,14 +258,13 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
     # create hv/mv transformers
     if not grid_data.components_power.transformers.hv_mv.empty:
-        std_type = '63 MVA 110/20 kV'
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
             pp.create_transformer(net,
                                   hv_bus=hv_bus,
                                   lv_bus=lv_bus,
-                                  std_type=std_type,
+                                  std_type=dave_settings()['hvmv_trafo_std_type'],
                                   name=trafo.dave_name)
             # additional Informations
             trafo_id = pp.get_element_index(net,
@@ -285,14 +278,13 @@ def create_power_grid(grid_data):
 
     # create mv/lv transformers
     if not grid_data.components_power.transformers.mv_lv.empty:
-        std_type = '0.63 MVA 20/0.4 kV'
         for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
             pp.create_transformer(net,
                                   hv_bus=hv_bus,
                                   lv_bus=lv_bus,
-                                  std_type=std_type,
+                                  std_type=dave_settings()['mvlv_trafo_std_type'],
                                   name=trafo.dave_name)
             # additional Informations
             trafo_id = pp.get_element_index(net,
@@ -302,7 +294,7 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
             net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
-    
+
     # ---create generators
     # create renewable powerplants
     net.sgen['geometry'] = None
@@ -365,7 +357,7 @@ def create_power_grid(grid_data):
     if 'EHV' in grid_data.target_input.power_levels[0]:
         # check for convolutional power plant with uranium as energy source
         uranium_idx = net.gen[net.gen.type == 'uranium'].index
-        if not uranium_idx.empty: 
+        if not uranium_idx.empty:
             for idx in uranium_idx:
                 # create ext grid
                 power_plant = net.gen.loc[idx]
@@ -383,8 +375,8 @@ def create_power_grid(grid_data):
         con_rel = net.gen.loc[pd.isnull(net.gen.aggregated)]
         con_100 = con_rel[con_rel['p_mw']>=100]
         for i, con in con_100.iterrows()
-        
-        
+
+
         # hier schauen ob ein akw im gebiet ist und dann das als ext grid nehmen
         # ansonsten das großte conventionelle nehmen
         # oder sagen das ab gewisser größe 100MW? alle Kraftwerke ein ext grid sind
@@ -402,8 +394,8 @@ def create_power_grid(grid_data):
                                name=dave_name)
             # additional Informations
             ext_id = pp.get_element_index(net,
-                                           element='ext_grid',
-                                           name=dave_name)
+                                          element='ext_grid',
+                                          name=dave_name)
             net.ext_grid.at[ext_id, 'voltage_level'] = 2
     elif 'MV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
@@ -414,8 +406,8 @@ def create_power_grid(grid_data):
                                name=dave_name)
             # additional Informations
             ext_id = pp.get_element_index(net,
-                                           element='ext_grid',
-                                           name=dave_name)
+                                          element='ext_grid',
+                                          name=dave_name)
             net.ext_grid.at[ext_id, 'voltage_level'] = 4
     elif 'LV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
@@ -429,7 +421,4 @@ def create_power_grid(grid_data):
                                            element='ext_grid',
                                            name=dave_name)
             net.ext_grid.at[ext_id, 'voltage_level'] = 6
-    
-    
-    
     return net
