@@ -56,7 +56,6 @@ def archiv_inventory(grid_data, read_only=False):
             file_name = f'dataset_{file_id}'
             return True, file_name
         else:
-             
             # --- in this case the dataset don't exist already in the archiv
             # set file id and name
             file_id = inventory_list.tail(1).iloc[0].id+1
@@ -193,6 +192,7 @@ def to_archiv(grid_data):
         archiv_file.close()
     else:
         print(f'The dataset you tried to save already exist in the DaVe archiv with the name "{file_name}"')
+    return file_name
 
 
 def from_archiv(dataset_name):

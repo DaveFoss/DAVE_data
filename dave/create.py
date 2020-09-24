@@ -1,11 +1,12 @@
 import os
 import pandas as pd
 import geopandas as gpd
+import shutil
 
 # imports from dave
 from dave.dave_structure import davestructure
 from dave import __version__
-from dave import dave_output_dir
+from dave import dave_output_dir, dave_dir
 from dave.topology import *  # target_area, create_ehv_topology, create_hv_topology, create_mv_topology, create_lv_topology
 from dave.plotting import *
 from dave.components import *
@@ -294,36 +295,44 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     else:
         # read dataset from archiv
         grid_data = from_archiv(f'{file_name}.h5')
-            
-    """ # Vorrübergehend aus für testzwecke
-    # save DaVe dataset to archiv and give it back to output folder
-    if not grid_data.target_input.iloc[0].typ == 'own area':
-        print('Save DaVe dataset to archiv')
-        print('---------------------------')
-        to_archiv(grid_data)
-      
-    """
-    # create dave output folder on desktop for plotting and converted models
-    if plot or convert:
-        print('Save plots and converted grid models at the following path:')
-        print(dave_output_dir)
-        print('-----------------------------------------------------------------------')
-        if not os.path.exists(dave_output_dir):
-            os.makedirs(dave_output_dir)
+    
+    # create dave output folder on desktop for DaVe dataset, plotting and converted model
+    print('Save DaVe dataset, plots and converted grid models at the following path:')
+    print(dave_output_dir)
+    print('-----------------------------------------------------------------------')
+    if not os.path.exists(dave_output_dir):
+        os.makedirs(dave_output_dir)
+    
+    
+    
+    # Vorrübergehend aus für testzwecke
+    # save DaVe dataset to archiv and also in the output folder
+    #if not grid_data.target_input.iloc[0].typ == 'own area':
+    print('Save DaVe dataset to archiv')
+    print('---------------------------')
+    # save dataset to archiv
+    file_name = to_archiv(grid_data)
+    # copy file from archiv folder to output folder
+    archiv_file_path = dave_dir + '\\datapool\\dave_archiv\\' + f'{file_name}.h5'
+    output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
+    if os.path.exists(archiv_file_path):
+        shutil.copyfile(archiv_file_path, output_file_path)
+        
             
     # plot informations
     if plot:
         plot_target_area(grid_data)
         plot_grid_data(grid_data)
         plot_landuse(grid_data)
+        # hier noch erzeuger plot
         
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder                   
-        #file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
-        #pp.to_json(net, file_path)
+        file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
+        pp.to_json(net, file_path)
     else:
         net_power = None
     if convert and gas_levels:
