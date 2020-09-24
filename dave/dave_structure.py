@@ -15,7 +15,7 @@ class davestructure(ADict):
         return copy.deepcopy(self)
 
     def __repr__(self):  # pragma: no cover
-        r = 'This dave dataset includes the following parameter tables:'
+        r = 'This DaVe dataset includes the following parameter tables:'
         for tb in list(self.keys()):
             if isinstance(self[tb], pd.DataFrame) and not self[tb].empty:
                 length = len(self[tb])
