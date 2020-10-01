@@ -388,7 +388,7 @@ def create_power_grid(grid_data):
                                name='ext_grid_1_0')
             # additional Informations
             ext_id = pp.get_element_index(net,
-                                          element='ext_grid',
+                                          element='ext_grid_1_0',
                                           name=dave_name)
             net.ext_grid.at[ext_id, 'voltage_level'] = 1
     elif 'HV' in grid_data.target_input.power_levels[0]:
@@ -400,7 +400,7 @@ def create_power_grid(grid_data):
             # additional Informations
             ext_id = pp.get_element_index(net,
                                           element='ext_grid',
-                                          name=dave_name)
+                                          name=f'ext_grid_2_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 2
     elif 'MV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
@@ -411,7 +411,7 @@ def create_power_grid(grid_data):
             # additional Informations
             ext_id = pp.get_element_index(net,
                                           element='ext_grid',
-                                          name=dave_name)
+                                          name=f'ext_grid_4_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 4
     elif 'LV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
@@ -422,6 +422,6 @@ def create_power_grid(grid_data):
             # additional Informations
             ext_id = pp.get_element_index(net,
                                            element='ext_grid',
-                                           name=dave_name)
+                                           name=f'ext_grid_6_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 6
     return net
