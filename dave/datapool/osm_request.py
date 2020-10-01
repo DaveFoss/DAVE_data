@@ -9,9 +9,9 @@ from six import string_types
 
 
 """
-This functions are based on the geopandas_osm python package, which was published under the 
+This functions are based on the geopandas_osm python package, which was published under the
 following licens:
-    
+
 The MIT License (MIT)
 
 Copyright (c) 2014 Jacob Wasserman
@@ -56,11 +56,11 @@ uninteresting_tags = set([
 
 
 # http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
-def query_osm(typ, bbox=None, recurse=None, tags='', raw=False, 
+def query_osm(typ, bbox=None, recurse=None, tags='', raw=False,
               meta=False, **kwargs):
     """
     Query the Overpass API to obtain OpenStreetMap data.
-    
+
     See also:
     http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
 
@@ -85,7 +85,7 @@ def query_osm(typ, bbox=None, recurse=None, tags='', raw=False,
     tags : string or list of query strings
         See also the OverpassQL (referenced above) for more tag options
         Examples:
-            tags='highway' 
+            tags='highway'
                 Matches objects with a 'highway' tag
             tags='highway=motorway' <-- Matches ob
                 Matches objects where the 'highway' tag is 'motorway'
@@ -104,7 +104,7 @@ def query_osm(typ, bbox=None, recurse=None, tags='', raw=False,
     meta : boolean, default False
         Indicates whether to query the metadata with each OSM object. This
         includes the changeset, timestamp, uid, user, and version.
-                
+
     Returns
     -------
     df - GeoDataFrame
@@ -165,7 +165,7 @@ def _build_url(typ, bbox=None, recurse=None, tags='', meta=False):
     query = '({typ}{bbox}{queries};{recurse};);out {meta};'.format(
         typ=typ, bbox=bboxstr, queries=queries, recurse=recursestr, meta=metastr)
 
-    url = ''.join(['http://www.overpass-api.de/api/interpreter?', 
+    url = ''.join(['http://www.overpass-api.de/api/interpreter?',
                    urlencode({'data': query})])
 
     return url
@@ -178,13 +178,17 @@ def read_osm(content, render=True, **kwargs):
 
     """
     doc = ET.fromstring(content)
-    
+
     nodes = read_nodes(doc)
     waynodes, waytags = read_ways(doc)
     relmembers, reltags = read_relations(doc)
+    
+    # check if all requested variables are empty
+    #if nodes.empty and waynodes.empty and waytags.empty and relmembers.empty and reltags.empty:
+        
 
     data = OSMData(nodes, waynodes, waytags, relmembers, reltags)
-    
+
     if render:
         data = render_to_gdf(data, **kwargs)
     return data
@@ -199,8 +203,9 @@ def read_nodes(doc):
     #   </node>
     nodes = [_element_to_dict(xmlnode) for xmlnode in doc.findall('node')]
     nodes = _dict_to_dataframe(nodes)
-    nodes['lon'] = nodes['lon'].astype(float)
-    nodes['lat'] = nodes['lat'].astype(float)
+    if not nodes.empty:
+        nodes['lon'] = nodes['lon'].astype(float)
+        nodes['lat'] = nodes['lat'].astype(float)
 
     return nodes
 
@@ -211,7 +216,7 @@ def _element_to_dict(element):
         k = t.attrib['k']
         if k not in uninteresting_tags:
             d[k] = t.attrib['v']
-    
+
     return d
 
 
@@ -304,13 +309,15 @@ def render_to_gdf(osmdata, drop_untagged=True):
 
 
 def render_nodes(nodes, drop_untagged=True):
-    # Drop nodes that have no tags, convert lon/lat to points
-    if drop_untagged:
-        nodes = nodes.dropna(subset=nodes.columns.drop(['id', 'lon', 'lat']),
-                             how='all')
-    points = [Point(x['lon'], x['lat']) for i, x in nodes.iterrows()]
-    nodes = nodes.drop(['lon', 'lat'], axis=1)
-    nodes = nodes.set_geometry(points, crs=_crs)
+    # check if their are nodes
+    if not nodes.empty:
+        # Drop nodes that have no tags, convert lon/lat to points
+        if drop_untagged:
+            nodes = nodes.dropna(subset=nodes.columns.drop(['id', 'lon', 'lat']),
+                                 how='all')
+        points = [Point(x['lon'], x['lat']) for i, x in nodes.iterrows()]
+        nodes = nodes.drop(['lon', 'lat'], axis=1)
+        nodes = nodes.set_geometry(points, crs=_crs)
 
     return nodes
 
