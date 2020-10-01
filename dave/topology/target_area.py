@@ -79,147 +79,158 @@ class target_area():
         if self.roads:
             roads = query_osm('way', target, recurse='down',
                               tags=['highway~"secondary|tertiary|unclassified|residential|living_street|footway"'])
-            # define road parameters which are relevant for the grid modeling
-            relevant_columns = ['geometry',
-                                'name',
-                                'highway']
-            roads = roads.filter(relevant_columns)
-            # consider only the linestring elements
-            roads = roads[roads.geometry.length != 0]
-            # consider only roads which intersects the target area
-            if target_number or target_number == 0:
-                target_area = self.target.geometry.iloc[target_number]
-            elif target_town:
-                targets = self.target[self.target.town == target_town]
-                target_area = cascaded_union(targets.geometry.tolist())
-            roads = roads[roads.geometry.intersects(target_area)]
-            # write roads into grid_data
-            self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
+            # check if there are data for roads
+            if not roads.empty:
+                # define road parameters which are relevant for the grid modeling
+                relevant_columns = ['geometry',
+                                    'name',
+                                    'highway']
+                roads = roads.filter(relevant_columns)
+                # consider only the linestring elements
+                roads = roads[roads.geometry.length != 0]
+                # consider only roads which intersects the target area
+                if target_number or target_number == 0:
+                    target_area = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_area = cascaded_union(targets.geometry.tolist())
+                roads = roads[roads.geometry.intersects(target_area)]
+                # write roads into grid_data
+                self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
             # add time delay
             time.sleep(time_delay)
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
             roads_plot = query_osm('way', target, recurse='down',
                                    tags=['highway~"motorway|trunk|primary"'])
-            # define road parameters which are relevant for the grid modeling
-            relevant_columns = ['geometry',
-                                'name']
-            roads_plot = roads_plot.filter(relevant_columns)
-            # consider only the linestring elements
-            roads_plot = roads_plot[roads_plot.geometry.length != 0]
-            # consider only roads which intersects the target area
-            if target_number or target_number == 0:
-                target_area = self.target.geometry.iloc[target_number]
-            elif target_town:
-                targets = self.target[self.target.town == target_town]
-                target_area = cascaded_union(targets.geometry.tolist())
-            roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
-            # write plotting roads into grid_data
-            self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
+            # check if there are data for roads_plot
+            if not roads_plot.empty:
+                # define road parameters which are relevant for the grid modeling
+                relevant_columns = ['geometry',
+                                    'name']
+                roads_plot = roads_plot.filter(relevant_columns)
+                # consider only the linestring elements
+                roads_plot = roads_plot[roads_plot.geometry.length != 0]
+                # consider only roads which intersects the target area
+                if target_number or target_number == 0:
+                    target_area = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_area = cascaded_union(targets.geometry.tolist())
+                roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
+                # write plotting roads into grid_data
+                self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
             # add time delay
             time.sleep(time_delay)
         # search landuse informations in the target area
         if self.landuse:
             landuse = query_osm('way', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
-            relevant_columns = ['landuse',
-                                'geometry',
-                                'name']
-            landuse = landuse.filter(relevant_columns)
-            # consider only the linestring elements
-            landuse = landuse[landuse.geometry.length != 0]
-            # consider only landuses which intersects the target area
-            if target_number or target_number == 0:
-                target_area = self.target.geometry.iloc[target_number]
-            elif target_town:
-                targets = self.target[self.target.town == target_town]
-                target_area = cascaded_union(targets.geometry.tolist())
-            # filter landuses that touches the target area
-            landuse = landuse[landuse.geometry.intersects(target_area)]
-            # convert geometry to polygon
-            landuse_drop = []
-            for i, land in landuse.iterrows():
-                if len(land.geometry.coords[:]) > 2:
-                    landuse.at[land.name, 'geometry'] = shapely.geometry.Polygon(land.geometry)
-                else:
-                    landuse_drop.append(land.name)
-            # drop landuses with wrong geometry
-            landuse = landuse.drop(landuse_drop)
-            # intersect landuses with the target area
-            landuse = landuse.to_crs(epsg=4326)
-            area = self.grid_data.area.rename(columns={'name': 'bundesland'})
-            landuse = gpd.overlay(landuse, area, how='intersection')
+            # check if there are data for landuse
             if not landuse.empty:
-                remove_columns = area.keys().tolist()
-                remove_columns.remove('geometry')
-                landuse = landuse.drop(columns=remove_columns)
-            # calculate polygon area in km²
-            landuse_3035 = landuse.to_crs(epsg=3035)  # project landuse to crs with unit in meter
-            landuse_area = landuse_3035.area/1E06
-            landuse['area_km2'] = landuse_area
-            # write landuse into grid_data
-            self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+                # define landuse parameters which are relevant for the grid modeling
+                relevant_columns = ['landuse',
+                                    'geometry',
+                                    'name']
+                landuse = landuse.filter(relevant_columns)
+                # consider only the linestring elements
+                landuse = landuse[landuse.geometry.length != 0]
+                # consider only landuses which intersects the target area
+                if target_number or target_number == 0:
+                    target_area = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_area = cascaded_union(targets.geometry.tolist())
+                # filter landuses that touches the target area
+                landuse = landuse[landuse.geometry.intersects(target_area)]
+                # convert geometry to polygon
+                landuse_drop = []
+                for i, land in landuse.iterrows():
+                    if len(land.geometry.coords[:]) > 2:
+                        landuse.at[land.name, 'geometry'] = shapely.geometry.Polygon(land.geometry)
+                    else:
+                        landuse_drop.append(land.name)
+                # drop landuses with wrong geometry
+                landuse = landuse.drop(landuse_drop)
+                # intersect landuses with the target area
+                landuse = landuse.to_crs(epsg=4326)
+                area = self.grid_data.area.rename(columns={'name': 'bundesland'})
+                landuse = gpd.overlay(landuse, area, how='intersection')
+                if not landuse.empty:
+                    remove_columns = area.keys().tolist()
+                    remove_columns.remove('geometry')
+                    landuse = landuse.drop(columns=remove_columns)
+                # calculate polygon area in km²
+                landuse_3035 = landuse.to_crs(epsg=3035)  # project landuse to crs with unit in meter
+                landuse_area = landuse_3035.area/1E06
+                landuse['area_km2'] = landuse_area
+                # write landuse into grid_data
+                self.grid_data.landuse = self.grid_data.landuse.append(landuse)
             # add time delay
             time.sleep(time_delay)
         # search building informations in the target area
         if self.buildings:
             buildings = query_osm('way', target, recurse='down', tags=['building'])
-            # define building parameters which are relevant for the grid modeling
-            relevant_columns = ['addr:housenumber',
-                                'addr:street',
-                                'addr:suburb',
-                                'amenity',
-                                'building',
-                                'building:levels',
-                                'geometry',
-                                'name']
-            buildings = buildings.filter(relevant_columns)
-            # consider only the linestring elements
-            buildings = buildings[buildings.geometry.length != 0]
-            # consider only buildings which intersects the target area
-            if target_number or target_number == 0:
-                target_area = self.target.geometry.iloc[target_number]
-            elif target_town:
-                targets = self.target[self.target.town == target_town]
-                target_area = cascaded_union(targets.geometry.tolist())
-            buildings = buildings[buildings.geometry.intersects(target_area)]
-            # create building categories
-            for_living = ['apartments',
-                          'detached',
-                          'dormitory',
-                          'farm',
-                          'house',
-                          'houseboat',
-                          'residential',
-                          'semidetached_house',
-                          'static_caravan',
-                          'terrace',
-                          'yes']
-            commercial = ['commercial',
-                          'hall',
-                          'industrial',
-                          'kindergarten',
-                          'kiosk',
-                          'office',
-                          'retail',
-                          'school',
-                          'supermarket',
-                          'warehouse']
-            # improve building tag with landuse parameter
-            landuse_retail = cascaded_union(landuse[landuse.landuse == 'retail'].geometry)
-            landuse_industrial = cascaded_union(landuse[landuse.landuse == 'industrial'].geometry)
-            landuse_commercial = cascaded_union(landuse[landuse.landuse == 'commercial'].geometry)
-            for i, building in buildings.iterrows():
-                if building.building not in (commercial):
-                    if building.geometry.intersects(landuse_retail):
-                        buildings.at[i, 'building'] = 'retail'
-                    elif building.geometry.intersects(landuse_industrial):
-                        buildings.at[i, 'building'] = 'industrial'
-                    elif building.geometry.intersects(landuse_commercial):
-                        buildings.at[i, 'building'] = 'commercial'
-            # write buildings into grid_data
-            self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
-            self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
-            self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
+            # check if there are data for buildings
+            if not buildings.empty:
+                # define building parameters which are relevant for the grid modeling
+                relevant_columns = ['addr:housenumber',
+                                    'addr:street',
+                                    'addr:suburb',
+                                    'amenity',
+                                    'building',
+                                    'building:levels',
+                                    'geometry',
+                                    'name']
+                buildings = buildings.filter(relevant_columns)
+                # consider only the linestring elements
+                buildings = buildings[buildings.geometry.length != 0]
+                # consider only buildings which intersects the target area
+                if target_number or target_number == 0:
+                    target_area = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_area = cascaded_union(targets.geometry.tolist())
+                buildings = buildings[buildings.geometry.intersects(target_area)]
+                # create building categories
+                for_living = ['apartments',
+                              'detached',
+                              'dormitory',
+                              'dwelling_house',
+                              'farm',
+                              'house',
+                              'houseboat',
+                              'residential',
+                              'semidetached_house',
+                              'static_caravan',
+                              'terrace',
+                              'yes']
+                commercial = ['commercial',
+                              'hall',
+                              'industrial',
+                              'kindergarten',
+                              'kiosk',
+                              'office',
+                              'retail',
+                              'school',
+                              'supermarket',
+                              'warehouse']
+                # improve building tag with landuse parameter
+                if not landuse.empty:
+                    landuse_retail = cascaded_union(landuse[landuse.landuse == 'retail'].geometry)
+                    landuse_industrial = cascaded_union(landuse[landuse.landuse == 'industrial'].geometry)
+                    landuse_commercial = cascaded_union(landuse[landuse.landuse == 'commercial'].geometry)
+                    for i, building in buildings.iterrows():
+                        if building.building not in (commercial):
+                            if building.geometry.intersects(landuse_retail):
+                                buildings.at[i, 'building'] = 'retail'
+                            elif building.geometry.intersects(landuse_industrial):
+                                buildings.at[i, 'building'] = 'industrial'
+                            elif building.geometry.intersects(landuse_commercial):
+                                buildings.at[i, 'building'] = 'commercial'
+                # write buildings into grid_data
+                self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
+                self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
+                self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
             # add time delay
             time.sleep(time_delay)
 
