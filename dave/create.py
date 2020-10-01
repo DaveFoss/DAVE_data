@@ -304,21 +304,26 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         os.makedirs(dave_output_dir)
     
     
-    
+    """
     # Vorrübergehend aus für testzwecke
     # save DaVe dataset to archiv and also in the output folder
-    #if not grid_data.target_input.iloc[0].typ == 'own area':
-    print('Save DaVe dataset to archiv')
-    print('---------------------------')
-    # save dataset to archiv
-    file_name = to_archiv(grid_data)
-    # copy file from archiv folder to output folder
-    archiv_file_path = dave_dir + '\\datapool\\dave_archiv\\' + f'{file_name}.h5'
-    output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
-    if os.path.exists(archiv_file_path):
-        shutil.copyfile(archiv_file_path, output_file_path)
+    if not grid_data.target_input.iloc[0].typ == 'own area':
+        print('Save DaVe dataset to archiv')
+        print('---------------------------')
+        # save dataset to archiv
+        file_name = to_archiv(grid_data)
+        # copy file from archiv folder to output folder
+        archiv_file_path = dave_dir + '\\datapool\\dave_archiv\\' + f'{file_name}.h5'
+        output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
+        if os.path.exists(archiv_file_path):
+            shutil.copyfile(archiv_file_path, output_file_path)
+    else: 
+        pass
+        # hier noch funktion das die dataset datei in diesem fall nur in den user output folder kommt
+    """    
         
-            
+    
+
     # plot informations
     if plot:
         plot_target_area(grid_data)
@@ -332,7 +337,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder                   
         file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
-        pp.to_json(net, file_path)
+        pp.to_json(net_power, file_path)
     else:
         net_power = None
     if convert and gas_levels:
