@@ -12,7 +12,7 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
         **net** (attrdict) - PANDAPOWER attrdict with grid data
 
     OUTPUT:
-        **net** (attrdict) - A cleaned up PANDAPOWER attrdict with grid data
+        **net** (attrdict) - A cleaned up and if necessary optimized PANDAPOWER attrdict with grid data
 
     EXAMPLE:
 
@@ -79,6 +79,7 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
         try:
             # run powerflow
             pp.runpp(net, max_iteration=100)
+            pf_converged = True
             # check boundarys
             if net.res_bus.vm_pu.min() < min_vm_pu:
                 use_opf = True
@@ -121,8 +122,8 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
             net.sgen['max_q_mvar'] = 0
             net.sgen['controllable'] = True
             # for gens
-            net.gen['min_vm_pu'] = 0.95 # necessary for OPF
-            net.gen['max_vm_pu'] = 1.05 # necessary for OPF
+            net.gen['min_vm_pu'] = min_vm_pu  # necessary for OPF
+            net.gen['max_vm_pu'] = max_vm_pu  # necessary for OPF
             net.gen['min_p_mw'] = 0
             net.gen['max_p_mw'] = net.gen.p_mw
             #net.gen['min_q_mvar']
@@ -138,8 +139,7 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                     max_bus = (net.res_bus.vm_pu.max() < max_vm_pu_pf) or (net.res_bus.vm_pu.max() < max_vm_pu)
                     max_line = (net.res_line.loading_percent.max() < max_line_loading_pf) or (net.res_line.loading_percent.max() < max_line_loading)
                     max_trafo = (net.res_trafo.loading_percent.max() < max_trafo_loading_pf) or (net.res_trafo.loading_percent.max() < max_trafo_loading)
-                if (min_bus and max_bus and max_line and max_trafo) or (not pf_converged):
-                    print('test')
+                if (not pf_converged) or (min_bus and max_bus and max_line and max_trafo):
                     # save original parameters as installed power in grid model
                     net.sgen['p_mw_installed'] = net.sgen.p_mw
                     net.sgen['q_mvar_installed'] = net.sgen.q_mvar
@@ -156,37 +156,13 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                     net.gen.p_mw = net.res_gen.p_mw
                     net.gen.sn_mva = (net.res_gen.p_mw**2 + net.res_gen.q_mvar**2).pow(1/2)
                     net.gen.vm_pu = net.res_gen.vm_pu
-                    
-                    """
-                    noch irgendwelche Parameter???
-                    """
-                
             except:
                 print('optimal power flow did not converged')
         # print results for boundaries parameters
-        print('the grid modell has the following charakteristik:')
+        print('the optimized grid modell has the following charakteristik:')
         print(f'min_vm_pu: {net.res_bus.vm_pu.min()}')
         print(f'max_vm_pu: {net.res_bus.vm_pu.max()}')
         print(f'max_line_loading: {net.res_line.loading_percent.max()}')
         print(f'max_trafo_loading: {net.res_trafo.loading_percent.max()}')
-                
-            
-            
-            
-        # hier einen try block zum zu schauen ob der opf durchläuft und wenn ja schauen ob die grenzen besser sind
-        # wenn ja dann werte ändern udn install leistungen eintragen. 
-        # wenn nicht dann ursprüngliches Modell nehmen
-        
-        
-        
-  
-    
-    
-        
-    
-    # hier fehlen dann noch Maßnahmen, um spannungs- und auslastungstoleranzen (grenzen) einzuhalten.
-    # z.b. alle Trafos unter 100 prozent loading bringen. Dazu dann sgens,gens und load Knotendirekt verändern.
-    # Das aber auch alles über das scaling, damit man die original werte noch hat
-    
 
     return net
