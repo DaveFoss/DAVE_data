@@ -38,7 +38,8 @@ SOFTWARE.
 
 OSMData = collections.namedtuple('OSMData', ('nodes', 'waynodes', 'waytags',
                                              'relmembers', 'reltags'))
-_crs = fiona.crs.from_epsg(4326)
+#_crs = fiona.crs.from_epsg(4326)
+_crs ='epsg:4326'
 
 # Tags to remove so we don't clobber the output. This list comes from
 # osmtogeojson's index.js (https://github.com/tyrasd/osmtogeojson)
@@ -297,10 +298,21 @@ def read_relations(doc):
     return relmembers, reltags
 
 
-def render_to_gdf(osmdata, drop_untagged=True):
+def render_to_gdf(osmdata, drop_untagged=True): 
     nodes = render_nodes(osmdata.nodes, drop_untagged)
-
     ways = render_ways(osmdata.nodes, osmdata.waynodes, osmdata.waytags)
+    
+    # set landuse tag from origin relation at relation members who has no landuse tag
+    if (ways is not None) and ('landuse' in ways.keys()) and (not osmdata.relmembers.empty):
+        for i, way in ways.iterrows():
+            # get and add origin relation id
+            rel_id = osmdata.relmembers[osmdata.relmembers.ref == way.id].iloc[0].id
+            ways.at[i, 'relation_id'] = rel_id
+            # get and add origin relation landuse if needed
+            rel_landuse = osmdata.reltags[osmdata.reltags.id == rel_id].iloc[0].landuse
+            if str(way.landuse) == 'nan':
+                ways.at[i, 'landuse'] = rel_landuse
+
     if ways is not None:
         # We should get append working
         nodes = nodes.append(ways).set_geometry('geometry', crs=_crs)
