@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import geopandas as gpd
 import pandas as pd
 import contextily as ctx
@@ -47,7 +48,7 @@ def plot_target_area(grid_data):
     roads = grid_data.roads.roads
     road_junctions = grid_data.roads.road_junctions
     buildings_for_living = grid_data.buildings.for_living
-    buildings_commercial = grid_data.buildings.commercial
+    buildings_commercial =  grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
     buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
     if not buildings_all.empty:
@@ -178,12 +179,12 @@ def plot_grid_data(grid_data):
         if not lv_nodes.empty:
             lv_nodes.plot(ax=ax, color='b', label='LV Nodes')
         if not lv_lines.empty:
-            lv_lines.plot(ax=ax, color='b', label='LV lines')
+            lv_lines.plot(ax=ax, color='b', label='LV Lines')
         # plot mv topology
         if not mv_nodes.empty:
             mv_nodes.plot(ax=ax, color='b', label='MV Nodes')
         if not mv_lines.empty:
-            mv_lines.plot(ax=ax, color='b', label='MV lines')
+            mv_lines.plot(ax=ax, color='b', label='MV Lines')
         """
         # plot electrical components
         if not renewable_plants.empty:
@@ -199,10 +200,10 @@ def plot_grid_data(grid_data):
         if not ehv_lines.empty:
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
-                ehv_lines_380.plot(ax=ax, color='red', zorder=3, label='380 kV lines')
+                ehv_lines_380.plot(ax=ax, color='red', zorder=3, label='380 kV Lines')
             ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
             if not ehv_lines_220.empty:
-                ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV lines')
+                ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV Lines')
         # plot hv topology
         if not hv_nodes.empty:
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
@@ -303,13 +304,13 @@ def plot_grid_data_osm(grid_data):
             hv_lines = hv_lines.to_crs(epsg=3857)
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
         # legende
-        ax.legend()
+        #ax.legend()
         # titel
         plt.title('Grid Data OSM')
         # plot background osm
-        #ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+        ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
         # plot background osm stamen design 
-        ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
+        #ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\grid_data.svg'
         plt.savefig(file_path,format='svg',dpi=300)
@@ -334,14 +335,22 @@ def plot_landuse(grid_data):
         # plot target area
         ax = plot_land(grid_data['area'])
         # plot landuses
+        plot_patch = []
         if not landuse_residential.empty:
-            landuse_residential.plot(ax=ax, color='b', label='Residential')
+            landuse_residential.plot(ax=ax, color='b')
+            blue_patch = mpatches.Patch(color='b', label='Residential')
+            plot_patch.append(blue_patch)
         if not landuse_industrial.empty:
             landuse_industrial.plot(ax=ax, color='r', label='Industrial')
+            red_patch = mpatches.Patch(color='r', label='Industrial')
+            plot_patch.append(red_patch)
         if not landuse_commercial.empty:
             landuse_commercial.plot(ax=ax, color='g', label='Commercial')
+            green_patch = mpatches.Patch(color='g', label='Commercial')
+            plot_patch.append(green_patch)
         # legende
-        ax.legend()
+        #ax.legend()
+        plt.legend(handles=plot_patch)
         # titel
         plt.title('Landuse')
         # save plot in the dave output folder
@@ -351,6 +360,16 @@ def plot_landuse(grid_data):
     # hierbei vielleicht in die Legende auch die Prozentzahl hinter das jeweilige
 
 def plot_erzeuger():
+    """
+    This function plots the power plants in the target area 
+
+    INPUT:
+        **grid_data** (dict) - all Informations about the target area and the grid
+
+    OUTPUT:
+
+    EXAMPLE:
+    """
     # hier eine Plotting funktion die nur die Erzeuger im Zielgebiet aufzeigt und 
     # verschiedene Farben für die verschiedenen Energieträger
     pass
