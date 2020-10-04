@@ -960,7 +960,7 @@ def transformators(grid_data):
     This function collects the transformers.
     EHV/EHV and EHV/HV trafos are based on ego_pf_hv_transformer from OEP
     HV/MV trafos are based on ego_dp_hvmv_substation from OEP
-    MV/LV trafos are based on 
+    MV/LV trafos are based on ego_dp_mvlv_substation from OEP
     """
     print('create transformers for target area')
     print('-----------------------------------')
@@ -1347,6 +1347,39 @@ def transformators(grid_data):
                                          'ego_subst_id': sub.ego_subst_id,
                                          'geometry': [sub.geometry]})
             grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
+            
+
+        # check if tranformer elements are empty and add a synthetic one on the first grid node if necessary
+        if grid_data.components_power.transformers.mv_lv.empty:
+            if not 'MV' in grid_data.target_input.power_levels[0]:
+                buses_lv = grid_data.lv_data.lv_nodes
+                first_bus = buses_lv[buses_lv.node_type == 'road_junction'].iloc[0]
+                if grid_data.mv_data.mv_nodes.empty:
+                    # if there are no mv nodes, create a new one from data of the first lv bus
+                    dave_name = 'node_5_0'
+                    mv_bus_df = gpd.GeoDataFrame({'dave_name': dave_name,
+                                                  'voltage_kv': [dave_settings()['mv_voltage']],
+                                                  'voltage_level': [5],
+                                                  'geometry': [first_bus.geometry],
+                                                  'source': 'dave internal'})
+                    mv_bus_df.crs = 'EPSG:4326'
+                    grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_bus_df)
+                    bus_hv = dave_name
+                bus_lv = first_bus.dave_name
+                # create transformer
+                trafo_df = gpd.GeoDataFrame({'bus_hv': bus_hv,
+                                             'bus_lv': bus_lv,
+                                             'voltage_kv_hv': [dave_settings()['mv_voltage']],
+                                             'voltage_kv_lv': [0.4],
+                                             'voltage_level': [6],
+                                             'geometry': [first_bus.geometry]})
+                grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
+            
+            elif not 'LV' in grid_data.target_input.power_levels[0]:
+                pass
+                # noch definieren
+            
+
         # add dave name
         grid_data.components_power.transformers.mv_lv.insert(0, 'dave_name', None)
         grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.reset_index(drop=True)
