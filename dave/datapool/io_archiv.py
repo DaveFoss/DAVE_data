@@ -9,7 +9,7 @@ from dave.datapool import get_data_path, convert_geometry_to_wkb, convert_geomet
 
 def _convert_from_archiv_data(archiv_file, key):
     data = archiv_file.get(key)
-    if not data.empty and ('geometry' in data.keys()):
+    if (not data.empty) and ('geometry' in data.keys()):
         data = convert_geometry_to_wkt(data)
     data = gpd.GeoDataFrame(data)
     return data
@@ -17,9 +17,12 @@ def _convert_from_archiv_data(archiv_file, key):
 
 def _convert_to_archiv_data(data_key):
     data = copy.deepcopy(data_key)
-    if (not data.empty) and ('geometry' in data.keys()):
-        data = convert_geometry_to_wkb(data)
-    data = pd.DataFrame(data)
+    if not data.empty:
+        if 'geometry' in data.keys():
+            data = convert_geometry_to_wkb(data)
+        data = pd.DataFrame(data)
+    else:
+        data = pd.DataFrame([])
     return data
 
 
