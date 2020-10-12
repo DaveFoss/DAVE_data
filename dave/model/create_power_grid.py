@@ -153,10 +153,13 @@ def create_power_grid(grid_data):
             bus_id = pp.get_element_index(net,
                                           element='bus',
                                           name=bus.dave_name)
-            net.bus.at[bus_id, 'node_type'] = bus.node_type
+            if 'node_type' in bus.keys():
+                net.bus.at[bus_id, 'node_type'] = bus.node_type
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
-            net.bus.at[bus_id, 'ego_version'] = bus.ego_version
-            net.bus.at[bus_id, 'ego_subst_id'] = bus.ego_subst_id
+            if 'ego_version' in bus.keys():
+                net.bus.at[bus_id, 'ego_version'] = bus.ego_version
+            if 'ego_subst_id' in bus.keys():
+                net.bus.at[bus_id, 'ego_subst_id'] = bus.ego_subst_id
             net.bus.at[bus_id, 'source'] = bus.source
     # create lines
     if not grid_data.mv_data.mv_lines.empty:
@@ -310,8 +313,10 @@ def create_power_grid(grid_data):
                                             name=trafo.dave_name)
             net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
-            net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
-            net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
+            if 'ego_subst_id' in bus.keys():
+                net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
+            if 'ego_version' in bus.keys():
+                net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
 
     # ---create generators
     # create renewable powerplants
@@ -378,18 +383,17 @@ def create_power_grid(grid_data):
             # set gens as slack bus
             for i, plant in plant_max.iterrows():
                 net.gen.at[plant.name, 'slack'] = True
-        # in case their is no convolutional power plant
+        # in case there is no convolutional power plant
         else:
             # create a ext grid on the first grid bus
             first_bus = grid_data.ehv_data.ehv_nodes.iloc[0].name
-            
             pp.create_ext_grid(net,
                                bus=first_bus,
                                name='ext_grid_1_0')
             # additional Informations
             ext_id = pp.get_element_index(net,
                                           element='ext_grid_1_0',
-                                          name=dave_name)
+                                          name=f'ext_grid_1_0')
             net.ext_grid.at[ext_id, 'voltage_level'] = 1
     elif 'HV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
