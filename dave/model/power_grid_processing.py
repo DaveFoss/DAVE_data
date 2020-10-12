@@ -27,12 +27,16 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
         for idx in range(0, len(diagnostic['disconnected_elements'])):
             drop_buses = diagnostic['disconnected_elements'][idx]['buses']
             pp.drop_buses(net, drop_buses)
+    # run network diagnostic
+    diagnostic = pp.diagnostic(net, report_style='None')
     # change lines with impedance close to zero to switches
     if 'impedance_values_close_to_zero' in diagnostic.keys():
         lines = diagnostic['impedance_values_close_to_zero'][0]['line']
         for line_index in lines:
             pp.create_replacement_switch_for_branch(net, element='line', idx=line_index)
         pp.drop_lines(net, lines=lines)
+    # run network diagnostic
+    diagnostic = pp.diagnostic(net, report_style='None')
     # correct invalid values
     if 'invalid_values' in diagnostic.keys():
         if 'gen' in diagnostic['invalid_values'].keys():
