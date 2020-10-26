@@ -157,7 +157,7 @@ def create_mv_topology(grid_data):
                         nearest_point_idx = distance[distance == distance.min()].index[0]
                         nearest_point = nearest_line_points[nearest_point_idx]
                         line_point = line_points[j]
-                # add createt connection line into mv lines
+                # add created connection line into mv lines
                 mv_line = LineString([line_point, nearest_point])
                 if not mv_lines.geom_equals(mv_line).any():
                     mv_lines[len(mv_lines)] = mv_line

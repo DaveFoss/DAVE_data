@@ -97,5 +97,5 @@ def create_hp_topology(grid_data):
         hp_pipes = hp_pipes.reset_index(drop=True)
         for i, pipe in hp_pipes.iterrows():
             hp_pipes.at[pipe.name, 'dave_name'] = f'pipe_1_{i}'
-        # add hv lines to grid data
+        # add hd lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)

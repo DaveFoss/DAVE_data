@@ -232,10 +232,6 @@ def create_lv_topology(grid_data):
         to_bus = lv_nodes[lv_nodes.geometry.x == line_coords_to[0]]
         if len(to_bus) > 1:
             to_bus = to_bus[to_bus.geometry.y == line_coords_to[1]]
-        
-        
-        
-        
         if not from_bus.empty:
             grid_data.lv_data.lv_lines.at[line.name, 'from_bus'] = from_bus.iloc[0].dave_name
         else:

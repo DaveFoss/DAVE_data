@@ -7,6 +7,7 @@ import shutil
 from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
+from dave.io_dave import write_dataset
 from dave.topology import *  # target_area, create_ehv_topology, create_hv_topology, create_mv_topology, create_lv_topology
 from dave.plotting import *
 from dave.components import *
@@ -318,11 +319,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
     else: 
-        pass
-        # hier noch funktion das die dataset datei in diesem fall nur in den user output folder kommt
-    """    
-        
-    
+        write_dataset(grid_data, dataset_path = dave_output_dir + '\\' + 'dave_dataset.h5')
+    """
 
     # plot informations
     if plot:

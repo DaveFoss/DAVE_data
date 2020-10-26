@@ -297,14 +297,16 @@ def plot_grid_data_osm(grid_data):
                 ehv_lines_220 = ehv_lines_220.to_crs(epsg=3857)
                 ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV lines')
         # plot hv topology
+        """
         if not hv_nodes.empty:
             hv_nodes = hv_nodes.to_crs(epsg=3857)
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
+        """
         if not hv_lines.empty:
             hv_lines = hv_lines.to_crs(epsg=3857)
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
         # legende
-        #ax.legend()
+        ax.legend()
         # titel
         plt.title('Grid Data OSM')
         # plot background osm

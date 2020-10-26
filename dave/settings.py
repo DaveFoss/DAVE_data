@@ -28,6 +28,7 @@ def dave_settings():
                 
                 # --- assumptions at pandapower convert:
                 # lines standard types
+                'mv_line_std_type': 'NA2XS2Y 1x240 RM/25 12/20 kV',  # dummy value, must be changed
                 'lv_line_std_type': 'NAYY 4x150 SE',  # dummy value, must be changed
                 # trafo parameters for ehv/ehv and  ehv/hv
                 'trafo_vkr_percent': 0,  # dummy value

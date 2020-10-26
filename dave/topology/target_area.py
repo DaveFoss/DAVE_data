@@ -125,28 +125,12 @@ class target_area():
         # search landuse informations in the target area
         if self.landuse:
             landuse = query_osm('way', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
-            
-            
-
             # check additionally osm relations
             landuse_rel = query_osm('relation', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
             landuse_rel = landuse_rel.reset_index(drop=True)
-            """
-            for i, land in landuse_rel.iterrows():
-                # filter wrong geometrie objects
-                if isinstance(land.geometry, Point):
-                    # del landuse if geometry is a point
-                    landuse_rel = landuse_rel.drop([land.name])
-                elif isinstance(land.geometry, LineString):
-                    # convert linestring to polygon
-                    poly = Polygon(land.geometry)
-                    landuse_rel.at[land.name, 'geometry'] = poly
-                    """
             # add landuses from relations to landuses from ways
             landuse = landuse.append(landuse_rel)
             landuse = landuse.reset_index(drop=True)
-                
-                
             # check if there are data for landuse
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
@@ -165,19 +149,12 @@ class target_area():
                 # filter landuses that touches the target area
                 landuse = landuse[landuse.geometry.intersects(target_area)]
                 # convert geometry to polygon
-                
-                
-                
                 for i, land in landuse.iterrows():
                     if isinstance(land.geometry, LineString):
                         landuse.at[land.name, 'geometry'] = Polygon(land.geometry)
                     elif isinstance(land.geometry, Point):
                         # del landuse if geometry is a point
                         landuse = landuse.drop([land.name])
-            
-            
-            
-            
                 # intersect landuses with the target area
                 landuse = landuse.to_crs(epsg=4326)
                 area = self.grid_data.area.rename(columns={'name': 'bundesland'})

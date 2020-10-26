@@ -683,18 +683,6 @@ def conventional_powerplants(grid_data):
                 conventionals.at[i, 'voltage_level'] = 5
             elif int(plant.voltage) >= 220:
                 conventionals.at[i, 'voltage_level'] = 1
-            elif int(plant.voltage) == 110:
-                conventionals.at[i, 'voltage_level'] = 3
-            elif (int(plant.voltage) <= 50) and (int(plant.voltage) >= 1):
-                conventionals.at[i, 'voltage_level'] = 5
-            elif int(plant.voltage) <= 0.4:
-                conventionals.at[i, 'voltage_level'] = 7
-        # add voltage level
-        for i, plant in conventionals.iterrows():
-            if plant.voltage == 'HS/MS':
-                conventionals.at[i, 'voltage_level'] = 4
-            elif int(plant.voltage) >= 220:
-                conventionals.at[i, 'voltage_level'] = 1
             elif (int(plant.voltage) < 220) and (int(plant.voltage) >= 60):
                 conventionals.at[i, 'voltage_level'] = 3
             elif (int(plant.voltage) < 60) and (int(plant.voltage) >= 1):
