@@ -1,3 +1,10 @@
-geopandas (evt. geopandas requierements auflisten)
+Shapely
+GDAL
+Fiona
+pyproj
+rasterio
+Rtree
+geopandas 
 matplotlib
 geopy
+contextily
