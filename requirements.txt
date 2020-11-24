@@ -8,3 +8,4 @@ geopandas
 matplotlib
 geopy
 contextily
+descartes
