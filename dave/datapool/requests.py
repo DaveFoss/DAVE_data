@@ -3,6 +3,8 @@ import pandas as pd
 import requests
 import shapely
 
+from dave.settings import dave_settings
+
 
 def oep_request(schema, table, where=None, geometry=None):
     """
@@ -43,6 +45,6 @@ def oep_request(schema, table, where=None, geometry=None):
         request_data['geometry'] = request_data[geometry].apply(lambda x:shapely.wkb.loads(x, hex=True))
         # create geoDataFrame
         request_data = gpd.GeoDataFrame(request_data,
-                                        crs='EPSG:4326',
+                                        crs=dave_settings()['crs_main'],
                                         geometry=request_data.geometry)
     return request_data

@@ -36,7 +36,7 @@ def create_mv_topology(grid_data):
                                             'mvlv_subst_id': 'ego_subst_id'})
     # change wrong crs from oep
     mvlv_buses.crs = 'EPSG:3035'
-    mvlv_buses = mvlv_buses.to_crs(epsg=4326)
+    mvlv_buses = mvlv_buses.to_crs(dave_settings()['crs_main'])
     # filter trafos for target area
     mvlv_buses = gpd.overlay(mvlv_buses, grid_data.area, how='intersection')
     if not mvlv_buses.empty:
@@ -77,7 +77,7 @@ def create_mv_topology(grid_data):
         grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         # --- create mv lines
         # lines to connect node with the nearest node
-        mv_lines = gpd.GeoSeries([], crs='EPSG:4326')
+        mv_lines = gpd.GeoSeries([])
         for i, bus in mv_buses.iterrows():
             mv_buses_rel = mv_buses.drop([bus.name])
             distance = mv_buses_rel.geometry.distance(bus.geometry)
@@ -86,6 +86,7 @@ def create_mv_topology(grid_data):
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
+        mv_lines = mv_lines.set_crs(dave_settings()['crs_main'])
         mv_lines = mv_lines.reset_index(drop=True)
         # connect line segments with each other
         while True:
@@ -121,7 +122,7 @@ def create_mv_topology(grid_data):
                 distance = mv_lines_con.geometry.distance(line)
                 nearest_line_idx = distance[distance == distance.min()].index[0]
                 # get line coordinates
-                line_points = gpd.GeoSeries([], crs='EPSG:4326')
+                line_points = gpd.GeoSeries([])
                 if isinstance(line, MultiLineString):
                     k = 0
                     for segment in line:
@@ -133,8 +134,10 @@ def create_mv_topology(grid_data):
                     for j in range(0, len(line.coords[:])):
                         point = line.coords[:][j]
                         line_points[j] = Point(point)
+                # set crs
+                line_points = line_points.set_crs(dave_settings()['crs_main'])
                 # get nearest line coordinates
-                nearest_line_points = gpd.GeoSeries([], crs='EPSG:4326')
+                nearest_line_points = gpd.GeoSeries([])
                 nearest_line = mv_lines_rel.loc[nearest_line_idx]
                 if isinstance(nearest_line, MultiLineString):
                     k = 0
@@ -147,7 +150,10 @@ def create_mv_topology(grid_data):
                     for j in range(0, len(nearest_line.coords[:])):
                         point = mv_lines_rel.loc[nearest_line_idx].coords[:][j]
                         nearest_line_points[j] = Point(point)
-                distance_min = 1000  # any big number for initialize
+                # set crs
+                nearest_line_points = nearest_line_points.set_crs(dave_settings()['crs_main'])
+                # define minimal distance for initialize
+                distance_min = 1000  # any big number
                 # find pair of nearest nodes
                 for j in range(0, len(line_points)):
                     point = line_points[j]
@@ -189,5 +195,5 @@ def create_mv_topology(grid_data):
             mv_lines.at[line.name, 'voltage_kv'] = dave_settings()['mv_voltage']
             mv_lines.at[line.name, 'voltage_level'] = 5
             mv_lines.at[line.name, 'source'] = 'dave internal'
-        # add mv nodes to grid data
+        # add mv lines to grid data
         grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)

@@ -11,6 +11,7 @@ from dave.components import power_components
 from dave.datapool import oep_request
 from dave.create import create_grid, create_empty_dataset
 from dave.voronoi import voronoi
+from dave.settings import dave_settings
 
 
 # imports for tests:
@@ -93,7 +94,7 @@ grid_data  = create_grid(postalcode=None,
                                     plot=False, 
                                     convert = False)
 """
-"""
+#"""
 grid_data  = create_grid(postalcode=None, 
                                     town_name=None, 
                                     federal_state=None, 
@@ -103,8 +104,8 @@ grid_data  = create_grid(postalcode=None,
                                     plot=True, 
                                     convert = False,
                                     opt_model = False)
-"""
 #"""
+"""
 grid_data  = create_grid(postalcode=None, 
                                     town_name=None, 
                                     federal_state=['ALL'], 
@@ -114,7 +115,7 @@ grid_data  = create_grid(postalcode=None,
                                     plot=True, 
                                     convert = False,
                                     opt_model = False)
-#"""
+"""
 
 
 
@@ -148,8 +149,6 @@ net_power = create_power_grid(grid_data)
 
 """
 
-
-    
     
 
 # stop and show runtime

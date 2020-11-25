@@ -54,7 +54,7 @@ def plot_target_area(grid_data):
     if not buildings_all.empty:
         building_centroids = buildings_all.centroid
     else:
-        building_centroids = gpd.GeoSeries([], crs='EPSG:4326')
+        building_centroids = gpd.GeoSeries([])
     # check if there is any data in target area, otherwise plot only the area
     data = [roads_plot,
             roads,

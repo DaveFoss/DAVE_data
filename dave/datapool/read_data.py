@@ -4,6 +4,7 @@ import pandas as pd
 from shapely.wkb import loads, dumps
 
 from dave import dave_dir
+from dave.settings import dave_settings
 
 
 def get_data_path(filename=None, dirname=None):
@@ -54,7 +55,7 @@ def read_postal():
     """
     postalger = pd.read_hdf(get_data_path('postalger.h5', 'data'))
     postalger = convert_geometry_to_wkt(postalger)  # convert geometry
-    postalger = gpd.GeoDataFrame(postalger, crs="EPSG:4326")
+    postalger = gpd.GeoDataFrame(postalger, crs=dave_settings()['crs_main'])
     return postalger
 
 
@@ -73,7 +74,7 @@ def read_federal_states():
     """
     federalstatesger = pd.read_hdf(get_data_path('federalstatesger.h5', 'data'))
     federalstatesger = convert_geometry_to_wkt(federalstatesger)  # convert geometry
-    federalstatesger = gpd.GeoDataFrame(federalstatesger, crs="EPSG:4326")
+    federalstatesger = gpd.GeoDataFrame(federalstatesger, crs=dave_settings()['crs_main'])
     return federalstatesger
 
 
@@ -95,7 +96,7 @@ def read_ehv_data():
     # get the individual Data Frames
     ehv_nodes = ehv_data.get('/ehv_nodes')
     ehv_nodes = convert_geometry_to_wkt(ehv_nodes)
-    ehv_nodes = gpd.GeoDataFrame(ehv_nodes, crs="EPSG:4326")
+    ehv_nodes = gpd.GeoDataFrame(ehv_nodes, crs=dave_settings()['crs_main'])
     ehv_node_changes = ehv_data.get('/ehv_node_changes')
     ehv_lines = ehv_data.get('/ehv_lines')
     ehv_trafos = ehv_data.get('/ehv_trafos')
@@ -126,30 +127,31 @@ def read_hp_data():
     """
     # --- read data
     hp_data = pd.HDFStore(get_data_path('hp_data.h5', 'data'))
+    data_crs = 'EPSG:31468'
     # nodes
     hp_nodes = hp_data.get('/nodes')
     hp_nodes = convert_geometry_to_wkt(hp_nodes)
-    hp_nodes = gpd.GeoDataFrame(hp_nodes, crs="EPSG:31468").to_crs(epsg=4326)
+    hp_nodes = gpd.GeoDataFrame(hp_nodes, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # pipelines
     hp_pipelines = hp_data.get('/pipelines')
     hp_pipelines = convert_geometry_to_wkt(hp_pipelines)
-    hp_pipelines = gpd.GeoDataFrame(hp_pipelines, crs="EPSG:31468").to_crs(epsg=4326)
+    hp_pipelines = gpd.GeoDataFrame(hp_pipelines, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # production
     hp_production = hp_data.get('/production')
     hp_production = convert_geometry_to_wkt(hp_production)
-    hp_production = gpd.GeoDataFrame(hp_production, crs="EPSG:31468").to_crs(epsg=4326)
+    hp_production = gpd.GeoDataFrame(hp_production, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # industry
     hp_industry = hp_data.get('/industry')
     hp_industry = convert_geometry_to_wkt(hp_industry)
-    hp_industry = gpd.GeoDataFrame(hp_industry, crs="EPSG:31468").to_crs(epsg=4326)
+    hp_industry = gpd.GeoDataFrame(hp_industry, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # storgae
     hp_storages = hp_data.get('/storages')
     hp_storages = convert_geometry_to_wkt(hp_storages)
-    hp_storages = gpd.GeoDataFrame(hp_storages, crs="EPSG:31468").to_crs(epsg=4326)
+    hp_storages = gpd.GeoDataFrame(hp_storages, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # gas demand total
     hp_gas_demand_total = hp_data.get('/gas_demand_total')
     hp_gas_demand_total = convert_geometry_to_wkt(hp_gas_demand_total)
-    hp_gas_demand_total = gpd.GeoDataFrame(hp_gas_demand_total, crs="EPSG:31468").to_crs(epsg=4326)
+    hp_gas_demand_total = gpd.GeoDataFrame(hp_gas_demand_total, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # close file
     hp_data.close()
     # create dictonary

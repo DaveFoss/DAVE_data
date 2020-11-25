@@ -96,6 +96,7 @@ class target_area():
                     target_area = cascaded_union(targets.geometry.tolist())
                 roads = roads[roads.geometry.intersects(target_area)]
                 # write roads into grid_data
+                roads = roads.set_crs(dave_settings()['crs_main'])
                 self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
             # add time delay
             time.sleep(time_delay)
@@ -119,6 +120,7 @@ class target_area():
                     target_area = cascaded_union(targets.geometry.tolist())
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
                 # write plotting roads into grid_data
+                roads_plot = roads_plot.set_crs(dave_settings()['crs_main'])
                 self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
             # add time delay
             time.sleep(time_delay)
@@ -156,7 +158,7 @@ class target_area():
                         # del landuse if geometry is a point
                         landuse = landuse.drop([land.name])
                 # intersect landuses with the target area
-                landuse = landuse.to_crs(epsg=4326)
+                landuse = landuse.set_crs(dave_settings()['crs_main'])
                 area = self.grid_data.area.rename(columns={'name': 'bundesland'})
                 landuse = gpd.overlay(landuse, area, how='intersection')
                 if not landuse.empty:
@@ -164,10 +166,11 @@ class target_area():
                     remove_columns.remove('geometry')
                     landuse = landuse.drop(columns=remove_columns)
                 # calculate polygon area in km²
-                landuse_3035 = landuse.to_crs(epsg=3035)  # project landuse to crs with unit in meter
+                landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])  # project landuse to crs with unit in meter
                 landuse_area = landuse_3035.area/1E06
                 landuse['area_km2'] = landuse_area
                 # write landuse into grid_data
+                landuse = landuse.set_crs(dave_settings()['crs_main'])
                 self.grid_data.landuse = self.grid_data.landuse.append(landuse)
             # add time delay
             time.sleep(time_delay)
@@ -232,6 +235,7 @@ class target_area():
                             elif building.geometry.intersects(landuse_commercial):
                                 buildings.at[i, 'building'] = 'commercial'
                 # write buildings into grid_data
+                buildings = buildings.set_crs(dave_settings()['crs_main'])
                 self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
                 self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
                 self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
@@ -290,6 +294,7 @@ class target_area():
             junction_points = gpd.GeoSeries(junction_points)
             road_junctions = junction_points.drop_duplicates()
             # write road junctions into grid_data
+            road_junctions = road_junctions.set_crs(dave_settings()['crs_main'])
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
 
     def _target_by_postalcode(self):
@@ -431,6 +436,7 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
+        self.grid_data.area = self.grid_data.area.set_crs(dave_settings()['crs_main'])
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc [0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)

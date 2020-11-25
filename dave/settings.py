@@ -1,7 +1,10 @@
 # DaVe Settings for assumptions and used data versions
 
 def dave_settings():
-    settings = {# --- data request
+    settings = {# geographical defintions:
+                'crs_main': 'EPSG:4326',
+                'crs_meter': 'EPSG:3035',
+                # --- data request
                 # OEP versions:
                 'hv_buses_ver':    'version=v0.4.6',
                 'hv_line_ver':     'version=v0.4.6',

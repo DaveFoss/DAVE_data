@@ -3,6 +3,8 @@ from shapely.geometry import Point, LineString, MultiPoint
 from shapely import ops, affinity
 import pandas as pd
 
+from dave.settings import dave_settings
+
 
 def nearest_road(building_centroids, roads):
     """
@@ -138,9 +140,9 @@ def line_connections(grid_data):
                 # create a lineString and add them to the line connection list
                 line_connection = LineString(line_points)
                 line_connections.append(line_connection)
-    line_connections = gpd.GeoSeries(line_connections, crs='EPSG:4326')
+    line_connections = gpd.GeoSeries(line_connections, crs=dave_settings()['crs_main'])
     # calculate line length
-    line_connections_3035 = line_connections.to_crs(epsg=3035)  # project lines to crs with unit in meter
+    line_connections_3035 = line_connections.to_crs(dave_settings()['crs_meter'])  # project lines to crs with unit in meter
     line_length = line_connections_3035.length
     grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(gpd.GeoDataFrame({'geometry': line_connections,
                                                                                      'line_type': 'line_connections',
@@ -194,13 +196,14 @@ def create_lv_topology(grid_data):
         building_nodes_df.at[node.name, 'dave_name'] = f'node_7_{i}'
     # add lv nodes to grid data
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
-    grid_data.lv_data.lv_nodes.crs = 'EPSG:4326'
+    grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries([], crs='EPSG:4326')
     for i, connection in building_connections.iterrows():
         line_build = LineString([connection['building_centroid'], connection['nearest_point']])
         line_buildings[i] = line_build
     # calculate line length
+    line_buildings = line_buildings.set_crs(epsg=4326)
     line_buildings_3035 = line_buildings.to_crs(epsg=3035)  # project lines to crs with unit in meter
     line_length = line_buildings_3035.length
     # write line informations into grid data
@@ -211,7 +214,7 @@ def create_lv_topology(grid_data):
                                                                                      'voltage_level': 7,
                                                                                      'source': 'dave internal'}))
     # set crs
-    grid_data.lv_data.lv_lines.crs = 'EPSG:4326'
+    grid_data.lv_data.lv_lines.crs = dave_settings()['crs_main']
     # create line connections to connect lines for buildings and road junctions with each other
     line_connections(grid_data)
     # add dave name for lv_lines

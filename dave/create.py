@@ -26,57 +26,55 @@ def create_empty_dataset():
         grid_data = create_empty_dataset()
 
     """
-    # define crs
-    crs = 'EPSG:4326'
     # define dave structure
     grid_data = davestructure({
                  # target data
-                 'area': gpd.GeoDataFrame([], crs=crs),
+                 'area': gpd.GeoDataFrame([]),
                  'target_input': pd.DataFrame(),
-                 'buildings': davestructure({'commercial': gpd.GeoDataFrame([], crs=crs),
-                                             'for_living': gpd.GeoDataFrame([], crs=crs),
-                                             'other': gpd.GeoDataFrame([], crs=crs)
+                 'buildings': davestructure({'commercial': gpd.GeoDataFrame([]),
+                                             'for_living': gpd.GeoDataFrame([]),
+                                             'other': gpd.GeoDataFrame([])
                                              }),
-                 'roads': davestructure({'roads': gpd.GeoDataFrame([], crs=crs),
-                                         'roads_plot': gpd.GeoDataFrame([], crs=crs),
-                                         'road_junctions': gpd.GeoSeries([], crs=crs)
+                 'roads': davestructure({'roads': gpd.GeoDataFrame([]),
+                                         'roads_plot': gpd.GeoDataFrame([]),
+                                         'road_junctions': gpd.GeoSeries([])
                                          }),
-                 'landuse': gpd.GeoDataFrame([], crs=crs),
+                 'landuse': gpd.GeoDataFrame([]),
                  # power grid data
-                 'ehv_data': davestructure({'ehv_substations': gpd.GeoDataFrame([], crs=crs),
-                                            'ehv_nodes': gpd.GeoDataFrame([], crs=crs),
-                                            'ehv_lines': gpd.GeoDataFrame([], crs=crs)
+                 'ehv_data': davestructure({'ehv_substations': gpd.GeoDataFrame([]),
+                                            'ehv_nodes': gpd.GeoDataFrame([]),
+                                            'ehv_lines': gpd.GeoDataFrame([])
                                             }),
-                 'hv_data': davestructure({'hv_nodes': gpd.GeoDataFrame([], crs=crs),
-                                           'hv_lines': gpd.GeoDataFrame([], crs=crs)
+                 'hv_data': davestructure({'hv_nodes': gpd.GeoDataFrame([]),
+                                           'hv_lines': gpd.GeoDataFrame([])
                                            }),
-                 'mv_data': davestructure({'mv_nodes': gpd.GeoDataFrame([], crs=crs),
-                                           'mv_lines': gpd.GeoDataFrame([], crs=crs)
+                 'mv_data': davestructure({'mv_nodes': gpd.GeoDataFrame([]),
+                                           'mv_lines': gpd.GeoDataFrame([])
                                            }),
-                 'lv_data': davestructure({'lv_nodes': gpd.GeoDataFrame([], crs=crs),
-                                           'lv_lines': gpd.GeoDataFrame([], crs=crs)
+                 'lv_data': davestructure({'lv_nodes': gpd.GeoDataFrame([]),
+                                           'lv_lines': gpd.GeoDataFrame([])
                                            }),
-                 'components_power': davestructure({'loads': gpd.GeoDataFrame([], crs=crs),
-                                                    'renewable_powerplants': gpd.GeoDataFrame([], crs=crs),
-                                                    'conventional_powerplants': gpd.GeoDataFrame([], crs=crs),
-                                                    'transformers': davestructure({'ehv_ehv': gpd.GeoDataFrame([], crs=crs),
-                                                                                   'ehv_hv': gpd.GeoDataFrame([], crs=crs),
-                                                                                   'hv_mv': gpd.GeoDataFrame([], crs=crs),
-                                                                                   'mv_lv': gpd.GeoDataFrame([], crs=crs)
+                 'components_power': davestructure({'loads': gpd.GeoDataFrame([]),
+                                                    'renewable_powerplants': gpd.GeoDataFrame([]),
+                                                    'conventional_powerplants': gpd.GeoDataFrame([]),
+                                                    'transformers': davestructure({'ehv_ehv': gpd.GeoDataFrame([]),
+                                                                                   'ehv_hv': gpd.GeoDataFrame([]),
+                                                                                   'hv_mv': gpd.GeoDataFrame([]),
+                                                                                   'mv_lv': gpd.GeoDataFrame([])
                                                                                    })
                                                     }),
                  # gas grid data
-                 'hp_data': davestructure({'hp_junctions': gpd.GeoDataFrame([], crs=crs),
-                                           'hp_pipes': gpd.GeoDataFrame([], crs=crs)
+                 'hp_data': davestructure({'hp_junctions': gpd.GeoDataFrame([]),
+                                           'hp_pipes': gpd.GeoDataFrame([])
                                            }),
-                 'mp_data': davestructure({'mp_junctions': gpd.GeoDataFrame([], crs=crs),
-                                           'mp_pipes': gpd.GeoDataFrame([], crs=crs)
+                 'mp_data': davestructure({'mp_junctions': gpd.GeoDataFrame([]),
+                                           'mp_pipes': gpd.GeoDataFrame([])
                                            }),
-                 'lp_data': davestructure({'lp_junctions': gpd.GeoDataFrame([], crs=crs),
-                                           'lp_pipes': gpd.GeoDataFrame([], crs=crs)
+                 'lp_data': davestructure({'lp_junctions': gpd.GeoDataFrame([]),
+                                           'lp_pipes': gpd.GeoDataFrame([])
                                            }),
-                 'components_gas': davestructure({'sinks': gpd.GeoDataFrame([], crs=crs),
-                                                  'sources': gpd.GeoDataFrame([], crs=crs),                                                    
+                 'components_gas': davestructure({'sinks': gpd.GeoDataFrame([]),
+                                                  'sources': gpd.GeoDataFrame([]),                                                    
                                                   }),
                  # auxillary
                  'dave_version': __version__
