@@ -83,7 +83,7 @@ def create_empty_dataset():
 
 
 def create_grid(postalcode=None, town_name=None, federal_state=None,
-                own_area=None, power_levels=['ALL'], gas_levels=['ALL'],
+                own_area=None, power_levels=[], gas_levels=[],
                 plot=True, convert=True, opt_model=True):
     """
     This is the main function of dave. This function generates automaticly grid
@@ -100,12 +100,12 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         **own_area** (string) - full path to a shape file which includes own target area (e.g. "C:/Users/name/test/test.shp")
 
     OPTIONAL:
-        **power_levels** (list, default ['ALL']) - this parameter defines which power levels should be considered
-                                                   options: 'EHV','HV','MV','LV'. There could be choose: one level, more
-                                                   than one level or 'ALL' for all levels
-        **gas_levels** (list, default ['ALL']) - this parameter defines which gas levels should be considered
-                                                 options: 'HP','MP','LP'. There could be choose: one level, more
-                                                 than one level or 'ALL' for all levels
+        **power_levels** (list, default []) - this parameter defines which power levels should be considered
+                                              options: 'EHV','HV','MV','LV'. There could be choose: one level, more
+                                              than one level or 'ALL' for all levels
+        **gas_levels** (list, default []) - this parameter defines which gas levels should be considered
+                                            options: 'HP','MP','LP'. There could be choose: one level, more
+                                            than one level or 'ALL' for all levels
         **plot** (boolean, default True) - if this value is true dave creates plottings automaticly
         **convert** (boolean, default True) - if this value is true dave will be convert the grid automaticly to pandapower and pandapipes
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal power flow calculation to get no boundary violations
