@@ -153,9 +153,14 @@ class target_area():
                 # convert geometry to polygon
                 for i, land in landuse.iterrows():
                     if isinstance(land.geometry, LineString):
-                        landuse.at[land.name, 'geometry'] = Polygon(land.geometry)
+                        num_coords = len(land.geometry.coords[:])
+                        # A LinearRing must have at least 3 coordinate tuples
+                        if num_coords >= 3:
+                            landuse.at[land.name, 'geometry'] = Polygon(land.geometry)
+                        else:
+                            landuse = landuse.drop([land.name])
                     elif isinstance(land.geometry, Point):
-                        # del landuse if geometry is a point
+                        # delet landuse if geometry is a point
                         landuse = landuse.drop([land.name])
                 # intersect landuses with the target area
                 landuse = landuse.set_crs(dave_settings()['crs_main'])
