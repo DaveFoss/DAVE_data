@@ -1,4 +1,3 @@
-import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import geopandas as gpd
@@ -48,7 +47,7 @@ def plot_target_area(grid_data):
     roads = grid_data.roads.roads
     road_junctions = grid_data.roads.road_junctions
     buildings_for_living = grid_data.buildings.for_living
-    buildings_commercial =  grid_data.buildings.commercial
+    buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
     buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
     if not buildings_all.empty:
@@ -70,14 +69,14 @@ def plot_target_area(grid_data):
         data_empty = False
     if data_empty:
         # plot target area
-        plot_land(grid_data['area'], only_area = True)
+        plot_land(grid_data['area'], only_area=True)
     else:
         # plot target area
-        ax = plot_land(grid_data['area'])        
+        ax = plot_land(grid_data['area'])
         # plot road informations
         if not roads_plot.empty:
             # these highways are only relevant for plotting
-            roads_plot.plot(ax=ax, color='k', label='Roads')  
+            roads_plot.plot(ax=ax, color='k', label='Roads')
         if not roads.empty:
             roads.plot(ax=ax, color='k')
         if not road_junctions.empty:
@@ -133,18 +132,18 @@ def plot_grid_data(grid_data):
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
     # check if there is any data in target area otherwise plot only the area
-    data = [roads_plot, 
-            roads, 
+    data = [roads_plot,
+            roads,
             road_junctions,
-            buildings_for_living, 
-            buildings_commercial, 
-            buildings_other, 
+            buildings_for_living,
+            buildings_commercial,
+            buildings_other,
             lv_nodes,
             lv_lines,
             mv_lines,
             mv_nodes,
-            renewable_plants, 
-            conventional_plants,  
+            renewable_plants,
+            conventional_plants,
             ehv_nodes,
             ehv_substations,
             ehv_lines,
@@ -159,13 +158,13 @@ def plot_grid_data(grid_data):
         data_empty = False
     if data_empty:
         # plot target area
-        plot_land(grid_data['area'], only_area = True) 
+        plot_land(grid_data['area'], only_area=True)
     else:
         # plot target area
         ax = plot_land(grid_data['area'])
         # plot road informations
         if not roads_plot.empty:
-            roads_plot.plot(ax=ax, color='k', alpha=0.2)  
+            roads_plot.plot(ax=ax, color='k', alpha=0.2)
         if not roads.empty:
             roads.plot(ax=ax, color='k', alpha=0.2)
         # plot buildings
@@ -200,20 +199,20 @@ def plot_grid_data(grid_data):
         if not ehv_lines.empty:
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
-                ehv_lines_380.plot(ax=ax, color='red', zorder=3, label='380 kV Lines')
+                ehv_lines_380.plot(ax=ax, color='r', zorder=3, label='380 kV Lines')
             ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
             if not ehv_lines_220.empty:
-                ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV Lines')
+                ehv_lines_220.plot(ax=ax, color='b', zorder=2, label='220 kV Lines')
         # plot hv topology
         if not hv_nodes.empty:
-            hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
+            hv_nodes.plot(ax=ax, color='g', markersize=6, label='HV Nodes')
         if not hv_lines.empty:
-            hv_lines.plot(ax=ax, color='k', markersize=6, label='HV Lines')
+            hv_lines.plot(ax=ax, color='g', markersize=6, label='HV Lines')
         # plot hp topology
         if not hp_junctions.empty:
             hp_junctions.plot(ax=ax, color='k', markersize=6, label='HP Junctions')
         if not hp_pipes.empty:
-            hp_pipes.plot(ax=ax, color='green', zorder=1, label='HP Pipes')
+            hp_pipes.plot(ax=ax, color='k', zorder=1, label='HP Pipes')
         # legende
         ax.legend()
         # titel
@@ -248,8 +247,8 @@ def plot_grid_data_osm(grid_data):
     # check if there is any data in target area otherwise plot only the area
     data = [lv_nodes,
             lv_lines,
-            renewable_plants, 
-            conventional_plants,  
+            renewable_plants,
+            conventional_plants,
             ehv_nodes,
             ehv_substations,
             ehv_lines,
@@ -262,12 +261,12 @@ def plot_grid_data_osm(grid_data):
         data_empty = False
     if data_empty:
         # plot target area
-        plot_land(grid_data['area'], only_area = True) 
+        plot_land(grid_data['area'], only_area=True)
     else:
         # plot target area
         test = grid_data['area'].to_crs(epsg=3857)
         ax = plot_land(test)
-       # ax = plot_land(grid_data['area'])
+        # ax = plot_land(grid_data['area'])
         # plot lv topology
         if not lv_nodes.empty:
             lv_nodes = lv_nodes.to_crs(epsg=3857)
@@ -297,11 +296,9 @@ def plot_grid_data_osm(grid_data):
                 ehv_lines_220 = ehv_lines_220.to_crs(epsg=3857)
                 ehv_lines_220.plot(ax=ax, color='blue', zorder=2, label='220 kV lines')
         # plot hv topology
-        """
         if not hv_nodes.empty:
             hv_nodes = hv_nodes.to_crs(epsg=3857)
             hv_nodes.plot(ax=ax, color='k', markersize=6, label='HV Nodes')
-        """
         if not hv_lines.empty:
             hv_lines = hv_lines.to_crs(epsg=3857)
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
@@ -311,17 +308,15 @@ def plot_grid_data_osm(grid_data):
         plt.title('Grid Data OSM')
         # plot background osm
         ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
-        # plot background osm stamen design 
-        #ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)
+        # ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)  # stamen design
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\grid_data.svg'
-        plt.savefig(file_path,format='svg',dpi=300)
-    # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die 
-    # verschiedenen Spannungs und Druck ebenen.
-    
+        plt.savefig(file_path, format='svg', dpi=300)
+
+
 def plot_landuse(grid_data):
     """
-    This function plots the landuses in the target area 
+    This function plots the landuses in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
@@ -351,19 +346,17 @@ def plot_landuse(grid_data):
             green_patch = mpatches.Patch(color='g', label='Commercial')
             plot_patch.append(green_patch)
         # legende
-        #ax.legend()
         plt.legend(handles=plot_patch)
         # titel
         plt.title('Landuse')
         # save plot in the dave output folder
         file_path = dave_output_dir + '\\landuse.svg'
-        plt.savefig(file_path,dpi=300)
-    # hier einen plot für die Landnutzung in der Target area erstellen, wobei diese unterschiedliche farben haben
-    # hierbei vielleicht in die Legende auch die Prozentzahl hinter das jeweilige
+        plt.savefig(file_path, dpi=300)
+
 
 def plot_erzeuger():
     """
-    This function plots the power plants in the target area 
+    This function plots the power plants in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
@@ -372,15 +365,16 @@ def plot_erzeuger():
 
     EXAMPLE:
     """
-    # hier eine Plotting funktion die nur die Erzeuger im Zielgebiet aufzeigt und 
+    # hier eine Plotting funktion die nur die Erzeuger im Zielgebiet aufzeigt und
     # verschiedene Farben für die verschiedenen Energieträger
     pass
 
+
 def plot_pandapower():
-    # hier die gewünschte pandapower plotting funktion rein schreiben 
+    # hier die gewünschte pandapower plotting funktion rein schreiben
     pass
 
 
 def plot_pandapipes():
-    # hier die gewünschte pandapipes plotting funktion rein schreiben 
+    # hier die gewünschte pandapipes plotting funktion rein schreiben
     pass

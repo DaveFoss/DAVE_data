@@ -1,9 +1,8 @@
 import pandapower as pp
 
-from dave import dave_output_dir
 
-
-def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_loading=100, max_trafo_loading=100):
+def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_loading=100,
+                     max_trafo_loading=100):
     """
     This function run a diagnosis a pandapower network and clean up occurring failures.
     Furthermore the grid will be adapt so all boundarys be respected.
@@ -50,7 +49,7 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                     pp.create_replacement_switch_for_branch(net, element='line', idx=line[0])
                     drop_lines.append(line[0])
             pp.drop_lines(net, lines=drop_lines)
-    # delete parallel switches 
+    # delete parallel switches
     diagnostic = pp.diagnostic(net, report_style='None')
     if 'parallel_switches' in diagnostic.keys():
         for i in range(0, len(diagnostic['parallel_switches'])):
@@ -58,11 +57,11 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
             # keep the first switch and delete the other ones
             for j in range(1, len(parallel_switches)):
                 net.switch = net.switch.drop([parallel_switches[j]])
-    
+
     # --- optimize grid model
-    if opt_model: 
+    if opt_model:
         print('run power grid optimization')
-        print('---------------------------')       
+        print('---------------------------')
         # run network diagnostic
         diagnostic = pp.diagnostic(net, report_style='None')
         # clean up overloads
@@ -105,7 +104,7 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
             pf_converged = False
             print('power flow did not converged')
         # optimize grid with opf
-        if use_opf: 
+        if use_opf:
             # --- try opf to find optimized network to network constraints
             # set grid parameter boundrys
             net.bus['min_vm_pu'] = min_vm_pu
@@ -168,5 +167,4 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
         print(f'max_vm_pu: {net.res_bus.vm_pu.max()}')
         print(f'max_line_loading: {net.res_line.loading_percent.max()}')
         print(f'max_trafo_loading: {net.res_trafo.loading_percent.max()}')
-
     return net

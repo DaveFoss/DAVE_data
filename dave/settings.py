@@ -1,9 +1,10 @@
-# DaVe Settings for assumptions and used data versions
+# DaVe Settings for used data and assumptions
 
 def dave_settings():
     settings = {# geographical defintions:
-                'crs_main': 'EPSG:4326',
-                'crs_meter': 'EPSG:3035',
+                'crs_main': 'EPSG:4326',  # crs which is based on the unit degree
+                'crs_meter': 'EPSG:3035',  # crs which is based on the unit meter
+
                 # --- data request
                 # OEP versions:
                 'hv_buses_ver':    'version=v0.4.6',
@@ -14,7 +15,35 @@ def dave_settings():
                 'mvlv_sub_ver':    'version=v0.4.5',
                 # osm time delay (because osm doesn't alowed more than 1 request per second)
                 'osm_time_delay': 60,  # in seconds
-                
+                # osm tags:
+                'road_tags': 'highway~"secondary|tertiary|unclassified|residential|living_street|footway"',
+                'road_plot_tags': 'highway~"motorway|trunk|primary"',
+                'landuse_tags': 'landuse~"commercial|industrial|residential|retail"',
+                'building_tags': 'building',
+                # osm categories
+                'buildings_for_living': ['apartments',
+                                         'detached',
+                                         'dormitory',
+                                         'dwelling_house',
+                                         'farm',
+                                         'house',
+                                         'houseboat',
+                                         'residential',
+                                         'semidetached_house',
+                                         'static_caravan',
+                                         'terrace',
+                                         'yes'],
+                'buildings_commercial': ['commercial',
+                                         'hall',
+                                         'industrial',
+                                         'kindergarten',
+                                         'kiosk',
+                                         'office',
+                                         'retail',
+                                         'school',
+                                         'supermarket',
+                                         'warehouse'],
+
                 # --- assumptions at grid generating:
                 # mv level
                 'mv_voltage': 20,
@@ -23,12 +52,12 @@ def dave_settings():
                 # power factors for loads
                 'cos_phi_residential': 0.95,  # induktiv
                 'cos_phi_industrial':  0.75,  # induktiv
-                'cos_phi_commercial':  0.75 , # induktiv
+                'cos_phi_commercial':  0.75,  # induktiv
                 # avarage load values for ehv, hv, and mv loads
                 'residential_load': 2,  # in MW/km²
                 'industrial_load': 10,  # in MW/km²
                 'commercial_load':  3,  # in MW/km²
-                
+
                 # --- assumptions at pandapower convert:
                 # lines standard types
                 'mv_line_std_type': 'NA2XS2Y 1x240 RM/25 12/20 kV',  # dummy value, must be changed

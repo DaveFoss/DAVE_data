@@ -5,6 +5,8 @@ import copy
 
 import dave.create
 from dave.datapool import convert_geometry_to_wkt, convert_geometry_to_wkb
+from dave.settings import dave_settings
+
 
 def _convert_data_from(file, key):
     data = file.get(key)
@@ -12,6 +14,7 @@ def _convert_data_from(file, key):
         data = convert_geometry_to_wkt(data)
     data = gpd.GeoDataFrame(data)
     return data
+
 
 def _convert_data_to(data_key):
     data = copy.deepcopy(data_key)
@@ -27,12 +30,12 @@ def _convert_data_to(data_key):
 def read_dataset(dataset_path):
     """
     This functions reads a dave dataset from a user given path
-    
+
     Output  grid_data - dave dataset
-    
+
     Example  grid_data = read_dataset(dataset_path)
     """
-    crs='EPSG:4326'
+    crs = dave_settings()['crs_main']
     # check if file exist
     if os.path.exists(dataset_path):
         # read data
@@ -158,7 +161,7 @@ def read_dataset(dataset_path):
         grid_data.dave_version = dave_version
         # close file
         file.close()
-        
+
         return grid_data
     else:
         print('Their is no suitable file at the given path')
@@ -259,4 +262,3 @@ def write_dataset(grid_data, dataset_path):
     archiv_file.put('/dave_version', dave_version)
     # close file
     archiv_file.close()
-

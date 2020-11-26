@@ -1,7 +1,5 @@
 import collections
 import xml.etree.ElementTree as ET
-import fiona.crs
-import geopandas as gpd
 from urllib.parse import urlencode
 from pandas.io.common import urlopen
 import pandas as pd
@@ -39,8 +37,7 @@ SOFTWARE.
 
 OSMData = collections.namedtuple('OSMData', ('nodes', 'waynodes', 'waytags',
                                              'relmembers', 'reltags'))
-#_crs = fiona.crs.from_epsg(4326)
-_crs ='epsg:4326'
+_crs = 'epsg:4326'
 
 # Tags to remove so we don't clobber the output. This list comes from
 # osmtogeojson's index.js (https://github.com/tyrasd/osmtogeojson)
@@ -184,10 +181,9 @@ def read_osm(content, render=True, **kwargs):
     nodes = read_nodes(doc)
     waynodes, waytags = read_ways(doc)
     relmembers, reltags = read_relations(doc)
-    
+
     # check if all requested variables are empty
     #if nodes.empty and waynodes.empty and waytags.empty and relmembers.empty and reltags.empty:
-        
 
     data = OSMData(nodes, waynodes, waytags, relmembers, reltags)
 
@@ -299,10 +295,10 @@ def read_relations(doc):
     return relmembers, reltags
 
 
-def render_to_gdf(osmdata, drop_untagged=True): 
+def render_to_gdf(osmdata, drop_untagged=True):
     nodes = render_nodes(osmdata.nodes, drop_untagged)
     ways = render_ways(osmdata.nodes, osmdata.waynodes, osmdata.waytags)
-    
+
     # set landuse tag from origin relation at relation members who has no landuse tag
     if (ways is not None) and ('landuse' in ways.keys()) and (not osmdata.relmembers.empty):
         for i, way in ways.iterrows():

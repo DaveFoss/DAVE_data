@@ -28,6 +28,7 @@ def convert_geometry_to_wkt(data_df):
     data_df = data_df.rename(columns={"geom": "geometry"})
     return data_df
 
+
 def convert_geometry_to_wkb(data_df):
     """
     This function converts geometry of a data frame from WKT to WKB format
@@ -38,7 +39,7 @@ def convert_geometry_to_wkb(data_df):
     data_df = data_df.drop(columns=['geometry'])
     data_df = data_df.rename(columns={"geom": "geometry"})
     return data_df
-    
+
 
 def read_postal():
     """
@@ -114,7 +115,7 @@ def read_hp_data():
     """
     This data includes informations for the german high pressure gas grid based on the publication
     "Electricity, Heat, and Gas Sector Data for Modeling the German System".
-    
+
     The reference year for the data is 2015.
 
     OUTPUT:
@@ -168,7 +169,7 @@ def read_household_consumption():
     """
     This data includes informations for the german high pressure gas grid based on the publication
     "Electricity, Heat, and Gas Sector Data for Modeling the German System".
-    
+
     The reference year for the data is 2015.
 
     OUTPUT:

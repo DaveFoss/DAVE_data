@@ -1,8 +1,7 @@
 import geopandas as gpd
-import shapely.geometry
-import pandas as pd
 
 from dave.datapool import read_hp_data
+
 
 def create_hp_topology(grid_data):
     """
@@ -23,6 +22,8 @@ def create_hp_topology(grid_data):
     print('---------------------------------------------')
     # read high pressure grid data from dave datapool
     hp_data = read_hp_data()
+    source = 'Paper: Electricity, Heat, and Gas Sector Data for Modeling the German System'
+    reference_year = 2015
     # --- create hp junctions (nodes)
     hp_junctions = hp_data['hp_nodes']
     # prepare data
@@ -38,8 +39,8 @@ def create_hp_topology(grid_data):
     hp_junctions = hp_junctions.drop(columns=(['OPERATOR_Z', 'COMPRESSOR', 'COMP_UNITS', 'NUTS_2',
                                                'NUTS_1', 'NUTS_0', 'X', 'Y', 'CROSSBORDE',
                                                'MARKETAREA', 'UGS', 'PROD']))
-    hp_junctions['reference_year'] = 2015
-    hp_junctions['source'] = 'Paper: Electricity, Heat, and Gas Sector Data for Modeling the German System'
+    hp_junctions['reference_year'] = reference_year
+    hp_junctions['source'] = source
     hp_junctions['pressure_level'] = 1
     hp_junctions['original_id'] = hp_junctions.original_id.astype('int32')
     # intersection with target area
@@ -79,10 +80,10 @@ def create_hp_topology(grid_data):
                                             'START_POIN': 'from_junction',
                                             'END_POINT': 'to_junction'})
         hp_pipes = hp_pipes.drop(columns=(['VIRTUAL']))
-        hp_pipes['reference_year'] = 2015
-        hp_pipes['source'] = 'Paper: Electricity, Heat, and Gas Sector Data for Modeling the German System'
+        hp_pipes['reference_year'] = reference_year
+        hp_pipes['source'] = source
         hp_pipes['pressure_level'] = 1
-        # change pipeline junction names from id to dave name 
+        # change pipeline junction names from id to dave name
         from_junction_new = []
         to_junction_new = []
         for i, pipe in hp_pipes.iterrows():

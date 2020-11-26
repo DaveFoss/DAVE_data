@@ -57,7 +57,7 @@ def create_hv_topology(grid_data):
                                table='ego_pf_hv_line',
                                where=dave_settings()['hv_line_ver'],
                                geometry='geom')
-        hv_lines = hv_lines.rename(columns={'version': 'ego_version', 
+        hv_lines = hv_lines.rename(columns={'version': 'ego_version',
                                             'subst_id': 'ego_subst_id',
                                             'scn_name': 'ego_scn_name',
                                             'line_id': 'ego_line_id',

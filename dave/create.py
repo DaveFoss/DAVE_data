@@ -8,7 +8,7 @@ from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
 from dave.io_dave import write_dataset
-from dave.topology import *  # target_area, create_ehv_topology, create_hv_topology, create_mv_topology, create_lv_topology
+from dave.topology import *
 from dave.plotting import *
 from dave.components import *
 from dave.model import *
@@ -74,7 +74,7 @@ def create_empty_dataset():
                                            'lp_pipes': gpd.GeoDataFrame([])
                                            }),
                  'components_gas': davestructure({'sinks': gpd.GeoDataFrame([]),
-                                                  'sources': gpd.GeoDataFrame([]),                                                    
+                                                  'sources': gpd.GeoDataFrame([]),
                                                   }),
                  # auxillary
                  'dave_version': __version__
@@ -92,23 +92,28 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
         One of these parameters must be set:
         **postalcode** (List of strings) - numbers of the target postalcode areas.
-                                           it could also be choose ['ALL'] for all postalcode areas in germany
+                                           it could also be choose ['ALL'] for all postalcode areas
+                                           in germany
         **town_name** (List of strings) - names of the target towns
                                           it could also be choose ['ALL'] for all citys in germany
         **federal_state** (List of strings) - names of the target federal states
-                                              it could also be choose ['ALL'] for all federal states in germany
-        **own_area** (string) - full path to a shape file which includes own target area (e.g. "C:/Users/name/test/test.shp")
+                                              it could also be choose ['ALL'] for all federal states
+                                              in germany
+        **own_area** (string) - full path to a shape file which includes own target area
+                                (e.g. "C:/Users/name/test/test.shp")
 
     OPTIONAL:
         **power_levels** (list, default []) - this parameter defines which power levels should be considered
-                                              options: 'EHV','HV','MV','LV'. There could be choose: one level, more
-                                              than one level or 'ALL' for all levels
+                                              options: 'EHV','HV','MV','LV', [].
+                                              there could be choose: one level, multiple levels or 'ALL'
         **gas_levels** (list, default []) - this parameter defines which gas levels should be considered
-                                            options: 'HP','MP','LP'. There could be choose: one level, more
-                                            than one level or 'ALL' for all levels
+                                            options: 'HP','MP','LP', [].
+                                            there could be choose: one level, multiple levels or 'ALL'
         **plot** (boolean, default True) - if this value is true dave creates plottings automaticly
-        **convert** (boolean, default True) - if this value is true dave will be convert the grid automaticly to pandapower and pandapipes
-        **opt_model** (boolean, default True) - if this value is true dave will be use the optimal power flow calculation to get no boundary violations
+        **convert** (boolean, default True) - if this value is true dave will be convert the grid
+                                              automaticly to pandapower and pandapipes
+        **opt_model** (boolean, default True) - if this value is true dave will be use the optimal
+                                                power flow calculation to get no boundary violations
 
     OUTPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
@@ -117,12 +122,6 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     EXAMPLE:
 
-    """
-
-
-    """
-    Evt. noch power_levels gegen voltage_levels tauschen (das müsste aber in alle Skripten geprüft werden)
-    Evt. noch gas_levels gegen pressure_levels tauschen (das müsste aber in alle Skripten geprüft werden)
     """
     # create empty datastructure
     grid_data = create_empty_dataset()
@@ -176,23 +175,25 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     # --- create target area informations
     if ('LV' in power_levels) or ('LP' in gas_levels):
-        file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                                             postalcode=postalcode, town_name=town_name,
-                                             federal_state=federal_state, own_area=own_area,
-                                             buffer=0, roads=True, roads_plot=True,
-                                             buildings=True, landuse=True).target()
+        file_exists, file_name = target_area(grid_data, power_levels=power_levels,
+                                             gas_levels=gas_levels, postalcode=postalcode,
+                                             town_name=town_name, federal_state=federal_state,
+                                             own_area=own_area, buffer=0, roads=True,
+                                             roads_plot=True, buildings=True, landuse=True).target()
     elif ('MV' in power_levels) or ('MP' in gas_levels):
-        file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                                             postalcode=postalcode, town_name=town_name,
-                                             federal_state=federal_state, own_area=own_area,
-                                             buffer=0, roads=True, roads_plot=True,
-                                             buildings=False, landuse=True).target()
+        file_exists, file_name = target_area(grid_data, power_levels=power_levels,
+                                             gas_levels=gas_levels, postalcode=postalcode,
+                                             town_name=town_name, federal_state=federal_state,
+                                             own_area=own_area, buffer=0, roads=True,
+                                             roads_plot=True, buildings=False,
+                                             landuse=True).target()
     else:
-        file_exists, file_name = target_area(grid_data, power_levels=power_levels, gas_levels=gas_levels,
-                                             postalcode=postalcode, town_name=town_name,
-                                             federal_state=federal_state, own_area=own_area,
-                                             buffer=0, roads=False, roads_plot=False,
-                                             buildings=False, landuse=True).target()
+        file_exists, file_name = target_area(grid_data, power_levels=power_levels,
+                                             gas_levels=gas_levels, postalcode=postalcode,
+                                             town_name=town_name, federal_state=federal_state,
+                                             own_area=own_area, buffer=0, roads=False,
+                                             roads_plot=False, buildings=False,
+                                             landuse=True).target()
     if not file_exists:
         # --- create desired power grid levels
         if power_levels == ['EHV']:
@@ -294,19 +295,18 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
     else:
         # read dataset from archiv
         grid_data = from_archiv(f'{file_name}.h5')
-    
+
     # create dave output folder on desktop for DaVe dataset, plotting and converted model
     print('Save DaVe dataset, plots and converted grid models at the following path:')
     print(dave_output_dir)
     print('-----------------------------------------------------------------------')
     if not os.path.exists(dave_output_dir):
         os.makedirs(dave_output_dir)
-    
-    
-    """
-    # Vorrübergehend aus für testzwecke
+
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
+        # Vorrübergehend aus für testzwecke
+        """
         print('Save DaVe dataset to archiv')
         print('---------------------------')
         # save dataset to archiv
@@ -316,9 +316,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
-    else: 
-        write_dataset(grid_data, dataset_path = dave_output_dir + '\\' + 'dave_dataset.h5')
-    """
+        """
+    else:
+        write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
 
     # plot informations
     if plot:
@@ -326,14 +326,14 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         plot_grid_data(grid_data)
         plot_landuse(grid_data)
         # hier noch erzeuger plot
-        
+
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power, opt_model=opt_model)
-        # save grid model in the dave output folder                   
+        # save grid model in the dave output folder
         file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
-        pp.to_json(net_power, file_path)
+        # pp.to_json(net_power, file_path)
     else:
         net_power = None
     if convert and gas_levels:
@@ -341,7 +341,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         net_gas = gas_processing(net_gas)
     else:
         net_gas = None
-        
+
     # return
     if net_power and net_gas:
         return grid_data, net_power, net_gas
@@ -351,4 +351,3 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         return grid_data, net_gas
     else:
         return grid_data
-    

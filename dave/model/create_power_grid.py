@@ -1,8 +1,6 @@
 import pandapower as pp
 from shapely import geometry, ops
-import pandas as pd
 
-from dave import dave_output_dir
 from dave.settings import dave_settings
 
 
@@ -393,7 +391,7 @@ def create_power_grid(grid_data):
             # additional Informations
             ext_id = pp.get_element_index(net,
                                           element='ext_grid_1_0',
-                                          name=f'ext_grid_1_0')
+                                          name='ext_grid_1_0')
             net.ext_grid.at[ext_id, 'voltage_level'] = 1
     elif 'HV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
@@ -425,7 +423,7 @@ def create_power_grid(grid_data):
                                name=f'ext_grid_6_{i}')
             # additional Informations
             ext_id = pp.get_element_index(net,
-                                           element='ext_grid',
-                                           name=f'ext_grid_6_{i}')
+                                          element='ext_grid',
+                                          name=f'ext_grid_6_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 6
     return net

@@ -2,7 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import time
 from shapely.ops import cascaded_union
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString, Point
 
 from dave.datapool import *
 from dave.settings import dave_settings
@@ -14,16 +14,15 @@ class target_area():
 
     INPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
-        **power_levels** (list) - this parameter defines which power levels should be considered
-                                                   options: 'EHV','HV','MV','LV', []. There could 
-                                                   be choose: one level, more than one level or [] 
-                                                   for empty levels
-        **gas_levels** (list) - this parameter defines which gas levels should be considered
-                                                 options: 'HP','MP','LP', []. There could be choose
-                                                 one level, more than one level or [] for empty levels
-        
+        **power_levels** (list)  - this parameter defines which power levels should be considered
+                                   options: 'EHV','HV','MV','LV', [].
+                                   there could be choose: one level, multiple levels or 'ALL'
+        **gas_levels** (list)    - this parameter defines which gas levels should be considered
+                                   options: 'HP','MP','LP', [].
+                                   there could be choose: one level, multiple levels or 'ALL'
+
         One of these parameters must be set:
-        **postalcode** (List of strings) - numbers of the target postalcode areas. 
+        **postalcode** (List of strings) - numbers of the target postalcode areas.
                                            it could also be choose ['ALL'] for all postalcode areas
                                            in germany
         **town_name** (List of strings) - names of the target towns
@@ -33,26 +32,25 @@ class target_area():
                                               in germany
         **own_area** (string) - full path to a shape file which includes own target area
                                 (e.g. "C:/Users/name/test/test.shp")
-        
-        
 
     OPTIONAL:
         **buffer** (float, default 0) - buffer for the target area
-        **roads** (boolean, default True) - obtain informations about roads which are relevant for the grid model
-        **roads_plot** (boolean, default False) - obtain informations about roads which can be nice for the visualization
-        **buildings** (boolean, default True) - obtain informations about buildings in the target area
-        **landuse** (boolean, default True) - obtain informations about the landuse of the target area
-        
+        **roads** (boolean, default True) - obtain informations about roads which are relevant for
+                                            the grid model
+        **roads_plot** (boolean, default False) - obtain informations about roads which can be nice
+                                                  for the visualization
+        **buildings** (boolean, default True) - obtain informations about buildings
+        **landuse** (boolean, default True) - obtain informations about landuses
+
     OUTPUT:
-    
+
     EXAMPLE:
             from dave.topology import target_area
             target_area(town_name = ['Kassel'], buffer=0).target()
     """
 
-    def __init__(self, grid_data, power_levels, 
-                 gas_levels, postalcode=None, town_name=None, 
-                 federal_state=None, own_area=None, buffer=0, roads=True, roads_plot=True, 
+    def __init__(self, grid_data, power_levels, gas_levels, postalcode=None, town_name=None,
+                 federal_state=None, own_area=None, buffer=0, roads=True, roads_plot=True,
                  buildings=True, landuse=True):
         # Init input parameters
         self.grid_data = grid_data
@@ -77,14 +75,11 @@ class target_area():
         time_delay = dave_settings()['osm_time_delay']
         # search relevant road informations in the target area
         if self.roads:
-            roads = query_osm('way', target, recurse='down',
-                              tags=['highway~"secondary|tertiary|unclassified|residential|living_street|footway"'])
+            roads = query_osm('way', target, recurse='down', tags=[dave_settings()['road_tags']])
             # check if there are data for roads
             if not roads.empty:
                 # define road parameters which are relevant for the grid modeling
-                relevant_columns = ['geometry',
-                                    'name',
-                                    'highway']
+                relevant_columns = ['geometry', 'name', 'highway']
                 roads = roads.filter(relevant_columns)
                 # consider only the linestring elements
                 roads = roads[roads.geometry.length != 0]
@@ -103,12 +98,11 @@ class target_area():
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
             roads_plot = query_osm('way', target, recurse='down',
-                                   tags=['highway~"motorway|trunk|primary"'])
+                                   tags=[dave_settings()['road_plot_tags']])
             # check if there are data for roads_plot
             if not roads_plot.empty:
                 # define road parameters which are relevant for the grid modeling
-                relevant_columns = ['geometry',
-                                    'name']
+                relevant_columns = ['geometry', 'name']
                 roads_plot = roads_plot.filter(relevant_columns)
                 # consider only the linestring elements
                 roads_plot = roads_plot[roads_plot.geometry.length != 0]
@@ -126,9 +120,11 @@ class target_area():
             time.sleep(time_delay)
         # search landuse informations in the target area
         if self.landuse:
-            landuse = query_osm('way', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
+            landuse = query_osm('way', target, recurse='down',
+                                tags=[dave_settings()['landuse_tags']])
             # check additionally osm relations
-            landuse_rel = query_osm('relation', target, recurse='down', tags=['landuse~"commercial|industrial|residential|retail"'])
+            landuse_rel = query_osm('relation', target, recurse='down',
+                                    tags=[dave_settings()['landuse_tags']])
             landuse_rel = landuse_rel.reset_index(drop=True)
             # add landuses from relations to landuses from ways
             landuse = landuse.append(landuse_rel)
@@ -136,9 +132,7 @@ class target_area():
             # check if there are data for landuse
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
-                relevant_columns = ['landuse',
-                                    'geometry',
-                                    'name']
+                relevant_columns = ['landuse', 'geometry', 'name']
                 landuse = landuse.filter(relevant_columns)
                 # consider only the linestring elements
                 landuse = landuse[landuse.geometry.length != 0]
@@ -171,7 +165,7 @@ class target_area():
                     remove_columns.remove('geometry')
                     landuse = landuse.drop(columns=remove_columns)
                 # calculate polygon area in km²
-                landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])  # project landuse to crs with unit in meter
+                landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])
                 landuse_area = landuse_3035.area/1E06
                 landuse['area_km2'] = landuse_area
                 # write landuse into grid_data
@@ -181,18 +175,13 @@ class target_area():
             time.sleep(time_delay)
         # search building informations in the target area
         if self.buildings:
-            buildings = query_osm('way', target, recurse='down', tags=['building'])
+            buildings = query_osm('way', target, recurse='down',
+                                  tags=[dave_settings()['building_tags']])
             # check if there are data for buildings
             if not buildings.empty:
                 # define building parameters which are relevant for the grid modeling
-                relevant_columns = ['addr:housenumber',
-                                    'addr:street',
-                                    'addr:suburb',
-                                    'amenity',
-                                    'building',
-                                    'building:levels',
-                                    'geometry',
-                                    'name']
+                relevant_columns = ['addr:housenumber', 'addr:street', 'addr:suburb', 'amenity',
+                                    'building', 'building:levels', 'geometry', 'name']
                 buildings = buildings.filter(relevant_columns)
                 # consider only the linestring elements
                 buildings = buildings[buildings.geometry.length != 0]
@@ -204,28 +193,8 @@ class target_area():
                     target_area = cascaded_union(targets.geometry.tolist())
                 buildings = buildings[buildings.geometry.intersects(target_area)]
                 # create building categories
-                for_living = ['apartments',
-                              'detached',
-                              'dormitory',
-                              'dwelling_house',
-                              'farm',
-                              'house',
-                              'houseboat',
-                              'residential',
-                              'semidetached_house',
-                              'static_caravan',
-                              'terrace',
-                              'yes']
-                commercial = ['commercial',
-                              'hall',
-                              'industrial',
-                              'kindergarten',
-                              'kiosk',
-                              'office',
-                              'retail',
-                              'school',
-                              'supermarket',
-                              'warehouse']
+                for_living = dave_settings()['buildings_for_living']
+                commercial = dave_settings()['buildings_commercial']
                 # improve building tag with landuse parameter
                 if not landuse.empty:
                     landuse_retail = cascaded_union(landuse[landuse.landuse == 'retail'].geometry)
@@ -252,36 +221,12 @@ class target_area():
         This function searches junctions for the relevant roads in the target area
         """
         roads = self.grid_data.roads.roads
-
-        # # old approach
-        # if not roads.empty:
-        #     junction_points = []
-        #     for i, line in roads.iterrows():
-        #         # create multipolygon for lines without the one under consideration
-        #         other_lines = roads.drop([i])
-        #         # save remaining roads for next iterationstep
-        #         roads = other_lines
-        #         other_lines = cascaded_union(other_lines.geometry)
-        #         # find line intersections
-        #         junctions = line.geometry.intersection(other_lines)
-        #         if junctions.geom_type == 'Point':
-        #             junction_points.append(junctions)
-        #         elif junctions.geom_type == 'MultiPoint':
-        #             for point in junctions:
-        #                 junction_points.append(point)
-        #     # delet duplicates
-        #     junction_points = gpd.GeoSeries(junction_points)
-        #     #road_junctions = junction_points.drop_duplicates()  #[junction_points.duplicated()]
-        #     road_junctions = junction_points
-        #     # write road junctions into grid_data
-        #     self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
-
         if not roads.empty:
             junction_points = []
             while len(roads) > 1:
-                # considered line 
+                # considered line
                 line_geometry = roads.iloc[0].geometry
-                # check considering line surroundings for other lines with possible intersection points
+                # check considered line surrounding for possible intersectionpoints with other lines
                 line_surr = line_geometry.buffer(1E-04)
                 lines_rel = roads[roads.geometry.crosses(line_surr)]
                 other_lines = cascaded_union(lines_rel.geometry)
@@ -393,9 +338,9 @@ class target_area():
         postal_list = postal_intersection['postalcode'].tolist()
         # filter duplicated postal codes
         postal_filtered = []
-        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered] 
+        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered]
         self.federal_state_postal = postal_filtered
-        
+
     def target(self):
         """
         This function calculate all relevant geographical informations for the
@@ -407,7 +352,7 @@ class target_area():
         # check wich input parameter is given
         if self.postalcode:
             target_area._target_by_postalcode(self)
-            target_input = pd.DataFrame({'typ': 'postalcode', 
+            target_input = pd.DataFrame({'typ': 'postalcode',
                                          'data': [self.postalcode],
                                          'power_levels': [self.power_levels],
                                          'gas_levels': [self.gas_levels]})
@@ -443,7 +388,7 @@ class target_area():
         self.grid_data.area = self.grid_data.area.append(self.target)
         self.grid_data.area = self.grid_data.area.set_crs(dave_settings()['crs_main'])
         # check if requested model is already in the archiv
-        if not self.grid_data.target_input.iloc [0].typ == 'own area':
+        if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
         else:
             file_exists = False
@@ -475,5 +420,5 @@ class target_area():
             # find road junctions
             target_area.road_junctions(self)
             return file_exists, file_name
-        else: 
+        else:
             return file_exists, file_name

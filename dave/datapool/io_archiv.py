@@ -32,7 +32,7 @@ def archiv_inventory(grid_data, read_only=False):
     Otherwise the dataset name and possibly the inventory list were created
     """
     # check if inventory file exists
-    inventory_path = get_data_path(f'inventory.csv', 'dave_archiv')
+    inventory_path = get_data_path('inventory.csv', 'dave_archiv')
     # dataset parameters
     target_input = grid_data.target_input.iloc[0]
     postalcode = target_input.data if target_input.typ == 'postalcode' else 'None'
@@ -76,7 +76,6 @@ def archiv_inventory(grid_data, read_only=False):
                 inventory_list.to_csv(inventory_path, index=False)
             return False, file_name
     else:
-         
         # --- archiv don't contain the dataset because it's empty
         # set file id and name
         file_id = 1
@@ -202,7 +201,7 @@ def from_archiv(dataset_name):
     """
     This functions reads a dave dataset from the dave internal archiv
     """
-    crs='EPSG:4326'
+    crs = 'EPSG:4326'
     # check if file exist
     files_in_archiv = os.listdir(get_data_path(dirname='dave_archiv'))
     if dataset_name in files_in_archiv:
@@ -329,7 +328,6 @@ def from_archiv(dataset_name):
         grid_data.dave_version = dave_version
         # close file
         archiv_file.close()
-        
         return grid_data
     else:
         print('The requested file is not found in the dave archiv')

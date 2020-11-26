@@ -31,8 +31,8 @@ def voronoi(points):
     vor = Voronoi(voronoi_points)
     # select finit lines and create LineStrings
     lines = [LineString(vor.vertices[line])
-                 for line in vor.ridge_vertices
-                 if -1 not in line]  # filtering regions with -1 because these are infinit
+             for line in vor.ridge_vertices
+             if -1 not in line]  # filtering regions with -1 because these are infinit
     # create polygons from the lines
     polygons = np.array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
@@ -48,10 +48,3 @@ def voronoi(points):
                     voronoi_polygons.at[polygon.name, 'dave_name'] = point.dave_name
                 break
     return voronoi_polygons
-
-
-
-
-# Evt. noch eine weitere Funktion zur voronoi Analyse schreiben, die die Landnutzung mit einbezieht. 
-# Da ich aber nicht immer die LAndnutzung mit drin haben möchte, bleibt die bisherige funktion drin
-# LAndnutzung wäre relevant wenn man Einwohnerzahlen behandelt/ die Wohnfläche eines Gebiets benötigt
