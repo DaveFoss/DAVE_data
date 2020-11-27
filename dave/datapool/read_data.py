@@ -165,6 +165,48 @@ def read_hp_data():
     return hp_data
 
 
+def read_gas_storage_ugs():
+    """
+    This data includes informations for the gas storages in germany based on the publication
+    "Underground Gas Storage in Germany".
+
+    The reference year for the data is 2019.
+
+    OUTPUT:
+         **gas storage data** (dict) - Informations for gas storages in germany
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         storage_data = data.read_gas_storage_ugs()
+    """
+    # --- read data
+    storage_data = pd.HDFStore(get_data_path('gas_storage_ugs.h5', 'data'))
+    # cavern storage for crude oil, petroleum products and liquid gas
+    cavern_fluid = storage_data.get('/fluid cavern storage')
+    cavern_fluid = gpd.GeoDataFrame(cavern_fluid,
+                                    geometry=gpd.points_from_xy(cavern_fluid.Lon, cavern_fluid.Lat),
+                                    crs=dave_settings()['crs_main'])
+    # cavern storages for natural gas
+    cavern_gas = storage_data.get('/natural gas cavern storage')
+    cavern_gas = gpd.GeoDataFrame(cavern_gas,
+                                  geometry=gpd.points_from_xy(cavern_gas.Lon, cavern_gas.Lat),
+                                  crs=dave_settings()['crs_main'])
+    # pore storages for natural gas
+    pore_gas = storage_data.get('/natural gas pore storage')
+    pore_gas = gpd.GeoDataFrame(pore_gas,
+                                geometry=gpd.points_from_xy(pore_gas.Lon, pore_gas.Lat),
+                                crs=dave_settings()['crs_main'])
+
+    # close file
+    storage_data.close()
+    # create dictonary
+    storage_data = {'cavern_fluid': cavern_fluid,
+                    'cavern_gas': cavern_gas,
+                    'pore_gas': pore_gas}
+    return storage_data
+
+
 def read_household_consumption():
     """
     This data includes informations for the german high pressure gas grid based on the publication
