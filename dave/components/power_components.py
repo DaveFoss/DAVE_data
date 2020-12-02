@@ -1382,11 +1382,9 @@ def transformators(grid_data):
         # diese zusätzzliche Leitung auch bei hv/mv trafos mit rein
 
 
-def get_household_power(household_size):
+def get_household_power(consumption_data, household_size):
     # set power factor
     cos_phi_residential = dave_settings()['cos_phi_residential']
-    # read consumption data
-    consumption_data = read_household_consumption()
     household_consumptions = consumption_data['household_consumptions']
     household_consumption = household_consumptions[household_consumptions['Personen pro Haushalt'] == household_size]
     p_mw = (household_consumption.iloc[0]['Durchschnitt  [kwh/a]']/1000)/dave_settings()['h_per_a']
@@ -1417,21 +1415,30 @@ def loads(grid_data):
         building_nodes = grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == 'building_centroid']
         # create lv loads for residential
         buildings_residential = grid_data.buildings.for_living
-        federal_states = read_federal_states()
+        federal_states, meta_data = read_federal_states()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         federal_states = federal_states.rename(columns={'name': 'federal state'})
         drop_columns = federal_states.keys().drop('federal state').drop('geometry')
         # intersect buildings with federal state areas to get the suitable federal state
         buildings_feds = gpd.overlay(buildings_residential, federal_states, how='intersection')
         buildings_feds = buildings_feds.drop(columns=drop_columns)
         # read consumption data
-        consumption_data = read_household_consumption()
+        consumption_data, meta_data = read_household_consumption()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         # get population for the diffrent areas
         if grid_data.target_input.iloc[0].typ in ['postalcode', 'town name', 'federal state']:
             population_area = grid_data.area
         else:
             # --- Case for own shape as input data
             # calculate proportions of postal area for grid area
-            postals = read_postal()
+            postals, meta_data = read_postal()
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             postal_own_intersection = gpd.overlay(postals, grid_data.area, how='intersection')
             postal_own_intersection = postal_own_intersection.rename(columns={'population': 'population_origin'})
             postal_own_landuse = gpd.overlay(grid_data.landuse, postal_own_intersection, how='intersection')
@@ -1486,7 +1493,7 @@ def loads(grid_data):
                         if pop_distribute != 0:
                             household_size = pop_distribute
                     # get power values for household
-                    p_mw, q_mvar = get_household_power(household_size=household_size)
+                    p_mw, q_mvar = get_household_power(consumption_data, household_size)
                     # reduce population to distribute
                     pop_distribute -= household_size
                     # --- select building in grid area

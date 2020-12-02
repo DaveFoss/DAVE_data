@@ -77,7 +77,8 @@ def create_empty_dataset():
                                                   'sources': gpd.GeoDataFrame([]),
                                                   }),
                  # auxillary
-                 'dave_version': __version__
+                 'dave_version': __version__,
+                 'meta_data': {}
                  })
     return grid_data
 

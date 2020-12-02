@@ -72,7 +72,10 @@ def create_ehv_topology(grid_data):
                     ehv_buses.at[bus.name, 'subst_name'] = sub.subst_name
                     break
         # read ehv tso data
-        ehv_data = read_ehv_data()
+        ehv_data, meta_data = read_ehv_data()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         # assign tso ehv node names to the ego ehv nodes
         for i, node in ehv_data['ehv_nodes'].iterrows():
             if node.osm_id:

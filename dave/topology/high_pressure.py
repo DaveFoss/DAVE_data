@@ -21,7 +21,10 @@ def create_hp_topology(grid_data):
     print('create high pressure topology for target area')
     print('---------------------------------------------')
     # read high pressure grid data from dave datapool
-    hp_data = read_hp_data()
+    hp_data, meta_data = read_hp_data()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     source = 'Paper: Electricity, Heat, and Gas Sector Data for Modeling the German System'
     reference_year = 2015
     # --- create hp junctions (nodes)

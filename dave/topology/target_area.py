@@ -252,7 +252,10 @@ class target_area():
         This function filter the postalcode informations for the target area.
         Multiple postalcode areas will be combinated.
         """
-        postal = read_postal()
+        postal, meta_data = read_postal()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         if len(self.postalcode) == 1 and self.postalcode[0] == 'ALL':
             # in this case all postalcode areas will be choosen
             target = postal
@@ -270,7 +273,10 @@ class target_area():
         """
         This functions searches for the postal codes which intersects with the own area
         """
-        postal = read_postal()
+        postal, meta_data = read_postal()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
         postal_list = postal_intersection['postalcode'].tolist()
         postal_filtered = []
@@ -282,7 +288,10 @@ class target_area():
         This function filter the postalcode informations for the target area.
         Multiple town name areas will be combinated
         """
-        postal = read_postal()
+        postal, meta_data = read_postal()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         if len(self.town_name) == 1 and self.town_name[0] == 'ALL':
             # in this case all city names will be choosen (same case as all postalcode areas)
             target = postal
@@ -308,7 +317,10 @@ class target_area():
         This function filter the federal state informations for the target area.
         Multiple federal state areas will be combinated.
         """
-        states = read_federal_states()
+        states, meta_data = read_federal_states()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         if len(self.federal_state) == 1 and self.federal_state[0] == 'ALL':
             # in this case all federal states will be choosen
             target = states
@@ -333,7 +345,10 @@ class target_area():
             self.federal_state = names_right
         self.target = target
         # convert federal states into postal code areas for target_input
-        postal = read_postal()
+        postal, meta_data  = read_postal()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
         postal_list = postal_intersection['postalcode'].tolist()
         # filter duplicated postal codes

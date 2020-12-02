@@ -57,7 +57,9 @@ def read_postal():
     postalger = pd.read_hdf(get_data_path('postalger.h5', 'data'))
     postalger = convert_geometry_to_wkt(postalger)  # convert geometry
     postalger = gpd.GeoDataFrame(postalger, crs=dave_settings()['crs_main'])
-    return postalger
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('postalger_meta.xlsx', 'data'), sheet_name=None)
+    return postalger, meta_data
 
 
 def read_federal_states():
@@ -76,7 +78,9 @@ def read_federal_states():
     federalstatesger = pd.read_hdf(get_data_path('federalstatesger.h5', 'data'))
     federalstatesger = convert_geometry_to_wkt(federalstatesger)  # convert geometry
     federalstatesger = gpd.GeoDataFrame(federalstatesger, crs=dave_settings()['crs_main'])
-    return federalstatesger
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('federalstatesger_meta.xlsx', 'data'), sheet_name=None)
+    return federalstatesger, meta_data
 
 
 def read_ehv_data():
@@ -108,7 +112,9 @@ def read_ehv_data():
                 'ehv_node_changes': ehv_node_changes,
                 'ehv_lines': ehv_lines,
                 'ehv_trafos': ehv_trafos}
-    return ehv_data
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('ehv_data_meta.xlsx', 'data'), sheet_name=None)
+    return ehv_data, meta_data
 
 
 def read_hp_data():
@@ -162,7 +168,9 @@ def read_hp_data():
                'hp_industry': hp_industry,
                'hp_storages': hp_storages,
                'hp_gas_demand_total': hp_gas_demand_total}
-    return hp_data
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('ehv_data_meta.xlsx', 'data'), sheet_name=None)
+    return hp_data, meta_data
 
 
 def read_gas_storage_ugs():
@@ -204,7 +212,9 @@ def read_gas_storage_ugs():
     storage_data = {'cavern_fluid': cavern_fluid,
                     'cavern_gas': cavern_gas,
                     'pore_gas': pore_gas}
-    return storage_data
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('ehv_data_meta.xlsx', 'data'), sheet_name=None)
+    return storage_data, meta_data
 
 
 def read_household_consumption():
@@ -232,4 +242,6 @@ def read_household_consumption():
     # create dictonary
     consumption_data = {'household_consumptions': household_consumptions,
                         'household_sizes': household_sizes}
-    return consumption_data
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('ehv_data_meta.xlsx', 'data'), sheet_name=None)
+    return consumption_data, meta_data
