@@ -23,10 +23,13 @@ def create_hv_topology(grid_data):
     print('create high voltage topology for target area')
     print('--------------------------------------------')
     # --- create hv nodes
-    ehvhv_buses = oep_request(schema='grid',
-                              table='ego_pf_hv_bus',
-                              where=dave_settings()['hv_buses_ver'],
-                              geometry='geom')
+    ehvhv_buses, meta_data = oep_request(schema='grid',
+                                         table='ego_pf_hv_bus',
+                                         where=dave_settings()['hv_buses_ver'],
+                                         geometry='geom')
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
                                               'scn_name': 'ego_scn_name',
                                               'bus_id': 'ego_bus_id',
@@ -53,10 +56,13 @@ def create_hv_topology(grid_data):
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
         # --- create hv lines
-        hv_lines = oep_request(schema='grid',
-                               table='ego_pf_hv_line',
-                               where=dave_settings()['hv_line_ver'],
-                               geometry='geom')
+        hv_lines, meta_data = oep_request(schema='grid',
+                                          table='ego_pf_hv_line',
+                                          where=dave_settings()['hv_line_ver'],
+                                          geometry='geom')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         hv_lines = hv_lines.rename(columns={'version': 'ego_version',
                                             'subst_id': 'ego_subst_id',
                                             'scn_name': 'ego_scn_name',

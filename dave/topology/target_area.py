@@ -75,7 +75,11 @@ class target_area():
         time_delay = dave_settings()['osm_time_delay']
         # search relevant road informations in the target area
         if self.roads:
-            roads = query_osm('way', target, recurse='down', tags=[dave_settings()['road_tags']])
+            roads, meta_data = query_osm('way', target, recurse='down',
+                                         tags=[dave_settings()['road_tags']])
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             # check if there are data for roads
             if not roads.empty:
                 # define road parameters which are relevant for the grid modeling
@@ -97,8 +101,11 @@ class target_area():
             time.sleep(time_delay)
         # search irrelevant road informations in the target area for a better overview
         if self.roads_plot:
-            roads_plot = query_osm('way', target, recurse='down',
-                                   tags=[dave_settings()['road_plot_tags']])
+            roads_plot, meta_data = query_osm('way', target, recurse='down',
+                                              tags=[dave_settings()['road_plot_tags']])
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             # check if there are data for roads_plot
             if not roads_plot.empty:
                 # define road parameters which are relevant for the grid modeling
@@ -120,10 +127,13 @@ class target_area():
             time.sleep(time_delay)
         # search landuse informations in the target area
         if self.landuse:
-            landuse = query_osm('way', target, recurse='down',
-                                tags=[dave_settings()['landuse_tags']])
+            landuse, meta_data = query_osm('way', target, recurse='down',
+                                           tags=[dave_settings()['landuse_tags']])
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             # check additionally osm relations
-            landuse_rel = query_osm('relation', target, recurse='down',
+            landuse_rel, meta_data = query_osm('relation', target, recurse='down',
                                     tags=[dave_settings()['landuse_tags']])
             landuse_rel = landuse_rel.reset_index(drop=True)
             # add landuses from relations to landuses from ways
@@ -175,8 +185,11 @@ class target_area():
             time.sleep(time_delay)
         # search building informations in the target area
         if self.buildings:
-            buildings = query_osm('way', target, recurse='down',
-                                  tags=[dave_settings()['building_tags']])
+            buildings, meta_data = query_osm('way', target, recurse='down',
+                                             tags=[dave_settings()['building_tags']])
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             # check if there are data for buildings
             if not buildings.empty:
                 # define building parameters which are relevant for the grid modeling

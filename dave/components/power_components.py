@@ -316,9 +316,12 @@ def renewable_powerplants(grid_data):
     if typ in ['postalcode', 'federal state', 'own area']:
         for plz in grid_data.target_input.data.iloc[0]:
             where = f'postcode={plz}'
-            data = oep_request(schema='supply',
-                               table='ego_renewable_powerplant',
-                               where=where)
+            data, meta_data = oep_request(schema='supply',
+                                          table='ego_renewable_powerplant',
+                                          where=where)
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if plz == grid_data.target_input.data.iloc[0][0]:
                 renewables = data
             else:
@@ -326,9 +329,12 @@ def renewable_powerplants(grid_data):
     elif typ == 'town name':
         for name in grid_data.target_input.data.iloc[0]:
             where = f'city={name}'
-            data = oep_request(schema='supply',
-                               table='ego_renewable_powerplant',
-                               where=where)
+            data, meta_data = oep_request(schema='supply',
+                                          table='ego_renewable_powerplant',
+                                          where=where)
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if name == grid_data.target_input.data.iloc[0][0]:
                 renewables = data
             else:
@@ -631,9 +637,12 @@ def conventional_powerplants(grid_data):
     if typ in ['postalcode', 'federal state', 'own area']:
         for plz in grid_data.target_input.data.iloc[0]:
             where = f'postcode={plz}'
-            data = oep_request(schema='supply',
-                               table='ego_conventional_powerplant',
-                               where=where)
+            data, meta_data = oep_request(schema='supply',
+                                          table='ego_conventional_powerplant',
+                                          where=where)
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if plz == grid_data.target_input.data.iloc[0][0]:
                 conventionals = data
             else:
@@ -641,9 +650,12 @@ def conventional_powerplants(grid_data):
     elif typ == 'town name':
         for name in grid_data.target_input.data.iloc[0]:
             where = f'city={name}'
-            data = oep_request(schema='supply',
-                               table='ego_conventional_powerplant',
-                               where=where)
+            data, meta_data = oep_request(schema='supply',
+                                          table='ego_conventional_powerplant',
+                                          where=where)
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if name == grid_data.target_input.data.iloc[0][0]:
                 conventionals = data
             else:
@@ -958,10 +970,13 @@ def transformators(grid_data):
     # --- create ehv/ehv and ehv/hv trafos
     if 'EHV' in grid_data.target_input.power_levels[0] or 'HV' in grid_data.target_input.power_levels[0]:
         # read transformator data from OEP, filter current exsist ones and rename paramter names
-        hv_trafos = oep_request(schema='grid',
-                                table='ego_pf_hv_transformer',
-                                where=dave_settings()['ehvhv_trans_ver'],
-                                geometry='geom')
+        hv_trafos, meta_data = oep_request(schema='grid',
+                                           table='ego_pf_hv_transformer',
+                                           where=dave_settings()['ehvhv_trans_ver'],
+                                           geometry='geom')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         hv_trafos = hv_trafos.rename(columns={'version': 'ego_version',
                                               'scn_name': 'ego_scn_name',
                                               'trafo_id': 'ego_trafo_id',
@@ -981,10 +996,13 @@ def transformators(grid_data):
         if ('EHV' in grid_data.target_input.power_levels[0] and grid_data.hv_data.hv_nodes.empty) \
            or ('HV' in grid_data.target_input.power_levels[0] and grid_data.ehv_data.ehv_nodes.empty):
             # read ehv/hv node data from OpenEnergyPlatform and adapt names
-            ehvhv_buses = oep_request(schema='grid',
-                                      table='ego_pf_hv_bus',
-                                      where=dave_settings()['hv_buses_ver'],
-                                      geometry='geom')
+            ehvhv_buses, meta_data = oep_request(schema='grid',
+                                                 table='ego_pf_hv_bus',
+                                                 where=dave_settings()['hv_buses_ver'],
+                                                 geometry='geom')
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
                                                       'scn_name': 'ego_scn_name',
                                                       'bus_id': 'ego_bus_id',
@@ -1109,10 +1127,13 @@ def transformators(grid_data):
     # --- create hv/mv trafos
     if 'HV' in grid_data.target_input.power_levels[0] or 'MV' in grid_data.target_input.power_levels[0]:
         # read transformator data from OEP, filter relevant parameters and rename paramter names
-        substations = oep_request(schema='grid',
-                                  table='ego_dp_hvmv_substation',
-                                  where=dave_settings()['hvmv_sub_ver'],
-                                  geometry='polygon')  # take substation polygon to get the full area
+        substations, meta_data = oep_request(schema='grid',
+                                             table='ego_dp_hvmv_substation',
+                                             where=dave_settings()['hvmv_sub_ver'],
+                                             geometry='polygon')  # take substation polygon to get the full area
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         substations = substations.rename(columns={'version': 'ego_version',
                                                   'subst_id': 'ego_subst_id',
                                                   'voltage': 'voltage_kv',
@@ -1137,10 +1158,13 @@ def transformators(grid_data):
         if grid_data.hv_data.hv_nodes.empty:
             # --- in this case the missing hv nodes for the transformator must be procured from OEP
             # read hv node data from OpenEnergyPlatform and adapt names
-            hv_nodes = oep_request(schema='grid',
-                                   table='ego_pf_hv_bus',
-                                   where=dave_settings()['hv_buses_ver'],
-                                   geometry='geom')
+            hv_nodes, meta_data = oep_request(schema='grid',
+                                              table='ego_pf_hv_bus',
+                                              where=dave_settings()['hv_buses_ver'],
+                                              geometry='geom')
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             hv_nodes = hv_nodes.rename(columns={'version': 'ego_version',
                                                 'scn_name': 'ego_scn_name',
                                                 'bus_id': 'ego_bus_id',
@@ -1244,10 +1268,13 @@ def transformators(grid_data):
     # --- create mv/lv trafos
     if 'MV' in grid_data.target_input.power_levels[0] or 'LV' in grid_data.target_input.power_levels[0]:
         # get transformator data from OEP
-        substations = oep_request(schema='grid',
-                                  table='ego_dp_mvlv_substation',
-                                  where=dave_settings()['mvlv_sub_ver'],
-                                  geometry='geom')
+        substations, meta_data = oep_request(schema='grid',
+                                             table='ego_dp_mvlv_substation',
+                                             where=dave_settings()['mvlv_sub_ver'],
+                                             geometry='geom')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         substations = substations.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy',
                                                  'subst_cnt']))
         substations = substations.rename(columns={'version': 'ego_version',

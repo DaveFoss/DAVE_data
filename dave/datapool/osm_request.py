@@ -6,6 +6,8 @@ import pandas as pd
 from shapely.geometry import Point, LineString
 from six import string_types
 
+from dave.datapool import get_data_path
+
 
 """
 This functions are based on the geopandas_osm python package, which was published under the
@@ -118,10 +120,13 @@ def query_osm(typ, bbox=None, recurse=None, tags='', raw=False,
     # TODO: Raise on non-200 (or 400-599)
     with urlopen(url) as response:
         content = response.read()
-
+        
+    # get meta informations
+    meta_data = pd.read_excel(get_data_path('osm_meta.xlsx', 'data'), sheet_name=None)
+    
     if raw:
-        return content
-    return read_osm(content, **kwargs)
+        return content, meta_data
+    return read_osm(content, **kwargs), meta_data
 
 
 def _build_url(typ, bbox=None, recurse=None, tags='', meta=False):

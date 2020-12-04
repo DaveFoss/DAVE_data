@@ -132,7 +132,7 @@ def read_dataset(dataset_path):
             grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(renewable_powerplants)
         loads = _convert_data_from(file, '/components_power/loads')
         if not loads.empty:
-            loads = gpd.GeoDataFrame(loads, crs=crs)
+            loads = gpd.GeoDataFrame(loads)
             grid_data.components_power.loads = grid_data.components_power.loads.append(loads)
         ehv_ehv = _convert_data_from(file, '/components_power/transformers/ehv_ehv')
         if not ehv_ehv.empty:

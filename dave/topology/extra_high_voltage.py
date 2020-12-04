@@ -25,10 +25,13 @@ def create_ehv_topology(grid_data):
     print('-------------------------------------------------')
     # --- create ehv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
-    ehv_substations = oep_request(schema='grid',
-                                  table='ego_dp_ehv_substation',
-                                  where=dave_settings()['ehv_sub_ver'],
-                                  geometry='polygon')
+    ehv_substations, meta_data = oep_request(schema='grid',
+                                             table='ego_dp_ehv_substation',
+                                             where=dave_settings()['ehv_sub_ver'],
+                                             geometry='polygon')
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehv_substations = ehv_substations.rename(columns={'version': 'ego_version',
                                                       'subst_id': 'ego_subst_id',
                                                       'voltage': 'voltage_kv'})
@@ -45,10 +48,13 @@ def create_ehv_topology(grid_data):
         grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(ehv_substations)
     # --- create ehv nodes
     # read ehv/hv node data from OpenEnergyPlatform and adapt names
-    ehvhv_buses = oep_request(schema='grid',
-                              table='ego_pf_hv_bus',
-                              where=dave_settings()['hv_buses_ver'],
-                              geometry='geom')
+    ehvhv_buses, meta_data = oep_request(schema='grid',
+                                         table='ego_pf_hv_bus',
+                                         where=dave_settings()['hv_buses_ver'],
+                                         geometry='geom')
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
                                               'scn_name': 'ego_scn_name',
                                               'bus_id': 'ego_bus_id',
@@ -124,10 +130,13 @@ def create_ehv_topology(grid_data):
         # add ehv nodes to grid data
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_buses)
         # --- create ehv lines
-        ehv_lines = oep_request(schema='grid',
-                                table='ego_pf_hv_line',
-                                where=dave_settings()['hv_line_ver'],
-                                geometry='geom')
+        ehv_lines, meta_data = oep_request(schema='grid',
+                                           table='ego_pf_hv_line',
+                                           where=dave_settings()['hv_line_ver'],
+                                           geometry='geom')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         ehv_lines = ehv_lines.rename(columns={'version': 'ego_version',
                                               'subst_id': 'ego_subst_id',
                                               'scn_name': 'ego_scn_name',

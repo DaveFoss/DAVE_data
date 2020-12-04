@@ -27,10 +27,14 @@ def create_mv_topology(grid_data):
 
     # --- create mv nodes
     # nodes for mv/lv traofs hv side
-    mvlv_buses = oep_request(schema='grid',
-                             table='ego_dp_mvlv_substation',
-                             where=dave_settings()['mvlv_sub_ver'],
-                             geometry='geom')
+    mvlv_buses, meta_data = oep_request(schema='grid',
+                                        table='ego_dp_mvlv_substation',
+                                        where=dave_settings()['mvlv_sub_ver'],
+                                        geometry='geom')
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+
     mvlv_buses = mvlv_buses.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']))
     mvlv_buses = mvlv_buses.rename(columns={'version': 'ego_version',
                                             'mvlv_subst_id': 'ego_subst_id'})
@@ -45,10 +49,13 @@ def create_mv_topology(grid_data):
         mvlv_buses = mvlv_buses.drop(columns=remove_columns)
     mvlv_buses['node_type'] = 'mvlv_substation'
     # nodes for hv/mv trafos us side
-    hvmv_buses = oep_request(schema='grid',
-                             table='ego_dp_hvmv_substation',
-                             where=dave_settings()['hvmv_sub_ver'],
-                             geometry='point')
+    hvmv_buses, meta_data = oep_request(schema='grid',
+                                        table='ego_dp_hvmv_substation',
+                                        where=dave_settings()['hvmv_sub_ver'],
+                                        geometry='point')
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     hvmv_buses = hvmv_buses.rename(columns={'version': 'ego_version',
                                             'subst_id': 'ego_subst_id'})
     # filter trafos for target area
