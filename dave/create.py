@@ -13,6 +13,7 @@ from dave.plotting import *
 from dave.components import *
 from dave.model import *
 from dave.datapool import *
+from dave.toolbox import *
 
 
 def create_empty_dataset():
@@ -85,7 +86,7 @@ def create_empty_dataset():
 
 def create_grid(postalcode=None, town_name=None, federal_state=None,
                 own_area=None, power_levels=[], gas_levels=[],
-                plot=True, convert=True, opt_model=True):
+                plot=True, convert=True, opt_model=True, combine_areas=[]):
     """
     This is the main function of dave. This function generates automaticly grid
     models for power and gas networks in the defined target area
@@ -115,6 +116,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                                               automaticly to pandapower and pandapipes
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal
                                                 power flow calculation to get no boundary violations
+        **combine_areas** (list, default []) - this parameter defines on which power levels not 
+                                               connected areas should combined
+                                               options: 'EHV','HV','MV','LV', []
 
     OUTPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
@@ -133,6 +137,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         power_levels[i] = power_levels[i].upper()
     for i in range(0, len(gas_levels)):
         gas_levels[i] = gas_levels[i].upper()
+    for i in range(0, len(combine_areas)):
+        combine_areas[i] = combine_areas[i].upper()
     # convert input value 'ALL'
     if power_levels == ['ALL']:
         power_levels = ['EHV', 'HV', 'MV', 'LV']
@@ -194,102 +200,57 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                                              town_name=town_name, federal_state=federal_state,
                                              own_area=own_area, buffer=0, roads=False,
                                              roads_plot=False, buildings=False,
-                                             landuse=True).target()
+                                             landuse=False).target()
     if not file_exists:
+        # create extended grid area to combine not connected areas
+        if combine_areas:
+            # save origin area
+            origin_area = grid_data.area
+            # hier dann die erstellung über funktion
+            combined_area = create_interim_area(grid_data.area)
         # --- create desired power grid levels
-        if power_levels == ['EHV']:
-            # create topology
-            create_ehv_topology(grid_data)
-        elif power_levels == ['HV']:
-            # create topology
-            create_hv_topology(grid_data)
-        elif power_levels == ['MV']:
-            # create topology
-            create_mv_topology(grid_data)
-        elif power_levels == ['LV']:
-            # create topology
-            create_lv_topology(grid_data)
-        elif power_levels == ['EHV', 'HV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_hv_topology(grid_data)
-        elif power_levels == ['EHV', 'MV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_mv_topology(grid_data)
-        elif power_levels == ['EHV', 'LV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_lv_topology(grid_data)
-        elif power_levels == ['HV', 'MV']:
-            # create topology
-            create_hv_topology(grid_data)
-            create_mv_topology(grid_data)
-        elif power_levels == ['HV', 'LV']:
-            # create topology
-            create_hv_topology(grid_data)
-            create_lv_topology(grid_data)
-        elif power_levels == ['MV', 'LV']:
-            # create topology
-            create_mv_topology(grid_data)
-            create_lv_topology(grid_data)
-        elif power_levels == ['EHV', 'HV', 'MV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_hv_topology(grid_data)
-            create_mv_topology(grid_data)
-        elif power_levels == ['EHV', 'HV', 'LV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_hv_topology(grid_data)
-            create_lv_topology(grid_data)
-        elif power_levels == ['EHV', 'MV', 'LV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_mv_topology(grid_data)
-            create_lv_topology(grid_data)
-        elif power_levels == ['HV', 'MV', 'LV']:
-            # create topology
-            create_hv_topology(grid_data)
-            create_mv_topology(grid_data)
-            create_lv_topology(grid_data)
-        elif power_levels == ['EHV', 'HV', 'MV', 'LV']:
-            # create topology
-            create_ehv_topology(grid_data)
-            create_hv_topology(grid_data)
-            create_mv_topology(grid_data)
-            create_lv_topology(grid_data)
-        else:
-            print('no voltage level was choosen or their is a failure in the input value.')
-            print(f'the input for the power levels was: {power_levels}')
-            print('---------------------------------------------------')
+        for level in power_levels:
+            # temporary extend grid area to combine not connected areas
+            if level in combine_areas:
+                # temporary use of extended grid area
+                grid_data.area = combined_area
+            if level == 'EHV':
+                create_ehv_topology(grid_data)
+            elif level == 'HV':
+                create_hv_topology(grid_data)
+            elif level == 'MV':
+                create_mv_topology(grid_data)
+            elif level == 'LV':
+                create_lv_topology(grid_data)
+            else:
+                print('no voltage level was choosen or their is a failure in the input value.')
+                print(f'the input for the power levels was: {power_levels}')
+                print('---------------------------------------------------')
+            # replace grid area with the origin one for further steps
+            if level in combine_areas:
+                grid_data.area = origin_area
         # create power grid components
         if power_levels:
             power_components(grid_data)
         # --- create desired gas grid levels
-        if gas_levels == ['HP']:
-            create_hp_topology(grid_data)
-        elif gas_levels == ['MP']:
-            create_mp_topology(grid_data)
-        elif gas_levels == ['LP']:
-            create_lp_topology(grid_data)
-        elif gas_levels == ['HP', 'MP']:
-            create_hp_topology(grid_data)
-            create_mp_topology(grid_data)
-        elif gas_levels == ['HP', 'LP']:
-            create_hp_topology(grid_data)
-            create_lp_topology(grid_data)
-        elif gas_levels == ['MP', 'LP']:
-            create_mp_topology(grid_data)
-            create_lp_topology(grid_data)
-        elif gas_levels == ['HP', 'MP', 'LP']:
-            create_hp_topology(grid_data)
-            create_mp_topology(grid_data)
-            create_lp_topology(grid_data)
-        else:
-            print('no gas level was choosen or their is a failure in the input value.')
-            print(f'the input for the gas levels was: {gas_levels}')
-            print('-----------------------------------------------')
+        for level in gas_levels:
+            # temporary extend grid area to combine not connected areas
+            if level in combine_areas:
+                # temporary use of extended grid area
+                grid_data.area = combined_area
+            if level == 'HP':
+                create_hp_topology(grid_data)
+            elif level == 'MP':
+                create_mp_topology(grid_data)
+            elif level == 'LP':
+                create_lp_topology(grid_data)
+            else:
+                print('no gas level was choosen or their is a failure in the input value.')
+                print(f'the input for the gas levels was: {gas_levels}')
+                print('-----------------------------------------------')
+            # replace grid area with the origin one for further steps
+            if level in combine_areas:
+                grid_data.area = origin_area
         # create gas grid components
         if gas_levels:
             gas_components(grid_data)

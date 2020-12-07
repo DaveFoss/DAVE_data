@@ -1673,6 +1673,8 @@ def loads(grid_data):
 
 
 def power_components(grid_data):
+    pass
+    """
     # add transformers
     transformators(grid_data)
     # add renewable powerplants
@@ -1683,3 +1685,4 @@ def power_components(grid_data):
     power_plant_lines(grid_data)
     # add loads
     loads(grid_data)
+    """
