@@ -6,14 +6,12 @@ import shutil
 # imports from dave
 from dave.dave_structure import davestructure
 from dave import __version__
-from dave import dave_output_dir, dave_dir
-from dave.io_dave import write_dataset
+from dave import dave_output_dir, dave_dir, write_dataset, create_interim_area
 from dave.topology import *
 from dave.plotting import *
 from dave.components import *
 from dave.model import *
 from dave.datapool import *
-from dave.toolbox import *
 
 
 def create_empty_dataset():
