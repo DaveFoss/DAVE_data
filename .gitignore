@@ -1,0 +1,5 @@
+# ignore cache files 
+*/.cache/*
+*/__pycache__/*
+**/__pycache__/**
+
