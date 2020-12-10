@@ -9,7 +9,8 @@ import math
 import copy
 
 from dave.datapool import *
-from dave import voronoi, dave_settings
+from dave.settings import dave_settings
+from dave.toolbox import voronoi
 
 
 def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
