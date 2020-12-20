@@ -9,3 +9,5 @@ matplotlib
 geopy
 contextily
 descartes
+pandapower
+pandapipes
