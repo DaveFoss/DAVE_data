@@ -21,7 +21,7 @@ def create_empty_dataset():
     This function initializes the dave datastructure.
 
     OUTPUT:
-        **grid_data** (attrdict) - dave attrdict with empty tables:
+        **grid_data** (attrdict) - dave attrdict with empty tables
 
     EXAMPLE:
         grid_data = create_empty_dataset()
@@ -116,7 +116,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                                               automaticly to pandapower and pandapipes
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal
                                                 power flow calculation to get no boundary violations
-        **combine_areas** (list, default []) - this parameter defines on which power levels not 
+        **combine_areas** (list, default []) - this parameter defines on which power levels not
                                                connected areas should combined
                                                options: 'EHV','HV','MV','LV', []
 
@@ -126,6 +126,13 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         **net_pipes**
 
     EXAMPLE:
+        from dave.create import create_grid
+        
+        grid_data  = create_grid(town_name=['Kassel', 'Baunatal']
+                                 power_levels=['HV', 'MV'],
+                                 gas_levels=['HP'], 
+                                 plot=False, 
+                                 convert = False)
 
     """
     # create empty datastructure
@@ -200,7 +207,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
                                              town_name=town_name, federal_state=federal_state,
                                              own_area=own_area, buffer=0, roads=False,
                                              roads_plot=False, buildings=False,
-                                             landuse=False).target()
+                                             landuse=True).target()
     if not file_exists:
         # create extended grid area to combine not connected areas
         if combine_areas:
@@ -267,8 +274,6 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
-        # Vorrübergehend aus für testzwecke
-        """
         print('Save DaVe dataset to archiv')
         print('---------------------------')
         # save dataset to archiv
@@ -278,7 +283,6 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
-        """
     else:
         write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
 
@@ -287,7 +291,6 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         plot_target_area(grid_data)
         plot_grid_data(grid_data)
         plot_landuse(grid_data)
-        # hier noch erzeuger plot
 
     # convert into pandapower and pandapipes
     if convert and power_levels:
@@ -295,7 +298,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder
         file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
-        # pp.to_json(net_power, file_path)
+        pp.to_json(net_power, file_path)
     else:
         net_power = None
     if convert and gas_levels:

@@ -27,10 +27,7 @@ def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
     """
     # create list of all diffrent connection transformers
     connection_trafos = plants_aggr.connection_trafo_dave_name.tolist()
-    trafo_names = []
-    for tname in connection_trafos:
-        if tname not in trafo_names:
-            trafo_names.append(tname)
+    trafo_names = list(set(connection_trafos))
     trafo_names.sort()
     # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'gas', 'geothermal', 'hydro', 'solar', 'wind']
@@ -47,10 +44,7 @@ def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
             plant_esource = plants_area[plants_area.generation_type == esource]
             if not plant_esource.empty:
                 sources = plant_esource.source.tolist()
-                sources_diff = []
-                for source in sources:
-                    if source not in sources_diff:
-                        sources_diff.append(source)
+                sources_diff = list(set(sources))
                 plant_power = pd.to_numeric(plant_esource.electrical_capacity_kw, downcast='float')
                 plant_df = gpd.GeoDataFrame({'aggregated': aggregate_name,
                                              'electrical_capacity_kw': plant_power.sum(),
@@ -76,10 +70,7 @@ def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
     """
     # create list of all diffrent connection transformers
     connection_trafos = plants_aggr.connection_trafo_dave_name.tolist()
-    trafo_names = []
-    for tname in connection_trafos:
-        if tname not in trafo_names:
-            trafo_names.append(tname)
+    trafo_names = list(set(connection_trafos))
     trafo_names.sort()
     # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'coal', 'gas', 'gas_mine', 'lignite', 'multiple_non_renewable',
@@ -354,12 +345,11 @@ def renewable_powerplants(grid_data):
         for i, plant in renewables.iterrows():
             if plant.voltage_level:
                 renewables.at[i, 'voltage_level'] = int(plant.voltage_level[1:2])
+            # This is for plants which have a nan value at the voltage level parameter
+            elif float(plant.electrical_capacity_kw) <= 50:
+                renewables.at[i, 'voltage_level'] = 7
             else:
-                # This is for plants which have a nan value at the voltage level parameter
-                if float(plant.electrical_capacity_kw) <= 50:
-                    renewables.at[i, 'voltage_level'] = 7
-                else:
-                    renewables.at[i, 'voltage_level'] = 5
+                renewables.at[i, 'voltage_level'] = 5
         # restrict plants to considered power levels
         if 'EHV' in grid_data.target_input.power_levels[0]:
             renewables = renewables
@@ -1684,8 +1674,6 @@ def power_components(grid_data):
     """
     This function calls all the functions for creating the power components in the wright order
     """
-    pass
-    """
     # add transformers
     transformators(grid_data)
     # add renewable powerplants
@@ -1696,4 +1684,3 @@ def power_components(grid_data):
     power_plant_lines(grid_data)
     # add loads
     loads(grid_data)
-    """

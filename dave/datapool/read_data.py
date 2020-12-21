@@ -22,7 +22,7 @@ def convert_geometry_to_wkt(data_df):
     """
     This function converts geometry of a data frame from WKB to WKT format
     """
-    data_df['geom'] = None  # create empty column, otherwise ther'e could be problems with add geoemtry
+    data_df['geom'] = None  # create empty column for no problems with adding geoemtry
     for i, data in data_df.iterrows():
         data_df.at[i, 'geom'] = loads(data.geometry)
     data_df = data_df.drop(columns=['geometry'])
@@ -34,7 +34,7 @@ def convert_geometry_to_wkb(data_df):
     """
     This function converts geometry of a data frame from WKT to WKB format
     """
-    data_df['geom'] = None  # create empty column, otherwise ther'e could be problems with add geoemtry
+    data_df['geom'] = None  # create empty column for no problems with adding geoemtry
     for i, data in data_df.iterrows():
         data_df.at[i, 'geom'] = dumps(data.geometry)
     data_df = data_df.drop(columns=['geometry'])
@@ -124,7 +124,7 @@ def read_hp_data():
     "Electricity, Heat, and Gas Sector Data for Modeling the German System" from the LKD_eu project.
 
     The reference year for the data is 2015.
-    
+
     Hint: This data ist also include at the scigridgas_igginl dataset
 
     OUTPUT:
@@ -149,11 +149,13 @@ def read_hp_data():
     # production
     hp_production = hp_data.get('/production')
     hp_production = convert_geometry_to_wkt(hp_production)
-    hp_production = gpd.GeoDataFrame(hp_production, crs=data_crs).to_crs(dave_settings()['crs_main'])
+    hp_production = gpd.GeoDataFrame(hp_production,
+                                     crs=data_crs).to_crs(dave_settings()['crs_main'])
     # industry
     hp_industry = hp_data.get('/industry')
     hp_industry = convert_geometry_to_wkt(hp_industry)
-    hp_industry = gpd.GeoDataFrame(hp_industry, crs=data_crs).to_crs(dave_settings()['crs_main'])
+    hp_industry = gpd.GeoDataFrame(hp_industry,
+                                   crs=data_crs).to_crs(dave_settings()['crs_main'])
     # storgae
     hp_storages = hp_data.get('/storages')
     hp_storages = convert_geometry_to_wkt(hp_storages)
@@ -161,7 +163,8 @@ def read_hp_data():
     # gas demand total
     hp_gas_demand_total = hp_data.get('/gas_demand_total')
     hp_gas_demand_total = convert_geometry_to_wkt(hp_gas_demand_total)
-    hp_gas_demand_total = gpd.GeoDataFrame(hp_gas_demand_total, crs=data_crs).to_crs(dave_settings()['crs_main'])
+    hp_gas_demand_total = gpd.GeoDataFrame(hp_gas_demand_total,
+                                           crs=data_crs).to_crs(dave_settings()['crs_main'])
     # close file
     hp_data.close()
     # create dictonary
@@ -222,7 +225,7 @@ def read_gas_storage_ugs():
 
 def read_household_consumption():
     """
-    This data includes informations for the german avarage houshold consumption and the avarage 
+    This data includes informations for the german avarage houshold consumption and the avarage
     houshold sizes per federal state
 
     OUTPUT:
