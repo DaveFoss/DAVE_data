@@ -2,6 +2,7 @@ import os
 import geopandas as gpd
 import pandas as pd
 from shapely.wkb import loads, dumps
+from shapely.geometry import LineString
 
 from dave import dave_dir
 from dave.settings import dave_settings
@@ -120,9 +121,11 @@ def read_ehv_data():
 def read_hp_data():
     """
     This data includes informations for the german high pressure gas grid based on the publication
-    "Electricity, Heat, and Gas Sector Data for Modeling the German System".
+    "Electricity, Heat, and Gas Sector Data for Modeling the German System" from the LKD_eu project.
 
     The reference year for the data is 2015.
+    
+    Hint: This data ist also include at the scigridgas_igginl dataset
 
     OUTPUT:
          **high pressure data** (dict) - Informations for the german high pressure gas grid
@@ -219,18 +222,16 @@ def read_gas_storage_ugs():
 
 def read_household_consumption():
     """
-    This data includes informations for the german high pressure gas grid based on the publication
-    "Electricity, Heat, and Gas Sector Data for Modeling the German System".
-
-    The reference year for the data is 2015.
+    This data includes informations for the german avarage houshold consumption and the avarage 
+    houshold sizes per federal state
 
     OUTPUT:
-         **high pressure data** (dict) - Informations for the german high pressure gas grid
+         **houshold consumption data** (dict) - Informations for the german high pressure gas grid
 
     EXAMPLE:
          import dave.datapool as data
 
-         hp_data = data.read_hp_data()
+         household_consumption = data.read_household_consumption()
     """
     # --- read data
     consumption_data = pd.HDFStore(get_data_path('household_power_consumption.h5', 'data'))
@@ -245,3 +246,85 @@ def read_household_consumption():
     # read meta data
     meta_data = pd.read_excel(get_data_path('ehv_data_meta.xlsx', 'data'), sheet_name=None)
     return consumption_data, meta_data
+
+
+def read_scigridgas_igginl():
+    """
+    This data includes informations for the europe gas grid produced by scigridgas.
+    The dataset is know as "igginl".
+
+    OUTPUT:
+         **scigridgas igginl data** (dict) - Informations for the europe gas grid
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         scigridgas_igginl = data.read_scigridgas_igginl()
+    """
+    # --- read data
+    igginl_data = pd.HDFStore(get_data_path('scigridgas_igginl.h5', 'data'))
+    # border_points
+    border_points = igginl_data.get('/border_points')
+    border_points = gpd.GeoDataFrame(border_points, geometry=gpd.points_from_xy(border_points.long,
+                                                                                border_points.lat),
+                                     crs=dave_settings()['crs_main'])
+    # compressors
+    compressors = igginl_data.get('/compressors')
+    compressors = gpd.GeoDataFrame(compressors, geometry=gpd.points_from_xy(compressors.long,
+                                                                            compressors.lat),
+                                   crs=dave_settings()['crs_main'])
+    # entry_points
+    entry_points = igginl_data.get('/entry_points')
+    entry_points = gpd.GeoDataFrame(entry_points, geometry=gpd.points_from_xy(entry_points.long,
+                                                                              entry_points.lat),
+                                    crs=dave_settings()['crs_main'])
+    # inter_connection_points
+    connection_points = igginl_data.get('/inter_connection_points')
+    inter_connection_points = gpd.GeoDataFrame(connection_points,
+                                               geometry=gpd.points_from_xy(connection_points.long,
+                                                                           connection_points.lat),
+                                               crs=dave_settings()['crs_main'])
+    # lngss
+    lngs = igginl_data.get('/lngs')
+    lngs = gpd.GeoDataFrame(lngs, geometry=gpd.points_from_xy(lngs.long, lngs.lat),
+                            crs=dave_settings()['crs_main'])
+    # nodes
+    nodes = igginl_data.get('/nodes')
+    nodes = gpd.GeoDataFrame(nodes, geometry=gpd.points_from_xy(nodes.long, nodes.lat),
+                             crs=dave_settings()['crs_main'])
+    # pipe_segments
+    pipe_segments = igginl_data.get('/pipe_segments')
+    pipe_segments.lat = pipe_segments.lat.apply(lambda x: eval(x))
+    pipe_segments.long = pipe_segments.long.apply(lambda x: eval(x))
+    geometry = []
+    for i, pipe in pipe_segments.iterrows():
+        lat = pipe.lat
+        long = pipe.long
+        line = LineString(list(zip(long, lat)))
+        geometry.append(line)
+    pipe_segments = gpd.GeoDataFrame(pipe_segments, geometry=pd.Series(geometry),
+                                     crs=dave_settings()['crs_main'])
+    # productions
+    productions = igginl_data.get('/productions')
+    productions = gpd.GeoDataFrame(productions, geometry=gpd.points_from_xy(productions.long,
+                                                                            productions.lat),
+                                   crs=dave_settings()['crs_main'])
+    # storages
+    storages = igginl_data.get('/storages')
+    storages = gpd.GeoDataFrame(storages, geometry=gpd.points_from_xy(storages.long, storages.lat),
+                                crs=dave_settings()['crs_main'])
+    # close file
+    igginl_data.close()
+    # create dictonary
+    storage_data = {'border_points': border_points,
+                    'compressors': compressors,
+                    'entry_points': entry_points,
+                    'inter_connection_points': inter_connection_points,
+                    'lngs': lngs,
+                    'nodes': nodes,
+                    'pipe_segments': pipe_segments,
+                    'productions': productions,
+                    'storages': storages}
+    # read meta data
+    meta_data = pd.read_excel(get_data_path('scigridgas_igginl.xlsx', 'data'), sheet_name=None)
+    return storage_data, meta_data
