@@ -178,6 +178,7 @@ def create_mv_topology(grid_data):
         mv_lines = gpd.GeoDataFrame(geometry=mv_lines)
         mv_lines.insert(0, 'dave_name', None)
         # project lines to crs with unit in meter for length calculation
+        mv_lines = mv_lines.set_crs(dave_settings()['crs_main'])
         mv_lines_3035 = mv_lines.to_crs(dave_settings()['crs_meter'])
         # add parameters to lines
         for i, line in mv_lines.iterrows():
