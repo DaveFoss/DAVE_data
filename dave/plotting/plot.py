@@ -39,8 +39,7 @@ def plot_target_area(grid_data):
         **grid_data** (attrdict) - all Informations about the target area
 
     OUTPUT:
-
-    EXAMPLE:
+        **target area plot** (svg file) - plot as vektor graphic
     """
     # input data
     roads_plot = grid_data.roads.roads_plot
@@ -109,8 +108,7 @@ def plot_grid_data(grid_data):
         **grid_data** (dict) - all Informations about the target area and the grid
 
     OUTPUT:
-
-    EXAMPLE:
+        **grid data plot** (svg file) - plot as vektor graphic
     """
     roads_plot = grid_data.roads.roads_plot
     roads = grid_data.roads.roads
@@ -232,8 +230,7 @@ def plot_grid_data_osm(grid_data):
         **grid_data** (dict) - all Informations about the target area and the grid
 
     OUTPUT:
-
-    EXAMPLE:
+        **grid data osm plot** (svg file) - plot as vektor graphic
     """
     lv_nodes = grid_data.lv_data.lv_nodes
     lv_lines = grid_data.lv_data.lv_lines
@@ -322,8 +319,7 @@ def plot_landuse(grid_data):
         **grid_data** (dict) - all Informations about the target area and the grid
 
     OUTPUT:
-
-    EXAMPLE:
+        **landuse plot** (svg file) - plot as vektor graphic
     """
     if not grid_data.landuse.empty:
         landuse_residential = grid_data.landuse[grid_data.landuse.landuse == 'residential']
@@ -354,7 +350,7 @@ def plot_landuse(grid_data):
         plt.savefig(file_path, dpi=300)
 
 
-def plot_erzeuger():
+def plot_generator():
     """
     This function plots the power plants in the target area
 
@@ -362,19 +358,8 @@ def plot_erzeuger():
         **grid_data** (dict) - all Informations about the target area and the grid
 
     OUTPUT:
-
-    EXAMPLE:
+        **generator plot** (svg file) - plot as vektor graphic
     """
     # hier eine Plotting funktion die nur die Erzeuger im Zielgebiet aufzeigt und
     # verschiedene Farben für die verschiedenen Energieträger
-    pass
-
-
-def plot_pandapower():
-    # hier die gewünschte pandapower plotting funktion rein schreiben
-    pass
-
-
-def plot_pandapipes():
-    # hier die gewünschte pandapipes plotting funktion rein schreiben
     pass

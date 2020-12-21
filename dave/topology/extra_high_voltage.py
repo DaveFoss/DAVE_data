@@ -12,13 +12,10 @@ def create_ehv_topology(grid_data):
     extra high voltage level
 
     INPUT:
-        **grid_data** (dict) - all Informations about the target area
-
-    OPTIONAL:
+        **grid_data** (dict) - all Informations about the grid area
 
     OUTPUT:
-
-    EXAMPLE:
+        Writes data in the DaVe dataset
     """
     # print to inform user
     print('create extra high voltage topology for target area')

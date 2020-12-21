@@ -9,13 +9,10 @@ def create_mp_topology(grid_data):
     medium pressure level
 
     INPUT:
-        **grid_data** (dict) - all Informations about the target area
-
-    OPTIONAL:
+        **grid_data** (dict) - all Informations about the grid area
 
     OUTPUT:
-
-    EXAMPLE:
+        Writes data in the DaVe dataset
     """
     pass
    

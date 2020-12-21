@@ -14,8 +14,6 @@ def create_interim_area(areas):
 
     OUTPUT:
         **areas** (GeoDataFrame) - all considered grid areas extended with interim areas
-
-    EXAMPLE:
     """
     # check if there are diffrent grid areas
     if len(areas) > 1:
@@ -56,8 +54,6 @@ def voronoi(points):
 
     OUTPUT:
         **voronoi polygons** (GeoDataFrame) - all voronoi areas for the given points
-
-    EXAMPLE:
     """
     # define points for voronoi centroids
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]

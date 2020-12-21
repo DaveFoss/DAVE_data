@@ -1410,6 +1410,14 @@ def transformators(grid_data):
 
 
 def get_household_power(consumption_data, household_size):
+    """
+    This function calculates the active and reactive power consumption for a given houshold size
+    based on the consumption data for a year
+    
+    INPUT:
+        **consumption_data** (Dict) - consumption data for germany from dave internal datapool
+        **household_size** (int) - size of the houshold between 1 and 5 person
+    """
     # set power factor
     cos_phi_residential = dave_settings()['cos_phi_residential']
     household_consumptions = consumption_data['household_consumptions']
@@ -1673,6 +1681,9 @@ def loads(grid_data):
 
 
 def power_components(grid_data):
+    """
+    This function calls all the functions for creating the power components in the wright order
+    """
     pass
     """
     # add transformers

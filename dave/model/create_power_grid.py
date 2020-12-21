@@ -6,16 +6,13 @@ from dave.settings import dave_settings
 
 def create_power_grid(grid_data):
     """
-    This function creates papandapower network.
+    This function creates a pandapower network based an the DaVe dataset
 
     INPUT:
         **grid_data** (attrdict) - calculated grid data from dave
 
     OUTPUT:
-        **net** (attrdict) - PANDAPOWER attrdict with grid data
-
-    EXAMPLE:
-
+        **net** (attrdict) - pandapower attrdict with grid data
     """
     print('create pandapower network for target area')
     print('-----------------------------------------')

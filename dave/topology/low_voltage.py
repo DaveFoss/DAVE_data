@@ -162,11 +162,8 @@ def create_lv_topology(grid_data):
     INPUT:
         **grid_data** (attrdict) - all Informations about the grid
 
-    OPTIONAL:
-
     OUTPUT:
-
-    EXAMPLE:
+        Writes data in the DaVe dataset
     """
     # print to inform user
     print('create low voltage network for target area')

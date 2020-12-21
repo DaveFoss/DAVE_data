@@ -15,11 +15,8 @@ def create_mv_topology(grid_data):
     INPUT:
         **grid_data** (dict) - all Informations about the target area
 
-    OPTIONAL:
-
     OUTPUT:
-
-    EXAMPLE:
+        Writes data in the DaVe dataset
     """
     # print to inform user
     print('create medium voltage network for target area')

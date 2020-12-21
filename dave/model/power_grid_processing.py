@@ -4,17 +4,14 @@ import pandapower as pp
 def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_loading=100,
                      max_trafo_loading=100):
     """
-    This function run a diagnosis a pandapower network and clean up occurring failures.
+    This function run a diagnosis of the pandapower network and clean up occurring failures.
     Furthermore the grid will be adapt so all boundarys be respected.
 
     INPUT:
-        **net** (attrdict) - PANDAPOWER attrdict with grid data
+        **net** (attrdict) - pandapower attrdict
 
     OUTPUT:
-        **net** (attrdict) - A cleaned up and if necessary optimized PANDAPOWER attrdict with grid data
-
-    EXAMPLE:
-
+        **net** (attrdict) - A cleaned up and if necessary optimized pandapower attrdict
     """
     print('run power grid diagnostic and processing')
     print('----------------------------------------')

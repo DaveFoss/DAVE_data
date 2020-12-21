@@ -8,6 +8,10 @@ from dave.datapool import get_data_path, convert_geometry_to_wkb, convert_geomet
 
 
 def _convert_from_archiv_data(archiv_file, key):
+    """
+    This function converts the geographical informations into geographical objects and creats a
+    GeoDataFrame
+    """
     data = archiv_file.get(key)
     if (not data.empty) and ('geometry' in data.keys()):
         data = convert_geometry_to_wkt(data)
@@ -16,6 +20,9 @@ def _convert_from_archiv_data(archiv_file, key):
 
 
 def _convert_to_archiv_data(data_key):
+    """
+    This function converts the geographical objects into a string and creats a DataFrame
+    """
     data = copy.deepcopy(data_key)
     if not data.empty:
         if 'geometry' in data.keys():

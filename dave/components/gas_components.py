@@ -1,4 +1,7 @@
 def gas_components(grid_data):
+    """
+    This function calls all the functions for creating the gas components in the wright order
+    """
     pass
 
     # gas storages in germany

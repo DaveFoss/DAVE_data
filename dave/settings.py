@@ -1,6 +1,7 @@
-# DaVe Settings for used data and assumptions
-
 def dave_settings():
+    """
+    This function returns a dataframe with the DaVe settings for used data and assumptions
+    """
     settings = {# geographical defintions:
                 'crs_main': 'EPSG:4326',  # crs which is based on the unit degree
                 'crs_meter': 'EPSG:3035',  # crs which is based on the unit meter

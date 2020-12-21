@@ -11,13 +11,10 @@ def create_hv_topology(grid_data):
     high voltage level
 
     INPUT:
-        **grid_data** (dict) - all Informations about the target area
-
-    OPTIONAL:
+        **grid_data** (dict) - all Informations about the grid area
 
     OUTPUT:
-
-    EXAMPLE:
+        Writes data in the DaVe dataset
     """
     # print to inform user
     print('create high voltage topology for target area')
