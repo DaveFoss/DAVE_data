@@ -1,6 +1,6 @@
 import geopandas as gpd
 
-from dave.datapool import read_hp_data
+from dave.datapool import read_hp_data, read_scigridgas_igginl
 
 
 def create_hp_topology(grid_data):
@@ -17,6 +17,71 @@ def create_hp_topology(grid_data):
     # print to inform user
     print('create high pressure topology for target area')
     print('---------------------------------------------')
+    # read high pressure grid data from dave datapool (scigridgas igginl)
+    scigrid_data, meta_data = read_scigridgas_igginl()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    # create hp junctions (nodes)
+    hp_junctions = scigrid_data['nodes']
+    # prepare data
+    hp_junctions = hp_junctions.rename(columns={'id': 'scigrid_id',
+                                                'name': 'scigrid_name'})
+    hp_junctions['source'] = 'scigridgas'
+    hp_junctions['pressure_level'] = 1
+    # intersection with target area
+    hp_junctions = gpd.overlay(hp_junctions, grid_data.area, how='intersection')
+    keys = grid_data.area.keys().tolist()
+    keys.remove('geometry')
+    hp_junctions = hp_junctions.drop(columns=(keys))
+    # consider data only if there are more than one junction in the target area
+    if len(hp_junctions) > 1:
+        # add dave name
+        hp_junctions.insert(0, 'dave_name', None)
+        hp_junctions = hp_junctions.reset_index(drop=True)
+        for i, junc in hp_junctions.iterrows():
+            hp_junctions.at[junc.name, 'dave_name'] = f'junction_1_{i}'
+        # add hp junctions to grid data
+        grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
+        # --- create hp pipes
+        hp_pipes = scigrid_data['pipe_segments']
+        # filter relevant pipelines by checking if both endpoints are in the target area
+        hp_junctions_ids = hp_junctions.scigrid_id.tolist()
+        hp_pipes['from_junction'] = hp_pipes.node_id.apply(lambda x: eval(x)[0])
+        hp_pipes['to_junction'] = hp_pipes.node_id.apply(lambda x: eval(x)[1])
+        hp_pipes = hp_pipes[(hp_pipes.start_node_id.isin(hp_junctions_ids)) &
+                            (hp_pipes.end_node_id.isin(hp_junctions_ids))]
+        # prepare data
+        hp_pipes = hp_pipes.rename(columns={'id': 'scigrid_id',
+                                            'name': 'scigrid_name'})
+        hp_pipes['source'] = 'scigridgas'
+        hp_pipes['pressure_level'] = 1
+        # change pipeline junction names from scigrid id to dave name
+        hp_pipes['from_junction'] = hp_pipes.from_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
+        hp_pipes['to_junction'] = hp_pipes.to_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
+        # add dave name
+        hp_pipes.insert(0, 'dave_name', None)
+        hp_pipes = hp_pipes.reset_index(drop=True)
+        for i, pipe in hp_pipes.iterrows():
+            hp_pipes.at[pipe.name, 'dave_name'] = f'pipe_1_{i}'
+        # add hp lines to grid data
+        grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
+
+
+def create_lkd_eu(grid_data):
+    """
+    This function creates a dictonary with all relevant parameters for the
+    high pressure level based on the lkd_eu dataset.
+
+    It is deprecated because the lkd_eu dataset is also in the scigridgas dataset implemented and
+    this one will be used for the hp level creation
+
+    INPUT:
+        **grid_data** (dict) - all Informations about the grid area
+
+    OUTPUT:
+        Writes data in the DaVe dataset
+    """
     # read high pressure grid data from dave datapool
     hp_data, meta_data = read_hp_data()
     # add meta data
