@@ -1670,17 +1670,23 @@ def loads(grid_data):
         grid_data.components_power.loads.at[load.name, 'dave_name'] = f'load_{load.voltage_level}_{i}'
 
 
-def power_components(grid_data):
+def power_components(grid_data, transformers, renewable_powerplants, conventional_powerplants,
+                     loads):
     """
-    This function calls all the functions for creating the power components in the wright order
+    This function calls all the functions for creating the power components in the correct order
     """
     # add transformers
-    transformators(grid_data)
+    if transformers:
+        transformators(grid_data)
     # add renewable powerplants
-    renewable_powerplants(grid_data)
+    if renewable_powerplants:
+        renewable_powerplants(grid_data)
     # add conventional powerplants
-    conventional_powerplants(grid_data)
+    if conventional_powerplants:
+        conventional_powerplants(grid_data)
     # create lines for power plants with a grid node far away
-    power_plant_lines(grid_data)
+    if renewable_powerplants or conventional_powerplants:
+        power_plant_lines(grid_data)
     # add loads
-    loads(grid_data)
+    if loads:
+        loads(grid_data)
