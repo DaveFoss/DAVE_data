@@ -171,9 +171,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, own_area=No
     if ('LV' in power_levels) or ('LP' in gas_levels):
         roads, roads_plot, buildings, landuse = True, True, True, True
     elif ('MV' in power_levels) or ('MP' in gas_levels):
-        roads, roads_plot, buildings, landuse = True, True, False, True
+        roads, roads_plot, buildings = True, True, False
+        landuse = True if loads is True else False  # landuse is needed for load calculation
     else:  # for EHV, HV and HP
-        roads, roads_plot, buildings, landuse = False, False, False, True
+        roads, roads_plot, buildings = False, False, False
+        landuse = True if loads is True else False  # landuse is needed for load calculation
     file_exists, file_name = target_area(grid_data, power_levels=power_levels,
                                          gas_levels=gas_levels, postalcode=postalcode,
                                          town_name=town_name, federal_state=federal_state,
