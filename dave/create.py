@@ -127,11 +127,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     EXAMPLE:
         from dave.create import create_grid
-        
+
         grid_data  = create_grid(town_name=['Kassel', 'Baunatal']
                                  power_levels=['HV', 'MV'],
-                                 gas_levels=['HP'], 
-                                 plot=False, 
+                                 gas_levels=['HP'],
+                                 plot=False,
                                  convert = False)
 
     """
@@ -140,74 +140,34 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     # --- adapt level inputs
     # set level inputs to upper strings
-    for i in range(0, len(power_levels)):
-        power_levels[i] = power_levels[i].upper()
-    for i in range(0, len(gas_levels)):
-        gas_levels[i] = gas_levels[i].upper()
-    for i in range(0, len(combine_areas)):
-        combine_areas[i] = combine_areas[i].upper()
+    power_levels = list(map(str.upper, power_levels))
+    gas_levels = list(map(str.upper, gas_levels))
+    combine_areas = list(map(str.upper, combine_areas))
     # convert input value 'ALL'
     if power_levels == ['ALL']:
         power_levels = ['EHV', 'HV', 'MV', 'LV']
     if gas_levels == ['ALL']:
         gas_levels = ['HP', 'MP', 'LP']
     # sort level inputs
-    for i in range(0, len(power_levels)):
-        if power_levels[i] == 'EHV':
-            power_levels[i] = 0
-        if power_levels[i] == 'HV':
-            power_levels[i] = 1
-        if power_levels[i] == 'MV':
-            power_levels[i] = 2
-        if power_levels[i] == 'LV':
-            power_levels[i] = 3
-    power_levels.sort()
-    for i in range(0, len(power_levels)):
-        if power_levels[i] == 0:
-            power_levels[i] = 'EHV'
-        if power_levels[i] == 1:
-            power_levels[i] = 'HV'
-        if power_levels[i] == 2:
-            power_levels[i] = 'MV'
-        if power_levels[i] == 3:
-            power_levels[i] = 'LV'
-    for i in range(0, len(gas_levels)):
-        if gas_levels[i] == 'HP':
-            gas_levels[i] = 0
-        if gas_levels[i] == 'MP':
-            gas_levels[i] = 1
-        if gas_levels[i] == 'LP':
-            gas_levels[i] = 2
-    gas_levels.sort()
-    for i in range(0, len(gas_levels)):
-        if gas_levels[i] == 0:
-            gas_levels[i] = 'HP'
-        if gas_levels[i] == 1:
-            gas_levels[i] = 'MP'
-        if gas_levels[i] == 2:
-            gas_levels[i] = 'LP'
-
+    order_power = ['EHV', 'HV', 'MV', 'LV']
+    power_sort = sorted(list(map(lambda x: order_power.index(x), power_levels)))
+    power_levels = list(map(lambda x: order_power[x], power_sort))
+    order_gas = ['HP', 'MP', 'LP']
+    gas_sort = sorted(list(map(lambda x: order_gas.index(x), gas_levels)))
+    gas_levels = list(map(lambda x: order_gas[x], gas_sort))
     # --- create target area informations
     if ('LV' in power_levels) or ('LP' in gas_levels):
-        file_exists, file_name = target_area(grid_data, power_levels=power_levels,
-                                             gas_levels=gas_levels, postalcode=postalcode,
-                                             town_name=town_name, federal_state=federal_state,
-                                             own_area=own_area, buffer=0, roads=True,
-                                             roads_plot=True, buildings=True, landuse=True).target()
+        roads, roads_plot, buildings, landuse = True, True, True, True
     elif ('MV' in power_levels) or ('MP' in gas_levels):
-        file_exists, file_name = target_area(grid_data, power_levels=power_levels,
-                                             gas_levels=gas_levels, postalcode=postalcode,
-                                             town_name=town_name, federal_state=federal_state,
-                                             own_area=own_area, buffer=0, roads=True,
-                                             roads_plot=True, buildings=False,
-                                             landuse=True).target()
-    else:
-        file_exists, file_name = target_area(grid_data, power_levels=power_levels,
-                                             gas_levels=gas_levels, postalcode=postalcode,
-                                             town_name=town_name, federal_state=federal_state,
-                                             own_area=own_area, buffer=0, roads=False,
-                                             roads_plot=False, buildings=False,
-                                             landuse=True).target()
+        roads, roads_plot, buildings, landuse = True, True, False, True
+    else:  # for EHV, HV and HP
+        roads, roads_plot, buildings, landuse = False, False, False, True
+    file_exists, file_name = target_area(grid_data, power_levels=power_levels,
+                                         gas_levels=gas_levels, postalcode=postalcode,
+                                         town_name=town_name, federal_state=federal_state,
+                                         own_area=own_area, buffer=0, roads=roads,
+                                         roads_plot=roads_plot, buildings=buildings,
+                                         landuse=landuse).target()
     if not file_exists:
         # create extended grid area to combine not connected areas
         if combine_areas:
@@ -274,6 +234,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
 
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
+        # Vorrübergehend aus für testzwecke
+        """
         print('Save DaVe dataset to archiv')
         print('---------------------------')
         # save dataset to archiv
@@ -283,6 +245,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None,
         output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
+        """
     else:
         write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
 

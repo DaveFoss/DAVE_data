@@ -291,10 +291,9 @@ class target_area():
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
-        postal_list = postal_intersection['postalcode'].tolist()
-        postal_filtered = []
-        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered]
-        self.own_postal = postal_filtered
+        # filter duplicated postal codes
+        self.own_postal = postal_intersection['postalcode'].unique().tolist()
+
 
     def _target_by_town_name(self):
         """
@@ -363,11 +362,9 @@ class target_area():
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
-        postal_list = postal_intersection['postalcode'].tolist()
-        # filter duplicated postal codes
-        postal_filtered = []
-        [postal_filtered.append(x) for x in postal_list if x not in postal_filtered]
-        self.federal_state_postal = postal_filtered
+        # filter duplikated postal codes
+        self.federal_state_postal = postal_intersection['postalcode'].unique().tolist()
+
 
     def target(self):
         """
