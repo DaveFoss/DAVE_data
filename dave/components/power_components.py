@@ -1128,9 +1128,8 @@ def transformators(grid_data):
                                                   'subst_id': 'ego_subst_id',
                                                   'voltage': 'voltage_kv',
                                                   'ags_0': 'Gemeindeschluessel'})
-        substations = substations.drop(columns=['point', 'polygon', 'power_type', 'substation',
-                                                'frequency', 'ref', 'dbahn', 'status', 'otg_id',
-                                                'geom'])
+        substations = substations.drop(columns=['power_type', 'substation', 'frequency', 'ref',
+                                                'dbahn', 'status', 'otg_id', 'geom'])
         # filter substations with point as geometry
         drop_substations = []
         for i, sub in substations.iterrows():
@@ -1193,6 +1192,8 @@ def transformators(grid_data):
         if grid_data.mv_data.mv_nodes.empty:
             # --- in this case the missing mv nodes for the transformers must be created
             mv_nodes = copy.deepcopy(substations)
+            # set points for geometry
+            mv_nodes['geometry'] = mv_nodes.point.apply(lambda x: shapely.wkb.loads(x, hex=True))
             mv_nodes['node_type'] = 'hvmv_substation'
             # consider data only if there are more than one node in the target area
             if len(mv_nodes) > 1:
