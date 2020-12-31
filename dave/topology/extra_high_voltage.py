@@ -1,4 +1,5 @@
 import geopandas as gpd
+import pandas as pd
 from shapely.geometry import LineString
 import math
 
@@ -37,10 +38,9 @@ def create_ehv_topology(grid_data):
     if len(ehv_substations) > 1:
         ehv_substations['voltage_level'] = 1
         # add dave name
-        ehv_substations.insert(0, 'dave_name', None)
         ehv_substations = ehv_substations.reset_index(drop=True)
-        for i, sub in ehv_substations.iterrows():
-            ehv_substations.at[sub.name, 'dave_name'] = f'substation_1_{i}'
+        name = pd.Series(list(map(lambda x: f'substation_1_{x}', ehv_substations.index)))
+        ehv_substations.insert(0, 'dave_name', name)
         # add ehv substations to grid data
         grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(ehv_substations)
     # --- create ehv nodes
@@ -121,9 +121,9 @@ def create_ehv_topology(grid_data):
         # add voltage level
         ehv_buses['voltage_level'] = 1
         # add dave name
-        ehv_buses.insert(0, 'dave_name', None)
-        for i, bus in ehv_buses.iterrows():
-            ehv_buses.at[bus.name, 'dave_name'] = f'node_1_{i}'
+        ehv_buses = ehv_buses.reset_index(drop=True)
+        name = pd.Series(list(map(lambda x: f'node_1_{x}', ehv_buses.index)))
+        ehv_buses.insert(0, 'dave_name', name)
         # add ehv nodes to grid data
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_buses)
         # --- create ehv lines
@@ -218,9 +218,8 @@ def create_ehv_topology(grid_data):
         # add voltage level
         ehv_lines['voltage_level'] = 1
         # add dave name
-        ehv_lines.insert(0, 'dave_name', None)
         ehv_lines = ehv_lines.reset_index(drop=True)
-        for i, line in ehv_lines.iterrows():
-            ehv_lines.at[line.name, 'dave_name'] = f'line_1_{i}'
+        name = pd.Series(list(map(lambda x: f'line_1_{x}', ehv_lines.index)))
+        ehv_lines.insert(0, 'dave_name', name)
         # add ehv lines to grid data
         grid_data.ehv_data.ehv_lines = grid_data.ehv_data.ehv_lines.append(ehv_lines)

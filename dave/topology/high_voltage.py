@@ -1,4 +1,5 @@
 import geopandas as gpd
+import pandas as pd
 import math
 
 from dave.datapool import oep_request
@@ -46,10 +47,9 @@ def create_hv_topology(grid_data):
         # add oep as source
         hv_buses['source'] = 'OEP'
         # add dave name
-        hv_buses.insert(0, 'dave_name', None)
         hv_buses = hv_buses.reset_index(drop=True)
-        for i, bus in hv_buses.iterrows():
-            hv_buses.at[bus.name, 'dave_name'] = f'node_3_{i}'
+        name = pd.Series(list(map(lambda x: f'node_3_{x}', hv_buses.index)))
+        hv_buses.insert(0, 'dave_name', name)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
         # --- create hv lines
@@ -110,9 +110,8 @@ def create_hv_topology(grid_data):
         # add voltage level
         hv_lines['voltage_level'] = 3
         # add dave name
-        hv_lines.insert(0, 'dave_name', None)
         hv_lines = hv_lines.reset_index(drop=True)
-        for i, line in hv_lines.iterrows():
-            hv_lines.at[line.name, 'dave_name'] = f'line_3_{i}'
+        name = pd.Series(list(map(lambda x: f'line_3_{x}', hv_lines.index)))
+        hv_lines.insert(0, 'dave_name', name)
         # add hv lines to grid data
         grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)

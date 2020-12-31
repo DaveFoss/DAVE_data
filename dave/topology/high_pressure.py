@@ -1,4 +1,5 @@
 import geopandas as gpd
+import pandas as pd
 
 from dave.datapool import read_hp_data, read_scigridgas_igginl
 
@@ -37,10 +38,9 @@ def create_hp_topology(grid_data):
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name
-        hp_junctions.insert(0, 'dave_name', None)
         hp_junctions = hp_junctions.reset_index(drop=True)
-        for i, junc in hp_junctions.iterrows():
-            hp_junctions.at[junc.name, 'dave_name'] = f'junction_1_{i}'
+        name = pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index)))
+        hp_junctions.insert(0, 'dave_name', name)
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
         # --- create hp pipes
@@ -60,10 +60,9 @@ def create_hp_topology(grid_data):
         hp_pipes['from_junction'] = hp_pipes.from_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         hp_pipes['to_junction'] = hp_pipes.to_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         # add dave name
-        hp_pipes.insert(0, 'dave_name', None)
         hp_pipes = hp_pipes.reset_index(drop=True)
-        for i, pipe in hp_pipes.iterrows():
-            hp_pipes.at[pipe.name, 'dave_name'] = f'pipe_1_{i}'
+        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
+        hp_pipes.insert(0, 'dave_name', name)
         # add hp lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
 
@@ -116,10 +115,9 @@ def create_lkd_eu(grid_data):
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name
-        hp_junctions.insert(0, 'dave_name', None)
         hp_junctions = hp_junctions.reset_index(drop=True)
-        for i, junc in hp_junctions.iterrows():
-            hp_junctions.at[junc.name, 'dave_name'] = f'junction_1_{i}'
+        name = pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index)))
+        hp_junctions.insert(0, 'dave_name', name)
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
         # --- create hp pipes
@@ -159,9 +157,8 @@ def create_lkd_eu(grid_data):
         hp_pipes['from_junction'] = from_junction_new
         hp_pipes['to_junction'] = to_junction_new
         # add dave name
-        hp_pipes.insert(0, 'dave_name', None)
         hp_pipes = hp_pipes.reset_index(drop=True)
-        for i, pipe in hp_pipes.iterrows():
-            hp_pipes.at[pipe.name, 'dave_name'] = f'pipe_1_{i}'
+        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
+        hp_pipes.insert(0, 'dave_name', name)
         # add hd lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)

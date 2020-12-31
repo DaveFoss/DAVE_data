@@ -1,4 +1,5 @@
 import geopandas as gpd
+import pandas as pd
 import copy
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
@@ -73,10 +74,9 @@ def create_mv_topology(grid_data):
         # add oep as source
         mv_buses['source'] = 'OEP'
         # add dave name
-        mv_buses.insert(0, 'dave_name', None)
         mv_buses = mv_buses.reset_index(drop=True)
-        for i, bus in mv_buses.iterrows():
-            mv_buses.at[bus.name, 'dave_name'] = f'node_5_{i}'
+        name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
+        mv_buses.insert(0, 'dave_name', name)
         # add mv nodes to grid data
         grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         # --- create mv lines

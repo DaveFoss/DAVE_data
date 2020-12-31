@@ -189,10 +189,9 @@ def create_lv_topology(grid_data):
                                                                    'voltage_kv': 0.4,
                                                                    'source': 'dave internal'}))
     # add dave name
-    building_nodes_df.insert(0, 'dave_name', None)
     building_nodes_df = building_nodes_df.reset_index(drop=True)
-    for i, node in building_nodes_df.iterrows():
-        building_nodes_df.at[node.name, 'dave_name'] = f'node_7_{i}'
+    name = pd.Series(list(map(lambda x: f'node_7_{x}', building_nodes_df.index)))
+    building_nodes_df.insert(0, 'dave_name', name)
     # add lv nodes to grid data
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
     grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
@@ -218,10 +217,9 @@ def create_lv_topology(grid_data):
     # create line connections to connect lines for buildings and road junctions with each other
     line_connections(grid_data)
     # add dave name for lv_lines
-    grid_data.lv_data.lv_lines.insert(0, 'dave_name', None)
     grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.reset_index(drop=True)
-    for i, line in grid_data.lv_data.lv_lines.iterrows():
-        grid_data.lv_data.lv_lines.at[line.name, 'dave_name'] = f'line_7_{i}'
+    name = pd.Series(list(map(lambda x: f'line_7_{x}', grid_data.lv_data.lv_lines.index)))
+    grid_data.lv_data.lv_lines.insert(0, 'dave_name', name)
     # get line bus names for each line and add to line data
     lv_nodes = grid_data.lv_data.lv_nodes
     for i, line in grid_data.lv_data.lv_lines.iterrows():
