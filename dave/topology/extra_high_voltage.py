@@ -38,7 +38,7 @@ def create_ehv_topology(grid_data):
     if len(ehv_substations) > 1:
         ehv_substations['voltage_level'] = 1
         # add dave name
-        ehv_substations = ehv_substations.reset_index(drop=True)
+        ehv_substations.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'substation_1_{x}', ehv_substations.index)))
         ehv_substations.insert(0, 'dave_name', name)
         # add ehv substations to grid data
@@ -117,11 +117,10 @@ def create_ehv_topology(grid_data):
                                                                'tso_name': tso_name,
                                                                'tso': tso_bus.tso,
                                                                'source': 'tso data'}))
-        ehv_buses = ehv_buses.reset_index(drop=True)
         # add voltage level
         ehv_buses['voltage_level'] = 1
         # add dave name
-        ehv_buses = ehv_buses.reset_index(drop=True)
+        ehv_buses.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'node_1_{x}', ehv_buses.index)))
         ehv_buses.insert(0, 'dave_name', name)
         # add ehv nodes to grid data
@@ -218,7 +217,7 @@ def create_ehv_topology(grid_data):
         # add voltage level
         ehv_lines['voltage_level'] = 1
         # add dave name
-        ehv_lines = ehv_lines.reset_index(drop=True)
+        ehv_lines.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'line_1_{x}', ehv_lines.index)))
         ehv_lines.insert(0, 'dave_name', name)
         # add ehv lines to grid data

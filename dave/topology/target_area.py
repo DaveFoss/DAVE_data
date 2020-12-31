@@ -135,10 +135,10 @@ class target_area():
             # check additionally osm relations
             landuse_rel, meta_data = query_osm('relation', target, recurse='down',
                                     tags=[dave_settings()['landuse_tags']])
-            landuse_rel = landuse_rel.reset_index(drop=True)
+            landuse_rel.reset_index(drop=True, inplace=True)
             # add landuses from relations to landuses from ways
             landuse = landuse.append(landuse_rel)
-            landuse = landuse.reset_index(drop=True)
+            landuse.reset_index(drop=True, inplace=True)
             # check if there are data for landuse
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
@@ -252,7 +252,7 @@ class target_area():
                         junction_points.append(point)
                 # set new roads quantity for the next iterationstep
                 roads = roads.drop([0])
-                roads = roads.reset_index(drop=True)
+                roads.reset_index(drop=True, inplace=True)
             # delet duplicates
             junction_points = gpd.GeoSeries(junction_points)
             road_junctions = junction_points.drop_duplicates()
@@ -436,12 +436,12 @@ class target_area():
                     # Obtain data from OSM
                     target_area._from_osm(self, target=border, target_number=i)
             # reset index for all osm data
-            self.grid_data.roads.roads = self.grid_data.roads.roads.reset_index(drop=True)
-            self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.reset_index(drop=True)
-            self.grid_data.landuse = self.grid_data.landuse.reset_index(drop=True)
-            self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.reset_index(drop=True)
-            self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.reset_index(drop=True)
-            self.grid_data.buildings.other = self.grid_data.buildings.other.reset_index(drop=True)
+            self.grid_data.roads.roads.reset_index(drop=True, inplace=True)
+            self.grid_data.roads.roads_plot.reset_index(drop=True, inplace=True)
+            self.grid_data.landuse.reset_index(drop=True, inplace=True)
+            self.grid_data.buildings.for_living.reset_index(drop=True, inplace=True)
+            self.grid_data.buildings.commercial.reset_index(drop=True, inplace=True)
+            self.grid_data.buildings.other.reset_index(drop=True, inplace=True)
             # find road junctions
             target_area.road_junctions(self)
             return file_exists, file_name

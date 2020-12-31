@@ -189,7 +189,7 @@ def create_lv_topology(grid_data):
                                                                    'voltage_kv': 0.4,
                                                                    'source': 'dave internal'}))
     # add dave name
-    building_nodes_df = building_nodes_df.reset_index(drop=True)
+    building_nodes_df.reset_index(drop=True, inplace=True)
     name = pd.Series(list(map(lambda x: f'node_7_{x}', building_nodes_df.index)))
     building_nodes_df.insert(0, 'dave_name', name)
     # add lv nodes to grid data
@@ -217,7 +217,7 @@ def create_lv_topology(grid_data):
     # create line connections to connect lines for buildings and road junctions with each other
     line_connections(grid_data)
     # add dave name for lv_lines
-    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.reset_index(drop=True)
+    grid_data.lv_data.lv_lines.reset_index(drop=True, inplace=True)
     name = pd.Series(list(map(lambda x: f'line_7_{x}', grid_data.lv_data.lv_lines.index)))
     grid_data.lv_data.lv_lines.insert(0, 'dave_name', name)
     # get line bus names for each line and add to line data
@@ -275,7 +275,7 @@ def create_lv_topology(grid_data):
                                                            'source': 'dave internal'})
                     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'from_bus'] = dave_name
-        grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.reset_index(drop=True)
+        grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
         road_junctions_grid = grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == 'road_junction']
         if not to_bus.empty:
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = to_bus.iloc[0].dave_name
@@ -319,4 +319,4 @@ def create_lv_topology(grid_data):
                                                            'source': 'dave internal'})
                     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = dave_name
-        grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.reset_index(drop=True)
+        grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)

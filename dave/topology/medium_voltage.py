@@ -74,7 +74,7 @@ def create_mv_topology(grid_data):
         # add oep as source
         mv_buses['source'] = 'OEP'
         # add dave name
-        mv_buses = mv_buses.reset_index(drop=True)
+        mv_buses.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
         mv_buses.insert(0, 'dave_name', name)
         # add mv nodes to grid data
@@ -91,7 +91,7 @@ def create_mv_topology(grid_data):
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
         mv_lines = mv_lines.set_crs(dave_settings()['crs_main'])
-        mv_lines = mv_lines.reset_index(drop=True)
+        mv_lines.reset_index(drop=True, inplace=True)
         # connect line segments with each other
         while True:
             # search for related lines and merge them
@@ -115,7 +115,7 @@ def create_mv_topology(grid_data):
                     mv_lines_rel[len(mv_lines)] = line_related
                     # delete found lines from line quantity
                     mv_lines_rel = mv_lines_rel.drop(lines_intersect.index.tolist())
-                    mv_lines_rel = mv_lines_rel.reset_index(drop=True)
+                    mv_lines_rel.reset_index(drop=True, inplace=True)
             # break loop if all lines connected
             if len(mv_lines_rel) == 1:
                 break

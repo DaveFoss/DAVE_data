@@ -120,7 +120,7 @@ def power_plant_lines(grid_data):
     renewables = grid_data.components_power.renewable_powerplants
     conventionals = grid_data.components_power.conventional_powerplants
     all_plants = pd.concat([renewables, conventionals])
-    all_plants = all_plants.reset_index()
+    all_plants.reset_index(drop=True, inplace=True)
     # --- create auxillary buses and lines for the power plants
     if not all_plants.empty:
         if 'aggregated' in all_plants.keys():
@@ -332,11 +332,10 @@ def renewable_powerplants(grid_data):
                 renewables = renewables.append(data)
     # prepare the DataFrame of the renewable plants
     if not renewables.empty:
-        renewables = renewables.reset_index()
+        renewables.reset_index(drop=True, inplace=True)
         renewables = renewables.drop(columns=['id',
                                               'gps_accuracy',
-                                              'geom',
-                                              'index'])
+                                              'geom'])
         renewables['lon'] = renewables['lon'].astype(float)
         renewables['lat'] = renewables['lat'].astype(float)
         renewables = renewables.rename(columns={'electrical_capacity': 'electrical_capacity_kw',
@@ -609,7 +608,7 @@ def renewable_powerplants(grid_data):
                 intersection = intersection.rename(columns={'dave_name': 'bus'})
                 grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
         # add dave name
-        grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.reset_index(drop=True)
+        grid_data.components_power.renewable_powerplants.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'ren_powerplant_{plant.voltage_level}_{x}',
                                   grid_data.components_power.renewable_powerplants.index)))
         grid_data.components_power.renewable_powerplants.insert(0, 'dave_name', name)
@@ -652,10 +651,9 @@ def conventional_powerplants(grid_data):
                 conventionals = conventionals.append(data)
     # prepare the DataFrame of the conventional plants
     if not conventionals.empty:
-        conventionals = conventionals.reset_index()
+        conventionals.reset_index(drop=True, inplace=True)
         conventionals = conventionals.drop(columns=['gid',
-                                                    'geom',
-                                                    'index'])
+                                                    'geom'])
         conventionals = conventionals.rename(columns={'capacity': 'capacity_mw',
                                                       'chp_capacity_uba': 'chp_capacity_uba_mw'})
         # prepare power plant voltage parameter for processing
@@ -941,7 +939,7 @@ def conventional_powerplants(grid_data):
                 grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
 
         # add dave name
-        grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.reset_index(drop=True)
+        grid_data.components_power.conventional_powerplants.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'con_powerplant_{voltage_level}_{x}',
                                   grid_data.components_power.conventional_powerplants.index)))
         grid_data.components_power.conventional_powerplants.insert(0, 'dave_name', name)
@@ -1052,11 +1050,11 @@ def transformators(grid_data):
                                 grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_bus1)
         # add dave name for nodes which are created for the transformers
         if 'dave_name' not in grid_data.hv_data.hv_nodes.keys():
-            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.reset_index(drop=True)
+            grid_data.hv_data.hv_nodes.reset_index(drop=True, inplace=True)
             name = pd.Series(list(map(lambda x: f'node_3_{x}', grid_data.hv_data.hv_nodes.index)))
             grid_data.hv_data.hv_nodes.insert(0, 'dave_name', name) 
         if 'dave_name' not in grid_data.ehv_data.ehv_nodes.keys():
-            grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.reset_index(drop=True)
+            grid_data.ehv_data.ehv_nodes.reset_index(drop=True, inplace=True)
             name = pd.Series(list(map(lambda x: f'node_1_{x}', grid_data.ehv_data.ehv_nodes.index)))
             grid_data.ehv_data.ehv_nodes.insert(0, 'dave_name', name) 
         # write transformator data in grid data and decied the grid level depending on voltage level
@@ -1068,7 +1066,7 @@ def transformators(grid_data):
                 ehv_ehv_trafos.insert(0, 'dave_name', None)
                 ehv_ehv_trafos.insert(1, 'bus_hv', None)
                 ehv_ehv_trafos.insert(2, 'bus_lv', None)
-                ehv_ehv_trafos = ehv_ehv_trafos.reset_index(drop=True)
+                ehv_ehv_trafos.reset_index(drop=True, inplace=True)
                 for i, trafo in ehv_ehv_trafos.iterrows():
                     ehv_ehv_trafos.at[trafo.name, 'dave_name'] = f'trafo_1_{i}'
                     # search for bus dave name and replace ego id
@@ -1092,7 +1090,7 @@ def transformators(grid_data):
             ehv_hv_trafos.insert(1, 'bus_hv', None)
             ehv_hv_trafos.insert(2, 'bus_lv', None)
             ehv_hv_trafos['tso_name'] = None
-            ehv_hv_trafos = ehv_hv_trafos.reset_index(drop=True)
+            ehv_hv_trafos.reset_index(drop=True, inplace=True)
             for i, trafo in ehv_hv_trafos.iterrows():
                 ehv_hv_trafos.at[trafo.name, 'dave_name'] = f'trafo_2_{i}'
                 # search for bus dave name and replace ego id
@@ -1172,7 +1170,7 @@ def transformators(grid_data):
             substations_reduced = substations.drop(columns=(substations_keys))
             hv_nodes = gpd.overlay(hv_nodes, substations_reduced, how='intersection')
             # add dave name
-            hv_nodes = hv_nodes.reset_index(drop=True)
+            hv_nodes.reset_index(drop=True, inplace=True)
             name = pd.Series(list(map(lambda x: f'node_3_{x}', hv_nodes.index)))
             hv_nodes.insert(0, 'dave_name', name)
             # add mv nodes to grid data
@@ -1196,7 +1194,7 @@ def transformators(grid_data):
                 # add oep as source
                 mv_nodes['source'] = 'OEP'
                 # add dave name
-                mv_nodes = mv_nodes.reset_index(drop=True)
+                mv_nodes.reset_index(drop=True, inplace=True)
                 name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_nodes.index)))
                 mv_nodes.insert(0, 'dave_name', name)
                 # add mv nodes to grid data
@@ -1244,7 +1242,7 @@ def transformators(grid_data):
                                          'geometry': [sub.geometry.centroid]})
             grid_data.components_power.transformers.hv_mv = grid_data.components_power.transformers.hv_mv.append(trafo_df)
         # add dave name
-        grid_data.components_power.transformers.hv_mv = grid_data.components_power.transformers.hv_mv.reset_index(drop=True)
+        grid_data.components_power.transformers.hv_mv.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'trafo_4_{x}',
                                   grid_data.components_power.transformers.hv_mv.index)))
         grid_data.components_power.transformers.hv_mv.insert(0, 'dave_name', name)
@@ -1284,7 +1282,7 @@ def transformators(grid_data):
                 # add oep as source
                 mv_buses['source'] = 'OEP'
                 # add dave name
-                mv_buses = mv_buses.reset_index(drop=True)
+                mv_buses.reset_index(drop=True, inplace=True)
                 name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
                 mv_buses.insert(0, 'dave_name', name)
                 # add mv nodes to grid data
@@ -1304,7 +1302,7 @@ def transformators(grid_data):
                 # add oep as source
                 lv_buses['source'] = 'OEP'
                 # add dave name
-                lv_buses = lv_buses.reset_index(drop=True)
+                lv_buses.reset_index(drop=True, inplace=True)
                 name = pd.Series(list(map(lambda x: f'node_7_{x}', lv_buses.index)))
                 lv_buses.insert(0, 'dave_name', name)
                 # add mv nodes to grid data
@@ -1377,7 +1375,7 @@ def transformators(grid_data):
                 # noch definieren
 
         # add dave name
-        grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.reset_index(drop=True)
+        grid_data.components_power.transformers.mv_lv.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'trafo_6_{x}',
                                   grid_data.components_power.transformers.mv_lv.index)))
         grid_data.components_power.transformers.mv_lv.insert(0, 'dave_name', name)
@@ -1654,7 +1652,7 @@ def loads(grid_data):
                                                 'voltage_level': [voltage_level]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
     # add dave name
-    grid_data.components_power.loads = grid_data.components_power.loads.reset_index(drop=True)
+    grid_data.components_power.loads.reset_index(drop=True, inplace=True)
     name = pd.Series(list(map(lambda x: f'load_{x.voltage_level}_{x.index}',
                               grid_data.components_power.loads)))
     grid_data.components_power.loads.insert(0, 'dave_name', name)

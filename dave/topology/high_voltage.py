@@ -47,7 +47,7 @@ def create_hv_topology(grid_data):
         # add oep as source
         hv_buses['source'] = 'OEP'
         # add dave name
-        hv_buses = hv_buses.reset_index(drop=True)
+        hv_buses.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'node_3_{x}', hv_buses.index)))
         hv_buses.insert(0, 'dave_name', name)
         # add hv nodes to grid data
@@ -110,7 +110,7 @@ def create_hv_topology(grid_data):
         # add voltage level
         hv_lines['voltage_level'] = 3
         # add dave name
-        hv_lines = hv_lines.reset_index(drop=True)
+        hv_lines.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'line_3_{x}', hv_lines.index)))
         hv_lines.insert(0, 'dave_name', name)
         # add hv lines to grid data

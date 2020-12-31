@@ -40,7 +40,7 @@ def create_interim_area(areas):
                 # add difference area to areas
                 areas = areas.append(gpd.GeoDataFrame({'name': 'interim area',
                                                        'geometry': [difference]}))
-                areas = areas.reset_index(drop=True)
+                areas.reset_index(drop=True, inplace=True)
 
     return areas
 

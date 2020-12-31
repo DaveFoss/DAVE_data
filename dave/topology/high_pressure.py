@@ -38,7 +38,7 @@ def create_hp_topology(grid_data):
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name
-        hp_junctions = hp_junctions.reset_index(drop=True)
+        hp_junctions.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index)))
         hp_junctions.insert(0, 'dave_name', name)
         # add hp junctions to grid data
@@ -60,7 +60,7 @@ def create_hp_topology(grid_data):
         hp_pipes['from_junction'] = hp_pipes.from_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         hp_pipes['to_junction'] = hp_pipes.to_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         # add dave name
-        hp_pipes = hp_pipes.reset_index(drop=True)
+        hp_pipes.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
         hp_pipes.insert(0, 'dave_name', name)
         # add hp lines to grid data
@@ -115,7 +115,7 @@ def create_lkd_eu(grid_data):
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name
-        hp_junctions = hp_junctions.reset_index(drop=True)
+        hp_junctions.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index)))
         hp_junctions.insert(0, 'dave_name', name)
         # add hp junctions to grid data
@@ -157,7 +157,7 @@ def create_lkd_eu(grid_data):
         hp_pipes['from_junction'] = from_junction_new
         hp_pipes['to_junction'] = to_junction_new
         # add dave name
-        hp_pipes = hp_pipes.reset_index(drop=True)
+        hp_pipes.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
         hp_pipes.insert(0, 'dave_name', name)
         # add hd lines to grid data
