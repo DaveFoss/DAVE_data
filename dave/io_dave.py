@@ -178,14 +178,18 @@ def read_dataset(dataset_path):
             lp_pipes = gpd.GeoDataFrame(lp_pipes, crs=crs)
             grid_data.lp_data.lp_pipes = grid_data.lp_data.lp_pipes.append(lp_pipes)
         # components gas
-        sinks = _convert_data_from(file, '/components_gas/sinks')
-        if not sinks.empty:
-            sinks = gpd.GeoDataFrame(sinks, crs=crs)
-            grid_data.components_gas.sinks = grid_data.components_gas.sinks.append(sinks)
+        compressors = _convert_data_from(file, '/components_gas/compressors')
+        if not compressors.empty:
+            compressors = gpd.GeoDataFrame(compressors, crs=crs)
+            grid_data.components_gas.compressors = grid_data.components_gas.compressors.append(compressors)
         sources = _convert_data_from(file, '/components_gas/sources')
         if not sources.empty:
             sources = gpd.GeoDataFrame(sources, crs=crs)
             grid_data.components_gas.sources = grid_data.components_gas.sources.append(sources)
+        storages_gas = _convert_data_from(file, '/components_gas/storages_gas')
+        if not storages_gas.empty:
+            storages_gas = gpd.GeoDataFrame(storages_gas, crs=crs)
+            grid_data.components_gas.storages_gas = grid_data.components_gas.storages_gas.append(storages_gas)
         # dave version
         dave_version = file.get('/dave_version')['dave_version'][0]
         grid_data.dave_version = dave_version
@@ -283,10 +287,12 @@ def write_dataset(grid_data, dataset_path):
     lp_pipes = _convert_data_to(grid_data.lp_data.lp_pipes)
     archiv_file.put('/lp_data/lp_pipes', lp_pipes)
     # components gas
-    sinks = _convert_data_to(grid_data.components_gas.sinks)
-    archiv_file.put('/components_gas/sinks', sinks)
+    compressors = _convert_data_to(grid_data.components_gas.compressors)
+    archiv_file.put('/components_gas/compressors', compressors)
     sources = _convert_data_to(grid_data.components_gas.sources)
     archiv_file.put('/components_gas/sources', sources)
+    storages_gas = _convert_data_to(grid_data.components_gas.storages_gas)
+    archiv_file.put('/components_gas/storages_gas', storages_gas)
     # dave version
     dave_version = pd.DataFrame({'dave_version': grid_data.dave_version}, index=[0])
     archiv_file.put('/dave_version', dave_version)
