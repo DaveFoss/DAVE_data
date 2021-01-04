@@ -26,8 +26,7 @@ def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
         **aggregate_name** (string) - the original voltage level of the aggregated power plants
     """
     # create list of all diffrent connection transformers
-    connection_trafos = plants_aggr.connection_trafo_dave_name.tolist()
-    trafo_names = list(set(connection_trafos))
+    trafo_names = list(set(plants_aggr.connection_trafo_dave_name.tolist()))
     trafo_names.sort()
     # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'gas', 'geothermal', 'hydro', 'solar', 'wind']
@@ -43,8 +42,7 @@ def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
         for esource in energy_sources:
             plant_esource = plants_area[plants_area.generation_type == esource]
             if not plant_esource.empty:
-                sources = plant_esource.source.tolist()
-                sources_diff = list(set(sources))
+                sources_diff = list(set(plant_esource.source.tolist()))
                 plant_power = pd.to_numeric(plant_esource.electrical_capacity_kw, downcast='float')
                 plant_df = gpd.GeoDataFrame({'aggregated': aggregate_name,
                                              'electrical_capacity_kw': plant_power.sum(),
@@ -69,8 +67,7 @@ def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
         **aggregate_name** (string) - the original voltage level of the aggregated power plants
     """
     # create list of all diffrent connection transformers
-    connection_trafos = plants_aggr.connection_trafo_dave_name.tolist()
-    trafo_names = list(set(connection_trafos))
+    trafo_names = list(set(plants_aggr.connection_trafo_dave_name.tolist()))
     trafo_names.sort()
     # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'coal', 'gas', 'gas_mine', 'lignite', 'multiple_non_renewable',
@@ -130,11 +127,12 @@ def power_plant_lines(grid_data):
         plants_rel.crs = dave_settings()['crs_main']
         plants_rel_3035 = plants_rel.to_crs(dave_settings()['crs_meter'])
         # considered voltage level
+        power_levels = grid_data.target_input.power_levels[0]
         considered_levels = []
-        considered_levels.append(1) if ('EHV' in grid_data.target_input.power_levels[0]) else None
-        considered_levels.append(3) if ('HV' in grid_data.target_input.power_levels[0]) else None
-        considered_levels.append(5) if ('MV' in grid_data.target_input.power_levels[0]) else None
-        considered_levels.append(7) if ('LV' in grid_data.target_input.power_levels[0]) else None
+        considered_levels.append(1) if ('EHV' in power_levels) else None
+        considered_levels.append(3) if ('HV' in power_levels) else None
+        considered_levels.append(5) if ('MV' in power_levels) else None
+        considered_levels.append(7) if ('LV' in power_levels) else None
         for i, plant in plants_rel_3035.iterrows():
             plant_bus = all_nodes_3035[all_nodes_3035.dave_name == plant.bus].iloc[0]
             bus_geometry = plant_bus.geometry
@@ -302,14 +300,15 @@ def renewable_powerplants(grid_data):
     """
     print('create renewable powerplants for target area')
     print('--------------------------------------------')
+    # define power_levels
+    power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
     typ = grid_data.target_input.typ.iloc[0]
     if typ in ['postalcode', 'federal state', 'own area']:
         for plz in grid_data.target_input.data.iloc[0]:
-            where = f'postcode={plz}'
             data, meta_data = oep_request(schema='supply',
                                           table='ego_renewable_powerplant',
-                                          where=where)
+                                          where=f'postcode={plz}')
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -319,10 +318,9 @@ def renewable_powerplants(grid_data):
                 renewables = renewables.append(data)
     elif typ == 'town name':
         for name in grid_data.target_input.data.iloc[0]:
-            where = f'city={name}'
             data, meta_data = oep_request(schema='supply',
                                           table='ego_renewable_powerplant',
-                                          where=where)
+                                          where=f'city={name}')
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -333,9 +331,7 @@ def renewable_powerplants(grid_data):
     # prepare the DataFrame of the renewable plants
     if not renewables.empty:
         renewables.reset_index(drop=True, inplace=True)
-        renewables = renewables.drop(columns=['id',
-                                              'gps_accuracy',
-                                              'geom'])
+        renewables = renewables.drop(columns=['id', 'gps_accuracy', 'geom'])
         renewables['lon'] = renewables['lon'].astype(float)
         renewables['lat'] = renewables['lat'].astype(float)
         renewables = renewables.rename(columns={'electrical_capacity': 'electrical_capacity_kw',
@@ -350,16 +346,16 @@ def renewable_powerplants(grid_data):
             else:
                 renewables.at[i, 'voltage_level'] = 5
         # restrict plants to considered power levels
-        if 'EHV' in grid_data.target_input.power_levels[0]:
+        if 'EHV' in power_levels:
             renewables = renewables
-        elif 'HV' in grid_data.target_input.power_levels[0]:
+        elif 'HV' in power_levels:
             renewables = renewables[renewables.voltage_level >= 3]
-        elif 'MV' in grid_data.target_input.power_levels[0]:
+        elif 'MV' in power_levels:
             renewables = renewables[renewables.voltage_level >= 5]
-        elif 'LV' in grid_data.target_input.power_levels[0]:
+        elif 'LV' in power_levels:
             renewables = renewables[renewables.voltage_level == 7]
         # find exact location by adress for renewable power plants which are on mv-level or lower
-        if ('LV' in grid_data.target_input.power_levels[0]) or ('MV' in grid_data.target_input.power_levels[0]):
+        if any(map(lambda x: x in power_levels, ['MV', 'LV'])):
             geolocator = ArcGIS(timeout=10000)  # set on None when geopy 2.0 was released
             plant_georefernce = renewables[renewables.voltage_level >= 5]
             for i, plant in plant_georefernce.iterrows():
@@ -373,8 +369,7 @@ def renewable_powerplants(grid_data):
                     # zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes
                     # behalten, falls keine Adresse bekannt. Das aber noch abändern.
         # convert DataFrame into a GeoDataFrame
-        renewables_geo = gpd.GeoDataFrame(renewables,
-                                          crs=dave_settings()['crs_main'],
+        renewables_geo = gpd.GeoDataFrame(renewables, crs=dave_settings()['crs_main'],
                                           geometry=gpd.points_from_xy(renewables.lon,
                                                                       renewables.lat))
         # intersection of power plants with target_area when target is an own area
@@ -389,8 +384,7 @@ def renewable_powerplants(grid_data):
         renewables_hv = renewables_geo[renewables_geo.voltage_level == 3]
         renewables_ehv_hv = renewables_geo[renewables_geo.voltage_level == 2]
         renewables_ehv = renewables_geo[renewables_geo.voltage_level == 1]
-        # define power_levels
-        power_levels = grid_data.target_input.power_levels[0]
+        
         # --- nodes for level 7 plants (LV)
         if not renewables_lv.empty:
             if 'LV' in power_levels:
@@ -401,7 +395,7 @@ def renewable_powerplants(grid_data):
                 intersection = intersection.rename(columns={'dave_name': 'bus'})
                 grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the lv-plants
-            elif ('MV' in power_levels) or ('HV' in power_levels) or ('EHV' in power_levels):
+            elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
                 if 'MV' in power_levels:
                     # In this case the Level 7 plants are aggregated and assigned to the nearest mv/lv-transformer
                     voronoi_polygons = voronoi(grid_data.components_power.transformers.mv_lv[['dave_name',
@@ -435,7 +429,7 @@ def renewable_powerplants(grid_data):
 
         # --- nodes for level 6 plants (MV/LV)
         if not renewables_mv_lv.empty:
-            if ('LV' in power_levels) or ('MV' in power_levels):
+            if any(map(lambda x: x in power_levels, ['MV', 'LV'])):
                 # In this case the Level 6 plants are assigned to the nearest mv/lv-transformer
                 voronoi_polygons = voronoi(grid_data.components_power.transformers.mv_lv[['dave_name',
                                                                                           'geometry']])
@@ -449,7 +443,7 @@ def renewable_powerplants(grid_data):
                 intersection = intersection.drop(columns=['index_right', 'centroid', 'trafo_name'])
                 grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mvlv-plants
-            elif ('HV' in power_levels) or ('EHV' in power_levels):
+            elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
                     # In this case the Level 6 plants are aggregated and assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(grid_data.components_power.transformers.hv_mv[['dave_name',
@@ -487,7 +481,7 @@ def renewable_powerplants(grid_data):
                 intersection = intersection.rename(columns={'dave_name': 'bus'})
                 grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mv-plants
-            elif ('HV' in power_levels) or ('EHV' in power_levels):
+            elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
                     # In this case the Level 5 plants are aggregated and assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(grid_data.components_power.transformers.hv_mv[['dave_name',
@@ -516,7 +510,7 @@ def renewable_powerplants(grid_data):
 
         # --- nodes for level 4 plants (HV/MV)
         if not renewables_hv_mv.empty:
-            if ('MV' in power_levels) or ('HV' in power_levels):
+            if any(map(lambda x: x in power_levels, ['HV', 'MV'])):
                 # In this case the Level 4 plants are assigned to the nearest hv/mv-transformer
                 voronoi_polygons = voronoi(grid_data.components_power.transformers.hv_mv[['dave_name',
                                                                                           'geometry']])
@@ -621,14 +615,15 @@ def conventional_powerplants(grid_data):
     """
     print('create conventional powerplants for target area')
     print('-----------------------------------------------')
+    # define power_levels
+    power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
     typ = grid_data.target_input.typ.iloc[0]
     if typ in ['postalcode', 'federal state', 'own area']:
         for plz in grid_data.target_input.data.iloc[0]:
-            where = f'postcode={plz}'
             data, meta_data = oep_request(schema='supply',
                                           table='ego_conventional_powerplant',
-                                          where=where)
+                                          where=f'postcode={plz}')
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -638,10 +633,9 @@ def conventional_powerplants(grid_data):
                 conventionals = conventionals.append(data)
     elif typ == 'town name':
         for name in grid_data.target_input.data.iloc[0]:
-            where = f'city={name}'
             data, meta_data = oep_request(schema='supply',
                                           table='ego_conventional_powerplant',
-                                          where=where)
+                                          where=f'city={name}')
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -691,17 +685,16 @@ def conventional_powerplants(grid_data):
             elif int(plant.voltage) < 1:
                 conventionals.at[i, 'voltage_level'] = 7
         # restrict plants to considered power levels
-        if 'EHV' in grid_data.target_input.power_levels[0]:
+        if 'EHV' in power_levels:
             conventionals = conventionals
-        elif 'HV' in grid_data.target_input.power_levels[0]:
+        elif 'HV' in power_levels:
             conventionals = conventionals[conventionals.voltage_level >= 3]
-        elif 'MV' in grid_data.target_input.power_levels[0]:
+        elif 'MV' in power_levels:
             conventionals = conventionals[conventionals.voltage_level >= 5]
-        elif 'LV' in grid_data.target_input.power_levels[0]:
+        elif 'LV' in power_levels:
             conventionals = conventionals[conventionals.voltage_level == 7]
         # convert DataFrame into a GeoDataFrame
-        conventionals_geo = gpd.GeoDataFrame(conventionals,
-                                             crs='EPSG:4326',
+        conventionals_geo = gpd.GeoDataFrame(conventionals, crs='EPSG:4326',
                                              geometry=gpd.points_from_xy(conventionals.lon,
                                                                          conventionals.lat))
         # intersection of power plants with target_area when target is an own area
@@ -716,8 +709,7 @@ def conventional_powerplants(grid_data):
         conventionals_hv = conventionals_geo[conventionals_geo.voltage_level == 3]
         conventionals_ehv_hv = conventionals_geo[conventionals_geo.voltage_level == 2]
         conventionals_ehv = conventionals_geo[conventionals_geo.voltage_level == 1]
-        # define power_levels
-        power_levels = grid_data.target_input.power_levels[0]
+        
         # --- nodes for level 7 plants (LV)
         if not conventionals_lv.empty:
             if 'LV' in power_levels:
@@ -729,7 +721,7 @@ def conventional_powerplants(grid_data):
                                                             'capacity_mw': 'electrical_capacity_mw'})
                 grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the lv-plants
-            elif ('MV' in power_levels) or ('HV' in power_levels) or ('EHV' in power_levels):
+            elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
                 if 'MV' in power_levels:
                     # In this case the Level 7 plants are aggregated and assigned to the nearest mv/lv-transformer
                     voronoi_polygons = voronoi(grid_data.components_power.transformers.mv_lv[['dave_name',
@@ -762,7 +754,7 @@ def conventional_powerplants(grid_data):
 
         # --- nodes for level 6 plants (MV/LV)
         if not conventionals_mv_lv.empty:
-            if ('LV' in power_levels) or ('MV' in power_levels):
+            if any(map(lambda x: x in power_levels, ['MV', 'LV'])):
                 # In this case the Level 6 plants are assigned to the nearest mv/lv-transformer
                 voronoi_polygons = voronoi(grid_data.components_power.transformers.mv_lv[['dave_name',
                                                                                           'geometry']])
@@ -778,7 +770,7 @@ def conventional_powerplants(grid_data):
                 intersection = intersection.drop(columns=['index_right', 'centroid', 'trafo_name'])
                 grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mvlv-plants
-            elif ('HV' in power_levels) or ('EHV' in power_levels):
+            elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
                     # In this case the Level 6 plants are aggregated and assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(grid_data.components_power.transformers.hv_mv[['dave_name',
@@ -815,7 +807,7 @@ def conventional_powerplants(grid_data):
                                                             'capacity_mw': 'electrical_capacity_mw'})
                 grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mv-plants
-            elif ('HV' in power_levels) or ('EHV' in power_levels):
+            elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
                     # In this case the Level 5 plants are aggregated and assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(grid_data.components_power.transformers.hv_mv[['dave_name',
@@ -843,7 +835,7 @@ def conventional_powerplants(grid_data):
 
         # --- nodes for level 4 plants (HV/MV)
         if not conventionals_hv_mv.empty:
-            if ('MV' in power_levels) or ('HV' in power_levels):
+            if any(map(lambda x: x in power_levels, ['HV', 'MV'])):
                 # In this case the Level 4 plants are assigned to the nearest hv/mv-transformer
                 voronoi_polygons = voronoi(grid_data.components_power.transformers.hv_mv[['dave_name',
                                                                                           'geometry']])
@@ -945,7 +937,7 @@ def conventional_powerplants(grid_data):
         grid_data.components_power.conventional_powerplants.insert(0, 'dave_name', name)
 
 
-def transformators(grid_data):
+def transformers(grid_data):
     """
     This function collects the transformers.
     EHV/EHV and EHV/HV trafos are based on ego_pf_hv_transformer from OEP
@@ -954,8 +946,10 @@ def transformators(grid_data):
     """
     print('create transformers for target area')
     print('-----------------------------------')
+    # define power_levels
+    power_levels = grid_data.target_input.power_levels[0]
     # --- create ehv/ehv and ehv/hv trafos
-    if 'EHV' in grid_data.target_input.power_levels[0] or 'HV' in grid_data.target_input.power_levels[0]:
+    if any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
         # read transformator data from OEP, filter current exsist ones and rename paramter names
         hv_trafos, meta_data = oep_request(schema='grid',
                                            table='ego_pf_hv_transformer',
@@ -980,8 +974,8 @@ def transformators(grid_data):
             remove_columns.remove('geometry')
             hv_trafos = hv_trafos.drop(columns=remove_columns)
         # check if there is no ehv level or hv level. in this case the missing nodes for the transformator must be procured from OEP
-        if ('EHV' in grid_data.target_input.power_levels[0] and grid_data.hv_data.hv_nodes.empty) \
-           or ('HV' in grid_data.target_input.power_levels[0] and grid_data.ehv_data.ehv_nodes.empty):
+        if ('EHV' in power_levels and grid_data.hv_data.hv_nodes.empty) \
+           or ('HV' in power_levels and grid_data.ehv_data.ehv_nodes.empty):
             # read ehv/hv node data from OpenEnergyPlatform and adapt names
             ehvhv_buses, meta_data = oep_request(schema='grid',
                                                  table='ego_pf_hv_bus',
@@ -1002,7 +996,7 @@ def transformators(grid_data):
                 ehvhv_buses = ehvhv_buses.drop(columns=remove_columns)
         # search for trafo voltage and create missing nodes
         for i, trafo in hv_trafos.iterrows():
-            if 'EHV' in grid_data.target_input.power_levels[0]:
+            if 'EHV' in power_levels:
                 ehv_bus0 = grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus0]
                 ehv_bus1 = grid_data.ehv_data.ehv_nodes[grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1]
                 if not ehv_bus0.empty:
@@ -1011,7 +1005,7 @@ def transformators(grid_data):
                 if not ehv_bus1.empty:
                     ehv_bus_index1 = ehv_bus1.index[0]
                     hv_trafos.at[trafo.name, 'voltage_kv_hv'] = grid_data.ehv_data.ehv_nodes.loc[ehv_bus_index1].voltage_kv
-                if ('HV' not in grid_data.target_input.power_levels[0]) and (ehv_bus0.empty):
+                if ('HV' not in power_levels) and (ehv_bus0.empty):
                     hv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([110])]
                     hv_bus0 = hv_buses[hv_buses.ego_bus_id == trafo.bus0]
                     if not hv_bus0.empty:
@@ -1027,12 +1021,12 @@ def transformators(grid_data):
                                 hv_bus0['voltage_level'] = 3
                                 hv_bus0['source'] = 'OEP'
                                 grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
-            if 'HV' in grid_data.target_input.power_levels[0]:
+            if 'HV' in power_levels:
                 hv_bus0 = grid_data.hv_data.hv_nodes[grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0]
                 if not hv_bus0.empty:
                     hv_bus_index0 = hv_bus0.index[0]
                     hv_trafos.at[trafo.name, 'voltage_kv_lv'] = grid_data.hv_data.hv_nodes.loc[hv_bus_index0].voltage_kv
-                if ('EHV' not in grid_data.target_input.power_levels[0]) and (not hv_bus0.empty):
+                if ('EHV' not in power_levels) and (not hv_bus0.empty):
                     ehv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([380, 220])]
                     ehv_bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1]
                     if not ehv_bus1.empty:
@@ -1059,7 +1053,7 @@ def transformators(grid_data):
             grid_data.ehv_data.ehv_nodes.insert(0, 'dave_name', name) 
         # write transformator data in grid data and decied the grid level depending on voltage level
         if not hv_trafos.empty:
-            if 'EHV' in grid_data.target_input.power_levels[0]:
+            if 'EHV' in power_levels:
                 ehv_ehv_trafos = hv_trafos[hv_trafos.voltage_kv_lv.isin([380, 220])]
                 ehv_ehv_trafos['voltage_level'] = 1
                 # add dave name for trafo and connection buses
@@ -1108,7 +1102,7 @@ def transformators(grid_data):
             grid_data.components_power.transformers.ehv_hv = grid_data.components_power.transformers.ehv_hv.append(ehv_hv_trafos)
 
     # --- create hv/mv trafos
-    if 'HV' in grid_data.target_input.power_levels[0] or 'MV' in grid_data.target_input.power_levels[0]:
+    if any(map(lambda x: x in power_levels, ['HV', 'MV'])):
         # read transformator data from OEP, filter relevant parameters and rename paramter names
         substations, meta_data = oep_request(schema='grid',
                                              table='ego_dp_hvmv_substation',
@@ -1247,7 +1241,7 @@ def transformators(grid_data):
                                   grid_data.components_power.transformers.hv_mv.index)))
         grid_data.components_power.transformers.hv_mv.insert(0, 'dave_name', name)
     # --- create mv/lv trafos
-    if 'MV' in grid_data.target_input.power_levels[0] or 'LV' in grid_data.target_input.power_levels[0]:
+    if any(map(lambda x: x in power_levels, ['MV', 'LV'])):
         # get transformator data from OEP
         substations, meta_data = oep_request(schema='grid',
                                              table='ego_dp_mvlv_substation',
@@ -1346,7 +1340,7 @@ def transformators(grid_data):
             grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
         # check if tranformer elements are empty and add a synthetic one on the first grid node if necessary
         if grid_data.components_power.transformers.mv_lv.empty:
-            if 'MV' not in grid_data.target_input.power_levels[0]:
+            if 'MV' not in power_levels:
                 buses_lv = grid_data.lv_data.lv_nodes
                 first_bus = buses_lv[buses_lv.node_type == 'road_junction'].iloc[0]
                 if grid_data.mv_data.mv_nodes.empty:
@@ -1370,7 +1364,7 @@ def transformators(grid_data):
                                              'geometry': [first_bus.geometry]})
                 grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
 
-            elif 'LV' not in grid_data.target_input.power_levels[0]:
+            elif 'LV' not in power_levels:
                 pass
                 # noch definieren
 
@@ -1583,7 +1577,7 @@ def loads(grid_data):
                                                 'voltage_level': [7]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
     # create loads for non grid level 7
-    elif ('MV' in power_levels) or ('HV' in power_levels) or ('EHV' in power_levels):
+    elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
         # create loads on grid level 6 (MV/LV)
         if 'MV' in power_levels:
             # In this case the loads are assigned to the nearest mv/lv-transformer
@@ -1615,10 +1609,7 @@ def loads(grid_data):
         # --- calculate consumption for the diffrent landuses in every single voronoi polygon
         # create list of all diffrent connection transformers
         connection_trafos = intersection.dave_name.tolist()
-        trafo_names = []
-        for tname in connection_trafos:
-            if tname not in trafo_names:
-                trafo_names.append(tname)
+        trafo_names = list(set(connection_trafos))
         trafo_names.sort()
         # iterate trough diffrent transformers and calulate the diffrent landuse consumptions
         for trafo_name in trafo_names:
@@ -1658,23 +1649,23 @@ def loads(grid_data):
     grid_data.components_power.loads.insert(0, 'dave_name', name)
 
 
-def power_components(grid_data, transformers, renewable_powerplants, conventional_powerplants,
-                     loads):
+def power_components(grid_data, transformer, renewable_powerplant, conventional_powerplant,
+                     load):
     """
     This function calls all the functions for creating the power components in the correct order
     """
     # add transformers
-    if transformers:
-        transformators(grid_data)
+    if transformer:
+        transformers(grid_data)
     # add renewable powerplants
-    if renewable_powerplants:
+    if renewable_powerplant:
         renewable_powerplants(grid_data)
     # add conventional powerplants
-    if conventional_powerplants:
+    if conventional_powerplant:
         conventional_powerplants(grid_data)
     # create lines for power plants with a grid node far away
-    if renewable_powerplants or conventional_powerplants:
+    if renewable_powerplant or conventional_powerplant:
         power_plant_lines(grid_data)
     # add loads
-    if loads:
+    if load:
         loads(grid_data)
