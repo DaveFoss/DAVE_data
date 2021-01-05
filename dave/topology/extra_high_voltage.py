@@ -30,9 +30,9 @@ def create_ehv_topology(grid_data):
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    ehv_substations = ehv_substations.rename(columns={'version': 'ego_version',
-                                                      'subst_id': 'ego_subst_id',
-                                                      'voltage': 'voltage_kv'})
+    ehv_substations.rename(columns={'version': 'ego_version',
+                                    'subst_id': 'ego_subst_id',
+                                    'voltage': 'voltage_kv'}, inplace=True)
     ehv_substations = gpd.overlay(ehv_substations, grid_data.area, how='intersection')
     # consider data only if there are more than one node in the target area
     if len(ehv_substations) > 1:
@@ -52,11 +52,11 @@ def create_ehv_topology(grid_data):
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
-                                              'scn_name': 'ego_scn_name',
-                                              'bus_id': 'ego_bus_id',
-                                              'v_nom': 'voltage_kv',
-                                              'length': 'length_km'})
+    ehvhv_buses.rename(columns={'version': 'ego_version',
+                                'scn_name': 'ego_scn_name',
+                                'bus_id': 'ego_bus_id',
+                                'v_nom': 'voltage_kv',
+                                'length': 'length_km'}, inplace=True)
     # filter nodes which are on the ehv-level, current exsist and within the target area
     ehv_buses = ehvhv_buses[(ehvhv_buses.voltage_kv.isin([380, 220])) &
                             (ehvhv_buses.ego_scn_name == 'Status Quo')]
@@ -64,7 +64,7 @@ def create_ehv_topology(grid_data):
     if not ehv_buses.empty:
         remove_columns = grid_data.area.keys().tolist()
         remove_columns.remove('geometry')
-        ehv_buses = ehv_buses.drop(columns=remove_columns)
+        ehv_buses.drop(columns=remove_columns, inplace=True)
     # consider data only if there are more than one node in the target area
     if len(ehv_buses) > 1:
         # search for the substations where the ehv nodes are within
@@ -133,16 +133,16 @@ def create_ehv_topology(grid_data):
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        ehv_lines = ehv_lines.rename(columns={'version': 'ego_version',
-                                              'subst_id': 'ego_subst_id',
-                                              'scn_name': 'ego_scn_name',
-                                              'line_id': 'ego_line_id',
-                                              'length': 'length_km',
-                                              's_nom': 's_nom_mva',
-                                              'r': 'r_ohm',
-                                              'x': 'x_ohm',
-                                              'g': 'g_s',
-                                              'b': 'b_s'})
+        ehv_lines.rename(columns={'version': 'ego_version',
+                                  'subst_id': 'ego_subst_id',
+                                  'scn_name': 'ego_scn_name',
+                                  'line_id': 'ego_line_id',
+                                  'length': 'length_km',
+                                  's_nom': 's_nom_mva',
+                                  'r': 'r_ohm',
+                                  'x': 'x_ohm',
+                                  'g': 'g_s',
+                                  'b': 'b_s'}, inplace=True)
         # filter lines which are on the ehv level by check if both endpoints are on the ehv level
         ehv_bus_ids = ehv_buses.ego_bus_id.tolist()
         ehv_lines = ehv_lines[(ehv_lines.bus0.isin(ehv_bus_ids)) &

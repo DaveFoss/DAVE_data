@@ -28,10 +28,10 @@ def create_hv_topology(grid_data):
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    ehvhv_buses = ehvhv_buses.rename(columns={'version': 'ego_version',
-                                              'scn_name': 'ego_scn_name',
-                                              'bus_id': 'ego_bus_id',
-                                              'v_nom': 'voltage_kv'})
+    ehvhv_buses.rename(columns={'version': 'ego_version',
+                                'scn_name': 'ego_scn_name',
+                                'bus_id': 'ego_bus_id',
+                                'v_nom': 'voltage_kv'}, inplace=True)
     # filter nodes which are on the hv level, current exsist and within the target area
     hv_buses = ehvhv_buses[(ehvhv_buses.voltage_kv == 110) &
                            (ehvhv_buses.ego_scn_name == 'Status Quo')]
@@ -60,16 +60,16 @@ def create_hv_topology(grid_data):
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        hv_lines = hv_lines.rename(columns={'version': 'ego_version',
-                                            'subst_id': 'ego_subst_id',
-                                            'scn_name': 'ego_scn_name',
-                                            'line_id': 'ego_line_id',
-                                            'length': 'length_km',
-                                            's_nom': 's_nom_mva',
-                                            'r': 'r_ohm',
-                                            'x': 'x_ohm',
-                                            'g': 'g_s',
-                                            'b': 'b_s'})
+        hv_lines.rename(columns={'version': 'ego_version',
+                                 'subst_id': 'ego_subst_id',
+                                 'scn_name': 'ego_scn_name',
+                                 'line_id': 'ego_line_id',
+                                 'length': 'length_km',
+                                 's_nom': 's_nom_mva',
+                                 'r': 'r_ohm',
+                                 'x': 'x_ohm',
+                                 'g': 'g_s',
+                                 'b': 'b_s'}, inplace=True)
         # filter lines which are on the hv level by check if both endpoints are on the hv level
         hv_bus_ids = hv_buses.ego_bus_id.tolist()
         hv_lines = hv_lines[(hv_lines.bus0.isin(hv_bus_ids)) &

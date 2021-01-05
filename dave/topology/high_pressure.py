@@ -26,8 +26,7 @@ def create_hp_topology(grid_data):
     # create hp junctions (nodes)
     hp_junctions = scigrid_data['nodes']
     # prepare data
-    hp_junctions = hp_junctions.rename(columns={'id': 'scigrid_id',
-                                                'name': 'scigrid_name'})
+    hp_junctions.rename(columns={'id': 'scigrid_id', 'name': 'scigrid_name'}, inplace=True)
     hp_junctions['source'] = 'scigridgas'
     hp_junctions['pressure_level'] = 1
     # intersection with target area
@@ -52,8 +51,7 @@ def create_hp_topology(grid_data):
         hp_pipes = hp_pipes[(hp_pipes.start_node_id.isin(hp_junctions_ids)) &
                             (hp_pipes.end_node_id.isin(hp_junctions_ids))]
         # prepare data
-        hp_pipes = hp_pipes.rename(columns={'id': 'scigrid_id',
-                                            'name': 'scigrid_name'})
+        hp_pipes.rename(columns={'id': 'scigrid_id', 'name': 'scigrid_name'}, inplace=True)
         hp_pipes['source'] = 'scigridgas'
         hp_pipes['pressure_level'] = 1
         # change pipeline junction names from scigrid id to dave name
@@ -91,18 +89,18 @@ def create_lkd_eu(grid_data):
     # --- create hp junctions (nodes)
     hp_junctions = hp_data['hp_nodes']
     # prepare data
-    hp_junctions = hp_junctions.rename(columns={'NODE_ID': 'original_id',
-                                                'NAME': 'original_name',
-                                                'OPERATOR': 'operator',
-                                                'ENTRY': 'entry',
-                                                'EXIT': 'exit',
-                                                'H_L_CONVER': 'h_l_converter',
-                                                'NUTS_3': 'nuts_3',
-                                                'ENTSOG_NAM': 'entsog_name',
-                                                'ENTSOG_KEY': 'entsog_key'})
-    hp_junctions = hp_junctions.drop(columns=(['OPERATOR_Z', 'COMPRESSOR', 'COMP_UNITS', 'NUTS_2',
-                                               'NUTS_1', 'NUTS_0', 'X', 'Y', 'CROSSBORDE',
-                                               'MARKETAREA', 'UGS', 'PROD']))
+    hp_junctions.rename(columns={'NODE_ID': 'original_id',
+                                 'NAME': 'original_name',
+                                 'OPERATOR': 'operator',
+                                 'ENTRY': 'entry',
+                                 'EXIT': 'exit',
+                                 'H_L_CONVER': 'h_l_converter',
+                                 'NUTS_3': 'nuts_3',
+                                 'ENTSOG_NAM': 'entsog_name',
+                                 'ENTSOG_KEY': 'entsog_key'}, inplace=True)
+    hp_junctions.drop(columns=(['OPERATOR_Z', 'COMPRESSOR', 'COMP_UNITS', 'NUTS_2', 'NUTS_1',
+                                'NUTS_0', 'X', 'Y', 'CROSSBORDE', 'MARKETAREA', 'UGS', 'PROD']),
+                      inplace=True)
     hp_junctions['reference_year'] = reference_year
     hp_junctions['source'] = source
     hp_junctions['pressure_level'] = 1
@@ -111,7 +109,7 @@ def create_lkd_eu(grid_data):
     hp_junctions = gpd.overlay(hp_junctions, grid_data.area, how='intersection')
     keys = grid_data.area.keys().tolist()
     keys.remove('geometry')
-    hp_junctions = hp_junctions.drop(columns=(keys))
+    hp_junctions.drop(columns=(keys), inplace=True)
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name
@@ -142,7 +140,7 @@ def create_lkd_eu(grid_data):
                                             'OPERATOR': 'operator',
                                             'START_POIN': 'from_junction',
                                             'END_POINT': 'to_junction'})
-        hp_pipes = hp_pipes.drop(columns=(['VIRTUAL']))
+        hp_pipes.drop(columns=(['VIRTUAL']), inplace=True)
         hp_pipes['reference_year'] = reference_year
         hp_pipes['source'] = source
         hp_pipes['pressure_level'] = 1

@@ -99,7 +99,7 @@ class target_area():
                     target_area = cascaded_union(targets.geometry.tolist())
                 roads = roads[roads.geometry.intersects(target_area)]
                 # write roads into grid_data
-                roads = roads.set_crs(dave_settings()['crs_main'])
+                roads.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
             # add time delay
             time.sleep(time_delay)
@@ -125,7 +125,7 @@ class target_area():
                     target_area = cascaded_union(targets.geometry.tolist())
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
                 # write plotting roads into grid_data
-                roads_plot = roads_plot.set_crs(dave_settings()['crs_main'])
+                roads_plot.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
             # add time delay
             time.sleep(time_delay)
@@ -177,13 +177,13 @@ class target_area():
                 if not landuse.empty:
                     remove_columns = area.keys().tolist()
                     remove_columns.remove('geometry')
-                    landuse = landuse.drop(columns=remove_columns)
+                    landuse.drop(columns=remove_columns, inplace=True)
                 # calculate polygon area in km²
                 landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])
                 landuse_area = landuse_3035.area/1E06
                 landuse['area_km2'] = landuse_area
                 # write landuse into grid_data
-                landuse = landuse.set_crs(dave_settings()['crs_main'])
+                landuse.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.landuse = self.grid_data.landuse.append(landuse)
             # add time delay
             time.sleep(time_delay)
@@ -226,7 +226,7 @@ class target_area():
                             elif building.geometry.intersects(landuse_commercial):
                                 buildings.at[i, 'building'] = 'commercial'
                 # write buildings into grid_data
-                buildings = buildings.set_crs(dave_settings()['crs_main'])
+                buildings.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
                 self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
                 self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
@@ -255,13 +255,13 @@ class target_area():
                     for point in junctions:
                         junction_points.append(point)
                 # set new roads quantity for the next iterationstep
-                roads = roads.drop([0])
+                roads.drop([0], inplace=True)
                 roads.reset_index(drop=True, inplace=True)
             # delet duplicates
             junction_points = gpd.GeoSeries(junction_points)
             road_junctions = junction_points.drop_duplicates()
             # write road junctions into grid_data
-            road_junctions = road_junctions.set_crs(dave_settings()['crs_main'])
+            road_junctions.set_crs(dave_settings()['crs_main'], inplace=True)
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
 
     def _target_by_postalcode(self):
@@ -384,7 +384,7 @@ class target_area():
         # change crs
         nuts_3.set_crs(dave_settings()['crs_meter'], inplace=True, allow_override=True)
         nuts_3.to_crs(dave_settings()['crs_main'], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0] == 'ALL':
+        if len(self.nuts_region) == 1 and self.nuts_region[0].capitalize() == 'ALL':
             # in this case all federal states will be choosen
             target = nuts_3
         else:
@@ -444,7 +444,7 @@ class target_area():
                                          'data': [self.federal_state_postal],
                                          'power_levels': [self.power_levels],
                                          'gas_levels': [self.gas_levels]})
-            self.grid_data.target_input = target_input 
+            self.grid_data.target_input = target_input
         elif self.nuts_region:
             target_area._target_by_nuts_region(self)
             target_input = pd.DataFrame({'typ': 'nuts region',

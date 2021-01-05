@@ -33,18 +33,18 @@ def create_mv_topology(grid_data):
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
 
-    mvlv_buses = mvlv_buses.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']))
-    mvlv_buses = mvlv_buses.rename(columns={'version': 'ego_version',
-                                            'mvlv_subst_id': 'ego_subst_id'})
+    mvlv_buses.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']), inplace=True)
+    mvlv_buses.rename(columns={'version': 'ego_version', 'mvlv_subst_id': 'ego_subst_id'},
+                      inplace=True)
     # change wrong crs from oep
-    mvlv_buses.crs = 'EPSG:3035'
+    mvlv_buses.crs = dave_settings()['crs_meter']
     mvlv_buses = mvlv_buses.to_crs(dave_settings()['crs_main'])
     # filter trafos for target area
     mvlv_buses = gpd.overlay(mvlv_buses, grid_data.area, how='intersection')
     if not mvlv_buses.empty:
         remove_columns = grid_data.area.keys().tolist()
         remove_columns.remove('geometry')
-        mvlv_buses = mvlv_buses.drop(columns=remove_columns)
+        mvlv_buses.drop(columns=remove_columns, inplace=True)
     mvlv_buses['node_type'] = 'mvlv_substation'
     # nodes for hv/mv trafos us side
     hvmv_buses, meta_data = oep_request(schema='grid',
@@ -62,9 +62,9 @@ def create_mv_topology(grid_data):
         remove_columns = grid_data.area.keys().tolist()
         remove_columns.remove('geometry')
         hvmv_buses = hvmv_buses.drop(columns=remove_columns)
-    hvmv_buses = hvmv_buses.drop(columns=(['lon', 'lat', 'point', 'polygon', 'power_type',
-                                           'substation', 'frequency', 'ref', 'dbahn', 'status',
-                                           'ags_0', 'geom', 'voltage']))
+    hvmv_buses.drop(columns=(['lon', 'lat', 'point', 'polygon', 'power_type', 'substation',
+                              'frequency', 'ref', 'dbahn', 'status', 'ags_0', 'geom', 'voltage']),
+                    inplace=True)
     hvmv_buses['node_type'] = 'hvmv_substation'
     # consider data only if there are more than one node in the target area
     mv_buses = mvlv_buses.append(hvmv_buses)
@@ -90,7 +90,7 @@ def create_mv_topology(grid_data):
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
-        mv_lines = mv_lines.set_crs(dave_settings()['crs_main'])
+        mv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         mv_lines.reset_index(drop=True, inplace=True)
         # connect line segments with each other
         while True:
@@ -114,7 +114,7 @@ def create_mv_topology(grid_data):
                     line_related = linemerge(new_line)
                     mv_lines_rel[len(mv_lines)] = line_related
                     # delete found lines from line quantity
-                    mv_lines_rel = mv_lines_rel.drop(lines_intersect.index.tolist())
+                    mv_lines_rel.drop(lines_intersect.index.tolist(), inplace=True)
                     mv_lines_rel.reset_index(drop=True, inplace=True)
             # break loop if all lines connected
             if len(mv_lines_rel) == 1:
@@ -155,7 +155,7 @@ def create_mv_topology(grid_data):
                         point = mv_lines_rel.loc[nearest_line_idx].coords[:][j]
                         nearest_line_points[j] = Point(point)
                 # set crs
-                nearest_line_points = nearest_line_points.set_crs(dave_settings()['crs_main'])
+                nearest_line_points.set_crs(dave_settings()['crs_main'], inplace=True)
                 # define minimal distance for initialize
                 distance_min = 1000  # any big number
                 # find pair of nearest nodes
@@ -175,7 +175,7 @@ def create_mv_topology(grid_data):
         mv_lines = gpd.GeoDataFrame(geometry=mv_lines)
         mv_lines.insert(0, 'dave_name', None)
         # project lines to crs with unit in meter for length calculation
-        mv_lines = mv_lines.set_crs(dave_settings()['crs_main'])
+        mv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         mv_lines_3035 = mv_lines.to_crs(dave_settings()['crs_meter'])
         # add parameters to lines
         for i, line in mv_lines.iterrows():
