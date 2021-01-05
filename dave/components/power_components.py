@@ -1657,8 +1657,9 @@ def loads(grid_data):
                     grid_data.components_power.loads = grid_data.components_power.loads.append(load_df)
     # add dave name
     grid_data.components_power.loads.reset_index(drop=True, inplace=True)
-    name = pd.Series(list(map(lambda x: f'load_{x.voltage_level}_{x.index}',
-                              grid_data.components_power.loads)))
+    name = pd.Series(list(map(lambda x, y: f'load_{x}_{y}',
+                              grid_data.components_power.loads.voltage_level,
+                              grid_data.components_power.loads.index)))
     grid_data.components_power.loads.insert(0, 'dave_name', name)
 
 
