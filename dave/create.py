@@ -86,10 +86,11 @@ def create_empty_dataset():
     return grid_data
 
 
-def create_grid(postalcode=None, town_name=None, federal_state=None, own_area=None, power_levels=[],
-                gas_levels=[], plot=True, convert=True, opt_model=True, combine_areas=[],
-                transformers=True, renewable_powerplants=True, conventional_powerplants=True,
-                loads=True, compressors=True, sources=True, storages_gas=True):
+def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region=None,
+                own_area=None, power_levels=[], gas_levels=[], plot=True, convert=True,
+                opt_model=True, combine_areas=[], transformers=True, renewable_powerplants=True,
+                conventional_powerplants=True, loads=True, compressors=True, sources=True,
+                storages_gas=True):
     """
     This is the main function of dave. This function generates automaticly grid
     models for power and gas networks in the defined target area
@@ -104,6 +105,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, own_area=No
         **federal_state** (List of strings) - names of the target federal states
                                               it could also be choose ['ALL'] for all federal states
                                               in germany
+        **nuts_region** (List of strings) - codes of the target nuts regions (independent from nuts level)
+                                            it could also be choose ['ALL'] for all nuts regions
+                                            in europe
         **own_area** (string) - full path to a shape file which includes own target area
                                 (e.g. "C:/Users/name/test/test.shp")
 
@@ -179,8 +183,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, own_area=No
     file_exists, file_name = target_area(grid_data, power_levels=power_levels,
                                          gas_levels=gas_levels, postalcode=postalcode,
                                          town_name=town_name, federal_state=federal_state,
-                                         own_area=own_area, buffer=0, roads=roads,
-                                         roads_plot=roads_plot, buildings=buildings,
+                                         nuts_region=nuts_region, own_area=own_area, buffer=0,
+                                         roads=roads, roads_plot=roads_plot, buildings=buildings,
                                          landuse=landuse).target()
     if not file_exists:
         # create extended grid area to combine not connected areas

@@ -1,7 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import time
-from shapely.ops import cascaded_union
+from shapely.ops import cascaded_union, unary_union
 from shapely.geometry import Polygon, LineString, Point
 
 from dave.datapool import *
@@ -30,6 +30,9 @@ class target_area():
         **federal_state** (List of strings) - names of the target federal states
                                               it could also be choose ['ALL'] for all federal states
                                               in germany
+        **nuts_region** (List of strings) - codes of the target nuts regions
+                                              it could also be choose ['ALL'] for all nuts regions
+                                              in europe
         **own_area** (string) - full path to a shape file which includes own target area
                                 (e.g. "C:/Users/name/test/test.shp")
 
@@ -50,13 +53,14 @@ class target_area():
     """
 
     def __init__(self, grid_data, power_levels, gas_levels, postalcode=None, town_name=None,
-                 federal_state=None, own_area=None, buffer=0, roads=True, roads_plot=True,
-                 buildings=True, landuse=True):
+                 federal_state=None, nuts_region=None, own_area=None, buffer=0, roads=True,
+                 roads_plot=True, buildings=True, landuse=True):
         # Init input parameters
         self.grid_data = grid_data
         self.postalcode = postalcode
         self.town_name = town_name
         self.federal_state = federal_state
+        self.nuts_region = nuts_region
         self.own_area = own_area
         self.buffer = buffer
         self.roads = roads
@@ -339,7 +343,7 @@ class target_area():
         else:
             names_right = []
             for i in range(len(self.federal_state)):
-                # bring name in right form
+                # bring name in right format
                 state_name = self.federal_state[i].split('-')
                 if len(state_name) == 1:
                     state_name = state_name[0].capitalize()
@@ -357,7 +361,7 @@ class target_area():
             self.federal_state = names_right
         self.target = target
         # convert federal states into postal code areas for target_input
-        postal, meta_data  = read_postal()
+        postal, meta_data = read_postal()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -365,6 +369,50 @@ class target_area():
         # filter duplikated postal codes
         self.federal_state_postal = postal_intersection['postalcode'].unique().tolist()
 
+    def _target_by_nuts_region(self):
+        """
+        This function filter the nuts region informations for the target area.
+        """
+        # request nuts-3 areas from oep
+        nuts_3, meta_data = oep_request(schema='boundaries',
+                                        table='ffe_osm_nuts3',
+                                        geometry='geom')
+        nuts_3.drop(columns=(['geom']), inplace=True)
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        # change crs
+        nuts_3.set_crs(dave_settings()['crs_meter'], inplace=True, allow_override=True)
+        nuts_3.to_crs(dave_settings()['crs_main'], inplace=True)
+        if len(self.nuts_region) == 1 and self.nuts_region[0] == 'ALL':
+            # in this case all federal states will be choosen
+            target = nuts_3
+        else:
+            for i in range(0, len(self.nuts_region)):
+                # bring name in right format
+                area = list(self.nuts_region[i])
+                for j in range(0, len(area)):
+                    if area[j].isalpha():
+                        area[j] = area[j].capitalize()
+                self.nuts_region[i] = ''.join(area)
+                # get area for nuts region
+                if i == 0:
+                    target = nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])]
+                else:
+                    target = target.append(nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])])
+                if target.empty:
+                    raise ValueError('nuts region name wasn`t found. Please check your input')
+        # merge multipolygons
+        #target['geometry'] = target.geometry.apply(lambda x: unary_union(x))
+        self.target = target
+        # convert nuts regions into postal code areas for target_input
+        postal, meta_data = read_postal()
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+            self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        postal_intersection = gpd.overlay(postal, self.target, how='intersection')
+        # filter duplikated postal codes
+        self.nuts_region_postal = postal_intersection['postalcode'].unique().tolist()
 
     def target(self):
         """
@@ -394,6 +442,14 @@ class target_area():
             target_input = pd.DataFrame({'typ': 'federal state',
                                          'federal_states': [self.federal_state],
                                          'data': [self.federal_state_postal],
+                                         'power_levels': [self.power_levels],
+                                         'gas_levels': [self.gas_levels]})
+            self.grid_data.target_input = target_input 
+        elif self.nuts_region:
+            target_area._target_by_nuts_region(self)
+            target_input = pd.DataFrame({'typ': 'nuts region',
+                                         'nuts_regions': [self.nuts_region],
+                                         'data': [self.nuts_region_postal],
                                          'power_levels': [self.power_levels],
                                          'gas_levels': [self.gas_levels]})
             self.grid_data.target_input = target_input
