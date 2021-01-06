@@ -1,8 +1,10 @@
 import geopandas as gpd
 import numpy as np
 from scipy.spatial import Voronoi
-from shapely.geometry import LineString
+from shapely.geometry import LineString, MultiPoint
 from shapely.ops import polygonize, cascaded_union
+
+from dave.settings import dave_settings
 
 
 def create_interim_area(areas):
@@ -58,11 +60,10 @@ def voronoi(points):
     # define points for voronoi centroids
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
     voronoi_points = np.array(voronoi_centroids)
-    # define maximum points that lying outside germany
-    points_boundary = [[5.58613450984361304, 55.11274402414650808],
-                       [15.29889892264705864, 55.11274402414650808],
-                       [15.23491496735850248, 47.13557706547874915],
-                       [5.60532969643017687, 47.12687113266557759]]
+    # maximum points of the considered area define, which limit the voronoi polygons
+    bound_points = MultiPoint(points.geometry).convex_hull.buffer(1).bounds
+    points_boundary = [[bound_points[0], bound_points[1]], [bound_points[0], bound_points[3]],
+                       [bound_points[2], bound_points[1]], [bound_points[2], bound_points[3]]]
     # append boundary points to avoid infinit polygons with relevant nodes
     voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
@@ -74,7 +75,7 @@ def voronoi(points):
     # create polygons from the lines
     polygons = np.array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
-    voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs='EPSG:4326')
+    voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()['crs_main'])
     # search voronoi centroids and dave name
     voronoi_polygons['centroid'] = None
     voronoi_polygons['dave_name'] = None
