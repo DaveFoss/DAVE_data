@@ -2,16 +2,17 @@ import geopandas as gpd
 import pandas as pd
 import os
 import copy
+from pandapower import to_json
+from shapely.wkb import loads, dumps
 
 import dave.create
-from dave.datapool import convert_geometry_to_wkt, convert_geometry_to_wkb
 from dave.settings import dave_settings
 
 
 def _convert_data_from(file, key):
     data = file.get(key)
     if (not data.empty) and ('geometry' in data.keys()):
-        data = convert_geometry_to_wkt(data)
+        data['geometry'] = data.geometry.apply(lambda x: loads(x))
     data = gpd.GeoDataFrame(data)
     return data
 
@@ -20,7 +21,7 @@ def _convert_data_to(data_key):
     data = copy.deepcopy(data_key)
     if not data.empty:
         if 'geometry' in data.keys():
-            data = convert_geometry_to_wkb(data)
+            data['geometry'] = data.geometry.apply(lambda x: dumps(x))
         data = pd.DataFrame(data)
     else:
         data = pd.DataFrame([])
@@ -227,7 +228,7 @@ def write_dataset(grid_data, dataset_path):
     road_junctions = copy.deepcopy(grid_data.roads.road_junctions)
     if not road_junctions.empty:
         road_junctions = pd.DataFrame({'geometry': road_junctions})
-        road_junctions = convert_geometry_to_wkb(road_junctions)
+        road_junctions['geometry'] = road_junctions.geometry.apply(lambda x: dumps(x))
     else:
         road_junctions = pd.DataFrame([])
     archiv_file.put('/roads/road_junctions', road_junctions)

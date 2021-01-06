@@ -2,9 +2,10 @@ import geopandas as gpd
 import pandas as pd
 import copy
 import os
+from shapely.wkb import loads, dumps
 
 import dave.create
-from dave.datapool import get_data_path, convert_geometry_to_wkb, convert_geometry_to_wkt
+from dave.datapool import get_data_path
 
 
 def _convert_from_archiv_data(archiv_file, key):
@@ -14,7 +15,7 @@ def _convert_from_archiv_data(archiv_file, key):
     """
     data = archiv_file.get(key)
     if (not data.empty) and ('geometry' in data.keys()):
-        data = convert_geometry_to_wkt(data)
+        data['geometry'] = data.geometry.apply(lambda x: loads(x))
     data = gpd.GeoDataFrame(data)
     return data
 
@@ -26,7 +27,7 @@ def _convert_to_archiv_data(data_key):
     data = copy.deepcopy(data_key)
     if not data.empty:
         if 'geometry' in data.keys():
-            data = convert_geometry_to_wkb(data)
+            data['geometry'] = data.geometry.apply(lambda x: dumps(x))
         data = pd.DataFrame(data)
     else:
         data = pd.DataFrame([])
@@ -130,7 +131,7 @@ def to_archiv(grid_data):
         road_junctions = copy.deepcopy(grid_data.roads.road_junctions)
         if not road_junctions.empty:
             road_junctions = pd.DataFrame({'geometry': road_junctions})
-            road_junctions = convert_geometry_to_wkb(road_junctions)
+            road_junctions['geometry'] = road_junctions.geometry.apply(lambda x: dumps(x))
         else:
             road_junctions = pd.DataFrame([])
         archiv_file.put('/roads/road_junctions', road_junctions)
