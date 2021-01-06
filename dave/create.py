@@ -7,7 +7,7 @@ import shutil
 from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
-from dave.io_dave import write_dataset
+from dave.io_dave import write_dataset, pp_to_json
 from dave.topology import *
 from dave.plotting import *
 from dave.components import *
@@ -279,8 +279,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder
-        file_path = dave_output_dir + '\\dave_power_grid.json'  # hier fehlt noch eine richtige funktion, wegen dem geometrien evt io_pandapower
-        pp.to_json(net_power, file_path)
+        file_path = dave_output_dir + '\\dave_power_grid.json'
+        pp_to_json(net_power, file_path)
     else:
         net_power = None
     if convert and gas_levels:

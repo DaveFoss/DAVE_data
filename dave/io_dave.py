@@ -299,3 +299,17 @@ def write_dataset(grid_data, dataset_path):
     archiv_file.put('/dave_version', dave_version)
     # close file
     archiv_file.close()
+
+
+def pp_to_json(net_power, file_path):
+    """
+    This functions converts a pandapower model into a json file
+    """
+    # convert geometry
+    if not net_power.trafo.empty:
+        net_power.trafo['geometry'] = net_power.trafo.geometry.apply(lambda x: dumps(x))
+    if not net_power.gen.empty:
+        net_power.gen['geometry'] = net_power.gen.geometry.apply(lambda x: dumps(x))
+    if not net_power.sgen.empty:
+        net_power.sgen['geometry'] = net_power.sgen.geometry.apply(lambda x: dumps(x))
+    to_json(net_power, filename=file_path)
