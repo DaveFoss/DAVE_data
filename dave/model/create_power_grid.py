@@ -14,7 +14,7 @@ def create_power_grid(grid_data):
     OUTPUT:
         **net** (attrdict) - pandapower attrdict with grid data
     """
-    print('create pandapower network for target area')
+    print('create pandapower network based on DaVe dataset')
     print('-----------------------------------------')
     # create empty network
     net = pp.create_empty_network()
@@ -212,6 +212,7 @@ def create_power_grid(grid_data):
     # --- create transformers
     # create ehv/ehv transformers
     net.trafo['geometry'] = None
+    net.trafo['tso_name'] = None
     if not grid_data.components_power.transformers.ehv_ehv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_ehv.iterrows():
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
@@ -316,6 +317,7 @@ def create_power_grid(grid_data):
     # ---create generators
     # create renewable powerplants
     net.sgen['geometry'] = None
+    net.sgen['source'] = None
     if not grid_data.components_power.renewable_powerplants.empty:
         for i, plant in grid_data.components_power.renewable_powerplants.iterrows():
             sgen_bus = net.bus[net.bus['name'] == plant.bus].index[0]
