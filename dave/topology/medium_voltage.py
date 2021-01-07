@@ -1,6 +1,6 @@
+import copy
 import geopandas as gpd
 import pandas as pd
-import copy
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
 

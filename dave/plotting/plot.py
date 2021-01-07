@@ -63,10 +63,6 @@ def plot_target_area(grid_data):
             building_centroids]
     data_check = pd.concat(data)
     if data_check.empty:
-        data_empty = True
-    else:
-        data_empty = False
-    if data_empty:
         # plot target area
         plot_land(grid_data['area'], only_area=True)
     else:
@@ -151,10 +147,6 @@ def plot_grid_data(grid_data):
             hp_pipes]
     data_check = pd.concat(data)
     if data_check.empty:
-        data_empty = True
-    else:
-        data_empty = False
-    if data_empty:
         # plot target area
         plot_land(grid_data['area'], only_area=True)
     else:
@@ -253,10 +245,6 @@ def plot_grid_data_osm(grid_data):
             hv_lines]
     data_check = pd.concat(data)
     if data_check.empty:
-        data_empty = True
-    else:
-        data_empty = False
-    if data_empty:
         # plot target area
         plot_land(grid_data['area'], only_area=True)
     else:

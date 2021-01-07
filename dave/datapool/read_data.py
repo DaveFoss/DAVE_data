@@ -278,10 +278,7 @@ def read_scigridgas_igginl():
     pipe_segments.long = pipe_segments.long.apply(lambda x: eval(x))
     geometry = []
     for i, pipe in pipe_segments.iterrows():
-        lat = pipe.lat
-        long = pipe.long
-        line = LineString(list(zip(long, lat)))
-        geometry.append(line)
+        geometry.append(LineString(list(zip(pipe.long, pipe.lat))))
     pipe_segments = gpd.GeoDataFrame(pipe_segments, geometry=pd.Series(geometry),
                                      crs=dave_settings()['crs_main'])
     # productions

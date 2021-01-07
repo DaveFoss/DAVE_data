@@ -1,7 +1,7 @@
-import geopandas as gpd
-import pandas as pd
 import os
 import copy
+import geopandas as gpd
+import pandas as pd
 from pandapower import to_json
 from shapely.wkb import loads, dumps
 
@@ -94,7 +94,8 @@ def read_dataset(dataset_path):
         ehv_substations = _convert_data_from(file, '/ehv_data/ehv_substations')
         if not ehv_substations.empty:
             ehv_substations = gpd.GeoDataFrame(ehv_substations, crs=crs)
-            grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(ehv_substations)
+            grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
+                ehv_substations)
         # hv data
         hv_nodes = _convert_data_from(file, '/hv_data/hv_nodes')
         if not hv_nodes.empty:
@@ -123,7 +124,8 @@ def read_dataset(dataset_path):
             lv_lines = gpd.GeoDataFrame(lv_lines, crs=crs)
             grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(lv_lines)
         # components_power
-        conventional_powerplants = _convert_data_from(file, '/components_power/conventional_powerplants')
+        conventional_powerplants = _convert_data_from(
+            file, '/components_power/conventional_powerplants')
         if not conventional_powerplants.empty:
             conventional_powerplants = gpd.GeoDataFrame(conventional_powerplants, crs=crs)
             grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(conventional_powerplants)
@@ -131,10 +133,10 @@ def read_dataset(dataset_path):
         if not renewable_powerplants.empty:
             renewable_powerplants = gpd.GeoDataFrame(renewable_powerplants, crs=crs)
             grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(renewable_powerplants)
-        loads = _convert_data_from(file, '/components_power/loads')
-        if not loads.empty:
-            loads = gpd.GeoDataFrame(loads)
-            grid_data.components_power.loads = grid_data.components_power.loads.append(loads)
+        load = _convert_data_from(file, '/components_power/loads')
+        if not load.empty:
+            load = gpd.GeoDataFrame(load)
+            grid_data.components_power.loads = grid_data.components_power.loads.append(load)
         ehv_ehv = _convert_data_from(file, '/components_power/transformers/ehv_ehv')
         if not ehv_ehv.empty:
             ehv_ehv = gpd.GeoDataFrame(ehv_ehv, crs=crs)
@@ -182,7 +184,8 @@ def read_dataset(dataset_path):
         compressors = _convert_data_from(file, '/components_gas/compressors')
         if not compressors.empty:
             compressors = gpd.GeoDataFrame(compressors, crs=crs)
-            grid_data.components_gas.compressors = grid_data.components_gas.compressors.append(compressors)
+            grid_data.components_gas.compressors = grid_data.components_gas.compressors.append(
+                compressors)
         sources = _convert_data_from(file, '/components_gas/sources')
         if not sources.empty:
             sources = gpd.GeoDataFrame(sources, crs=crs)
@@ -190,7 +193,8 @@ def read_dataset(dataset_path):
         storages_gas = _convert_data_from(file, '/components_gas/storages_gas')
         if not storages_gas.empty:
             storages_gas = gpd.GeoDataFrame(storages_gas, crs=crs)
-            grid_data.components_gas.storages_gas = grid_data.components_gas.storages_gas.append(storages_gas)
+            grid_data.components_gas.storages_gas = grid_data.components_gas.storages_gas.append(
+                storages_gas)
         # dave version
         dave_version = file.get('/dave_version')['dave_version'][0]
         grid_data.dave_version = dave_version
@@ -262,8 +266,8 @@ def write_dataset(grid_data, dataset_path):
     archiv_file.put('/components_power/conventional_powerplants', conventional_powerplants)
     renewable_powerplants = _convert_data_to(grid_data.components_power.renewable_powerplants)
     archiv_file.put('/components_power/renewable_powerplants', renewable_powerplants)
-    loads = _convert_data_to(grid_data.components_power.loads)
-    archiv_file.put('/components_power/loads', loads)
+    load = _convert_data_to(grid_data.components_power.loads)
+    archiv_file.put('/components_power/loads', load)
     ehv_ehv = _convert_data_to(grid_data.components_power.transformers.ehv_ehv)
     archiv_file.put('/components_power/transformers/ehv_ehv', ehv_ehv)
     ehv_hv = _convert_data_to(grid_data.components_power.transformers.ehv_hv)

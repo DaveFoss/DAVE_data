@@ -1,6 +1,6 @@
+import math
 import geopandas as gpd
 import pandas as pd
-import math
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
@@ -95,7 +95,8 @@ def create_hv_topology(grid_data):
             hv_lines.at[line.name, 'c_nf'] = c_nf
             hv_lines.at[line.name, 'c_nf_per_km'] = c_nf/line.length_km
             # calculate and add max i
-            hv_lines.at[line.name, 'max_i_ka'] = ((float(line.s_nom_mva)*1E06)/(line.voltage_kv*1E03))*1E-03
+            hv_lines.at[line.name, 'max_i_ka'] = ((float(line.s_nom_mva)*1E06) /
+                                                  (line.voltage_kv*1E03))*1E-03
             # calculate parallel lines
             hv_lines.at[line.name, 'parallel'] = line.cables/3
             # change line bus names from ego id to dave name

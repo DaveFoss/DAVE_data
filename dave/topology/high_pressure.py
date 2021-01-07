@@ -38,8 +38,8 @@ def create_hp_topology(grid_data):
     if len(hp_junctions) > 1:
         # add dave name
         hp_junctions.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index)))
-        hp_junctions.insert(0, 'dave_name', name)
+        hp_junctions.insert(0, 'dave_name',
+                            pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index))))
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
         # --- create hp pipes
@@ -55,8 +55,10 @@ def create_hp_topology(grid_data):
         hp_pipes['source'] = 'scigridgas'
         hp_pipes['pressure_level'] = 1
         # change pipeline junction names from scigrid id to dave name
-        hp_pipes['from_junction'] = hp_pipes.from_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
-        hp_pipes['to_junction'] = hp_pipes.to_junction.apply(lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
+        hp_pipes['from_junction'] = hp_pipes.from_junction.apply(
+            lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
+        hp_pipes['to_junction'] = hp_pipes.to_junction.apply(
+            lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
@@ -85,7 +87,6 @@ def create_lkd_eu(grid_data):
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     source = 'Paper: Electricity, Heat, and Gas Sector Data for Modeling the German System'
-    reference_year = 2015
     # --- create hp junctions (nodes)
     hp_junctions = hp_data['hp_nodes']
     # prepare data
@@ -101,7 +102,7 @@ def create_lkd_eu(grid_data):
     hp_junctions.drop(columns=(['OPERATOR_Z', 'COMPRESSOR', 'COMP_UNITS', 'NUTS_2', 'NUTS_1',
                                 'NUTS_0', 'X', 'Y', 'CROSSBORDE', 'MARKETAREA', 'UGS', 'PROD']),
                       inplace=True)
-    hp_junctions['reference_year'] = reference_year
+    hp_junctions['reference_year'] = 2015
     hp_junctions['source'] = source
     hp_junctions['pressure_level'] = 1
     hp_junctions['original_id'] = hp_junctions.original_id.astype('int32')
@@ -114,13 +115,13 @@ def create_lkd_eu(grid_data):
     if len(hp_junctions) > 1:
         # add dave name
         hp_junctions.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index)))
-        hp_junctions.insert(0, 'dave_name', name)
+        hp_junctions.insert(0, 'dave_name',
+                            pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index))))
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
         # --- create hp pipes
         hp_pipes = hp_data['hp_pipelines']
-        # filter relevant pipelines by checking if both endpoints are in the target area and its a real pipeline
+        # filter relevant and real pipelines by checking if both endpoints are in the target area
         hp_junctions_ids = hp_junctions.original_id.tolist()
         hp_pipes = hp_pipes[(hp_pipes.START_POIN.isin(hp_junctions_ids)) &
                             (hp_pipes.END_POINT.isin(hp_junctions_ids)) &
@@ -141,15 +142,17 @@ def create_lkd_eu(grid_data):
                                             'START_POIN': 'from_junction',
                                             'END_POINT': 'to_junction'})
         hp_pipes.drop(columns=(['VIRTUAL']), inplace=True)
-        hp_pipes['reference_year'] = reference_year
+        hp_pipes['reference_year'] = 2015
         hp_pipes['source'] = source
         hp_pipes['pressure_level'] = 1
         # change pipeline junction names from id to dave name
         from_junction_new = []
         to_junction_new = []
         for i, pipe in hp_pipes.iterrows():
-            from_junction_dave = hp_junctions[hp_junctions.original_id == pipe.from_junction].iloc[0].dave_name
-            to_junction_dave = hp_junctions[hp_junctions.original_id == pipe.to_junction].iloc[0].dave_name
+            from_junction_dave = hp_junctions[
+                hp_junctions.original_id == pipe.from_junction].iloc[0].dave_name
+            to_junction_dave = hp_junctions[
+                hp_junctions.original_id == pipe.to_junction].iloc[0].dave_name
             from_junction_new.append(from_junction_dave)
             to_junction_new.append(to_junction_dave)
         hp_pipes['from_junction'] = from_junction_new

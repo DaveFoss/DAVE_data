@@ -135,10 +135,14 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                 pp.runopp(net, verbose=True)
                 # check results and compare with previous parameters
                 if pf_converged:
-                    min_bus = (net.res_bus.vm_pu.min() > min_vm_pu_pf) or (net.res_bus.vm_pu.min() > min_vm_pu)
-                    max_bus = (net.res_bus.vm_pu.max() < max_vm_pu_pf) or (net.res_bus.vm_pu.max() < max_vm_pu)
-                    max_line = (net.res_line.loading_percent.max() < max_line_loading_pf) or (net.res_line.loading_percent.max() < max_line_loading)
-                    max_trafo = (net.res_trafo.loading_percent.max() < max_trafo_loading_pf) or (net.res_trafo.loading_percent.max() < max_trafo_loading)
+                    min_bus = ((net.res_bus.vm_pu.min() > min_vm_pu_pf) or
+                               (net.res_bus.vm_pu.min() > min_vm_pu))
+                    max_bus = ((net.res_bus.vm_pu.max() < max_vm_pu_pf) or
+                               (net.res_bus.vm_pu.max() < max_vm_pu))
+                    max_line = ((net.res_line.loading_percent.max() < max_line_loading_pf) or
+                                (net.res_line.loading_percent.max() < max_line_loading))
+                    max_trafo = ((net.res_trafo.loading_percent.max() < max_trafo_loading_pf) or
+                                 (net.res_trafo.loading_percent.max() < max_trafo_loading))
                 if (not pf_converged) or (min_bus and max_bus and max_line and max_trafo):
                     # save original parameters as installed power in grid model
                     net.sgen['p_mw_installed'] = net.sgen.p_mw

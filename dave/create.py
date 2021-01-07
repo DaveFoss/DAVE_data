@@ -1,18 +1,20 @@
 import os
+import shutil
 import pandas as pd
 import geopandas as gpd
-import shutil
 
 # imports from dave
 from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
 from dave.io_dave import write_dataset, pp_to_json
-from dave.topology import *
-from dave.plotting import *
-from dave.components import *
-from dave.model import *
-from dave.datapool import *
+from dave.topology import (target_area, create_ehv_topology, create_hv_topology, create_mv_topology,
+                           create_lv_topology, create_hp_topology, create_mp_topology,
+                           create_lp_topology)
+from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
+from dave.components import power_components, gas_components
+from dave.model import create_power_grid, power_processing, create_gas_grid, gas_processing
+from dave.datapool import from_archiv
 from dave.toolbox import create_interim_area
 
 
@@ -32,53 +34,64 @@ def create_empty_dataset():
         # target data
         'area': gpd.GeoDataFrame([]),
         'target_input': pd.DataFrame(),
-        'buildings': davestructure({'commercial': gpd.GeoDataFrame([]),
-                                    'for_living': gpd.GeoDataFrame([]),
-                                    'other': gpd.GeoDataFrame([])
-                                    }),
-        'roads': davestructure({'roads': gpd.GeoDataFrame([]),
-                                'roads_plot': gpd.GeoDataFrame([]),
-                                'road_junctions': gpd.GeoSeries([])
-                                }),
+        'buildings': davestructure(
+            {'commercial': gpd.GeoDataFrame([]),
+             'for_living': gpd.GeoDataFrame([]),
+             'other': gpd.GeoDataFrame([])
+             }),
+        'roads': davestructure(
+            {'roads': gpd.GeoDataFrame([]),
+             'roads_plot': gpd.GeoDataFrame([]),
+             'road_junctions': gpd.GeoSeries([])
+             }),
         'landuse': gpd.GeoDataFrame([]),
         # power grid data
-        'ehv_data': davestructure({'ehv_substations': gpd.GeoDataFrame([]),
-                                   'ehv_nodes': gpd.GeoDataFrame([]),
-                                   'ehv_lines': gpd.GeoDataFrame([])
-                                   }),
-        'hv_data': davestructure({'hv_nodes': gpd.GeoDataFrame([]),
-                                  'hv_lines': gpd.GeoDataFrame([])
-                                  }),
-        'mv_data': davestructure({'mv_nodes': gpd.GeoDataFrame([]),
-                                  'mv_lines': gpd.GeoDataFrame([])
-                                  }),
-        'lv_data': davestructure({'lv_nodes': gpd.GeoDataFrame([]),
-                                  'lv_lines': gpd.GeoDataFrame([])
-                                  }),
-        'components_power': davestructure({'loads': gpd.GeoDataFrame([]),
-                                           'renewable_powerplants': gpd.GeoDataFrame([]),
-                                           'conventional_powerplants': gpd.GeoDataFrame([]),
-                                           'transformers': davestructure({
-                                               'ehv_ehv': gpd.GeoDataFrame([]),
-                                               'ehv_hv': gpd.GeoDataFrame([]),
-                                               'hv_mv': gpd.GeoDataFrame([]),
-                                               'mv_lv': gpd.GeoDataFrame([])
-                                               })
-                                           }),
+        'ehv_data': davestructure(
+            {'ehv_substations': gpd.GeoDataFrame([]),
+             'ehv_nodes': gpd.GeoDataFrame([]),
+             'ehv_lines': gpd.GeoDataFrame([])
+             }),
+        'hv_data': davestructure(
+            {'hv_nodes': gpd.GeoDataFrame([]),
+             'hv_lines': gpd.GeoDataFrame([])
+             }),
+        'mv_data': davestructure(
+            {'mv_nodes': gpd.GeoDataFrame([]),
+             'mv_lines': gpd.GeoDataFrame([])
+             }),
+        'lv_data': davestructure(
+            {'lv_nodes': gpd.GeoDataFrame([]),
+             'lv_lines': gpd.GeoDataFrame([])
+             }),
+        'components_power': davestructure(
+            {'loads': gpd.GeoDataFrame([]),
+             'renewable_powerplants': gpd.GeoDataFrame([]),
+             'conventional_powerplants': gpd.GeoDataFrame([]),
+             'transformers': davestructure(
+                 {'ehv_ehv': gpd.GeoDataFrame([]),
+                  'ehv_hv': gpd.GeoDataFrame([]),
+                  'hv_mv': gpd.GeoDataFrame([]),
+                  'mv_lv': gpd.GeoDataFrame([])
+                  })
+             }),
         # gas grid data
-        'hp_data': davestructure({'hp_junctions': gpd.GeoDataFrame([]),
-                                  'hp_pipes': gpd.GeoDataFrame([])
-                                  }),
-        'mp_data': davestructure({'mp_junctions': gpd.GeoDataFrame([]),
-                                  'mp_pipes': gpd.GeoDataFrame([])
-                                  }),
-        'lp_data': davestructure({'lp_junctions': gpd.GeoDataFrame([]),
-                                  'lp_pipes': gpd.GeoDataFrame([])
-                                  }),
-        'components_gas': davestructure({'compressors': gpd.GeoDataFrame([]),
-                                         'sources': gpd.GeoDataFrame([]),
-                                         'storages_gas': gpd.GeoDataFrame([])
-                                         }),
+        'hp_data': davestructure(
+            {'hp_junctions': gpd.GeoDataFrame([]),
+             'hp_pipes': gpd.GeoDataFrame([])
+             }),
+        'mp_data': davestructure(
+            {'mp_junctions': gpd.GeoDataFrame([]),
+             'mp_pipes': gpd.GeoDataFrame([])
+             }),
+        'lp_data': davestructure(
+            {'lp_junctions': gpd.GeoDataFrame([]),
+             'lp_pipes': gpd.GeoDataFrame([])
+             }),
+        'components_gas': davestructure(
+            {'compressors': gpd.GeoDataFrame([]),
+             'sources': gpd.GeoDataFrame([]),
+             'storages_gas': gpd.GeoDataFrame([])
+             }),
         # auxillary
         'dave_version': __version__,
         'meta_data': {}
@@ -105,19 +118,22 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         **federal_state** (List of strings) - names of the target federal states
                                               it could also be choose ['ALL'] for all federal states
                                               in germany
-        **nuts_region** (List of strings) - codes of the target nuts regions (independent from nuts level)
+        **nuts_region** (List of strings) - codes of the target nuts regions (independent from nuts
+                                                                              level)
                                             it could also be choose ['ALL'] for all nuts regions
                                             in europe
         **own_area** (string) - full path to a shape file which includes own target area
                                 (e.g. "C:/Users/name/test/test.shp")
 
     OPTIONAL:
-        **power_levels** (list, default []) - this parameter defines which power levels should be considered
+        **power_levels** (list, default []) - this parameter defines which power levels should be
+                                              considered
                                               options: 'EHV','HV','MV','LV', [].
-                                              there could be choose: one level, multiple levels or 'ALL'
-        **gas_levels** (list, default []) - this parameter defines which gas levels should be considered
+                                              there could be choose: one/multiple level(s) or 'ALL'
+        **gas_levels** (list, default []) - this parameter defines which gas levels should be
+                                            considered
                                             options: 'HP','MP','LP', [].
-                                            there could be choose: one level, multiple levels or 'ALL'
+                                            there could be choose: one/multiple level(s) or 'ALL'
         **plot** (boolean, default True) - if this value is true dave creates plottings automaticly
         **convert** (boolean, default True) - if this value is true dave will be convert the grid
                                               automaticly to pandapower and pandapipes
@@ -176,10 +192,10 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         roads, roads_plot, buildings, landuse = True, True, True, True
     elif ('MV' in power_levels) or ('MP' in gas_levels):
         roads, roads_plot, buildings = True, True, False
-        landuse = True if loads is True else False  # landuse is needed for load calculation
+        landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for EHV, HV and HP
         roads, roads_plot, buildings = False, False, False
-        landuse = True if loads is True else False  # landuse is needed for load calculation
+        landuse = bool(loads)  # landuse is needed for load calculation
     file_exists, file_name = target_area(grid_data, power_levels=power_levels,
                                          gas_levels=gas_levels, postalcode=postalcode,
                                          town_name=town_name, federal_state=federal_state,
@@ -270,9 +286,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
 
     # plot informations
     if plot:
-        plot_target_area(grid_data)
+        #plot_target_area(grid_data)
         plot_grid_data(grid_data)
-        plot_landuse(grid_data)
+        #plot_landuse(grid_data)
 
     # convert into pandapower and pandapipes
     if convert and power_levels:

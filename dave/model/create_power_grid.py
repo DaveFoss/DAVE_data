@@ -1,5 +1,6 @@
 import pandapower as pp
-from shapely import geometry, ops
+from shapely.geometry import MultiLineString
+from shapely.ops import linemerge
 
 from dave.settings import dave_settings
 
@@ -44,13 +45,13 @@ def create_power_grid(grid_data):
     if not grid_data.ehv_data.ehv_lines.empty:
         for i, line in grid_data.ehv_data.ehv_lines.iterrows():
             # get line geometry coordinates
-            if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
-                merged_line = ops.linemerge(line.geometry)
+            if isinstance(line.geometry, MultiLineString):
+                merged_line = linemerge(line.geometry)
                 # sometimes line merge can not merge the lines correctly
-                if isinstance(merged_line, geometry.multilinestring.MultiLineString):
+                if isinstance(merged_line, MultiLineString):
                     line_coords = []
-                    for i in range(0, len(merged_line)):
-                        line_coords += merged_line[i].coords[:]
+                    for j in range(0, len(merged_line)):
+                        line_coords += merged_line[j].coords[:]
                 else:
                     line_coords = merged_line.coords[:]
             else:
@@ -100,13 +101,13 @@ def create_power_grid(grid_data):
     if not grid_data.hv_data.hv_lines.empty:
         for i, line in grid_data.hv_data.hv_lines.iterrows():
             # get line geometry coordinates
-            if isinstance(line.geometry, geometry.multilinestring.MultiLineString):
-                merged_line = ops.linemerge(line.geometry)
+            if isinstance(line.geometry, MultiLineString):
+                merged_line = linemerge(line.geometry)
                 # sometimes line merge can not merge the lines correctly
-                if isinstance(merged_line, geometry.multilinestring.MultiLineString):
+                if isinstance(merged_line, MultiLineString):
                     line_coords = []
-                    for i in range(0, len(merged_line)):
-                        line_coords += merged_line[i].coords[:]
+                    for j in range(0, len(merged_line)):
+                        line_coords += merged_line[j].coords[:]
                 else:
                     line_coords = merged_line.coords[:]
             else:
@@ -220,18 +221,19 @@ def create_power_grid(grid_data):
 
             # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
             # aber wie? wenn ich nur r,x,b, gegeben habe
-            pp.create_transformer_from_parameters(net,
-                                                  hv_bus=hv_bus,
-                                                  lv_bus=lv_bus,
-                                                  sn_mva=trafo.s_nom_mva,
-                                                  vn_hv_kv=trafo.voltage_kv_hv,
-                                                  vn_lv_kv=trafo.voltage_kv_lv,
-                                                  vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
-                                                  vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
-                                                  pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
-                                                  i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
-                                                  shift_degree=trafo.phase_shift,
-                                                  name=trafo.dave_name)
+            pp.create_transformer_from_parameters(
+                net,
+                hv_bus=hv_bus,
+                lv_bus=lv_bus,
+                sn_mva=trafo.s_nom_mva,
+                vn_hv_kv=trafo.voltage_kv_hv,
+                vn_lv_kv=trafo.voltage_kv_lv,
+                vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
+                vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
+                pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
+                i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
+                shift_degree=trafo.phase_shift,
+                name=trafo.dave_name)
             # additional Informations
             trafo_id = pp.get_element_index(net,
                                             element='trafo',
@@ -250,18 +252,19 @@ def create_power_grid(grid_data):
 
             # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
             # aber wie? wenn ich nur r,x,b, gegeben habe
-            pp.create_transformer_from_parameters(net,
-                                                  hv_bus=hv_bus,
-                                                  lv_bus=lv_bus,
-                                                  sn_mva=trafo.s_nom_mva,
-                                                  vn_hv_kv=trafo.voltage_kv_hv,
-                                                  vn_lv_kv=trafo.voltage_kv_lv,
-                                                  vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
-                                                  vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
-                                                  pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
-                                                  i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
-                                                  shift_degree=trafo.phase_shift,
-                                                  name=trafo.dave_name)
+            pp.create_transformer_from_parameters(
+                net,
+                hv_bus=hv_bus,
+                lv_bus=lv_bus,
+                sn_mva=trafo.s_nom_mva,
+                vn_hv_kv=trafo.voltage_kv_hv,
+                vn_lv_kv=trafo.voltage_kv_lv,
+                vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
+                vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
+                pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
+                i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
+                shift_degree=trafo.phase_shift,
+                name=trafo.dave_name)
             # additional Informations
             trafo_id = pp.get_element_index(net,
                                             element='trafo',

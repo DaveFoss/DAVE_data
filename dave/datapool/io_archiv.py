@@ -161,12 +161,14 @@ def to_archiv(grid_data):
         lv_lines = _convert_to_archiv_data(grid_data.lv_data.lv_lines)
         archiv_file.put('/lv_data/lv_lines', lv_lines)
         # components_power
-        conventional_powerplants = _convert_to_archiv_data(grid_data.components_power.conventional_powerplants)
+        conventional_powerplants = _convert_to_archiv_data(
+            grid_data.components_power.conventional_powerplants)
         archiv_file.put('/components_power/conventional_powerplants', conventional_powerplants)
-        renewable_powerplants = _convert_to_archiv_data(grid_data.components_power.renewable_powerplants)
+        renewable_powerplants = _convert_to_archiv_data(
+            grid_data.components_power.renewable_powerplants)
         archiv_file.put('/components_power/renewable_powerplants', renewable_powerplants)
-        loads = _convert_to_archiv_data(grid_data.components_power.loads)
-        archiv_file.put('/components_power/loads', loads)
+        load = _convert_to_archiv_data(grid_data.components_power.loads)
+        archiv_file.put('/components_power/loads', load)
         ehv_ehv = _convert_to_archiv_data(grid_data.components_power.transformers.ehv_ehv)
         archiv_file.put('/components_power/transformers/ehv_ehv', ehv_ehv)
         ehv_hv = _convert_to_archiv_data(grid_data.components_power.transformers.ehv_hv)
@@ -201,7 +203,8 @@ def to_archiv(grid_data):
         # close file
         archiv_file.close()
     else:
-        print(f'The dataset you tried to save already exist in the DaVe archiv with the name "{file_name}"')
+        print('The dataset you tried to save already exist in the DaVe archiv'
+              f' with the name "{file_name}"')
     return file_name
 
 
@@ -259,7 +262,8 @@ def from_archiv(dataset_name):
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_nodes)
         ehv_substations = _convert_from_archiv_data(archiv_file, '/ehv_data/ehv_substations')
         ehv_substations = gpd.GeoDataFrame(ehv_substations, crs=crs)
-        grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(ehv_substations)
+        grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
+            ehv_substations)
         # hv data
         hv_nodes = _convert_from_archiv_data(archiv_file, '/hv_data/hv_nodes')
         hv_nodes = gpd.GeoDataFrame(hv_nodes, crs=crs)
@@ -282,15 +286,17 @@ def from_archiv(dataset_name):
         lv_lines = gpd.GeoDataFrame(lv_lines, crs=crs)
         grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(lv_lines)
         # components_power
-        conventional_powerplants = _convert_from_archiv_data(archiv_file, '/components_power/conventional_powerplants')
+        conventional_powerplants = _convert_from_archiv_data(
+            archiv_file, '/components_power/conventional_powerplants')
         conventional_powerplants = gpd.GeoDataFrame(conventional_powerplants, crs=crs)
         grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(conventional_powerplants)
-        renewable_powerplants = _convert_from_archiv_data(archiv_file, '/components_power/renewable_powerplants')
+        renewable_powerplants = _convert_from_archiv_data(
+            archiv_file, '/components_power/renewable_powerplants')
         renewable_powerplants = gpd.GeoDataFrame(renewable_powerplants, crs=crs)
         grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(renewable_powerplants)
-        loads = _convert_from_archiv_data(archiv_file, '/components_power/loads')
-        loads = gpd.GeoDataFrame(loads, crs=crs)
-        grid_data.components_power.loads = grid_data.components_power.loads.append(loads)
+        load = _convert_from_archiv_data(archiv_file, '/components_power/loads')
+        load = gpd.GeoDataFrame(load, crs=crs)
+        grid_data.components_power.loads = grid_data.components_power.loads.append(load)
         ehv_ehv = _convert_from_archiv_data(archiv_file, '/components_power/transformers/ehv_ehv')
         ehv_ehv = gpd.GeoDataFrame(ehv_ehv, crs=crs)
         grid_data.components_power.transformers.ehv_ehv = grid_data.components_power.transformers.ehv_ehv.append(ehv_ehv)

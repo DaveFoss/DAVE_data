@@ -33,7 +33,8 @@ class davestructure(ADict):
                     if isinstance(self[tb][utb], davestructure):
                         r += f'\n\t   - {utb}:'
                         for uutb in list(self[tb][utb].keys()):
-                            if isinstance(self[tb][utb][uutb], pd.DataFrame) and not self[tb][utb][uutb].empty:
+                            if (isinstance(self[tb][utb][uutb], pd.DataFrame) and not
+                               self[tb][utb][uutb].empty):
                                 length = len(self[tb][utb][uutb])
                                 r += f'\n\t\t   - {uutb} ({length} {"elements" if length > 1 else "element"})'
         return r

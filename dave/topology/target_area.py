@@ -1,10 +1,10 @@
+import time
 import pandas as pd
 import geopandas as gpd
-import time
 from shapely.ops import cascaded_union, unary_union
 from shapely.geometry import Polygon, LineString, Point
 
-from dave.datapool import *
+from dave.datapool import query_osm, oep_request, read_postal, read_federal_states, archiv_inventory
 from dave.settings import dave_settings
 
 
@@ -138,7 +138,7 @@ class target_area():
                 self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             # check additionally osm relations
             landuse_rel, meta_data = query_osm('relation', target, recurse='down',
-                                    tags=[dave_settings()['landuse_tags']])
+                                               tags=[dave_settings()['landuse_tags']])
             landuse_rel.reset_index(drop=True, inplace=True)
             # add landuses from relations to landuses from ways
             landuse = landuse.append(landuse_rel)
@@ -215,8 +215,10 @@ class target_area():
                 # improve building tag with landuse parameter
                 if not landuse.empty:
                     landuse_retail = cascaded_union(landuse[landuse.landuse == 'retail'].geometry)
-                    landuse_industrial = cascaded_union(landuse[landuse.landuse == 'industrial'].geometry)
-                    landuse_commercial = cascaded_union(landuse[landuse.landuse == 'commercial'].geometry)
+                    landuse_industrial = cascaded_union(
+                        landuse[landuse.landuse == 'industrial'].geometry)
+                    landuse_commercial = cascaded_union(
+                        landuse[landuse.landuse == 'commercial'].geometry)
                     for i, building in buildings.iterrows():
                         if building.building not in (commercial):
                             if building.geometry.intersects(landuse_retail):
@@ -227,9 +229,12 @@ class target_area():
                                 buildings.at[i, 'building'] = 'commercial'
                 # write buildings into grid_data
                 buildings.set_crs(dave_settings()['crs_main'], inplace=True)
-                self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(buildings[buildings.building.isin(for_living)])
-                self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(buildings[buildings.building.isin(commercial)])
-                self.grid_data.buildings.other = self.grid_data.buildings.other.append(buildings[~buildings.building.isin(for_living+commercial)])
+                self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(
+                    buildings[buildings.building.isin(for_living)])
+                self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(
+                    buildings[buildings.building.isin(commercial)])
+                self.grid_data.buildings.other = self.grid_data.buildings.other.append(
+                    buildings[~buildings.building.isin(for_living+commercial)])
             # add time delay
             time.sleep(time_delay)
 
@@ -297,7 +302,6 @@ class target_area():
         postal_intersection = gpd.overlay(postal, self.target, how='intersection')
         # filter duplicated postal codes
         self.own_postal = postal_intersection['postalcode'].unique().tolist()
-
 
     def _target_by_town_name(self):
         """
@@ -399,7 +403,8 @@ class target_area():
                 if i == 0:
                     target = nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])]
                 else:
-                    target = target.append(nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])])
+                    target = target.append(
+                        nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])])
                 if target.empty:
                     raise ValueError('nuts region name wasn`t found. Please check your input')
         # merge multipolygons

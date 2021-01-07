@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
-import requests
 import shapely
+import requests
 
 from dave.settings import dave_settings
 
@@ -26,7 +26,8 @@ def oep_request(schema, table, where=None, geometry=None):
     """
     oep_url = 'http://oep.iks.cs.ovgu.de/'
     if where:
-        request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/?where='+where,)
+        request = requests.get(
+            oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/?where='+where,)
     else:
         request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/',)
     # convert data to dataframe
@@ -41,7 +42,8 @@ def oep_request(schema, table, where=None, geometry=None):
     if geometry:
         # --- convert into geopandas DataFrame with right crs
         # transform WKB to WKT / Geometry
-        request_data['geometry'] = request_data[geometry].apply(lambda x: shapely.wkb.loads(x, hex=True))
+        request_data['geometry'] = request_data[geometry].apply(
+            lambda x: shapely.wkb.loads(x, hex=True))
         # create geoDataFrame
         request_data = gpd.GeoDataFrame(request_data,
                                         crs=dave_settings()['crs_main'],
