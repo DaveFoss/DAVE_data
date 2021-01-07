@@ -307,9 +307,9 @@ def pp_to_json(net_power, file_path):
     """
     # convert geometry
     if not net_power.trafo.empty:
-        net_power.trafo['geometry'] = net_power.trafo.geometry.apply(lambda x: dumps(x))
+        net_power.trafo['geometry'] = net_power.trafo.geometry.apply(lambda x: dumps(x, hex=True))
     if not net_power.gen.empty:
-        net_power.gen['geometry'] = net_power.gen.geometry.apply(lambda x: dumps(x))
+        net_power.gen['geometry'] = net_power.gen.geometry.apply(lambda x: dumps(x, hex=True))
     if not net_power.sgen.empty:
-        net_power.sgen['geometry'] = net_power.sgen.geometry.apply(lambda x: dumps(x))
+        net_power.sgen['geometry'] = net_power.sgen.geometry.apply(lambda x: dumps(x, hex=True))
     to_json(net_power, filename=file_path)
