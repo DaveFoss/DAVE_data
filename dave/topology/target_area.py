@@ -1,7 +1,7 @@
 import time
 import pandas as pd
 import geopandas as gpd
-from shapely.ops import cascaded_union, unary_union
+from shapely.ops import unary_union
 from shapely.geometry import Polygon, LineString, Point
 
 from dave.datapool import query_osm, oep_request, read_postal, read_federal_states, archiv_inventory
@@ -96,7 +96,7 @@ class target_area():
                     target_area = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_area = cascaded_union(targets.geometry.tolist())
+                    target_area = unary_union(targets.geometry.tolist())
                 roads = roads[roads.geometry.intersects(target_area)]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()['crs_main'], inplace=True)
@@ -122,7 +122,7 @@ class target_area():
                     target_area = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_area = cascaded_union(targets.geometry.tolist())
+                    target_area = unary_union(targets.geometry.tolist())
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_area)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()['crs_main'], inplace=True)
@@ -155,7 +155,7 @@ class target_area():
                     target_area = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_area = cascaded_union(targets.geometry.tolist())
+                    target_area = unary_union(targets.geometry.tolist())
                 # filter landuses that touches the target area
                 landuse = landuse[landuse.geometry.intersects(target_area)]
                 # convert geometry to polygon
@@ -207,17 +207,17 @@ class target_area():
                     target_area = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_area = cascaded_union(targets.geometry.tolist())
+                    target_area = unary_union(targets.geometry.tolist())
                 buildings = buildings[buildings.geometry.intersects(target_area)]
                 # create building categories
                 for_living = dave_settings()['buildings_for_living']
                 commercial = dave_settings()['buildings_commercial']
                 # improve building tag with landuse parameter
                 if not landuse.empty:
-                    landuse_retail = cascaded_union(landuse[landuse.landuse == 'retail'].geometry)
-                    landuse_industrial = cascaded_union(
+                    landuse_retail = unary_union(landuse[landuse.landuse == 'retail'].geometry)
+                    landuse_industrial = unary_union(
                         landuse[landuse.landuse == 'industrial'].geometry)
-                    landuse_commercial = cascaded_union(
+                    landuse_commercial = unary_union(
                         landuse[landuse.landuse == 'commercial'].geometry)
                     for i, building in buildings.iterrows():
                         if building.building not in (commercial):
@@ -251,7 +251,7 @@ class target_area():
                 # check considered line surrounding for possible intersectionpoints with other lines
                 line_surr = line_geometry.buffer(1E-04)
                 lines_rel = roads[roads.geometry.crosses(line_surr)]
-                other_lines = cascaded_union(lines_rel.geometry)
+                other_lines = unary_union(lines_rel.geometry)
                 # find line intersections between considered line and other lines
                 junctions = line_geometry.intersection(other_lines)
                 if junctions.geom_type == 'Point':
@@ -486,7 +486,7 @@ class target_area():
                 for i in range(0, len(diff_targets)):
                     town = self.target[self.target.town == diff_targets.iloc[i]]
                     if len(town) > 1:
-                        border = cascaded_union(town.geometry.tolist()).convex_hull
+                        border = unary_union(town.geometry.tolist()).convex_hull
                     else:
                         border = town.iloc[0].geometry.convex_hull
                     # Obtain data from OSM
