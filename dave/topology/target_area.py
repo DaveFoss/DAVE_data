@@ -1,4 +1,5 @@
 import time
+import copy
 import pandas as pd
 import geopandas as gpd
 from shapely.ops import unary_union
@@ -242,7 +243,7 @@ class target_area():
         """
         This function searches junctions for the relevant roads in the target area
         """
-        roads = self.grid_data.roads.roads
+        roads = copy.deepcopy(self.grid_data.roads.roads)
         if not roads.empty:
             junction_points = []
             while len(roads) > 1:
