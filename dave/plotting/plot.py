@@ -171,7 +171,7 @@ def plot_grid_data(grid_data):
             lv_lines.plot(ax=ax, color='b', label='LV Lines')
         # plot mv topology
         if not mv_nodes.empty:
-            mv_nodes.plot(ax=ax, color='b', label='MV Nodes')
+            mv_nodes.plot(ax=ax, color='b', markersize=6, label='MV Nodes')
         if not mv_lines.empty:
             mv_lines.plot(ax=ax, color='b', label='MV Lines')
         """
@@ -312,7 +312,8 @@ def plot_landuse(grid_data):
     if not grid_data.landuse.empty:
         landuse_residential = grid_data.landuse[grid_data.landuse.landuse == 'residential']
         landuse_industrial = grid_data.landuse[grid_data.landuse.landuse == 'industrial']
-        landuse_commercial = grid_data.landuse[grid_data.landuse.landuse.isin(['commercial', 'retail'])]
+        landuse_commercial = grid_data.landuse[grid_data.landuse.landuse.isin(['commercial',
+                                                                               'retail'])]
         # plot target area
         ax = plot_land(grid_data['area'])
         # plot landuses

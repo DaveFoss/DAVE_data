@@ -53,7 +53,8 @@ def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
                                              'source': [sources_diff],
                                              'geometry': [plant_esource.connection_node.iloc[0]],
                                              'bus': trafo_bus_lv})
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(plant_df)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(plant_df)
 
 
 def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
@@ -94,7 +95,8 @@ def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
                                              'voltage_level': plant_esource.voltage_level.iloc[0],
                                              'geometry': [plant_esource.connection_node.iloc[0]],
                                              'bus': trafo_bus_lv})
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(plant_df)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(plant_df)
 
 
 def power_plant_lines(grid_data):
@@ -130,8 +132,7 @@ def power_plant_lines(grid_data):
                                      grid_data.target_input.power_levels[0]))
         for i, plant in plants_rel_3035.iterrows():
             plant_bus = all_nodes_3035[all_nodes_3035.dave_name == plant.bus].iloc[0]
-            bus_geometry = plant_bus.geometry
-            distance = plant.geometry.distance(bus_geometry)  # in meter
+            distance = plant.geometry.distance(plant_bus.geometry)  # in meter
             if (distance > 50) and (plant_bus.voltage_level in considered_levels):
                 # get plant coordinates in crs 4326
                 plant_geometry = plants_rel.loc[plant.name].geometry
@@ -195,20 +196,18 @@ def power_plant_lines(grid_data):
                         plant_index, 'bus'] = dave_name_bus_aux
                 # create connection line
                 bus_origin = all_nodes[all_nodes.dave_name == plant.bus].iloc[0]
-                bus_geometry = bus_origin.geometry
-                line_geometry = LineString([plant_geometry, bus_geometry])
+                line_geometry = LineString([plant_geometry, bus_origin.geometry])
                 if plant_bus.voltage_level == 1:  # (EHV)
                     ehv_lines = grid_data.ehv_data.ehv_lines
                     last_line_name = ehv_lines.iloc[len(ehv_lines)-1].dave_name
                     number = int(last_line_name.replace('line_1_', ''))+1
-                    dave_name_line_aux = f'line_1_{number}'
                     # check if there is a line neighbor
                     line_neighbor = ehv_lines[(ehv_lines.bus0 == bus_origin.dave_name) |
                                               (ehv_lines.bus1 == bus_origin.dave_name)]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
                         auxillary_line = gpd.GeoDataFrame(
-                            {'dave_name': dave_name_line_aux,
+                            {'dave_name': f'line_1_{number}',
                              'bus0': dave_name_bus_aux,
                              'bus1': bus_origin.dave_name,
                              'x_ohm': line_neighbor.x_ohm_per_km/distance,
@@ -231,14 +230,13 @@ def power_plant_lines(grid_data):
                     hv_lines = grid_data.hv_data.hv_lines
                     last_line_name = hv_lines.iloc[len(hv_lines)-1].dave_name
                     number = int(last_line_name.replace('line_3_', ''))+1
-                    dave_name_line_aux = f'line_3_{number}'
                     # check if there is a line neighbor
                     line_neighbor = hv_lines[(hv_lines.bus0 == bus_origin.dave_name) |
                                              (hv_lines.bus1 == bus_origin.dave_name)]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
                         auxillary_line = gpd.GeoDataFrame(
-                            {'dave_name': dave_name_line_aux,
+                            {'dave_name': f'line_3_{number}',
                              'bus0': dave_name_bus_aux,
                              'bus1': bus_origin.dave_name,
                              'x_ohm': line_neighbor.x_ohm_per_km/distance,
@@ -261,15 +259,14 @@ def power_plant_lines(grid_data):
                     mv_lines = grid_data.mv_data.mv_lines
                     last_line_name = mv_lines.iloc[len(mv_lines)-1].dave_name
                     number = int(last_line_name.replace('line_5_', ''))+1
-                    dave_name_line_aux = f'line_5_{number}'
                     # check if there is a line neighbor
                     line_neighbor = mv_lines[(mv_lines.from_bus == bus_origin.dave_name) |
                                              (mv_lines.to_bus == bus_origin.dave_name)]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
-                        # Diese Parameter müssen evt noch angepasst werden wenn die MV Line Daten bekannt sind
+                        # Diese Parameter noch angepasst, wenn die MV Line Daten bekannt sind
                         auxillary_line = gpd.GeoDataFrame(
-                            {'dave_name': dave_name_line_aux,
+                            {'dave_name': f'line_5_{number}',
                              'from_bus': dave_name_bus_aux,
                              'to_bus': bus_origin.dave_name,
                              'length_km': distance/1000,
@@ -283,7 +280,6 @@ def power_plant_lines(grid_data):
                     lv_lines = grid_data.lv_data.lv_lines
                     last_line_name = lv_lines.iloc[len(lv_lines)-1].dave_name
                     number = int(last_line_name.replace('line_7_', ''))+1
-                    dave_name_line_aux = f'line_7_{number}'
                     # check if there is a line neighbor
                     # line neighbor muss noch angepasst werden auf from und to bus aus lv_lines
                     line_neighbor = lv_lines[(lv_lines.from_bus == bus_origin.dave_name) |
@@ -292,7 +288,7 @@ def power_plant_lines(grid_data):
                         line_neighbor = line_neighbor.iloc[0]
                         # Diese Parameter müssen noch angepasst werden wenn lv neu berechnet wird
                         auxillary_line = gpd.GeoDataFrame(
-                            {'dave_name': dave_name_line_aux,
+                            {'dave_name': f'line_7_{number}',
                              'length_km': distance/1000,
                              'geometry': [line_geometry],
                              'voltage_kv': line_neighbor.voltage_kv,
@@ -405,7 +401,8 @@ def renewable_powerplants(grid_data):
                                          op='intersects')
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus'}, inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the lv-plants
             elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
                 if 'MV' in power_levels:
@@ -456,7 +453,8 @@ def renewable_powerplants(grid_data):
                     trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                     intersection.at[plant.name, 'bus'] = trafo_bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mvlv-plants
             elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
@@ -497,7 +495,8 @@ def renewable_powerplants(grid_data):
                                          op='intersects')
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus'}, inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mv-plants
             elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
@@ -543,7 +542,8 @@ def renewable_powerplants(grid_data):
                     trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                     intersection.at[plant.name, 'bus'] = trafo_bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the hvmv-plants
             elif 'EHV' in power_levels:
                 # In this case the Level 4 plants assigned to the nearest ehv/hv-transformer
@@ -577,7 +577,8 @@ def renewable_powerplants(grid_data):
                                          op='intersects')
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus'}, inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the hv-plants
             elif 'EHV' in power_levels:
                 # In this case the Level 3 plants are assigned to the nearest ehv/hv-transformer
@@ -603,7 +604,7 @@ def renewable_powerplants(grid_data):
 
         # --- nodes for level 2 plants (EHV/HV)
         if not renewables_ehv_hv.empty:
-            if ('HV' in power_levels) or ('EHV' in power_levels):
+            if any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 # In this case the Level 2 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[['dave_name', 'geometry']])
@@ -616,7 +617,8 @@ def renewable_powerplants(grid_data):
                     trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                     intersection.at[plant.name, 'bus'] = trafo_bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
 
         # --- nodes for level 1 plants (EHV)
         if not renewables_ehv.empty:
@@ -628,7 +630,8 @@ def renewable_powerplants(grid_data):
                                          op='intersects')
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus'}, inplace=True)
-                grid_data.components_power.renewable_powerplants = grid_data.components_power.renewable_powerplants.append(intersection)
+                grid_data.components_power.renewable_powerplants = \
+                    grid_data.components_power.renewable_powerplants.append(intersection)
         # add dave name
         grid_data.components_power.renewable_powerplants.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'ren_powerplant_{plant.voltage_level}_{x}',
@@ -747,7 +750,8 @@ def conventional_powerplants(grid_data):
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus',
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the lv-plants
             elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
                 if 'MV' in power_levels:
@@ -799,7 +803,8 @@ def conventional_powerplants(grid_data):
                     trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                     intersection.at[plant.name, 'bus'] = trafo_bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mvlv-plants
             elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
@@ -839,7 +844,8 @@ def conventional_powerplants(grid_data):
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus',
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the mv-plants
             elif any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 if 'HV' in power_levels:
@@ -887,7 +893,8 @@ def conventional_powerplants(grid_data):
                     intersection.at[plant.name, 'bus'] = trafo_bus_lv
                 #intersection = intersection.drop(columns=['index_right', 'centroid', 'trafo_name'])
                 intersection.drop(columns=['trafo_name'], inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the hvmv-plants
             elif 'EHV' in power_levels:
                 # In this case the Level 4 plants are assigned to the nearest ehv/hv-transformer
@@ -920,7 +927,8 @@ def conventional_powerplants(grid_data):
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus',
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
             # find next higher and considered voltage level to assigne the hv-plants
             elif 'EHV' in power_levels:
                 # In this case the Level 3 plants are assigned to the nearest ehv/hv-transformer
@@ -945,7 +953,7 @@ def conventional_powerplants(grid_data):
 
         # --- nodes for level 2 plants (EHV/HV)
         if not conventionals_ehv_hv.empty:
-            if ('HV' in power_levels) or ('EHV' in power_levels):
+            if any(map(lambda x: x in power_levels, ['EHV', 'HV'])):
                 # In this case the Level 2 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[['dave_name', 'geometry']])
@@ -959,7 +967,8 @@ def conventional_powerplants(grid_data):
                     trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                     intersection.at[plant.name, 'bus'] = trafo_bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
 
         # --- nodes for level 1 plants (EHV)
         if not conventionals_ehv.empty:
@@ -972,7 +981,8 @@ def conventional_powerplants(grid_data):
                 intersection.drop(columns=['index_right', 'centroid'], inplace=True)
                 intersection.rename(columns={'dave_name': 'bus',
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
-                grid_data.components_power.conventional_powerplants = grid_data.components_power.conventional_powerplants.append(intersection)
+                grid_data.components_power.conventional_powerplants = \
+                    grid_data.components_power.conventional_powerplants.append(intersection)
 
         # add dave name
         grid_data.components_power.conventional_powerplants.reset_index(drop=True, inplace=True)
@@ -1135,7 +1145,8 @@ def transformers(grid_data):
                 # drop columns with ego_id
                 ehv_ehv_trafos.drop(columns=['bus0', 'bus1'], inplace=True)
                 # add ehv/ehv trafos to grid data
-                grid_data.components_power.transformers.ehv_ehv = grid_data.components_power.transformers.ehv_ehv.append(ehv_ehv_trafos)
+                grid_data.components_power.transformers.ehv_ehv = \
+                    grid_data.components_power.transformers.ehv_ehv.append(ehv_ehv_trafos)
             ehv_hv_trafos = hv_trafos[hv_trafos.voltage_kv_lv == 110]
             ehv_hv_trafos['voltage_level'] = 2
             # add dave name trafo and connection buses
@@ -1151,14 +1162,15 @@ def transformers(grid_data):
                 hv_buses = grid_data.hv_data.hv_nodes
                 bus0_name = hv_buses[hv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
                 bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
-                #tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].tso_name
+                tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].tso_name
                 ehv_hv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
                 ehv_hv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
-                #ehv_hv_trafos.at[trafo.name, 'tso_name'] = tso_name
+                ehv_hv_trafos.at[trafo.name, 'tso_name'] = tso_name
             # change column name
             ehv_hv_trafos.drop(columns=['bus0', 'bus1'], inplace=True)
             # add ehv/ehv trafos to grid data
-            grid_data.components_power.transformers.ehv_hv = grid_data.components_power.transformers.ehv_hv.append(ehv_hv_trafos)
+            grid_data.components_power.transformers.ehv_hv = \
+                grid_data.components_power.transformers.ehv_hv.append(ehv_hv_trafos)
 
     # --- create hv/mv trafos
     if any(map(lambda x: x in power_levels, ['HV', 'MV'])):
@@ -1296,7 +1308,8 @@ def transformers(grid_data):
                                          'operator': sub.operator,
                                          'Gemeindeschluessel': sub.Gemeindeschluessel,
                                          'geometry': [sub.geometry.centroid]})
-            grid_data.components_power.transformers.hv_mv = grid_data.components_power.transformers.hv_mv.append(trafo_df)
+            grid_data.components_power.transformers.hv_mv = \
+                grid_data.components_power.transformers.hv_mv.append(trafo_df)
         # add dave name
         grid_data.components_power.transformers.hv_mv.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'trafo_4_{x}',
@@ -1400,7 +1413,8 @@ def transformers(grid_data):
                                          'ego_version': sub.ego_version,
                                          'ego_subst_id': sub.ego_subst_id,
                                          'geometry': [sub.geometry]})
-            grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
+            grid_data.components_power.transformers.mv_lv = \
+                grid_data.components_power.transformers.mv_lv.append(trafo_df)
         # add a synthetic tranformer on the first grid node if necessary
         if grid_data.components_power.transformers.mv_lv.empty:
             if 'MV' not in power_levels:
@@ -1425,7 +1439,8 @@ def transformers(grid_data):
                                              'voltage_kv_lv': [0.4],
                                              'voltage_level': [6],
                                              'geometry': [first_bus.geometry]})
-                grid_data.components_power.transformers.mv_lv = grid_data.components_power.transformers.mv_lv.append(trafo_df)
+                grid_data.components_power.transformers.mv_lv = \
+                    grid_data.components_power.transformers.mv_lv.append(trafo_df)
 
             elif 'LV' not in power_levels:
                 pass
@@ -1438,10 +1453,10 @@ def transformers(grid_data):
         grid_data.components_power.transformers.mv_lv.insert(0, 'dave_name', name)
 
 
-        # lv_nodes find closest node, hierbei wenn distanz mehr als 50 m dann leitung erstellen auf lv ebene.
-        # schauen ob bereits ein KNoten existiert (distance <=10E-05?) da die bei mv ebene schon erstellt werden,
-        # ansonsonsten knoten erstellen an dem trafo und mit dem nächsten knoten verbinden + Leitung
-        # diese zusätzzliche Leitung auch bei hv/mv trafos mit rein
+        # lv_nodes find closest node, hierbei wenn distanz mehr als 50 m dann leitung erstellen auf
+        # lv ebene. schauen ob bereits ein Knoten existiert (distance <=10E-05?) da die bei mv ebene
+        # schon erstellt werden, ansonsonsten knoten erstellen an dem trafo und mit dem nächsten
+        # knoten verbinden + Leitung diese zusätzzliche Leitung auch bei hv/mv trafos mit rein
 
 
 def get_household_power(consumption_data, household_size):
@@ -1553,11 +1568,11 @@ def loads(grid_data):
                 household_sizes = consumption_data['household_sizes']
                 sizes_feds = household_sizes[household_sizes.Bundesland == federal_state].iloc[0]
                 # household weights for considered federal state
-                w_1P = sizes_feds['Anteil 1 Person [%]']/100
-                w_2P = sizes_feds['Anteil 2 Personen [%]']/100
-                w_3P = sizes_feds['Anteil 3 Personen [%]']/100
-                w_4P = sizes_feds['Anteil 4 Personen [%]']/100
-                w_5P = sizes_feds['Anteil 5 Personen und mehr [%]']/100
+                w_1p = sizes_feds['Anteil 1 Person [%]']/100
+                w_2p = sizes_feds['Anteil 2 Personen [%]']/100
+                w_3p = sizes_feds['Anteil 3 Personen [%]']/100
+                w_4p = sizes_feds['Anteil 4 Personen [%]']/100
+                w_5p = sizes_feds['Anteil 5 Personen und mehr [%]']/100
                 # distribute the whole population over teh considered area
                 pop_distribute = area.population
                 # construct random generator
@@ -1565,9 +1580,8 @@ def loads(grid_data):
                 while pop_distribute != 0:
                     if pop_distribute > 5:
                         # select houshold size, weighted randomly
-                        household_size = rng.choice([1, 2, 3, 4, 5],
-                                                    1,
-                                                    p=[w_1P, w_2P, w_3P, w_4P, w_5P])[0]
+                        household_size = rng.choice([1, 2, 3, 4, 5], 1,
+                                                    p=[w_1p, w_2p, w_3p, w_4p, w_5p])[0]
                     else:
                         # selcet  the rest of population
                         if pop_distribute != 0:

@@ -88,8 +88,7 @@ class target_area():
             # check if there are data for roads
             if not roads.empty:
                 # define road parameters which are relevant for the grid modeling
-                relevant_columns = ['geometry', 'name', 'highway']
-                roads = roads.filter(relevant_columns)
+                roads = roads.filter(['geometry', 'name', 'highway'])
                 # consider only the linestring elements
                 roads = roads[roads.geometry.length != 0]
                 # consider only roads which intersects the target area
@@ -114,8 +113,7 @@ class target_area():
             # check if there are data for roads_plot
             if not roads_plot.empty:
                 # define road parameters which are relevant for the grid modeling
-                relevant_columns = ['geometry', 'name']
-                roads_plot = roads_plot.filter(relevant_columns)
+                roads_plot = roads_plot.filter(['geometry', 'name'])
                 # consider only the linestring elements
                 roads_plot = roads_plot[roads_plot.geometry.length != 0]
                 # consider only roads which intersects the target area
@@ -147,8 +145,7 @@ class target_area():
             # check if there are data for landuse
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
-                relevant_columns = ['landuse', 'geometry', 'name']
-                landuse = landuse.filter(relevant_columns)
+                landuse = landuse.filter(['landuse', 'geometry', 'name'])
                 # consider only the linestring elements
                 landuse = landuse[landuse.geometry.length != 0]
                 # consider only landuses which intersects the target area
@@ -162,9 +159,8 @@ class target_area():
                 # convert geometry to polygon
                 for i, land in landuse.iterrows():
                     if isinstance(land.geometry, LineString):
-                        num_coords = len(land.geometry.coords[:])
                         # A LinearRing must have at least 3 coordinate tuples
-                        if num_coords >= 3:
+                        if len(land.geometry.coords[:]) >= 3:
                             landuse.at[land.name, 'geometry'] = Polygon(land.geometry)
                         else:
                             landuse = landuse.drop([land.name])
@@ -198,9 +194,9 @@ class target_area():
             # check if there are data for buildings
             if not buildings.empty:
                 # define building parameters which are relevant for the grid modeling
-                relevant_columns = ['addr:housenumber', 'addr:street', 'addr:suburb', 'amenity',
-                                    'building', 'building:levels', 'geometry', 'name']
-                buildings = buildings.filter(relevant_columns)
+                buildings = buildings.filter(['addr:housenumber', 'addr:street', 'addr:suburb',
+                                              'amenity', 'building', 'building:levels', 'geometry',
+                                              'name'])
                 # consider only the linestring elements
                 buildings = buildings[buildings.geometry.length != 0]
                 # consider only buildings which intersects the target area
@@ -250,8 +246,7 @@ class target_area():
                 # considered line
                 line_geometry = roads.iloc[0].geometry
                 # check considered line surrounding for possible intersectionpoints with other lines
-                line_surr = line_geometry.buffer(1E-04)
-                lines_rel = roads[roads.geometry.crosses(line_surr)]
+                lines_rel = roads[roads.geometry.crosses(line_geometry.buffer(1E-04))]
                 other_lines = unary_union(lines_rel.geometry)
                 # find line intersections between considered line and other lines
                 junctions = line_geometry.intersection(other_lines)

@@ -182,10 +182,10 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         gas_levels = ['HP', 'MP', 'LP']
     # sort level inputs
     order_power = ['EHV', 'HV', 'MV', 'LV']
-    power_sort = sorted(list(map(lambda x: order_power.index(x), power_levels)))
+    power_sort = sorted(list(map(order_power.index, power_levels)))
     power_levels = list(map(lambda x: order_power[x], power_sort))
     order_gas = ['HP', 'MP', 'LP']
-    gas_sort = sorted(list(map(lambda x: order_gas.index(x), gas_levels)))
+    gas_sort = sorted(list(map(order_gas.index, gas_levels)))
     gas_levels = list(map(lambda x: order_gas[x], gas_sort))
     # --- create target area informations
     if ('LV' in power_levels) or ('LP' in gas_levels):
@@ -286,7 +286,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
 
     # plot informations
     if plot:
-        #plot_target_area(grid_data)
+        if 'LV' in power_levels:
+            plot_target_area(grid_data)
         plot_grid_data(grid_data)
         #plot_landuse(grid_data)
 

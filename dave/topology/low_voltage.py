@@ -60,8 +60,7 @@ def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=
     nearest_points = gpd.GeoSeries([])
     for centroid in building_centroids:
         # create radial lines for searching
-        line = LineString([(centroid.x, centroid.y),
-                           (centroid.x, centroid.y+line_length)])
+        line = LineString([(centroid.x, centroid.y), (centroid.x, centroid.y+line_length)])
         line_rad = [
             affinity.rotate(line, i, (centroid.x, centroid.y)) for i in range(0, 360, line_ankle)]
         multiline_rad = ops.cascaded_union(line_rad)
@@ -91,7 +90,7 @@ def line_connections(grid_data):
     road_junctions = grid_data.roads.road_junctions
     all_nodes = pd.concat([nearest_building_point, road_junctions]).drop_duplicates()
     # search line connections
-    line_connections = []
+    line_connect = []
     for i, road in grid_data.roads.roads.iterrows():
         road_course = road.geometry.coords[:]
         # change road direction to become a uniformly road style
@@ -142,12 +141,12 @@ def line_connections(grid_data):
                 line_points.append(grid_nodes_sort[j+1])  # end point
                 # create a lineString and add them to the line connection list
                 line_connection = LineString(line_points)
-                line_connections.append(line_connection)
-    line_connections = gpd.GeoSeries(line_connections, crs=dave_settings()['crs_main'])
+                line_connect.append(line_connection)
+    line_connect = gpd.GeoSeries(line_connect, crs=dave_settings()['crs_main'])
     # calculate line length
-    line_connections_3035 = line_connections.to_crs(dave_settings()['crs_meter'])
+    line_connections_3035 = line_connect.to_crs(dave_settings()['crs_meter'])
     line_length = line_connections_3035.length
-    lines_gdf = gpd.GeoDataFrame({'geometry': line_connections,
+    lines_gdf = gpd.GeoDataFrame({'geometry': line_connect,
                                   'line_type': 'line_connections',
                                   'length_km': line_length/1000,
                                   'voltage_kv': 0.4,

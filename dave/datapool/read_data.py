@@ -33,7 +33,7 @@ def read_postal():
     """
     postalger = pd.read_hdf(get_data_path('postalger.h5', 'data'))
     # convert geometry
-    postalger['geometry'] = postalger.geometry.apply(lambda x: loads(x))
+    postalger['geometry'] = postalger.geometry.apply(loads)
     postalger = gpd.GeoDataFrame(postalger, crs=dave_settings()['crs_main'])
     # read meta data
     meta_data = pd.read_excel(get_data_path('postalger_meta.xlsx', 'data'), sheet_name=None)
@@ -54,7 +54,7 @@ def read_federal_states():
          postal = data.read_federal_states()
     """
     federalstatesger = pd.read_hdf(get_data_path('federalstatesger.h5', 'data'))
-    federalstatesger['geometry'] = federalstatesger.geometry.apply(lambda x: loads(x))
+    federalstatesger['geometry'] = federalstatesger.geometry.apply(loads)
     federalstatesger = gpd.GeoDataFrame(federalstatesger, crs=dave_settings()['crs_main'])
     # read meta data
     meta_data = pd.read_excel(get_data_path('federalstatesger_meta.xlsx', 'data'), sheet_name=None)
@@ -78,7 +78,7 @@ def read_ehv_data():
     ehv_data = pd.HDFStore(get_data_path('ehv_data.h5', 'data'))
     # get the individual Data Frames
     ehv_nodes = ehv_data.get('/ehv_nodes')
-    ehv_nodes['geometry'] = ehv_nodes.geometry.apply(lambda x: loads(x))
+    ehv_nodes['geometry'] = ehv_nodes.geometry.apply(loads)
     ehv_nodes = gpd.GeoDataFrame(ehv_nodes, crs=dave_settings()['crs_main'])
     ehv_node_changes = ehv_data.get('/ehv_node_changes')
     ehv_lines = ehv_data.get('/ehv_lines')
@@ -117,29 +117,29 @@ def read_hp_data():
     data_crs = 'EPSG:31468'
     # nodes
     hp_nodes = hp_data.get('/nodes')
-    hp_nodes['geometry'] = hp_nodes.geometry.apply(lambda x: loads(x))
+    hp_nodes['geometry'] = hp_nodes.geometry.apply(loads)
     hp_nodes = gpd.GeoDataFrame(hp_nodes, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # pipelines
     hp_pipelines = hp_data.get('/pipelines')
-    hp_pipelines['geometry'] = hp_pipelines.geometry.apply(lambda x: loads(x))
+    hp_pipelines['geometry'] = hp_pipelines.geometry.apply(loads)
     hp_pipelines = gpd.GeoDataFrame(hp_pipelines, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # production
     hp_production = hp_data.get('/production')
-    hp_production['geometry'] = hp_production.geometry.apply(lambda x: loads(x))
+    hp_production['geometry'] = hp_production.geometry.apply(loads)
     hp_production = gpd.GeoDataFrame(hp_production,
                                      crs=data_crs).to_crs(dave_settings()['crs_main'])
     # industry
     hp_industry = hp_data.get('/industry')
-    hp_industry['geometry'] = hp_industry.geometry.apply(lambda x: loads(x))
+    hp_industry['geometry'] = hp_industry.geometry.apply(loads)
     hp_industry = gpd.GeoDataFrame(hp_industry,
                                    crs=data_crs).to_crs(dave_settings()['crs_main'])
     # storgae
     hp_storages = hp_data.get('/storages')
-    hp_storages['geometry'] = hp_storages.geometry.apply(lambda x: loads(x))
+    hp_storages['geometry'] = hp_storages.geometry.apply(loads)
     hp_storages = gpd.GeoDataFrame(hp_storages, crs=data_crs).to_crs(dave_settings()['crs_main'])
     # gas demand total
     hp_gas_demand_total = hp_data.get('/gas_demand_total')
-    hp_gas_demand_total['geometry'] = hp_gas_demand_total.geometry.apply(lambda x: loads(x))
+    hp_gas_demand_total['geometry'] = hp_gas_demand_total.geometry.apply(loads)
     hp_gas_demand_total = gpd.GeoDataFrame(hp_gas_demand_total,
                                            crs=data_crs).to_crs(dave_settings()['crs_main'])
     # close file
@@ -274,8 +274,8 @@ def read_scigridgas_igginl():
                              crs=dave_settings()['crs_main'])
     # pipe_segments
     pipe_segments = igginl_data.get('/pipe_segments')
-    pipe_segments.lat = pipe_segments.lat.apply(lambda x: eval(x))
-    pipe_segments.long = pipe_segments.long.apply(lambda x: eval(x))
+    pipe_segments.lat = pipe_segments.lat.apply(eval)
+    pipe_segments.long = pipe_segments.long.apply(eval)
     geometry = []
     for i, pipe in pipe_segments.iterrows():
         geometry.append(LineString(list(zip(pipe.long, pipe.lat))))

@@ -1,7 +1,7 @@
+import math
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
-import math
 
 from dave.datapool import read_ehv_data, oep_request
 from dave.settings import dave_settings
