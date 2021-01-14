@@ -33,52 +33,6 @@ def nearest_road(building_centroids, roads):
     return building_connections
 
 
-def nearest_road_radial(building_centroids, roads, line_length=2E-3, line_ankle=10):
-    """
-    Old function, the nearest_road function is faster.
-
-    This function finds the shortest way between the building centroids and a road. For this the
-    Method uses radial lines which start from the building centroid. From that there are many
-    intersections between the radial lines and the roads. At the last step the intersection point
-    with the shortest distance to the building centroid will be searched.
-
-    INPUT:
-        **building centroids** (GeoDataSeries) - buildings in the target area
-        **roads** (GeoDataFrame) - relevant roads in the target area
-
-    OPTIONAL:
-        **line length** (float, default 2E-3) - defines the length auf the radial lines
-        **line amkle** (float, default 10) - defines ankle between the radial lines
-
-    OUTPUT:
-        **building connections** (DataFrame) - DataFrame includes the shortest connection to a road
-                                               for each building centroid
-    """
-    # create multistring of relevant roads and intersect radial lines with it
-    multiline_roads = ops.cascaded_union(roads.geometry)
-    # finding nearest connection between the building centroids and the roads
-    nearest_points = gpd.GeoSeries([])
-    for centroid in building_centroids:
-        # create radial lines for searching
-        line = LineString([(centroid.x, centroid.y), (centroid.x, centroid.y+line_length)])
-        line_rad = [
-            affinity.rotate(line, i, (centroid.x, centroid.y)) for i in range(0, 360, line_ankle)]
-        multiline_rad = ops.cascaded_union(line_rad)
-        points_int = multiline_roads.intersection(multiline_rad)
-        if not points_int:
-            # if there is no intersection point set it equal the building point
-            points_int = centroid
-        # finding nearest point
-        point_near = ops.nearest_points(centroid, points_int)[1]
-        # write data in  series
-
-        building_index = building_centroids[building_centroids == centroid].index[0]
-        nearest_points[building_index] = point_near
-    building_connections = pd.concat([building_centroids, nearest_points], axis=1)
-    building_connections.columns = ['building_centroid', 'nearest_point']
-    return building_connections
-
-
 def line_connections(grid_data):
     """
     This function creates the line connections between the building lines (Points on the roads)
@@ -199,8 +153,8 @@ def create_lv_topology(grid_data):
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries([], crs='EPSG:4326')
     for i, connection in building_connections.iterrows():
-        line_build = LineString([connection['building_centroid'], connection['nearest_point']])
-        line_buildings[i] = line_build
+        line_buildings[i] = LineString([connection['building_centroid'],
+                                        connection['nearest_point']])
     # calculate line length
     line_buildings = line_buildings.set_crs(dave_settings()['crs_main'])
     line_buildings_3035 = line_buildings.to_crs(dave_settings()['crs_meter'])
