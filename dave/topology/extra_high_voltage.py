@@ -84,12 +84,10 @@ def create_ehv_topology(grid_data):
         # assign tso ehv node names to the ego ehv nodes
         for i, node in ehv_data['ehv_nodes'].iterrows():
             if node.osm_id:
-                # search for the matching ego ehv substation for the tso ehv node
-                node_osm_id = 'w'+node.osm_id
-                substation = ehv_substations[ehv_substations.osm_id == node_osm_id]
+                substation = ehv_substations[ehv_substations.osm_id == 'w'+node.osm_id]
                 if not substation.empty:
-                    substation_id = substation.iloc[0].ego_subst_id
-                    ehv_buses_index = ehv_buses[ehv_buses.ego_subst_id == substation_id].index
+                    ehv_buses_index = ehv_buses[
+                        ehv_buses.ego_subst_id == substation.iloc[0].ego_subst_id].index
                     for index in ehv_buses_index:
                         ehv_buses.at[index, 'tso_name'] = node[
                             'name'].replace('_380', '').replace('_220', '')
@@ -113,8 +111,8 @@ def create_ehv_topology(grid_data):
             area = grid_data.area
         ehv_buses_tso = gpd.overlay(ehv_data['ehv_nodes'], area, how='intersection')
         for i, tso_bus in ehv_buses_tso.iterrows():
-            if tso_bus['name'].replace('_380', '').replace('_220', '') not in ehv_buses_tso_names:
-                tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
+            tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
+            if tso_name not in ehv_buses_tso_names:
                 ehv_buses = ehv_buses.append(gpd.GeoDataFrame({'voltage_kv': tso_bus.voltage_kv,
                                                                'geometry': [tso_bus.geometry],
                                                                'subst_name': tso_bus.name_osm,
@@ -204,7 +202,6 @@ def create_ehv_topology(grid_data):
                 from_bus = from_bus[from_bus.voltage_kv == line.vn_kv]
                 to_bus = to_bus[to_bus.voltage_kv == line.vn_kv]
                 if (not from_bus.empty) and (not to_bus.empty):
-                    geometry = LineString([from_bus.iloc[0].geometry, to_bus.iloc[0].geometry])
                     ehv_lines = ehv_lines.append(gpd.GeoDataFrame(
                         {'bus0': from_bus.iloc[0].dave_name,
                          'bus1': to_bus.iloc[0].dave_name,
@@ -217,7 +214,8 @@ def create_ehv_topology(grid_data):
                          'c_nf': line.c_uf,
                          'c_nf_per_km': line.c_nf_per_km,
                          'length_km': line.length_km,
-                         'geometry': [geometry],
+                         'geometry': [LineString([from_bus.iloc[0].geometry,
+                                                  to_bus.iloc[0].geometry])],
                          'voltage_kv': line.vn_kv,
                          'max_i_ka': line.max_i_ka,
                          'source': 'tso data',

@@ -1,6 +1,6 @@
 import geopandas as gpd
 from shapely.geometry import Point, LineString, MultiPoint
-from shapely import ops, affinity
+from shapely.ops import nearest_points, cascaded_union
 import pandas as pd
 
 from dave.settings import dave_settings
@@ -20,15 +20,14 @@ def nearest_road(building_centroids, roads):
 
     """
     # create multistring of relevant roads and intersect radial lines with it
-    multiline_roads = ops.cascaded_union(roads.geometry)
+    multiline_roads = cascaded_union(roads.geometry)
     # finding nearest connection between the building centroids and the roads
-    nearest_points = gpd.GeoSeries([])
+    near_points = gpd.GeoSeries([])
     for centroid in building_centroids:
         # finding nearest point
-        point_near = ops.nearest_points(centroid, multiline_roads)[1]
         building_index = building_centroids[building_centroids == centroid].index[0]
-        nearest_points[building_index] = point_near
-    building_connections = pd.concat([building_centroids, nearest_points], axis=1)
+        near_points[building_index] = nearest_points(centroid, multiline_roads)[1]
+    building_connections = pd.concat([building_centroids, near_points], axis=1)
     building_connections.columns = ['building_centroid', 'nearest_point']
     return building_connections
 
@@ -41,8 +40,8 @@ def line_connections(grid_data):
     # define relevant nodes
     nearest_building_point = gpd.GeoSeries(grid_data.lv_data.lv_nodes[
         grid_data.lv_data.lv_nodes.node_type == 'nearest_point'].geometry)
-    road_junctions = grid_data.roads.road_junctions
-    all_nodes = pd.concat([nearest_building_point, road_junctions]).drop_duplicates()
+    all_nodes = pd.concat([nearest_building_point,
+                           grid_data.roads.road_junctions]).drop_duplicates()
     # search line connections
     line_connect = []
     for i, road in grid_data.roads.roads.iterrows():
@@ -64,7 +63,7 @@ def line_connections(grid_data):
             while len(grid_nodes) > 1:  # sort nodes by their sequenz along the road
                 start_node = Point(grid_nodes.pop(node_index))
                 grid_nodes_points = MultiPoint(grid_nodes)
-                next_node = ops.nearest_points(start_node, grid_nodes_points)[1]
+                next_node = nearest_points(start_node, grid_nodes_points)[1]
                 grid_nodes_sort.append(next_node.coords[:][0])
                 node_index = grid_nodes.index(next_node.coords[:][0])
             # build lines to connect the all grid nodes with each other
@@ -74,8 +73,8 @@ def line_connections(grid_data):
                 start_point = Point(grid_nodes_sort[j])
                 end_point = Point(grid_nodes_sort[j+1])
                 # find nearest points to them
-                start_nearest = ops.nearest_points(start_point, road_points)[1]
-                end_nearest = ops.nearest_points(end_point, road_points)[1]
+                start_nearest = nearest_points(start_point, road_points)[1]
+                end_nearest = nearest_points(end_point, road_points)[1]
                 # find road index
                 for point in road_course:
                     if point[0] == start_nearest.x:
@@ -94,8 +93,7 @@ def line_connections(grid_data):
                     line_points.append(road_course[p])
                 line_points.append(grid_nodes_sort[j+1])  # end point
                 # create a lineString and add them to the line connection list
-                line_connection = LineString(line_points)
-                line_connect.append(line_connection)
+                line_connect.append(LineString(line_points))
     line_connect = gpd.GeoSeries(line_connect, crs=dave_settings()['crs_main'])
     # calculate line length
     line_connections_3035 = line_connect.to_crs(dave_settings()['crs_meter'])
@@ -151,17 +149,16 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
     grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
     # --- create lines for building connections
-    line_buildings = gpd.GeoSeries([], crs='EPSG:4326')
-    for i, connection in building_connections.iterrows():
-        line_buildings[i] = LineString([connection['building_centroid'],
-                                        connection['nearest_point']])
+    line_buildings = gpd.GeoSeries(list(map(lambda x, y: LineString([x, y]),
+                                            building_connections['building_centroid'],
+                                            building_connections['nearest_point'])),
+                                   crs='EPSG:4326')
     # calculate line length
     line_buildings = line_buildings.set_crs(dave_settings()['crs_main'])
     line_buildings_3035 = line_buildings.to_crs(dave_settings()['crs_meter'])
-    line_length = line_buildings_3035.length
     line_gdf = gpd.GeoDataFrame({'geometry': line_buildings,
                                  'line_type': 'line_buildings',
-                                 'length_km': line_length/1000,
+                                 'length_km': line_buildings_3035.length/1000,
                                  'voltage_kv': 0.4,
                                  'voltage_level': 7,
                                  'source': 'dave internal'})
@@ -197,41 +194,41 @@ def create_lv_topology(grid_data):
                 distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
                 if distance.min() < 1E-04:
                     # road junction node was found
-                    road_junction_idx = distance[distance == distance.min()].index[0]
-                    dave_name = road_junctions_grid.loc[road_junction_idx].dave_name
+                    dave_name = road_junctions_grid.loc[
+                        distance[distance == distance.min()].index[0]].dave_name
                 else:
                     # no road junction was found, create it from road junction data
                     distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
                     if distance.min() < 1E-04:
-                        road_junction_idx = distance[distance == distance.min()].index[0]
-                        road_junction_geom = road_junctions_origin.loc[road_junction_idx]
+                        road_junction_geom = road_junctions_origin.loc[
+                            distance[distance == distance.min()].index[0]]
                         # create lv_point for relevant road junction
                         dave_number = int(grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[
                             0].replace('node_7_', ''))
-                        dave_name = 'node_7_' + str(dave_number+1)
-                        junction_point_gdf = gpd.GeoDataFrame({'geometry': [road_junction_geom],
-                                                               'dave_name': dave_name,
-                                                               'node_type': 'road_junction',
-                                                               'voltage_level': 7,
-                                                               'voltage_kv': 0.4,
-                                                               'source': 'dave internal'})
+                        junction_point_gdf = gpd.GeoDataFrame(
+                            {'geometry': [road_junction_geom],
+                             'dave_name': 'node_7_' + str(dave_number+1),
+                             'node_type': 'road_junction',
+                             'voltage_level': 7,
+                             'voltage_kv': 0.4,
+                             'source': 'dave internal'})
                         grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
                             junction_point_gdf)
             else:
                 distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
                 if distance.min() < 1E-04:
-                    road_junction_idx = distance[distance == distance.min()].index[0]
-                    road_junction_geom = road_junctions_origin.loc[road_junction_idx]
+                    road_junction_geom = road_junctions_origin.loc[
+                        distance[distance == distance.min()].index[0]]
                     # create lv_point for relevant road junction
                     dave_number = int(grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[
                         0].replace('node_7_', ''))
-                    dave_name = 'node_7_' + str(dave_number+1)
-                    junction_point_gdf = gpd.GeoDataFrame({'geometry': [road_junction_geom],
-                                                           'dave_name': dave_name,
-                                                           'node_type': 'road_junction',
-                                                           'voltage_level': 7,
-                                                           'voltage_kv': 0.4,
-                                                           'source': 'dave internal'})
+                    junction_point_gdf = gpd.GeoDataFrame(
+                        {'geometry': [road_junction_geom],
+                         'dave_name': 'node_7_' + str(dave_number+1),
+                         'node_type': 'road_junction',
+                         'voltage_level': 7,
+                         'voltage_kv': 0.4,
+                         'source': 'dave internal'})
                     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
                         junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'from_bus'] = dave_name
@@ -246,41 +243,41 @@ def create_lv_topology(grid_data):
                 distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
                 if distance.min() < 1E-04:
                     # road junction node was found
-                    road_junction_idx = distance[distance == distance.min()].index[0]
-                    dave_name = road_junctions_grid.loc[road_junction_idx].dave_name
+                    dave_name = road_junctions_grid.loc[
+                        distance[distance == distance.min()].index[0]].dave_name
                 else:
                     # no road junction was found, create it from road junction data
                     distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
                     if distance.min() < 1E-04:
-                        road_junction_idx = distance[distance == distance.min()].index[0]
-                        road_junction_geom = road_junctions_origin.loc[road_junction_idx]
+                        road_junction_geom = road_junctions_origin.loc[
+                            distance[distance == distance.min()].index[0]]
                         # create lv_point for relevant road junction
                         dave_number = int(grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[
                             0].replace('node_7_', ''))
-                        dave_name = 'node_7_' + str(dave_number+1)
-                        junction_point_gdf = gpd.GeoDataFrame({'geometry': [road_junction_geom],
-                                                               'dave_name': dave_name,
-                                                               'node_type': 'road_junction',
-                                                               'voltage_level': 7,
-                                                               'voltage_kv': 0.4,
-                                                               'source': 'dave internal'})
+                        junction_point_gdf = gpd.GeoDataFrame(
+                            {'geometry': [road_junction_geom],
+                             'dave_name': 'node_7_' + str(dave_number+1),
+                             'node_type': 'road_junction',
+                             'voltage_level': 7,
+                             'voltage_kv': 0.4,
+                             'source': 'dave internal'})
                         grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
                             junction_point_gdf)
             else:
                 distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
                 if distance.min() < 1E-04:
-                    road_junction_idx = distance[distance == distance.min()].index[0]
-                    road_junction_geom = road_junctions_origin.loc[road_junction_idx]
+                    road_junction_geom = road_junctions_origin.loc[
+                        distance[distance == distance.min()].index[0]]
                     # create lv_point for relevant road junction
                     dave_number = int(grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[
                         0].replace('node_7_', ''))
-                    dave_name = 'node_7_' + str(dave_number+1)
-                    junction_point_gdf = gpd.GeoDataFrame({'geometry': [road_junction_geom],
-                                                           'dave_name': dave_name,
-                                                           'node_type': 'road_junction',
-                                                           'voltage_level': 7,
-                                                           'voltage_kv': 0.4,
-                                                           'source': 'dave internal'})
+                    junction_point_gdf = gpd.GeoDataFrame(
+                        {'geometry': [road_junction_geom],
+                         'dave_name': 'node_7_' + str(dave_number+1),
+                         'node_type': 'road_junction',
+                         'voltage_level': 7,
+                         'voltage_kv': 0.4,
+                         'source': 'dave internal'})
                     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
                         junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = dave_name

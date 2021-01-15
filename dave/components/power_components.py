@@ -3,9 +3,9 @@ import copy
 import geopandas as gpd
 import pandas as pd
 from geopy.geocoders import ArcGIS
-import shapely
+from shapely import wkb
 from shapely.geometry import Point, MultiPoint, LineString, Polygon
-from shapely.ops import polygonize, cascaded_union
+from shapely.ops import polygonize, cascaded_union, nearest_points
 import numpy as np
 
 
@@ -44,13 +44,12 @@ def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
         for esource in energy_sources:
             plant_esource = plants_area[plants_area.generation_type == esource]
             if not plant_esource.empty:
-                sources_diff = list(set(plant_esource.source.tolist()))
                 plant_power = pd.to_numeric(plant_esource.electrical_capacity_kw, downcast='float')
                 plant_df = gpd.GeoDataFrame({'aggregated': aggregate_name,
                                              'electrical_capacity_kw': plant_power.sum(),
                                              'generation_type': esource,
                                              'voltage_level': plant_esource.voltage_level.iloc[0],
-                                             'source': [sources_diff],
+                                             'source': [list(set(plant_esource.source.tolist()))],
                                              'geometry': [plant_esource.connection_node.iloc[0]],
                                              'bus': trafo_bus_lv})
                 grid_data.components_power.renewable_powerplants = \
@@ -343,8 +342,8 @@ def renewable_powerplants(grid_data):
         renewables.drop(columns=['id', 'gps_accuracy', 'geom'], inplace=True)
         renewables['lon'] = renewables['lon'].astype(float)
         renewables['lat'] = renewables['lat'].astype(float)
-        renewables = renewables.rename(columns={'electrical_capacity': 'electrical_capacity_kw',
-                                                'thermal_capacity': 'thermal_capacity_kw'})
+        renewables.rename(columns={'electrical_capacity': 'electrical_capacity_kw',
+                                   'thermal_capacity': 'thermal_capacity_kw'}, inplace=True)
         # change voltage level to numbers
         for i, plant in renewables.iterrows():
             if plant.voltage_level:
@@ -450,8 +449,8 @@ def renewable_powerplants(grid_data):
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.mv_lv
                 for i, plant in intersection.iterrows():
-                    trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
-                    intersection.at[plant.name, 'bus'] = trafo_bus_lv
+                    intersection.at[plant.name, 'bus'] = trafos[
+                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
@@ -539,8 +538,8 @@ def renewable_powerplants(grid_data):
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.hv_mv
                 for i, plant in intersection.iterrows():
-                    trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
-                    intersection.at[plant.name, 'bus'] = trafo_bus_lv
+                    intersection.at[plant.name, 'bus'] = trafos[
+                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
@@ -614,8 +613,8 @@ def renewable_powerplants(grid_data):
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.ehv_hv
                 for i, plant in intersection.iterrows():
-                    trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
-                    intersection.at[plant.name, 'bus'] = trafo_bus_lv
+                    intersection.at[plant.name, 'bus'] = trafos[
+                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
@@ -695,11 +694,9 @@ def conventional_powerplants(grid_data):
             elif plant.voltage == '6\n20':
                 conventionals.at[plant.name, 'voltage'] = 'Werknetz'
         # drop plants with no defined voltage, plants at factory networks and shutdowned plants
-        drop_plants = conventionals[
-            conventionals.voltage.isin(['Werknetz', 'None'])].index.to_list()
-        drop_plants = drop_plants + conventionals[
-            conventionals.status == 'shutdown'].index.to_list()
-        conventionals.drop(drop_plants, inplace=True)
+        conventionals.drop(conventionals[conventionals.voltage.isin(
+            ['Werknetz', 'None'])].index.to_list() + conventionals[
+                conventionals.status == 'shutdown'].index.to_list(), inplace=True)
         # add voltage level
         for i, plant in conventionals.iterrows():
             if plant.voltage == 'HS':
@@ -800,8 +797,8 @@ def conventional_powerplants(grid_data):
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.mv_lv
                 for i, plant in intersection.iterrows():
-                    trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
-                    intersection.at[plant.name, 'bus'] = trafo_bus_lv
+                    intersection.at[plant.name, 'bus'] = trafos[
+                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
                     grid_data.components_power.conventional_powerplants.append(intersection)
@@ -889,8 +886,8 @@ def conventional_powerplants(grid_data):
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.hv_mv
                 for i, plant in intersection.iterrows():
-                    trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
-                    intersection.at[plant.name, 'bus'] = trafo_bus_lv
+                    intersection.at[plant.name, 'bus'] = trafos[
+                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                 #intersection = intersection.drop(columns=['index_right', 'centroid', 'trafo_name'])
                 intersection.drop(columns=['trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
@@ -964,8 +961,8 @@ def conventional_powerplants(grid_data):
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.ehv_hv
                 for i, plant in intersection.iterrows():
-                    trafo_bus_lv = trafos[trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
-                    intersection.at[plant.name, 'bus'] = trafo_bus_lv
+                    intersection.at[plant.name, 'bus'] = trafos[
+                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
                     grid_data.components_power.conventional_powerplants.append(intersection)
@@ -1018,10 +1015,8 @@ def transformers(grid_data):
                                   's_nom': 's_nom_mva'}, inplace=True)
         hv_trafos = hv_trafos[hv_trafos.ego_scn_name == 'Status Quo']
         # change geometry to point because in original data the geometry was lines with length 0
-        for i, trafo in hv_trafos.iterrows():
-            trafo_point = Point(trafo.geometry[0].coords[:][0][0],
-                                trafo.geometry[0].coords[:][0][1])
-            hv_trafos.at[trafo.name, 'geometry'] = trafo_point
+        hv_trafos['geometry'] = hv_trafos.geometry.apply(lambda x: Point(x[0].coords[:][0][0],
+                                                                         x[0].coords[:][0][1]))
         # check for transformer in the target area
         hv_trafos = gpd.overlay(hv_trafos, grid_data.area, how='intersection')
         if not hv_trafos.empty:
@@ -1057,20 +1052,17 @@ def transformers(grid_data):
                 ehv_bus1 = grid_data.ehv_data.ehv_nodes[
                     grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1]
                 if not ehv_bus0.empty:
-                    ehv_bus_index0 = ehv_bus0.index[0]
                     hv_trafos.at[trafo.name, 'voltage_kv_lv'] = grid_data.ehv_data.ehv_nodes.loc[
-                        ehv_bus_index0].voltage_kv
+                        ehv_bus0.index[0]].voltage_kv
                 if not ehv_bus1.empty:
-                    ehv_bus_index1 = ehv_bus1.index[0]
                     hv_trafos.at[trafo.name, 'voltage_kv_hv'] = grid_data.ehv_data.ehv_nodes.loc[
-                        ehv_bus_index1].voltage_kv
+                        ehv_bus1.index[0]].voltage_kv
                 if ('HV' not in power_levels) and (ehv_bus0.empty):
                     hv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([110])]
                     hv_bus0 = hv_buses[hv_buses.ego_bus_id == trafo.bus0]
                     if not hv_bus0.empty:
-                        hv_bus_index0 = hv_bus0.index[0]
                         hv_trafos.at[trafo.name, 'voltage_kv_lv'] = hv_buses.loc[
-                            hv_bus_index0].voltage_kv
+                            hv_bus0.index[0]].voltage_kv
                         # check if node allready exsist, otherwise create them
                         if grid_data.hv_data.hv_nodes.empty:
                             hv_bus0['voltage_level'] = 3
@@ -1087,16 +1079,14 @@ def transformers(grid_data):
                 hv_bus0 = grid_data.hv_data.hv_nodes[
                     grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0]
                 if not hv_bus0.empty:
-                    hv_bus_index0 = hv_bus0.index[0]
                     hv_trafos.at[trafo.name, 'voltage_kv_lv'] = grid_data.hv_data.hv_nodes.loc[
-                        hv_bus_index0].voltage_kv
+                        hv_bus0.index[0]].voltage_kv
                 if ('EHV' not in power_levels) and (not hv_bus0.empty):
                     ehv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([380, 220])]
                     ehv_bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1]
                     if not ehv_bus1.empty:
-                        ehv_bus_index1 = ehv_bus1.index[0]
                         hv_trafos.at[trafo.name, 'voltage_kv_hv'] = ehv_buses.loc[
-                            ehv_bus_index1].voltage_kv
+                            ehv_bus1.index[0]].voltage_kv
                         # check if node allready exsist, otherwise create them
                         if grid_data.ehv_data.ehv_nodes.empty:
                             ehv_bus1['voltage_level'] = 1
@@ -1121,6 +1111,8 @@ def transformers(grid_data):
             grid_data.ehv_data.ehv_nodes.insert(0, 'dave_name', name)
         # write transformator data in grid data and decied the grid level depending on voltage level
         if not hv_trafos.empty:
+            ehv_buses = grid_data.ehv_data.ehv_nodes
+            hv_buses = grid_data.hv_data.hv_nodes
             if 'EHV' in power_levels:
                 ehv_ehv_trafos = hv_trafos[hv_trafos.voltage_kv_lv.isin([380, 220])]
                 ehv_ehv_trafos['voltage_level'] = 1
@@ -1133,15 +1125,12 @@ def transformers(grid_data):
                 for i, trafo in ehv_ehv_trafos.iterrows():
                     ehv_ehv_trafos.at[trafo.name, 'dave_name'] = f'trafo_1_{i}'
                     # search for bus dave name and replace ego id
-                    ehv_buses = grid_data.ehv_data.ehv_nodes
-                    bus0_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
-                    bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
-                    subst_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].subst_name
-                    tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0].tso_name
-                    ehv_ehv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
-                    ehv_ehv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
-                    ehv_ehv_trafos.at[trafo.name, 'substation_name'] = subst_name
-                    ehv_ehv_trafos.at[trafo.name, 'tso_name'] = tso_name
+                    bus0 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0]
+                    bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0]
+                    ehv_ehv_trafos.at[trafo.name, 'bus_lv'] = bus0.dave_name
+                    ehv_ehv_trafos.at[trafo.name, 'bus_hv'] = bus1.dave_name
+                    ehv_ehv_trafos.at[trafo.name, 'substation_name'] = bus0.subst_name
+                    ehv_ehv_trafos.at[trafo.name, 'tso_name'] = bus0.tso_name
                 # drop columns with ego_id
                 ehv_ehv_trafos.drop(columns=['bus0', 'bus1'], inplace=True)
                 # add ehv/ehv trafos to grid data
@@ -1158,14 +1147,12 @@ def transformers(grid_data):
             for i, trafo in ehv_hv_trafos.iterrows():
                 ehv_hv_trafos.at[trafo.name, 'dave_name'] = f'trafo_2_{i}'
                 # search for bus dave name and replace ego id
-                ehv_buses = grid_data.ehv_data.ehv_nodes
-                hv_buses = grid_data.hv_data.hv_nodes
-                bus0_name = hv_buses[hv_buses.ego_bus_id == trafo.bus0].iloc[0].dave_name
-                bus1_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].dave_name
-                tso_name = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0].tso_name
-                ehv_hv_trafos.at[trafo.name, 'bus_lv'] = bus0_name
-                ehv_hv_trafos.at[trafo.name, 'bus_hv'] = bus1_name
-                ehv_hv_trafos.at[trafo.name, 'tso_name'] = tso_name
+                bus0 = hv_buses[hv_buses.ego_bus_id == trafo.bus0].iloc[0]
+                bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0]
+                ehv_hv_trafos.at[trafo.name, 'bus_lv'] = bus0.dave_name
+                ehv_hv_trafos.at[trafo.name, 'bus_hv'] = bus1.dave_name
+                ehv_hv_trafos.at[trafo.name, 'substation_name'] = bus1.subst_name
+                ehv_hv_trafos.at[trafo.name, 'tso_name'] = bus1.tso_name
             # change column name
             ehv_hv_trafos.drop(columns=['bus0', 'bus1'], inplace=True)
             # add ehv/ehv trafos to grid data
@@ -1250,7 +1237,7 @@ def transformers(grid_data):
             # --- in this case the missing mv nodes for the transformers must be created
             mv_nodes = copy.deepcopy(substations)
             # set points for geometry
-            mv_nodes['geometry'] = mv_nodes.point.apply(lambda x: shapely.wkb.loads(x, hex=True))
+            mv_nodes['geometry'] = mv_nodes.point.apply(lambda x: wkb.loads(x, hex=True))
             mv_nodes['node_type'] = 'hvmv_substation'
             # consider data only if there are more than one node in the target area
             if len(mv_nodes) > 1:
@@ -1275,7 +1262,7 @@ def transformers(grid_data):
             else:
                 # find closest hv node to the substation
                 multipoints_hv = MultiPoint(hv_nodes.geometry.tolist())
-                nearest_point = shapely.ops.nearest_points(sub.geometry.centroid, multipoints_hv)[1]
+                nearest_point = nearest_points(sub.geometry.centroid, multipoints_hv)[1]
                 for j, node in hv_nodes.iterrows():
                     if nearest_point == node.geometry:
                         bus_hv = node.dave_name
@@ -1289,7 +1276,7 @@ def transformers(grid_data):
             else:
                 # find closest mv node to the substation
                 multipoints_hv = MultiPoint(mv_nodes.geometry.tolist())
-                nearest_point = shapely.ops.nearest_points(sub.geometry.centroid, multipoints_hv)[1]
+                nearest_point = nearest_points(sub.geometry.centroid, multipoints_hv)[1]
                 for j, node in hv_nodes.iterrows():
                     if nearest_point == node.geometry:
                         bus_lv = node.dave_name
@@ -1387,7 +1374,7 @@ def transformers(grid_data):
             else:
                 # find closest mv node to the substation
                 multipoints_mv = MultiPoint(mv_buses.geometry.tolist())
-                nearest_point = shapely.ops.nearest_points(sub.geometry, multipoints_mv)[1]
+                nearest_point = nearest_points(sub.geometry, multipoints_mv)[1]
                 for j, node in mv_buses.iterrows():
                     if nearest_point == node.geometry:
                         bus_hv = node.dave_name
@@ -1399,7 +1386,7 @@ def transformers(grid_data):
             else:
                 # find closest lv node to the substation
                 multipoints_lv = MultiPoint(lv_buses.geometry.tolist())
-                nearest_point = shapely.ops.nearest_points(sub.geometry, multipoints_lv)[1]
+                nearest_point = nearest_points(sub.geometry, multipoints_lv)[1]
                 for j, node in lv_buses.iterrows():
                     if nearest_point == node.geometry:
                         bus_lv = node.dave_name
@@ -1532,7 +1519,6 @@ def loads(grid_data):
             postal_own_landuse = gpd.overlay(grid_data.landuse, postal_own_intersection,
                                              how='intersection')
             for i, postal in postal_own_intersection.iterrows():
-                pop_plz = postal.population_origin
                 # --- calculate full plz residential area
                 border = postals[
                     postals.postalcode == postal.postalcode].iloc[0].geometry.convex_hull
@@ -1555,7 +1541,7 @@ def loads(grid_data):
                 plz_own_residential = plz_own_landuse[plz_own_landuse.landuse == 'residential']
                 plz_own_residential = cascaded_union(plz_own_residential.geometry.to_list())
                 # calculate population for proportion of postal area
-                pop_own = (plz_own_residential.area/plz_residential.area)*pop_plz
+                pop_own = (plz_own_residential.area/plz_residential.area)*postal.population_origin
                 postal_own_intersection.at[i, 'population'] = round(pop_own)
             population_area = postal_own_intersection
         for i, area in population_area.iterrows():
@@ -1608,9 +1594,8 @@ def loads(grid_data):
                         building_centroid = building_geom.centroid
                         centroid_distance = building_nodes.distance(building_centroid)
                         if centroid_distance.min() < 1E-04:
-                            building_node_idx = centroid_distance[
-                                centroid_distance == centroid_distance.min()].index[0]
-                            lv_node = building_nodes.loc[building_node_idx]
+                            lv_node = building_nodes.loc[centroid_distance[
+                                centroid_distance == centroid_distance.min()].index[0]]
                     # create residential load
                     load_df = gpd.GeoDataFrame({'bus': lv_node.dave_name,
                                                 'p_mw': p_mw,
@@ -1633,17 +1618,13 @@ def loads(grid_data):
             building_point = grid_data.lv_data.lv_nodes[
                 grid_data.lv_data.lv_nodes.geometry.within(building_poly)]
             if not building_point.empty:
-                bus_name = building_point.iloc[0].dave_name
-                building_area = building_poly.area
-                load_proportion = building_area/industrial_area_full
-                p_mw = industrial_load_full*load_proportion
-                q_mvar = p_mw*math.sin(math.acos(cos_phi_industrial))/cos_phi_industrial
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame({'bus': bus_name,
-                                                'p_mw': p_mw,
-                                                'q_mvar': q_mvar,
-                                                'landuse': 'industrial',
-                                                'voltage_level': [7]})
+                    load_df = gpd.GeoDataFrame(
+                        {'bus': building_point.iloc[0].dave_name,
+                         'p_mw': industrial_load_full*(building_poly.area/industrial_area_full),
+                         'q_mvar': p_mw*math.sin(math.acos(cos_phi_industrial))/cos_phi_industrial,
+                         'landuse': 'industrial',
+                         'voltage_level': [7]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
         # create lv loads for commercial
@@ -1660,17 +1641,13 @@ def loads(grid_data):
             building_point = grid_data.lv_data.lv_nodes[
                 grid_data.lv_data.lv_nodes.geometry.within(building_poly)]
             if not building_point.empty:
-                bus_name = building_point.iloc[0].dave_name
-                building_area = building_poly.area
-                load_proportion = building_area/commercial_area_full
-                p_mw = commercial_load_full*load_proportion
-                q_mvar = p_mw*math.sin(math.acos(cos_phi_commercial))/cos_phi_commercial
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame({'bus': bus_name,
-                                                'p_mw': p_mw,
-                                                'q_mvar': q_mvar,
-                                                'landuse': 'commercial',
-                                                'voltage_level': [7]})
+                    load_df = gpd.GeoDataFrame(
+                        {'bus': building_point.iloc[0].dave_name,
+                         'p_mw': commercial_load_full*(building_poly.area/commercial_area_full),
+                         'q_mvar': p_mw*math.sin(math.acos(cos_phi_commercial))/cos_phi_commercial,
+                         'landuse': 'commercial',
+                         'voltage_level': [7]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
     # create loads for non grid level 7
@@ -1701,8 +1678,7 @@ def loads(grid_data):
         intersection.drop(columns=['area_km2'], inplace=True)
         # calculate area from intersected polygons
         intersection_3035 = intersection.to_crs(dave_settings()['crs_meter'])
-        intersection_area = intersection_3035.area/1E06
-        intersection['area_km2'] = intersection_area
+        intersection['area_km2'] = intersection_3035.area/1E06
         # --- calculate consumption for the diffrent landuses in every single voronoi polygon
         # create list of all diffrent connection transformers
         connection_trafos = intersection.dave_name.tolist()

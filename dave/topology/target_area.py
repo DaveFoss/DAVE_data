@@ -90,7 +90,7 @@ class target_area():
                 # define road parameters which are relevant for the grid modeling
                 roads = roads.filter(['geometry', 'name', 'highway'])
                 # consider only the linestring elements
-                roads = roads[roads.geometry.length != 0]
+                roads = roads[roads.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only roads which intersects the target area
                 if target_number or target_number == 0:
                     target_area = self.target.geometry.iloc[target_number]
@@ -115,7 +115,8 @@ class target_area():
                 # define road parameters which are relevant for the grid modeling
                 roads_plot = roads_plot.filter(['geometry', 'name'])
                 # consider only the linestring elements
-                roads_plot = roads_plot[roads_plot.geometry.length != 0]
+                roads_plot = roads_plot[roads_plot.geometry.apply(lambda x: isinstance(x,
+                                                                                       LineString))]
                 # consider only roads which intersects the target area
                 if target_number or target_number == 0:
                     target_area = self.target.geometry.iloc[target_number]
@@ -147,7 +148,7 @@ class target_area():
                 # define landuse parameters which are relevant for the grid modeling
                 landuse = landuse.filter(['landuse', 'geometry', 'name'])
                 # consider only the linestring elements
-                landuse = landuse[landuse.geometry.length != 0]
+                landuse = landuse[landuse.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only landuses which intersects the target area
                 if target_number or target_number == 0:
                     target_area = self.target.geometry.iloc[target_number]
@@ -177,8 +178,7 @@ class target_area():
                     landuse.drop(columns=remove_columns, inplace=True)
                 # calculate polygon area in km²
                 landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])
-                landuse_area = landuse_3035.area/1E06
-                landuse['area_km2'] = landuse_area
+                landuse['area_km2'] = landuse_3035.area/1E06
                 # write landuse into grid_data
                 landuse.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.landuse = self.grid_data.landuse.append(landuse)
@@ -198,7 +198,7 @@ class target_area():
                                               'amenity', 'building', 'building:levels', 'geometry',
                                               'name'])
                 # consider only the linestring elements
-                buildings = buildings[buildings.geometry.length != 0]
+                buildings = buildings[buildings.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only buildings which intersects the target area
                 if target_number or target_number == 0:
                     target_area = self.target.geometry.iloc[target_number]
@@ -388,10 +388,10 @@ class target_area():
             # in this case all federal states will be choosen
             target = nuts_3
         else:
-            for i in range(0, len(self.nuts_region)):
+            for i in range(len(self.nuts_region)):
                 # bring name in right format
                 area = list(self.nuts_region[i])
-                for j in range(0, len(area)):
+                for j in range(len(area)):
                     if area[j].isalpha():
                         area[j] = area[j].capitalize()
                 self.nuts_region[i] = ''.join(area)

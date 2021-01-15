@@ -26,8 +26,7 @@ def create_interim_area(areas):
             areas_other = areas.drop([i])
             distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
-                area_nearest_idx = distance[distance == distance.min()].index[0]
-                areas_iso.append((i, area_nearest_idx))
+                areas_iso.append((i, distance[distance == distance.min()].index[0]))
         # if their are isolated areas, check for a connection on the highest grid level
         if len(areas_iso) > 0:
             for area_iso in areas_iso:

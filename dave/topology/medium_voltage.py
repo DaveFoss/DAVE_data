@@ -111,8 +111,7 @@ def create_mv_topology(grid_data):
                         else:
                             new_line.append(line)
                     # merge found lines and add new line to line quantity
-                    line_related = linemerge(new_line)
-                    mv_lines_rel[len(mv_lines)] = line_related
+                    mv_lines_rel[len(mv_lines)] = linemerge(new_line)
                     # delete found lines from line quantity
                     mv_lines_rel.drop(lines_intersect.index.tolist(), inplace=True)
                     mv_lines_rel.reset_index(drop=True, inplace=True)
@@ -130,14 +129,12 @@ def create_mv_topology(grid_data):
                 if isinstance(line, MultiLineString):
                     k = 0
                     for segment in line:
-                        for j in range(0, len(segment.coords[:])):
-                            point = segment.coords[:][j]
-                            line_points[k] = Point(point)
+                        for j in range(len(segment.coords[:])):
+                            line_points[k] = Point(segment.coords[:][j])
                             k += 1
                 else:
-                    for j in range(0, len(line.coords[:])):
-                        point = line.coords[:][j]
-                        line_points[j] = Point(point)
+                    for j in range(len(line.coords[:])):
+                        line_points[j] = Point(line.coords[:][j])
                 # set crs
                 line_points = line_points.set_crs(dave_settings()['crs_main'])
                 # get nearest line coordinates
@@ -146,20 +143,19 @@ def create_mv_topology(grid_data):
                 if isinstance(nearest_line, MultiLineString):
                     k = 0
                     for segment in nearest_line:
-                        for j in range(0, len(segment.coords[:])):
-                            point = segment.coords[:][j]
-                            nearest_line_points[k] = Point(point)
+                        for j in range(len(segment.coords[:])):
+                            nearest_line_points[k] = Point(segment.coords[:][j])
                             k += 1
                 else:
-                    for j in range(0, len(nearest_line.coords[:])):
-                        point = mv_lines_rel.loc[nearest_line_idx].coords[:][j]
-                        nearest_line_points[j] = Point(point)
+                    for j in range(len(nearest_line.coords[:])):
+                        nearest_line_points[j] = Point(mv_lines_rel.loc[
+                            nearest_line_idx].coords[:][j])
                 # set crs
                 nearest_line_points.set_crs(dave_settings()['crs_main'], inplace=True)
                 # define minimal distance for initialize
                 distance_min = 1000  # any big number
                 # find pair of nearest nodes
-                for j in range(0, len(line_points)):
+                for j in range(len(line_points)):
                     point = line_points[j]
                     distance = nearest_line_points.geometry.distance(point)
                     if distance_min > distance.min():
