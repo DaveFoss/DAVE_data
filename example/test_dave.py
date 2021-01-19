@@ -10,17 +10,17 @@ This is a example file for testing dave
 # test target by plz
 _postalcode_1 = ['34225']  # Baunatal
 _postalcode_2 = ['37085', '37075', '37083', '37079', '37081', '37073', '37077']  # Göttingen
-_postalcode_3 = ['ALL']
+_postalcode_3 = ['ALL']  # all postal code areas in germany
 
 # test target by town_name
 _town_name_1 = ['Göttingen']
 _town_name_2 = ['KAsSel', 'Baunatal']
-_town_name_3 = ['ALL']
+_town_name_3 = ['ALL']  # all town names in germany
 
 # test target by federal state
 _federal_state_1 = ['Hessen']
 _federal_state_2 = ['HeSsEn', 'SchleSWIg-HOLstein']
-_federal_state_3 = ['ALL']
+_federal_state_3 = ['ALL']  # all federal states in germany
 
 # test target by nuts-region
 _nuts_1 = ['DE']  # nuts level 0
