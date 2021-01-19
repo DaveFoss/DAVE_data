@@ -5,7 +5,7 @@ import pandas as pd
 from geopy.geocoders import ArcGIS
 from shapely import wkb
 from shapely.geometry import Point, MultiPoint, LineString, Polygon
-from shapely.ops import polygonize, cascaded_union, nearest_points
+from shapely.ops import polygonize, unary_union, nearest_points
 import numpy as np
 
 
@@ -1534,12 +1534,12 @@ def loads(grid_data):
                     if not isinstance(obj.geometry, LineString):
                         drop_objects.append(obj.name)
                 plz_residential.drop(drop_objects, inplace=True)
-                plz_residential = cascaded_union(list(polygonize(plz_residential.geometry)))
+                plz_residential = unary_union(list(polygonize(plz_residential.geometry)))
                 # calculate plz  residential area for grid area
                 plz_own_landuse = postal_own_landuse[
                     postal_own_landuse.postalcode == postal.postalcode]
                 plz_own_residential = plz_own_landuse[plz_own_landuse.landuse == 'residential']
-                plz_own_residential = cascaded_union(plz_own_residential.geometry.to_list())
+                plz_own_residential = unary_union(plz_own_residential.geometry.to_list())
                 # calculate population for proportion of postal area
                 pop_own = (plz_own_residential.area/plz_residential.area)*postal.population_origin
                 postal_own_intersection.at[i, 'population'] = round(pop_own)
@@ -1609,7 +1609,7 @@ def loads(grid_data):
         industrial_load_full = industrial_polygons.area_km2.sum()*industrial_load  # in MW
         industrial_buildings = grid_data.buildings.commercial[
             grid_data.buildings.commercial.building == 'industrial']
-        industrial_polygons_sum = cascaded_union(
+        industrial_polygons_sum = unary_union(
             np.array(list(polygonize(industrial_buildings.geometry))))
         industrial_area_full = industrial_polygons_sum.area
         for i, industrial_poly in industrial_buildings.iterrows():
@@ -1632,7 +1632,7 @@ def loads(grid_data):
         commercial_load_full = commercial_polygons.area_km2.sum()*commercial_load  # in MW
         commercial_buildings = grid_data.buildings.commercial[
             grid_data.buildings.commercial.building != 'industrial']
-        commercial_polygons_sum = cascaded_union(
+        commercial_polygons_sum = unary_union(
             np.array(list(polygonize(commercial_buildings.geometry))))
         commercial_area_full = commercial_polygons_sum.area
         for i, commercial_poly in commercial_buildings.iterrows():
