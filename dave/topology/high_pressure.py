@@ -48,8 +48,8 @@ def create_hp_topology(grid_data):
         hp_junctions_ids = hp_junctions.scigrid_id.tolist()
         hp_pipes['from_junction'] = hp_pipes.node_id.apply(lambda x: eval(x)[0])
         hp_pipes['to_junction'] = hp_pipes.node_id.apply(lambda x: eval(x)[1])
-        hp_pipes = hp_pipes[(hp_pipes.start_node_id.isin(hp_junctions_ids)) &
-                            (hp_pipes.end_node_id.isin(hp_junctions_ids))]
+        hp_pipes = hp_pipes[(hp_pipes.from_junction.isin(hp_junctions_ids)) &
+                            (hp_pipes.to_junction.isin(hp_junctions_ids))]
         # prepare data
         hp_pipes.rename(columns={'id': 'scigrid_id', 'name': 'scigrid_name'}, inplace=True)
         hp_pipes['source'] = 'scigridgas'
