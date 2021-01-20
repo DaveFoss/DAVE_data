@@ -4,6 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from pandapower import to_json
 from shapely.wkb import loads, dumps
+from shapely.geometry import Point
 
 import dave.create
 from dave.settings import dave_settings
@@ -282,15 +283,15 @@ def write_dataset(grid_data, dataset_path):
     archiv_file.close()
 
 
-def pp_to_json(net_power, file_path):
+def pp_to_json(net, file_path):
     """
     This functions converts a pandapower model into a json file
     """
     # convert geometry
-    if not net_power.trafo.empty:
-        net_power.trafo['geometry'] = net_power.trafo.geometry.apply(lambda x: dumps(x, hex=True))
-    if not net_power.gen.empty:
-        net_power.gen['geometry'] = net_power.gen.geometry.apply(lambda x: dumps(x, hex=True))
-    if not net_power.sgen.empty:
-        net_power.sgen['geometry'] = net_power.sgen.geometry.apply(lambda x: dumps(x, hex=True))
-    to_json(net_power, filename=file_path)
+    if not net.trafo.empty and all(list(map(lambda x: isinstance(x, Point), net.trafo.geometry))):
+        net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: dumps(x, hex=True))
+    if not net.gen.empty and all(list(map(lambda x: isinstance(x, Point), net.gen.geometry))):
+        net.gen['geometry'] = net.gen.geometry.apply(lambda x: dumps(x, hex=True))
+    if not net.sgen.empty and all(list(map(lambda x: isinstance(x, Point), net.sgen.geometry))):
+        net.sgen['geometry'] = net.sgen.geometry.apply(lambda x: dumps(x, hex=True))
+    to_json(net, filename=file_path)
