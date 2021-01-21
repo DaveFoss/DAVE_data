@@ -16,8 +16,8 @@ def create_hp_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # print to inform user
-    print('create high pressure topology for target area')
-    print('---------------------------------------------')
+    print('create high pressure topology')
+    print('----------------------------------')
     # read high pressure grid data from dave datapool (scigridgas igginl)
     scigrid_data, meta_data = read_scigridgas_igginl()
     # add meta data

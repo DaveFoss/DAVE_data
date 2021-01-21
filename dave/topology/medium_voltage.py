@@ -20,8 +20,8 @@ def create_mv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # print to inform user
-    print('create medium voltage network for target area')
-    print('---------------------------------------------')
+    print('create medium voltage topology')
+    print('----------------------------------')
 
     # --- create mv nodes
     # nodes for mv/lv traofs hv side

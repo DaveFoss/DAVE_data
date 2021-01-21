@@ -19,8 +19,8 @@ def create_ehv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # print to inform user
-    print('create extra high voltage topology for target area')
-    print('-------------------------------------------------')
+    print('create extra high voltage topology')
+    print('----------------------------------')
     # --- create ehv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
     ehv_substations, meta_data = oep_request(schema='grid',

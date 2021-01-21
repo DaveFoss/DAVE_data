@@ -119,8 +119,8 @@ def create_lv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # print to inform user
-    print('create low voltage network for target area')
-    print('------------------------------------------')
+    print('create low voltage topology')
+    print('----------------------------------')
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)

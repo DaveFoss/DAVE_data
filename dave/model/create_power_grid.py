@@ -15,8 +15,8 @@ def create_power_grid(grid_data):
     OUTPUT:
         **net** (attrdict) - pandapower attrdict with grid data
     """
-    print('create pandapower network based on DaVe dataset')
-    print('-----------------------------------------')
+    print('create pandapower network')
+    print('----------------------------------')
     # create empty network
     net = pp.create_empty_network()
     # add dave version

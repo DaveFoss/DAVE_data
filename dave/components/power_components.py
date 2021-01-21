@@ -108,7 +108,7 @@ def power_plant_lines(grid_data):
     connection point
     """
     print('create powerplant lines')
-    print('-----------------------')
+    print('----------------------------------')
     # get all grid nodes
     all_nodes = pd.concat([grid_data.ehv_data.ehv_nodes, grid_data.hv_data.hv_nodes,
                            grid_data.mv_data.mv_nodes, grid_data.lv_data.lv_nodes])
@@ -306,8 +306,8 @@ def renewable_powerplants(grid_data):
     and perhaps assign them their exact location by adress, if these are available.
     Furthermore assign a grid node to the generators and aggregated them depending on the situation
     """
-    print('create renewable powerplants for target area')
-    print('--------------------------------------------')
+    print('create renewable powerplants')
+    print('----------------------------------')
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
@@ -643,8 +643,8 @@ def conventional_powerplants(grid_data):
     This function collects the generators based on ego_conventional_powerplant from OEP
     Furthermore assign a grid node to the generators and aggregated them depending on the situation
     """
-    print('create conventional powerplants for target area')
-    print('-----------------------------------------------')
+    print('create conventional powerplants')
+    print('----------------------------------')
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
@@ -995,8 +995,8 @@ def transformers(grid_data):
     HV/MV trafos are based on ego_dp_hvmv_substation from OEP
     MV/LV trafos are based on ego_dp_mvlv_substation from OEP
     """
-    print('create transformers for target area')
-    print('-----------------------------------')
+    print('create transformers')
+    print('----------------------------------')
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # --- create ehv/ehv and ehv/hv trafos
@@ -1470,8 +1470,8 @@ def loads(grid_data):
     This function creates loads by osm landuse polygons in the target area an assigne them to a
     suitable node on the considered voltage level by voronoi analysis
     """
-    print('create loads for target area')
-    print('----------------------------')
+    print('create electrical loads')
+    print('----------------------------------')
     # define avarage load values
     residential_load = dave_settings()['residential_load']
     industrial_load = dave_settings()['industrial_load']

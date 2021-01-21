@@ -13,8 +13,8 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
     OUTPUT:
         **net** (attrdict) - A cleaned up and if necessary optimized pandapower attrdict
     """
-    print('run power grid diagnostic and processing')
-    print('----------------------------------------')
+    print('run power grid processing')
+    print('----------------------------------')
     # run network diagnostic
     diagnostic = pp.diagnostic(net, report_style='None')
     # --- clean up failures detected by the diagnostic tool
@@ -58,7 +58,7 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
     # --- optimize grid model
     if opt_model:
         print('run power grid optimization')
-        print('---------------------------')
+        print('----------------------------------')
         # run network diagnostic
         diagnostic = pp.diagnostic(net, report_style='None')
         # clean up overloads

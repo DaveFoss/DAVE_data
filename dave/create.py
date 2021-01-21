@@ -261,9 +261,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         grid_data = from_archiv(f'{file_name}.h5')
 
     # create dave output folder on desktop for DaVe dataset, plotting and converted model
-    print('Save DaVe dataset, plots and converted grid models at the following path:')
+    print('Save DaVe output data at the following path:')
     print(dave_output_dir)
-    print('-----------------------------------------------------------------------')
+    print('----------------------------------')
     if not os.path.exists(dave_output_dir):
         os.makedirs(dave_output_dir)
 
@@ -272,7 +272,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         # Vorrübergehend aus für testzwecke
         """
         print('Save DaVe dataset to archiv')
-        print('---------------------------')
+        print('----------------------------------')
         # save dataset to archiv
         file_name = to_archiv(grid_data)
         # copy file from archiv folder to output folder

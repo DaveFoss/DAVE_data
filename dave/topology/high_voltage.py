@@ -18,8 +18,8 @@ def create_hv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # print to inform user
-    print('create high voltage topology for target area')
-    print('--------------------------------------------')
+    print('create high voltage topology')
+    print('----------------------------------')
     # --- create hv nodes
     ehvhv_buses, meta_data = oep_request(schema='grid',
                                          table='ego_pf_hv_bus',

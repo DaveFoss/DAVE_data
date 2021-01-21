@@ -421,8 +421,8 @@ class target_area():
         target area and add it to the grid_data
         """
         # print to inform user
-        print('Check OSM data for target area')
-        print('------------------------------')
+        print('collect geographical data')
+        print('----------------------------------')
         # check wich input parameter is given
         if self.postalcode:
             target_area._target_by_postalcode(self)
