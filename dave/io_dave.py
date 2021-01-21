@@ -2,7 +2,7 @@ import os
 import copy
 import geopandas as gpd
 import pandas as pd
-from pandapower import to_json
+from pandapower import to_json, from_json
 from shapely.wkb import loads, dumps
 from shapely.geometry import Point
 
@@ -294,4 +294,18 @@ def pp_to_json(net, file_path):
         net.gen['geometry'] = net.gen.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.sgen.empty and all(list(map(lambda x: isinstance(x, Point), net.sgen.geometry))):
         net.sgen['geometry'] = net.sgen.geometry.apply(lambda x: dumps(x, hex=True))
+    # convert pp model to json and save the file
     to_json(net, filename=file_path)
+
+
+def json_to_pp(file_path):
+    # read json file and convert to pp model
+    net = from_json(file_path)
+    # convert geometry
+    if not net.trafo.empty and all(list(map(lambda x: isinstance(x, str), net.trafo.geometry))):
+        net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: loads(x, hex=True))
+    if not net.gen.empty and all(list(map(lambda x: isinstance(x, str), net.gen.geometry))):
+        net.gen['geometry'] = net.gen.geometry.apply(lambda x: loads(x, hex=True))
+    if not net.sgen.empty and all(list(map(lambda x: isinstance(x, str), net.sgen.geometry))):
+        net.sgen['geometry'] = net.sgen.geometry.apply(lambda x: loads(x, hex=True))
+    return net
