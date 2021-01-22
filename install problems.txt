@@ -1,2 +1,0 @@
-Problem: Could not find module 'C:\anaconda3\Library\bin\geos_c.dll' (requiered from shapely)
-Solution: install geos with "conda install -c conda-forge geos" (by using anaconda)
