@@ -17,13 +17,16 @@ def storages_gas(grid_data):
     # read_gas_storage_ugs()
 
 
-def gas_components(grid_data, compressors, sources, storages_gas):
+def gas_components(grid_data, compressor, source, storage_gas):
     """
     This function calls all the functions for creating the gas components in the wright order
     """
     # add compressors
-    compressors(grid_data)
+    if compressor:
+        compressors(grid_data)
     # add sources
-    sources(grid_data)
+    if source:
+        sources(grid_data)
     # add storages
-    storages_gas(grid_data)
+    if storage_gas:
+        storages_gas(grid_data)
