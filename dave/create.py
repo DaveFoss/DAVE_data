@@ -14,7 +14,7 @@ from dave.topology import (target_area, create_ehv_topology, create_hv_topology,
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
 from dave.components import power_components, gas_components
 from dave.model import create_power_grid, power_processing, create_gas_grid, gas_processing
-from dave.datapool import from_archiv
+from dave.datapool import from_archiv, to_archiv
 from dave.toolbox import create_interim_area
 
 
@@ -270,17 +270,19 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
         # Vorrübergehend aus für testzwecke
-        """
         print('Save DaVe dataset to archiv')
         print('----------------------------------')
+        # check if archiv folder exists otherwise create one
+        archiv_dir = dave_dir + '\\datapool\\dave_archiv\\'
+        if not os.path.exists(archiv_dir):
+            os.makedirs(archiv_dir)
         # save dataset to archiv
         file_name = to_archiv(grid_data)
         # copy file from archiv folder to output folder
-        archiv_file_path = dave_dir + '\\datapool\\dave_archiv\\' + f'{file_name}.h5'
+        archiv_file_path = archiv_dir + f'{file_name}.h5'
         output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
-        """
     else:
         write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
 
