@@ -1120,6 +1120,7 @@ def transformers(grid_data):
                 ehv_ehv_trafos.insert(0, 'dave_name', None)
                 ehv_ehv_trafos.insert(1, 'bus_hv', None)
                 ehv_ehv_trafos.insert(2, 'bus_lv', None)
+                ehv_ehv_trafos['substation_name'] = None
                 ehv_ehv_trafos['tso_name'] = None
                 ehv_ehv_trafos.reset_index(drop=True, inplace=True)
                 for i, trafo in ehv_ehv_trafos.iterrows():
@@ -1142,6 +1143,7 @@ def transformers(grid_data):
             ehv_hv_trafos.insert(0, 'dave_name', None)
             ehv_hv_trafos.insert(1, 'bus_hv', None)
             ehv_hv_trafos.insert(2, 'bus_lv', None)
+            ehv_hv_trafos['substation_name'] = None
             ehv_hv_trafos['tso_name'] = None
             ehv_hv_trafos.reset_index(drop=True, inplace=True)
             for i, trafo in ehv_hv_trafos.iterrows():
