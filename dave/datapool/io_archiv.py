@@ -179,10 +179,12 @@ def to_archiv(grid_data):
                         _convert_to_archiv_data(grid_data.lp_data.lp_junctions))
         archiv_file.put('/lp_data/lp_pipes', _convert_to_archiv_data(grid_data.lp_data.lp_pipes))
         # components gas
-        archiv_file.put('/components_gas/sinks',
-                        _convert_to_archiv_data(grid_data.components_gas.sinks))
+        archiv_file.put('/components_gas/compressors',
+                        _convert_to_archiv_data(grid_data.components_gas.compressors))
         archiv_file.put('/components_gas/sources',
                         _convert_to_archiv_data(grid_data.components_gas.sources))
+        archiv_file.put('/components_gas/storages_gas',
+                        _convert_to_archiv_data(grid_data.components_gas.storages_gas))
         # dave version
         archiv_file.put('/dave_version',
                         pd.DataFrame({'dave_version': grid_data.dave_version}, index=[0]))
@@ -303,10 +305,14 @@ def from_archiv(dataset_name):
         grid_data.lp_data.lp_pipes = grid_data.lp_data.lp_pipes.append(gpd.GeoDataFrame(
             _convert_from_archiv_data(archiv_file, '/lp_data/lp_pipes'), crs=crs))
         # components gas
-        grid_data.components_gas.sinks = grid_data.components_gas.sinks.append(gpd.GeoDataFrame(
-            _convert_from_archiv_data(archiv_file, '/components_gas/sinks'), crs=crs))
+        grid_data.components_gas.compressors = grid_data.components_gas.compressors.append(
+            gpd.GeoDataFrame(_convert_from_archiv_data(archiv_file, '/components_gas/compressors'),
+                             crs=crs))
         grid_data.components_gas.sources = grid_data.components_gas.sources.append(gpd.GeoDataFrame(
             _convert_from_archiv_data(archiv_file, '/components_gas/sources'), crs=crs))
+        grid_data.components_gas.storages_gas = grid_data.components_gas.storages_gas.append(
+            gpd.GeoDataFrame(_convert_from_archiv_data(archiv_file, '/components_gas/storages_gas'),
+                             crs=crs))
         # dave version
         grid_data.dave_version = archiv_file.get('/dave_version')['dave_version'][0]
         # close file
