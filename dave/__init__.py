@@ -1,4 +1,4 @@
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 import os
 dave_dir = os.path.dirname(os.path.realpath(__file__))
