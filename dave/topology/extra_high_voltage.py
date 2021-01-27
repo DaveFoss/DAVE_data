@@ -163,15 +163,13 @@ def create_ehv_topology(grid_data):
         for i, line in ehv_lines.iterrows():
             # add voltage
             ehv_bus_index = ehv_buses[ehv_buses.ego_bus_id == line.bus0].index[0]
-            ehv_lines.at[line.name, 'voltage_kv'] = ehv_buses.loc[ehv_bus_index].voltage_kv
+            line_voltage = ehv_buses.loc[ehv_bus_index].voltage_kv
+            ehv_lines.at[line.name, 'voltage_kv'] = line_voltage
             # change line bus names from ego id to dave name
             bus0_dave = ehv_buses[ehv_buses.ego_bus_id == line.bus0].iloc[0].dave_name
             bus1_dave = ehv_buses[ehv_buses.ego_bus_id == line.bus1].iloc[0].dave_name
             bus0_new.append(bus0_dave)
             bus1_new.append(bus1_dave)
-        ehv_lines['bus0'] = bus0_new
-        ehv_lines['bus1'] = bus1_new
-        for i, line in ehv_lines.iterrows():
             # calculate and add r,x,c per km
             ehv_lines.at[line.name, 'r_ohm_per_km'] = float(line.r_ohm)/line.length_km
             ehv_lines.at[line.name, 'x_ohm_per_km'] = float(line.x_ohm)/line.length_km
@@ -180,9 +178,11 @@ def create_ehv_topology(grid_data):
             ehv_lines.at[line.name, 'c_nf_per_km'] = c_nf/line.length_km
             # calculate and add max i
             ehv_lines.at[line.name, 'max_i_ka'] = ((float(line.s_nom_mva)*1E06) /
-                                                   (line.voltage_kv*1E03))*1E-03
+                                                   (line_voltage*1E03))*1E-03
             # parallel lines
             ehv_lines.at[line.name, 'parallel'] = line.cables/3
+        ehv_lines['bus0'] = bus0_new
+        ehv_lines['bus1'] = bus1_new
         # add oep as source
         ehv_lines['source'] = 'OEP'
         # add missing tso ehv lines which are not in the ego line data
