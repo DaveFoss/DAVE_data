@@ -5,3 +5,5 @@ stages:
 # define jobs
 test:
     stage: test
+    script:
+    -echo 'This job test something'
