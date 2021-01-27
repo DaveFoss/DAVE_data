@@ -1,3 +1,4 @@
+# via conda
 Shapely
 GDAL
 Fiona
@@ -9,5 +10,7 @@ matplotlib
 geopy
 contextily
 descartes
-pandapower
-pandapipes
+# via pip
+'pandapower'
+'pandapipes'
+'tables'
