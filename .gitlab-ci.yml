@@ -1,0 +1,7 @@
+# define stages
+stages:
+    - test
+    
+# define jobs
+test:
+    stage: test
