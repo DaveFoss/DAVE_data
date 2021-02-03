@@ -1,16 +1,16 @@
-# via conda
+# via conda forge
 Shapely
 GDAL
 Fiona
 pyproj
-rasterio
 Rtree
 geopandas 
 matplotlib
 geopy
-contextily
 descartes
+pandapower
+rasterio
+contextily
 # via pip
-'pandapower'
-'pandapipes'
-'tables'
+#pandapipes
+#tables
