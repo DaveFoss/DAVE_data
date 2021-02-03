@@ -1,0 +1,8 @@
+Change Log
+=============
+- [CHANGED] test txt
+- [FIXED] test txt
+
+[1.0.1] - 2021-01-26
+----------------------
+- [ADDED] test txt
