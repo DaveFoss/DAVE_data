@@ -57,7 +57,7 @@ def voronoi(points):
         **voronoi polygons** (GeoDataFrame) - all voronoi areas for the given points
     """
     # define points for voronoi centroids
-    points.reset_index(drop=True, inplace=True)
+    points = points.reset_index(drop=True)  # don't use inplace
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
     voronoi_points = np.array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
