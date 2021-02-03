@@ -1,0 +1,9 @@
+# define stages
+stages:
+    - test
+    
+# define jobs
+test:
+    stage: test
+    script:
+    -echo "This job test something"
