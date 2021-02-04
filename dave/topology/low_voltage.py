@@ -1,7 +1,8 @@
 import geopandas as gpd
+import pandas as pd
 from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import nearest_points, unary_union
-import pandas as pd
+from tqdm import tqdm
 
 from dave.settings import dave_settings
 
@@ -118,13 +119,12 @@ def create_lv_topology(grid_data):
     OUTPUT:
         Writes data in the DaVe dataset
     """
-    # print to inform user
-    print('create low voltage topology')
-    print('----------------------------------')
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)
-    centroids = buildings_rel.reset_index(drop=True).centroid
+    buildings_rel_3035 = buildings_rel.to_crs(dave_settings()['crs_meter'])
+    centroids = buildings_rel_3035.reset_index(drop=True).centroid
+    centroids = centroids.to_crs(dave_settings()['crs_main'])
     building_connections = nearest_road(building_centroids=centroids,
                                         roads=grid_data.roads.roads)
     # delet duplicates in nearest road points
@@ -174,13 +174,15 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_lines.insert(0, 'dave_name', name)
     # get line bus names for each line and add to line data
     lv_nodes = grid_data.lv_data.lv_nodes
+    # get road junctions
+    road_junctions_origin = grid_data.roads.road_junctions
+    road_junctions_origin_3035 = road_junctions_origin.to_crs(dave_settings()['crs_meter'])
     for i, line in grid_data.lv_data.lv_lines.iterrows():
+        road_junctions_grid = grid_data.lv_data.lv_nodes[
+            grid_data.lv_data.lv_nodes.node_type == 'road_junction']
         line_coords_from = line.geometry.coords[:][0]
         line_coords_to = line.geometry.coords[:][len(line.geometry.coords[:])-1]
         from_bus = lv_nodes[lv_nodes.geometry.x == line_coords_from[0]]
-        road_junctions_grid = grid_data.lv_data.lv_nodes[
-            grid_data.lv_data.lv_nodes.node_type == 'road_junction']
-        road_junctions_origin = grid_data.roads.road_junctions
         if len(from_bus) > 1:
             from_bus = from_bus[from_bus.geometry.y == line_coords_from[1]]
         to_bus = lv_nodes[lv_nodes.geometry.x == line_coords_to[0]]
@@ -216,7 +218,7 @@ def create_lv_topology(grid_data):
                         grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
                             junction_point_gdf)
             else:
-                distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
+                distance = road_junctions_origin_3035.geometry.distance(Point(line_coords_from))
                 if distance.min() < 1E-04:
                     road_junction_geom = road_junctions_origin.loc[
                         distance[distance == distance.min()].index[0]]
