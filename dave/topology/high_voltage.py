@@ -1,6 +1,7 @@
 import math
 import geopandas as gpd
 import pandas as pd
+from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
@@ -17,9 +18,8 @@ def create_hv_topology(grid_data):
     OUTPUT:
         Writes data in the DaVe dataset
     """
-    # print to inform user
-    print('create high voltage topology')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create high voltage topology', position=0)
     # --- create hv nodes
     ehvhv_buses, meta_data = oep_request(schema='grid',
                                          table='ego_pf_hv_bus',
@@ -32,6 +32,8 @@ def create_hv_topology(grid_data):
                                 'scn_name': 'ego_scn_name',
                                 'bus_id': 'ego_bus_id',
                                 'v_nom': 'voltage_kv'}, inplace=True)
+    # update progress
+    pbar.update(10)
     # filter nodes which are on the hv level, current exsist and within the target area
     hv_buses = ehvhv_buses[(ehvhv_buses.voltage_kv == 110) &
                            (ehvhv_buses.ego_scn_name == 'Status Quo')]
@@ -52,6 +54,8 @@ def create_hv_topology(grid_data):
         hv_buses.insert(0, 'dave_name', name)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
+        # update progress
+        pbar.update(10)
         # --- create hv lines
         hv_lines, meta_data = oep_request(schema='grid',
                                           table='ego_pf_hv_line',
@@ -70,6 +74,8 @@ def create_hv_topology(grid_data):
                                  'x': 'x_ohm',
                                  'g': 'g_s',
                                  'b': 'b_s'}, inplace=True)
+        # update progress
+        pbar.update(10)
         # filter lines which are on the hv level by check if both endpoints are on the hv level
         hv_bus_ids = hv_buses.ego_bus_id.tolist()
         hv_lines = hv_lines[(hv_lines.bus0.isin(hv_bus_ids)) &
@@ -85,6 +91,8 @@ def create_hv_topology(grid_data):
         hv_lines.insert(b_column_index+1, 'c_nf', None)
         # add voltage
         hv_lines['voltage_kv'] = 110
+        # update progress
+        pbar.update(10)
         bus0_new = []
         bus1_new = []
         for i, line in hv_lines.iterrows():
@@ -104,6 +112,8 @@ def create_hv_topology(grid_data):
             bus1_dave = hv_buses[hv_buses.ego_bus_id == line.bus1].iloc[0].dave_name
             bus0_new.append(bus0_dave)
             bus1_new.append(bus1_dave)
+            # update progress
+            pbar.update(50/len(hv_lines))
         hv_lines['bus0'] = bus0_new
         hv_lines['bus1'] = bus1_new
         # add oep as source
@@ -116,3 +126,10 @@ def create_hv_topology(grid_data):
         hv_lines.insert(0, 'dave_name', name)
         # add hv lines to grid data
         grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)
+        # update progress
+        pbar.update(9.999)
+    else:
+        # update progress
+        pbar.update(90)
+    # close progress bar
+    pbar.close()

@@ -1,6 +1,7 @@
 import math
 import geopandas as gpd
 import pandas as pd
+from tqdm import tqdm
 from shapely.geometry import LineString
 
 from dave.datapool import read_ehv_data, oep_request
@@ -18,9 +19,8 @@ def create_ehv_topology(grid_data):
     OUTPUT:
         Writes data in the DaVe dataset
     """
-    # print to inform user
-    print('create extra high voltage topology')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create extra high voltage topology', position=0)
     # --- create ehv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
     ehv_substations, meta_data = oep_request(schema='grid',
@@ -34,6 +34,8 @@ def create_ehv_topology(grid_data):
                                     'subst_id': 'ego_subst_id',
                                     'voltage': 'voltage_kv'}, inplace=True)
     ehv_substations = gpd.overlay(ehv_substations, grid_data.area, how='intersection')
+    # update progress
+    pbar.update(10)
     # consider data only if there are more than one node in the target area
     if len(ehv_substations) > 1:
         ehv_substations['voltage_level'] = 1
@@ -44,6 +46,8 @@ def create_ehv_topology(grid_data):
         # add ehv substations to grid data
         grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
             ehv_substations)
+    # update progress
+    pbar.update(10)
     # --- create ehv nodes
     # read ehv/hv node data from OpenEnergyPlatform and adapt names
     ehvhv_buses, meta_data = oep_request(schema='grid',
@@ -58,6 +62,8 @@ def create_ehv_topology(grid_data):
                                 'bus_id': 'ego_bus_id',
                                 'v_nom': 'voltage_kv',
                                 'length': 'length_km'}, inplace=True)
+    # update progress
+    pbar.update(10)
     # filter nodes which are on the ehv-level, current exsist and within the target area
     ehv_buses = ehvhv_buses[(ehvhv_buses.voltage_kv.isin([380, 220])) &
                             (ehvhv_buses.ego_scn_name == 'Status Quo')]
@@ -76,6 +82,8 @@ def create_ehv_topology(grid_data):
                     ehv_buses.at[bus.name, 'ego_subst_id'] = sub.ego_subst_id
                     ehv_buses.at[bus.name, 'subst_name'] = sub.subst_name
                     break
+            # update progress
+            pbar.update(10/len(ehv_buses))
         # read ehv tso data
         ehv_data, meta_data = read_ehv_data()
         # add meta data
@@ -101,6 +109,8 @@ def create_ehv_topology(grid_data):
                             'name'].replace('_380', '').replace('_220', '')
                         ehv_buses.at[bus.name, 'tso'] = node['tso']
                         break
+            # update progress
+            pbar.update(10/len(ehv_data['ehv_nodes']))
         # add oep as source
         ehv_buses['source'] = 'OEP'
         # add missing tso ehv nodes which are not in the ego node data
@@ -119,6 +129,8 @@ def create_ehv_topology(grid_data):
                                                                'tso_name': tso_name,
                                                                'tso': tso_bus.tso,
                                                                'source': 'tso data'}))
+        # update progress
+        pbar.update(10)
         # add voltage level
         ehv_buses['voltage_level'] = 1
         # add dave name
@@ -158,6 +170,8 @@ def create_ehv_topology(grid_data):
         b_column_index = ehv_lines.columns.get_loc('b_s')
         ehv_lines.insert(b_column_index+1, 'c_nf_per_km', None)
         ehv_lines.insert(b_column_index+1, 'c_nf', None)
+        # update progress
+        pbar.update(10)
         bus0_new = []
         bus1_new = []
         for i, line in ehv_lines.iterrows():
@@ -181,6 +195,8 @@ def create_ehv_topology(grid_data):
                                                    (line_voltage*1E03))*1E-03
             # parallel lines
             ehv_lines.at[line.name, 'parallel'] = line.cables/3
+            # update progress
+            pbar.update(20/len(ehv_lines))
         ehv_lines['bus0'] = bus0_new
         ehv_lines['bus1'] = bus1_new
         # add oep as source
@@ -228,3 +244,7 @@ def create_ehv_topology(grid_data):
         ehv_lines.insert(0, 'dave_name', name)
         # add ehv lines to grid data
         grid_data.ehv_data.ehv_lines = grid_data.ehv_data.ehv_lines.append(ehv_lines)
+        # update progress
+        pbar.update(9.999)
+    # close progress bar
+    pbar.close()
