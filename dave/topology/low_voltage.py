@@ -119,6 +119,8 @@ def create_lv_topology(grid_data):
     OUTPUT:
         Writes data in the DaVe dataset
     """
+    # set progress bar
+    pbar = tqdm(total=100, desc='create low voltage topology', position=0)
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)
@@ -148,6 +150,8 @@ def create_lv_topology(grid_data):
     # add lv nodes to grid data
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
     grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
+    # update progress
+    pbar.update(20)
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries(list(map(lambda x, y: LineString([x, y]),
                                             building_connections['building_centroid'],
@@ -172,6 +176,9 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_lines.reset_index(drop=True, inplace=True)
     name = pd.Series(list(map(lambda x: f'line_7_{x}', grid_data.lv_data.lv_lines.index)))
     grid_data.lv_data.lv_lines.insert(0, 'dave_name', name)
+    # update progress
+    pbar.update(10)
+    # --- create missing road junctions to connect the lines with each other
     # get line bus names for each line and add to line data
     lv_nodes = grid_data.lv_data.lv_nodes
     # get road junctions
@@ -206,9 +213,10 @@ def create_lv_topology(grid_data):
                     # create lv_point for relevant road junction
                     dave_number = int(grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[
                         0].replace('node_7_', ''))
+                    dave_name = 'node_7_' + str(dave_number+1)
                     junction_point_gdf = gpd.GeoDataFrame(
                         {'geometry': [road_junction_geom],
-                         'dave_name': 'node_7_' + str(dave_number+1),
+                         'dave_name': dave_name,
                          'node_type': 'road_junction',
                          'voltage_level': 7,
                          'voltage_kv': 0.4,
@@ -237,9 +245,10 @@ def create_lv_topology(grid_data):
                     # create lv_point for relevant road junction
                     dave_number = int(grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[
                         0].replace('node_7_', ''))
+                    dave_name = 'node_7_' + str(dave_number+1)
                     junction_point_gdf = gpd.GeoDataFrame(
                         {'geometry': [road_junction_geom],
-                         'dave_name': 'node_7_' + str(dave_number+1),
+                         'dave_name': dave_name,
                          'node_type': 'road_junction',
                          'voltage_level': 7,
                          'voltage_kv': 0.4,
@@ -248,3 +257,7 @@ def create_lv_topology(grid_data):
                         junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = dave_name
         grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
+        # update progress
+        pbar.update(80/len(grid_data.lv_data.lv_lines))
+    # close progress bar
+    pbar.close()
