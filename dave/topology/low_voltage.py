@@ -1,5 +1,6 @@
 import geopandas as gpd
 import pandas as pd
+import warnings
 from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import nearest_points, unary_union
 from tqdm import tqdm
@@ -151,7 +152,7 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
     grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
     # update progress
-    pbar.update(20)
+    pbar.update(10)
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries(list(map(lambda x, y: LineString([x, y]),
                                             building_connections['building_centroid'],
@@ -183,7 +184,6 @@ def create_lv_topology(grid_data):
     lv_nodes = grid_data.lv_data.lv_nodes
     # get road junctions
     road_junctions_origin = grid_data.roads.road_junctions
-    #road_junctions_origin_3035 = road_junctions_origin.to_crs(dave_settings()['crs_meter'])
     for i, line in grid_data.lv_data.lv_lines.iterrows():
         road_junctions_grid = grid_data.lv_data.lv_nodes[
             grid_data.lv_data.lv_nodes.node_type == 'road_junction']
@@ -199,14 +199,20 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, 'from_bus'] = from_bus.iloc[0].dave_name
         else:
             # check if there is a suitable road junction in grid data
-            distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning)
+                # filter crs warning because it is not relevant
+                distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
             if distance.min() < 1E-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[
                     distance[distance == distance.min()].index[0]].dave_name
             else:
                 # no road junction was found, create it from road junction data
-                distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
+                with warnings.catch_warnings():
+                    warnings.filterwarnings('ignore', category=UserWarning)
+                    # filter crs warning because it is not relevant
+                    distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
                 if distance.min() < 1E-04:
                     road_junction_geom = road_junctions_origin.loc[
                         distance[distance == distance.min()].index[0]]
@@ -231,14 +237,20 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = to_bus.iloc[0].dave_name
         else:
             # check if there is a suitable road junction in grid data
-            distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning)
+                # filter crs warning because it is not relevant
+                distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
             if distance.min() < 1E-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[
                     distance[distance == distance.min()].index[0]].dave_name
             else:
                 # no road junction was found, create it from road junction data
-                distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
+                with warnings.catch_warnings():
+                    warnings.filterwarnings('ignore', category=UserWarning)
+                    # filter crs warning because it is not relevant
+                    distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
                 if distance.min() < 1E-04:
                     road_junction_geom = road_junctions_origin.loc[
                         distance[distance == distance.min()].index[0]]
