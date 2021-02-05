@@ -1,6 +1,7 @@
 import copy
 import geopandas as gpd
 import pandas as pd
+import warnings
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
 
@@ -84,7 +85,10 @@ def create_mv_topology(grid_data):
         mv_lines = gpd.GeoSeries([])
         for i, bus in mv_buses.iterrows():
             mv_buses_rel = mv_buses.drop([bus.name])
-            distance = mv_buses_rel.geometry.distance(bus.geometry)
+            with warnings.catch_warnings():
+                # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
+                distance = mv_buses_rel.geometry.distance(bus.geometry)
             nearest_bus_idx = distance[distance == distance.min()].index[0]
             mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
             # check if line already exists
@@ -152,7 +156,10 @@ def create_mv_topology(grid_data):
                 # find pair of nearest nodes
                 for j in range(len(line_points)):
                     point = line_points[j]
-                    distance = nearest_line_points.geometry.distance(point)
+                    with warnings.catch_warnings():
+                        # filter crs warning because it is not relevant
+                        warnings.filterwarnings('ignore', category=UserWarning)
+                        distance = nearest_line_points.geometry.distance(point)
                     if distance_min > distance.min():
                         distance_min = distance.min()
                         nearest_point_idx = distance[distance == distance.min()].index[0]
