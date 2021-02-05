@@ -118,7 +118,8 @@ def create_lv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # set progress bar
-    pbar = tqdm(total=100, desc='create low voltage topology', position=0)
+    pbar = tqdm(total=100, desc='create low voltage topology:       ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)

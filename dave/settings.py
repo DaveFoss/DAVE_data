@@ -2,7 +2,9 @@ def dave_settings():
     """
     This function returns a dataframe with the DaVe settings for used data and assumptions
     """
-    settings = {# geographical defintions:
+    settings = {# structural definitions:
+                'bar_format': '{desc:<10}{percentage:5.0f}%|{bar:30}{r_bar}',  # format progress bar
+                # geographical defintions:
                 'crs_main': 'EPSG:4326',  # crs which is based on the unit degree
                 'crs_meter': 'EPSG:3035',  # crs which is based on the unit meter
 

@@ -19,7 +19,8 @@ def create_hv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # set progress bar
-    pbar = tqdm(total=100, desc='create high voltage topology', position=0)
+    pbar = tqdm(total=100, desc='create high voltage topology:      ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # --- create hv nodes
     ehvhv_buses, meta_data = oep_request(schema='grid',
                                          table='ego_pf_hv_bus',

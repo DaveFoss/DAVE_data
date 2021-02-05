@@ -20,7 +20,8 @@ def create_ehv_topology(grid_data):
         Writes data in the DaVe dataset
     """
     # set progress bar
-    pbar = tqdm(total=100, desc='create extra high voltage topology', position=0)
+    pbar = tqdm(total=100, desc='create extra high voltage topology:', position=0,
+                bar_format=dave_settings()['bar_format'])
     # --- create ehv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
     ehv_substations, meta_data = oep_request(schema='grid',

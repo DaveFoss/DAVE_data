@@ -1,7 +1,8 @@
 import copy
+import warnings
 import geopandas as gpd
 import pandas as pd
-import warnings
+from tqdm import tqdm
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
 
@@ -20,10 +21,9 @@ def create_mv_topology(grid_data):
     OUTPUT:
         Writes data in the DaVe dataset
     """
-    # print to inform user
-    print('create medium voltage topology')
-    print('----------------------------------')
-
+    # set progress bar
+    pbar = tqdm(total=100, desc='create medium voltage topology:    ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # --- create mv nodes
     # nodes for mv/lv traofs hv side
     mvlv_buses, meta_data = oep_request(schema='grid',
@@ -33,7 +33,6 @@ def create_mv_topology(grid_data):
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-
     mvlv_buses.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']), inplace=True)
     mvlv_buses.rename(columns={'version': 'ego_version', 'mvlv_subst_id': 'ego_subst_id'},
                       inplace=True)
@@ -47,6 +46,8 @@ def create_mv_topology(grid_data):
         remove_columns.remove('geometry')
         mvlv_buses.drop(columns=remove_columns, inplace=True)
     mvlv_buses['node_type'] = 'mvlv_substation'
+    # update progress
+    pbar.update(10)
     # nodes for hv/mv trafos us side
     hvmv_buses, meta_data = oep_request(schema='grid',
                                         table='ego_dp_hvmv_substation',
@@ -67,6 +68,8 @@ def create_mv_topology(grid_data):
                               'frequency', 'ref', 'dbahn', 'status', 'ags_0', 'geom', 'voltage']),
                     inplace=True)
     hvmv_buses['node_type'] = 'hvmv_substation'
+    # update progress
+    pbar.update(10)
     # consider data only if there are more than one node in the target area
     mv_buses = mvlv_buses.append(hvmv_buses)
     if len(mv_buses) > 1:
@@ -94,6 +97,8 @@ def create_mv_topology(grid_data):
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
+            # update progress
+            pbar.update(20/len(mv_buses))
         mv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         mv_lines.reset_index(drop=True, inplace=True)
         # connect line segments with each other
@@ -169,6 +174,8 @@ def create_mv_topology(grid_data):
                 mv_line = LineString([line_point, nearest_point])
                 if not mv_lines.geom_equals(mv_line).any():
                     mv_lines[len(mv_lines)] = mv_line
+        # update progress
+        pbar.update(40)
         # prepare dataframe for mv lines
         mv_lines = gpd.GeoDataFrame(geometry=mv_lines)
         mv_lines.insert(0, 'dave_name', None)
@@ -178,11 +185,17 @@ def create_mv_topology(grid_data):
         # add parameters to lines
         for i, line in mv_lines.iterrows():
             # get from bus name
-            from_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][0]))
+            with warnings.catch_warnings():
+                # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
+                from_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][0]))
             from_bus_idx = from_bus_distance[from_bus_distance == from_bus_distance.min()].index[0]
             mv_lines.at[line.name, 'from_bus'] = mv_buses.loc[from_bus_idx].dave_name
             # get to bus name
-            to_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][1]))
+            with warnings.catch_warnings():
+                # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
+                to_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][1]))
             to_bus_idx = to_bus_distance[to_bus_distance == to_bus_distance.min()].index[0]
             mv_lines.at[line.name, 'to_bus'] = mv_buses.loc[to_bus_idx].dave_name
             # calculate length in km
@@ -193,5 +206,9 @@ def create_mv_topology(grid_data):
             mv_lines.at[line.name, 'voltage_kv'] = dave_settings()['mv_voltage']
             mv_lines.at[line.name, 'voltage_level'] = 5
             mv_lines.at[line.name, 'source'] = 'dave internal'
+            # update progress
+            pbar.update(20/len(mv_lines))
         # add mv lines to grid data
         grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)
+    # close progress bar
+    pbar.close()

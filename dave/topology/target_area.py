@@ -426,7 +426,8 @@ class target_area():
         target area and add it to the grid_data
         """
         # set progress bar
-        self.pbar = tqdm(total=100, desc='collect geographical data', position=0)
+        self.pbar = tqdm(total=100, desc='collect geographical data:         ', position=0,
+                         bar_format=dave_settings()['bar_format'])
         # check wich input parameter is given
         if self.postalcode:
             target_area._target_by_postalcode(self)
