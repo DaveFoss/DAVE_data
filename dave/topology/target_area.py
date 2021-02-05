@@ -293,11 +293,9 @@ class target_area():
             # in this case all postalcode areas will be choosen
             target = postal
         else:
-            for i in range(len(self.postalcode)):
-                if i == 0:
-                    target = postal[postal.postalcode == self.postalcode[i]]
-                else:
-                    target = target.append(postal[postal.postalcode == self.postalcode[i]])
+            for i, plz in enumerate(self.postalcode):
+                target = postal[postal.postalcode == plz] if i == 0 else \
+                    target.append(postal[postal.postalcode == plz])
             # sort federal state names
             self.postalcode.sort()
         self.target = target
@@ -328,13 +326,10 @@ class target_area():
             target = postal
         else:
             names_right = []
-            for i in range(len(self.town_name)):
-                if i == 0:
-                    town_name = self.town_name[0].capitalize()
-                    target = postal[postal.town == town_name]
-                else:
-                    town_name = self.town_name[i].capitalize()
-                    target = target.append(postal[postal.town == town_name])
+            for i, town in enumerate(self.town_name):
+                town_name = town.capitalize()
+                target = postal[postal.town == town_name] if i == 0 else \
+                    target.append(postal[postal.town == town_name])
                 names_right.append(town_name)
                 if target.empty:
                     raise ValueError('town name wasn`t found. Please check your input')
@@ -403,19 +398,14 @@ class target_area():
             # in this case all federal states will be choosen
             target = nuts_3
         else:
-            for i in range(len(self.nuts_region)):
+            for i, region in enumerate(self.nuts_region):
                 # bring name in right format
-                area = list(self.nuts_region[i])
-                for j in range(len(area)):
-                    if area[j].isalpha():
-                        area[j] = area[j].capitalize()
+                area = list(region)
+                area = [letter.capitalize() for letter in area if letter.isalpha()]
                 self.nuts_region[i] = ''.join(area)
                 # get area for nuts region
-                if i == 0:
-                    target = nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])]
-                else:
-                    target = target.append(
-                        nuts_3[nuts_3['nuts_code'].str.contains(self.nuts_region[i])])
+                target = nuts_3[nuts_3['nuts_code'].str.contains(region)] if i == 0 \
+                    else target.append(nuts_3[nuts_3['nuts_code'].str.contains(region)])
                 if target.empty:
                     raise ValueError('nuts region name wasn`t found. Please check your input')
         # merge multipolygons
@@ -487,8 +477,7 @@ class target_area():
         if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
         else:
-            file_exists = False
-            file_name = 'None'
+            file_exists, file_name = False, 'None'
         # update progress
         self.pbar.update(float(10))
         if not file_exists:
@@ -497,14 +486,12 @@ class target_area():
                 diff_targets = self.target['town'].drop_duplicates()
                 # define progress step
                 progress_step = 80/len(diff_targets)
-                for i in range(0, len(diff_targets)):
-                    town = self.target[self.target.town == diff_targets.iloc[i]]
-                    if len(town) > 1:
-                        border = unary_union(town.geometry.tolist()).convex_hull
-                    else:
-                        border = town.iloc[0].geometry.convex_hull
+                for diff_target in diff_targets:
+                    town = self.target[self.target.town == diff_target]
+                    border = unary_union(town.geometry.tolist()).convex_hull if len(town) > 1 else \
+                        town.iloc[0].geometry.convex_hull
                     # Obtain data from OSM
-                    target_area._from_osm(self, target=border, target_town=diff_targets.iloc[i],
+                    target_area._from_osm(self, target=border, target_town=diff_target,
                                           progress_step=progress_step)
             else:
                 for i in range(0, len(self.target)):

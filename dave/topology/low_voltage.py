@@ -52,12 +52,9 @@ def line_connections(grid_data):
         if road_course[0] > road_course[len(road_course)-1]:
             road_course = road_course[::-1]
         road_points = MultiPoint(road_course)
-        # find nodes wich are on the considered road and sort them
-        grid_nodes = []
-        for node in all_nodes:
-            if road.geometry.distance(node) < 1E-10:
-                grid_nodes.append(node.coords[:][0])
-        grid_nodes = sorted(grid_nodes)  # sort nodes by their longitude to find start point
+        # find nodes on the considered road and sort them by their longitude to find start point
+        grid_nodes = sorted([node.coords[:][0] for node in all_nodes
+                             if road.geometry.distance(node) < 1E-10])
         if grid_nodes:  # check if their are grid nodes on the considered road
             # sort nodes by their nearest neighbor
             grid_nodes_sort = [grid_nodes[0]]  # start node
@@ -200,8 +197,8 @@ def create_lv_topology(grid_data):
         else:
             # check if there is a suitable road junction in grid data
             with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=UserWarning)
                 # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
                 distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
             if distance.min() < 1E-04:
                 # road junction node was found
@@ -210,8 +207,8 @@ def create_lv_topology(grid_data):
             else:
                 # no road junction was found, create it from road junction data
                 with warnings.catch_warnings():
-                    warnings.filterwarnings('ignore', category=UserWarning)
                     # filter crs warning because it is not relevant
+                    warnings.filterwarnings('ignore', category=UserWarning)
                     distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
                 if distance.min() < 1E-04:
                     road_junction_geom = road_junctions_origin.loc[
@@ -238,8 +235,8 @@ def create_lv_topology(grid_data):
         else:
             # check if there is a suitable road junction in grid data
             with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=UserWarning)
                 # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
                 distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
             if distance.min() < 1E-04:
                 # road junction node was found
@@ -248,8 +245,8 @@ def create_lv_topology(grid_data):
             else:
                 # no road junction was found, create it from road junction data
                 with warnings.catch_warnings():
-                    warnings.filterwarnings('ignore', category=UserWarning)
                     # filter crs warning because it is not relevant
+                    warnings.filterwarnings('ignore', category=UserWarning)
                     distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
                 if distance.min() < 1E-04:
                     road_junction_geom = road_junctions_origin.loc[

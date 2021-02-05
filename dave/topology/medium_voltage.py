@@ -125,31 +125,26 @@ def create_mv_topology(grid_data):
                 distance = mv_lines_con.geometry.distance(line)
                 nearest_line_idx = distance[distance == distance.min()].index[0]
                 # get line coordinates
-                line_points = gpd.GeoSeries([])
                 if isinstance(line, MultiLineString):
-                    k = 0
+                    line_points = []
                     for segment in line:
-                        for j in range(len(segment.coords[:])):
-                            line_points[k] = Point(segment.coords[:][j])
-                            k += 1
+                        line_points += [Point(coords) for coords in segment.coords[:]]
+                    line_points = gpd.GeoSeries(line_points)
                 else:
-                    for j in range(len(line.coords[:])):
-                        line_points[j] = Point(line.coords[:][j])
+                    line_points = gpd.GeoSeries([Point(coords) for coords in line.coords[:]])
                 # set crs
                 line_points = line_points.set_crs(dave_settings()['crs_main'])
                 # get nearest line coordinates
-                nearest_line_points = gpd.GeoSeries([])
                 nearest_line = mv_lines_rel.loc[nearest_line_idx]
                 if isinstance(nearest_line, MultiLineString):
-                    k = 0
+                    nearest_line_points = []
                     for segment in nearest_line:
-                        for j in range(len(segment.coords[:])):
-                            nearest_line_points[k] = Point(segment.coords[:][j])
-                            k += 1
+                        nearest_line_points += [Point(coords) for coords in segment.coords[:]]
+                    nearest_line_points = gpd.GeoSeries(nearest_line_points)
                 else:
-                    for j in range(len(nearest_line.coords[:])):
-                        nearest_line_points[j] = Point(mv_lines_rel.loc[
-                            nearest_line_idx].coords[:][j])
+                    nearest_line_points = gpd.GeoSeries([Point(mv_lines_rel.loc[
+                        nearest_line_idx].coords[:][j])
+                        for j in range(len(nearest_line.coords[:]))])
                 # set crs
                 nearest_line_points.set_crs(dave_settings()['crs_main'], inplace=True)
                 # define minimal distance for initialize
@@ -175,21 +170,16 @@ def create_mv_topology(grid_data):
         mv_lines_3035 = mv_lines.to_crs(dave_settings()['crs_meter'])
         # add parameters to lines
         for i, line in mv_lines.iterrows():
-            # from bus name
-            from_bus = line.geometry.coords[:][0]
-            from_bus_distance = mv_buses.distance(Point(from_bus))
+            # get from bus name
+            from_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][0]))
             from_bus_idx = from_bus_distance[from_bus_distance == from_bus_distance.min()].index[0]
-            from_bus_name = mv_buses.loc[from_bus_idx].dave_name
-            mv_lines.at[line.name, 'from_bus'] = from_bus_name
-            # to bus name
-            to_bus = line.geometry.coords[:][1]
-            to_bus_distance = mv_buses.distance(Point(to_bus))
+            mv_lines.at[line.name, 'from_bus'] = mv_buses.loc[from_bus_idx].dave_name
+            # get to bus name
+            to_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][1]))
             to_bus_idx = to_bus_distance[to_bus_distance == to_bus_distance.min()].index[0]
-            to_bus_name = mv_buses.loc[to_bus_idx].dave_name
-            mv_lines.at[line.name, 'to_bus'] = to_bus_name
+            mv_lines.at[line.name, 'to_bus'] = mv_buses.loc[to_bus_idx].dave_name
             # calculate length in km
-            line_length_km = mv_lines_3035.loc[i].geometry.length/1000
-            mv_lines.at[line.name, 'length_km'] = line_length_km
+            mv_lines.at[line.name, 'length_km'] = mv_lines_3035.loc[i].geometry.length/1000
             # line dave name
             mv_lines.at[line.name, 'dave_name'] = f'line_5_{i}'
             # additional informations

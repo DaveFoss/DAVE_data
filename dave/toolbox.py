@@ -68,10 +68,8 @@ def voronoi(points):
     voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
     vor = Voronoi(voronoi_points)
-    # select finit lines and create LineStrings
-    lines = [LineString(vor.vertices[line])
-             for line in vor.ridge_vertices
-             if -1 not in line]  # filtering regions with -1 because these are infinit
+    # select finit lines and create LineStrings (regions with -1 are infinit)
+    lines = [LineString(vor.vertices[line]) for line in vor.ridge_vertices if -1 not in line]
     # create polygons from the lines
     polygons = np.array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
