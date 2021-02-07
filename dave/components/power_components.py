@@ -2,6 +2,8 @@ import math
 import copy
 import geopandas as gpd
 import pandas as pd
+import warnings
+from tqdm import tqdm
 from geopy.geocoders import ArcGIS
 from shapely import wkb
 from shapely.geometry import Point, MultiPoint, LineString, Polygon
@@ -107,8 +109,9 @@ def power_plant_lines(grid_data):
     This function is not for aggregated power plants because these are anyway close to the
     connection point
     """
-    print('create powerplant lines')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create powerplant lines:           ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # get all grid nodes
     all_nodes = pd.concat([grid_data.ehv_data.ehv_nodes, grid_data.hv_data.hv_nodes,
                            grid_data.mv_data.mv_nodes, grid_data.lv_data.lv_nodes])
@@ -118,12 +121,12 @@ def power_plant_lines(grid_data):
     conventionals = grid_data.components_power.conventional_powerplants
     all_plants = pd.concat([renewables, conventionals])
     all_plants.reset_index(drop=True, inplace=True)
+    # update progress
+    pbar.update(10)
     # --- create auxillary buses and lines for the power plants
     if not all_plants.empty:
-        if 'aggregated' in all_plants.keys():
-            plants_rel = all_plants[all_plants.aggregated.isnull()]
-        else:
-            plants_rel = all_plants
+        plants_rel = all_plants[all_plants.aggregated.isnull()] \
+            if 'aggregated' in all_plants.keys() else all_plants
         plants_rel.crs = dave_settings()['crs_main']
         plants_rel_3035 = plants_rel.to_crs(dave_settings()['crs_meter'])
         # considered voltage level
@@ -298,6 +301,13 @@ def power_plant_lines(grid_data):
                              'to_bus': bus_origin.dave_name})
                         grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(
                             auxillary_line).reset_index(drop=True)
+            # update progress
+            pbar.update(90/len(plants_rel_3035))
+    else:
+        # update progress
+        pbar.update(90)
+    # close progress bar
+    pbar.close()
 
 
 def renewable_powerplants(grid_data):
@@ -306,8 +316,9 @@ def renewable_powerplants(grid_data):
     and perhaps assign them their exact location by adress, if these are available.
     Furthermore assign a grid node to the generators and aggregated them depending on the situation
     """
-    print('create renewable powerplants')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create renewable powerplants:      ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
@@ -336,6 +347,8 @@ def renewable_powerplants(grid_data):
                 renewables = data
             else:
                 renewables = renewables.append(data)
+    # update progress
+    pbar.update(10)
     # prepare the DataFrame of the renewable plants
     if not renewables.empty:
         renewables.reset_index(drop=True, inplace=True)
@@ -374,6 +387,11 @@ def renewable_powerplants(grid_data):
                     pass
                     # zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes
                     # behalten, falls keine Adresse bekannt. Das aber noch abändern.
+                # update progress
+                pbar.update(20/len(plant_georefernce))
+        else:
+            # update progress
+            pbar.update(20)
         # convert DataFrame into a GeoDataFrame
         renewables_geo = gpd.GeoDataFrame(renewables, crs=dave_settings()['crs_main'],
                                           geometry=gpd.points_from_xy(renewables.lon,
@@ -436,6 +454,8 @@ def renewable_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_ren(grid_data, intersection_rel, aggregate_name='level 7 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 6 plants (MV/LV)
         if not renewables_mv_lv.empty:
@@ -483,6 +503,8 @@ def renewable_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_ren(grid_data, intersection_rel, aggregate_name='level 6 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 5 plants (MV)
         if not renewables_mv.empty:
@@ -525,6 +547,8 @@ def renewable_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_ren(grid_data, intersection_rel, aggregate_name='level 5 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 4 plants (HV/MV)
         if not renewables_hv_mv.empty:
@@ -565,6 +589,8 @@ def renewable_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_ren(grid_data, intersection_rel, aggregate_name='level 4 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 3 plants (HV)
         if not renewables_hv.empty:
@@ -600,6 +626,8 @@ def renewable_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_ren(grid_data, intersection_rel, aggregate_name='level 3 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 2 plants (EHV/HV)
         if not renewables_ehv_hv.empty:
@@ -618,6 +646,8 @@ def renewable_powerplants(grid_data):
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 1 plants (EHV)
         if not renewables_ehv.empty:
@@ -636,6 +666,13 @@ def renewable_powerplants(grid_data):
         name = pd.Series(list(map(lambda x: f'ren_powerplant_{plant.voltage_level}_{x}',
                                   grid_data.components_power.renewable_powerplants.index)))
         grid_data.components_power.renewable_powerplants.insert(0, 'dave_name', name)
+        # update progress
+        pbar.update(10)
+    else:
+        # update progress
+        pbar.update(90)
+    # close progress bar
+    pbar.close()
 
 
 def conventional_powerplants(grid_data):
@@ -643,8 +680,9 @@ def conventional_powerplants(grid_data):
     This function collects the generators based on ego_conventional_powerplant from OEP
     Furthermore assign a grid node to the generators and aggregated them depending on the situation
     """
-    print('create conventional powerplants')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create conventional powerplants:   ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
@@ -673,6 +711,8 @@ def conventional_powerplants(grid_data):
                 conventionals = data
             else:
                 conventionals = conventionals.append(data)
+    # update progress
+    pbar.update(20)
     # prepare the DataFrame of the conventional plants
     if not conventionals.empty:
         conventionals.reset_index(drop=True, inplace=True)
@@ -736,6 +776,8 @@ def conventional_powerplants(grid_data):
         conventionals_hv = conventionals_geo[conventionals_geo.voltage_level == 3]
         conventionals_ehv_hv = conventionals_geo[conventionals_geo.voltage_level == 2]
         conventionals_ehv = conventionals_geo[conventionals_geo.voltage_level == 1]
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 7 plants (LV)
         if not conventionals_lv.empty:
@@ -782,6 +824,8 @@ def conventional_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_con(grid_data, intersection_rel, aggregate_name='level 7 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 6 plants (MV/LV)
         if not conventionals_mv_lv.empty:
@@ -830,6 +874,8 @@ def conventional_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_con(grid_data, intersection_rel, aggregate_name='level 6 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 5 plants (MV)
         if not conventionals_mv.empty:
@@ -871,6 +917,8 @@ def conventional_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_con(grid_data, intersection_rel, aggregate_name='level 5 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 4 plants (HV/MV)
         if not conventionals_hv_mv.empty:
@@ -913,6 +961,8 @@ def conventional_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_con(grid_data, intersection_rel, aggregate_name='level 4 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 3 plants (HV)
         if not conventionals_hv.empty:
@@ -947,6 +997,8 @@ def conventional_powerplants(grid_data):
                                                  'connection_trafo_dave_name']]
                 # aggregated power plants, set geometry and write them into grid data
                 aggregate_plants_con(grid_data, intersection_rel, aggregate_name='level 3 plants')
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 2 plants (EHV/HV)
         if not conventionals_ehv_hv.empty:
@@ -966,6 +1018,8 @@ def conventional_powerplants(grid_data):
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
                     grid_data.components_power.conventional_powerplants.append(intersection)
+        # update progress
+        pbar.update(10)
 
         # --- nodes for level 1 plants (EHV)
         if not conventionals_ehv.empty:
@@ -986,6 +1040,13 @@ def conventional_powerplants(grid_data):
         name = pd.Series(list(map(lambda x: f'con_powerplant_{voltage_level}_{x}',
                                   grid_data.components_power.conventional_powerplants.index)))
         grid_data.components_power.conventional_powerplants.insert(0, 'dave_name', name)
+        # update progress
+        pbar.update(10)
+    else:
+        # update progress
+        pbar.update(90)
+    # close progress bar
+    pbar.close()
 
 
 def transformers(grid_data):
@@ -995,8 +1056,9 @@ def transformers(grid_data):
     HV/MV trafos are based on ego_dp_hvmv_substation from OEP
     MV/LV trafos are based on ego_dp_mvlv_substation from OEP
     """
-    print('create transformers')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create transformers:               ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # --- create ehv/ehv and ehv/hv trafos
@@ -1023,6 +1085,8 @@ def transformers(grid_data):
             remove_columns = grid_data.area.keys().tolist()
             remove_columns.remove('geometry')
             hv_trafos.drop(columns=remove_columns, inplace=True)
+        # update progress
+        pbar.update(5)
         # in case of missing ehv/hv-level, nodes for the transformator must be procured from OEP
         if ('EHV' in power_levels and grid_data.hv_data.hv_nodes.empty) \
            or ('HV' in power_levels and grid_data.ehv_data.ehv_nodes.empty):
@@ -1044,6 +1108,8 @@ def transformers(grid_data):
                 remove_columns = grid_data.area.keys().tolist()
                 remove_columns.remove('geometry')
                 ehvhv_buses.drop(columns=remove_columns, inplace=True)
+        # update progress
+        pbar.update(5)
         # search for trafo voltage and create missing nodes
         for i, trafo in hv_trafos.iterrows():
             if 'EHV' in power_levels:
@@ -1100,6 +1166,8 @@ def transformers(grid_data):
                                 ehv_bus1['source'] = 'OEP'
                                 grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
                                     ehv_bus1)
+            # update progress
+            pbar.update(10/len(hv_trafos))
         # add dave name for nodes which are created for the transformers
         if 'dave_name' not in grid_data.hv_data.hv_nodes.keys():
             grid_data.hv_data.hv_nodes.reset_index(drop=True, inplace=True)
@@ -1160,6 +1228,11 @@ def transformers(grid_data):
             # add ehv/ehv trafos to grid data
             grid_data.components_power.transformers.ehv_hv = \
                 grid_data.components_power.transformers.ehv_hv.append(ehv_hv_trafos)
+        # update progress
+        pbar.update(10)
+    else:
+        # update progress
+        pbar.update(30)
 
     # --- create hv/mv trafos
     if any(map(lambda x: x in power_levels, ['HV', 'MV'])):
@@ -1189,6 +1262,8 @@ def transformers(grid_data):
             remove_columns = grid_data.area.keys().tolist()
             remove_columns.remove('geometry')
             substations.drop(columns=remove_columns, inplace=True)
+        # update progress
+        pbar.update(10)
         # --- prepare hv nodes for the transformers
         # check if the hv nodes already exist, otherwise create them
         if grid_data.hv_data.hv_nodes.empty:
@@ -1232,6 +1307,8 @@ def transformers(grid_data):
 
         else:
             hv_nodes = grid_data.hv_data.hv_nodes
+        # update progress
+        pbar.update(10)
         # --- prepare mv nodes for the transformers
         # check for mv nodes within hv/mv substations if they were created in mv topology function
         # Otherwise create missing mv nodes
@@ -1299,11 +1376,17 @@ def transformers(grid_data):
                                          'geometry': [sub.geometry.centroid]})
             grid_data.components_power.transformers.hv_mv = \
                 grid_data.components_power.transformers.hv_mv.append(trafo_df)
+            # update progress
+            pbar.update(10/len(substations))
         # add dave name
         grid_data.components_power.transformers.hv_mv.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'trafo_4_{x}',
                                   grid_data.components_power.transformers.hv_mv.index)))
         grid_data.components_power.transformers.hv_mv.insert(0, 'dave_name', name)
+    else:
+        # update progress
+        pbar.update(30)
+
     # --- create mv/lv trafos
     if any(map(lambda x: x in power_levels, ['MV', 'LV'])):
         # get transformator data from OEP
@@ -1327,6 +1410,8 @@ def transformers(grid_data):
             remove_columns = grid_data.area.keys().tolist()
             remove_columns.remove('geometry')
             substations.drop(columns=remove_columns, inplace=True)
+        # update progress
+        pbar.update(10)
         # --- prepare mv nodes for the transformers
         # check if the mv nodes already exist, otherwise create them
         if grid_data.mv_data.mv_nodes.empty:
@@ -1367,6 +1452,8 @@ def transformers(grid_data):
                 grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
         else:
             lv_buses = grid_data.lv_data.lv_nodes
+        # update progress
+        pbar.update(10)
         # create mv/lv transfromers
         for i, sub in substations.iterrows():
             # get hv bus
@@ -1440,6 +1527,14 @@ def transformers(grid_data):
         name = pd.Series(list(map(lambda x: f'trafo_6_{x}',
                                   grid_data.components_power.transformers.mv_lv.index)))
         grid_data.components_power.transformers.mv_lv.insert(0, 'dave_name', name)
+        # update progress
+        pbar.update(10)
+    else:
+        # update progress
+        pbar.update(30)
+    # close progress bar
+    pbar.update(10)
+    pbar.close()
 
 
         # lv_nodes find closest node, hierbei wenn distanz mehr als 50 m dann leitung erstellen auf
@@ -1472,8 +1567,9 @@ def loads(grid_data):
     This function creates loads by osm landuse polygons in the target area an assigne them to a
     suitable node on the considered voltage level by voronoi analysis
     """
-    print('create electrical loads')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create electrical loads:           ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # define avarage load values
     residential_load = dave_settings()['residential_load']
     industrial_load = dave_settings()['industrial_load']
@@ -1489,7 +1585,7 @@ def loads(grid_data):
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
             grid_data.lv_data.lv_nodes.node_type == 'building_centroid']
-        # create lv loads for residential
+        # --- create lv loads for residential
         buildings_residential = grid_data.buildings.for_living
         federal_states, meta_data = read_federal_states()
         # add meta data
@@ -1502,6 +1598,8 @@ def loads(grid_data):
         buildings_feds.drop(columns=drop_columns, inplace=True)
         # read consumption data
         consumption_data, meta_data = read_household_consumption()
+        # update progress
+        pbar.update(10)
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -1546,6 +1644,8 @@ def loads(grid_data):
                 pop_own = (plz_own_residential.area/plz_residential.area)*postal.population_origin
                 postal_own_intersection.at[i, 'population'] = round(pop_own)
             population_area = postal_own_intersection
+        # update progress
+        pbar.update(10)
         for i, area in population_area.iterrows():
             if area.population != 0:
                 # filter buildings for considered area
@@ -1594,7 +1694,10 @@ def loads(grid_data):
                     else:
                         # check the case that the building centroid is outside building boundary
                         building_centroid = building_geom.centroid
-                        centroid_distance = building_nodes.distance(building_centroid)
+                        with warnings.catch_warnings():
+                            # filter crs warning because it is not relevant
+                            warnings.filterwarnings('ignore', category=UserWarning)
+                            centroid_distance = building_nodes.distance(building_centroid)
                         if centroid_distance.min() < 1E-04:
                             lv_node = building_nodes.loc[centroid_distance[
                                 centroid_distance == centroid_distance.min()].index[0]]
@@ -1606,6 +1709,8 @@ def loads(grid_data):
                                                 'voltage_level': [7]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
+            # update progress
+            pbar.update(40/len(population_area))
         # create lv loads for industrial
         industrial_polygons = grid_data.landuse[grid_data.landuse.landuse == 'industrial']
         industrial_load_full = industrial_polygons.area_km2.sum()*industrial_load  # in MW
@@ -1629,6 +1734,8 @@ def loads(grid_data):
                          'voltage_level': [7]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
+            # update progress
+            pbar.update(20/len(industrial_buildings))
         # create lv loads for commercial
         commercial_polygons = grid_data.landuse[grid_data.landuse.landuse == 'commercial']
         commercial_load_full = commercial_polygons.area_km2.sum()*commercial_load  # in MW
@@ -1652,6 +1759,8 @@ def loads(grid_data):
                          'voltage_level': [7]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
+            # update progress
+            pbar.update(20/len(commercial_buildings))
     # create loads for non grid level 7
     elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
         # create loads on grid level 6 (MV/LV)
@@ -1675,6 +1784,8 @@ def loads(grid_data):
                                                                                        'geometry']])
             trafos = grid_data.components_power.transformers.ehv_hv
             voltage_level = 2
+        # update progress
+        pbar.update(10)
         # --- create loads for the lowest considered voltage level
         intersection = gpd.overlay(grid_data.landuse, voronoi_polygons, how='intersection')
         intersection.drop(columns=['area_km2'], inplace=True)
@@ -1686,6 +1797,8 @@ def loads(grid_data):
         connection_trafos = intersection.dave_name.tolist()
         trafo_names = list(set(connection_trafos))
         trafo_names.sort()
+        # update progress
+        pbar.update(10)
         # iterate trough diffrent transformers and calulate the diffrent landuse consumptions
         for trafo_name in trafo_names:
             # search trafo bus
@@ -1720,12 +1833,16 @@ def loads(grid_data):
                                                 'voltage_level': [voltage_level]})
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
+            # update progress
+            pbar.update(79.8/len(trafo_names))
     # add dave name
     grid_data.components_power.loads.reset_index(drop=True, inplace=True)
     name = pd.Series(list(map(lambda x, y: f'load_{x}_{y}',
                               grid_data.components_power.loads.voltage_level,
                               grid_data.components_power.loads.index)))
     grid_data.components_power.loads.insert(0, 'dave_name', name)
+    # close progress bar
+    pbar.close()
 
 
 def power_components(grid_data, transformer, renewable_powerplant, conventional_powerplant,
