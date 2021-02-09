@@ -21,9 +21,9 @@ def _convert_data_from(file, key):
 def _convert_data_to(data_key):
     data = copy.deepcopy(data_key)
     if not data.empty:
+        data = pd.DataFrame(data)
         if 'geometry' in data.keys():
             data['geometry'] = data.geometry.apply(dumps)
-        data = pd.DataFrame(data)
     else:
         data = pd.DataFrame([])
     return data

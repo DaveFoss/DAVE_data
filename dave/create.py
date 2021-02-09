@@ -2,6 +2,7 @@ import os
 import shutil
 import pandas as pd
 import geopandas as gpd
+import warnings
 
 # imports from dave
 from dave.dave_structure import davestructure
@@ -261,7 +262,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         grid_data = from_archiv(f'{file_name}.h5')
 
     # create dave output folder on desktop for DaVe dataset, plotting and converted model
-    print('Save DaVe output data at the following path:')
+    print('\nSave DaVe output data at the following path:')
     print(dave_output_dir)
     print('----------------------------------')
     if not os.path.exists(dave_output_dir):
@@ -269,6 +270,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
 
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
+        """ this function is taken out for development
+
         # Vorrübergehend aus für testzwecke
         print('Save DaVe dataset to archiv')
         print('----------------------------------')
@@ -283,8 +286,12 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
+        """
     else:
-        write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
+        with warnings.catch_warnings():
+            # filter warnings because of the PerformanceWarning from pytables at the geometry type
+            warnings.simplefilter('ignore')
+            write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
 
     # plot informations
     if plot:
