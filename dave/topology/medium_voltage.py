@@ -159,8 +159,7 @@ def create_mv_topology(grid_data):
                 # define minimal distance for initialize
                 distance_min = 1000  # any big number
                 # find pair of nearest nodes
-                for j in range(len(line_points)):
-                    point = line_points[j]
+                for point in line_points:
                     with warnings.catch_warnings():
                         # filter crs warning because it is not relevant
                         warnings.filterwarnings('ignore', category=UserWarning)
@@ -169,7 +168,7 @@ def create_mv_topology(grid_data):
                         distance_min = distance.min()
                         nearest_point_idx = distance[distance == distance.min()].index[0]
                         nearest_point = nearest_line_points[nearest_point_idx]
-                        line_point = line_points[j]
+                        line_point = point
                 # add created connection line into mv lines
                 mv_line = LineString([line_point, nearest_point])
                 if not mv_lines.geom_equals(mv_line).any():

@@ -1760,7 +1760,7 @@ def loads(grid_data):
                     grid_data.components_power.loads = grid_data.components_power.loads.append(
                         load_df)
             # update progress
-            pbar.update(20/len(commercial_buildings))
+            pbar.update(19.8/len(commercial_buildings))
     # create loads for non grid level 7
     elif any(map(lambda x: x in power_levels, ['EHV', 'HV', 'MV'])):
         # create loads on grid level 6 (MV/LV)
