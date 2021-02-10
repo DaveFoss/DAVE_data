@@ -11,5 +11,12 @@ def create_gas_grid(grid_data):
     OUTPUT:
         **net** (attrdict) - pandapipes attrdict with grid data
     """
-    pass
-    # hier wird das Gasnetzmodell anhand der grid_data erstellt. ruaskommen soll dan fertiges pp netz als pickel(oder json?)
+    print('create pandapipes network')
+    print('----------------------------------')
+    # create empty network
+    net = ppi.create_empty_network()
+    # add dave version
+    net['dave_version'] = grid_data.dave_version
+
+    # --- create high pressure topology
+    # create junctions
