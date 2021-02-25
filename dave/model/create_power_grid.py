@@ -337,7 +337,8 @@ def create_power_grid(grid_data):
             if 'aggregated' in plant.keys():
                 net.sgen.at[sgen_id, 'aggregated'] = plant.aggregated
             net.sgen.at[sgen_id, 'voltage_level'] = plant.voltage_level
-            net.sgen.at[sgen_id, 'source'] = plant.source
+            if 'source' in plant.keys():
+                net.sgen.at[sgen_id, 'source'] = plant.source
     # create conventional powerplants
     net.gen['geometry'] = None
     if not grid_data.components_power.conventional_powerplants.empty:
@@ -356,6 +357,8 @@ def create_power_grid(grid_data):
             if 'aggregated' in plant.keys():
                 net.gen.at[gen_id, 'aggregated'] = plant.aggregated
             net.gen.at[gen_id, 'voltage_level'] = plant.voltage_level
+            if 'source' in plant.keys():
+                net.gen.at[gen_id, 'source'] = plant.source
 
     # --- create loads
     if not grid_data.components_power.loads.empty:
