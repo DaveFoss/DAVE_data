@@ -395,7 +395,7 @@ def create_power_grid(grid_data):
                                name='ext_grid_1_0')
             # additional Informations
             ext_id = pp.get_element_index(net,
-                                          element='ext_grid_1_0',
+                                          element='ext_grid',
                                           name='ext_grid_1_0')
             net.ext_grid.at[ext_id, 'voltage_level'] = 1
     elif 'HV' in grid_data.target_input.power_levels[0]:
