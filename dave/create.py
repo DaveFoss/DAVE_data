@@ -3,6 +3,7 @@ import shutil
 import pandas as pd
 import geopandas as gpd
 import warnings
+import timeit
 
 # imports from dave
 from dave.dave_structure import davestructure
@@ -168,6 +169,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
                                  convert = False)
 
     """
+    # start runtime
+    _start_time = timeit.default_timer()
     # create empty datastructure
     grid_data = create_empty_dataset()
 
@@ -313,7 +316,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
     else:
         net_gas = None
 
-    # return
+    # return runtime
+    _stop_time = timeit.default_timer()
+    print('runtime = ' + str(round((_stop_time - _start_time)/60, 2)) + ' min')
+
+    # return data
     if net_power and net_gas:
         return grid_data, net_power, net_gas
     elif net_power:
