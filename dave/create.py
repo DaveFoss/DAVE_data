@@ -199,7 +199,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for EHV, HV and HP
         roads, roads_plot, buildings = False, False, False
-        landuse = bool(loads)  # landuse is needed for load calculation
+        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
     file_exists, file_name = target_area(grid_data, power_levels=power_levels,
                                          gas_levels=gas_levels, postalcode=postalcode,
                                          town_name=town_name, federal_state=federal_state,
