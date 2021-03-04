@@ -303,5 +303,5 @@ def read_scigridgas_igginl():
                     'productions': productions,
                     'storages': storages}
     # read meta data
-    meta_data = pd.read_excel(get_data_path('scigridgas_igginl.xlsx', 'data'), sheet_name=None)
+    meta_data = pd.read_excel(get_data_path('scigridgas_igginl_meta.xlsx', 'data'), sheet_name=None)
     return storage_data, meta_data
