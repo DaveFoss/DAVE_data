@@ -394,14 +394,14 @@ class target_area():
         # change crs
         nuts_3.set_crs(dave_settings()['crs_meter'], inplace=True, allow_override=True)
         nuts_3.to_crs(dave_settings()['crs_main'], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0].capitalize() == 'ALL':
+        if len(self.nuts_region) == 1 and self.nuts_region[0].upper() == 'ALL':
             # in this case all federal states will be choosen
             target = nuts_3
         else:
             for i, region in enumerate(self.nuts_region):
                 # bring name in right format
                 area = list(region)
-                area = [letter.capitalize() for letter in area if letter.isalpha()]
+                area = [letter.upper() for letter in area if letter.isalpha()]
                 self.nuts_region[i] = ''.join(area)
                 # get area for nuts region
                 target = nuts_3[nuts_3['nuts_code'].str.contains(region)] if i == 0 \
