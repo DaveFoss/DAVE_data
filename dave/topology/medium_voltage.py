@@ -79,8 +79,8 @@ def create_mv_topology(grid_data):
         mv_buses['source'] = 'OEP'
         # add dave name
         mv_buses.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
-        mv_buses.insert(0, 'dave_name', name)
+        mv_buses.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'node_5_{x}',
+                                                           mv_buses.index))))
         # add mv nodes to grid data
         grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         # --- create mv lines
