@@ -20,9 +20,8 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
     # --- clean up failures detected by the diagnostic tool
     # delete disconected buses and the elements connected to them
     if 'disconnected_elements' in diagnostic.keys():
-        for idx in range(0, len(diagnostic['disconnected_elements'])):
-            drop_buses = diagnostic['disconnected_elements'][idx]['buses']
-            pp.drop_buses(net, drop_buses)
+        for idx in range(len(diagnostic['disconnected_elements'])):
+            pp.drop_buses(net, diagnostic['disconnected_elements'][idx]['buses'])
     # run network diagnostic
     diagnostic = pp.diagnostic(net, report_style='None')
     # change lines with impedance close to zero to switches
