@@ -1,5 +1,6 @@
 import geopandas as gpd
 import numpy as np
+import warnings
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint
 from shapely.ops import polygonize, cascaded_union
@@ -24,7 +25,10 @@ def create_interim_area(areas):
         for i, area in areas.iterrows():
             # check if the considered area adjoining an other one
             areas_other = areas.drop([i])
-            distance = areas_other.geometry.distance(area.geometry)
+            with warnings.catch_warnings():
+                # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
+                distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
                 areas_iso.append((i, distance[distance == distance.min()].index[0]))
         # if their are isolated areas, check for a connection on the highest grid level
