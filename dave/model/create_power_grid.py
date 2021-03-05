@@ -27,14 +27,11 @@ def create_power_grid(grid_data):
     if not grid_data.ehv_data.ehv_nodes.empty:
         net.bus['tso_name'] = None
         for i, bus in grid_data.ehv_data.ehv_nodes.iterrows():
-            pp.create_bus(net,
-                          name=bus.dave_name,
-                          vn_kv=bus.voltage_kv,
-                          geodata=bus.geometry.coords[:][0])
+            bus_id = pp.create_bus(net,
+                                   name=bus.dave_name,
+                                   vn_kv=bus.voltage_kv,
+                                   geodata=bus.geometry.coords[:][0])
             # additional Informations
-            bus_id = pp.get_element_index(net,
-                                          element='bus',
-                                          name=bus.dave_name)
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
             if 'tso_name' in bus.index:
@@ -59,22 +56,19 @@ def create_power_grid(grid_data):
             # get bus indexes for the line buses
             from_bus = pp.get_element_index(net, element='bus', name=line.bus0)
             to_bus = pp.get_element_index(net, element='bus', name=line.bus1)
-            pp.create_line_from_parameters(net,
-                                           from_bus=from_bus,
-                                           to_bus=to_bus,
-                                           length_km=line.length_km,
-                                           r_ohm_per_km=line.r_ohm_per_km,
-                                           x_ohm_per_km=line.x_ohm_per_km,
-                                           c_nf_per_km=line.c_nf_per_km,
-                                           max_i_ka=line.max_i_ka,
-                                           name=line.dave_name,
-                                           type='ol',
-                                           geodata=[list(coords) for coords in line_coords],
-                                           parallel=line.parallel)
+            line_id = pp.create_line_from_parameters(net,
+                                                     from_bus=from_bus,
+                                                     to_bus=to_bus,
+                                                     length_km=line.length_km,
+                                                     r_ohm_per_km=line.r_ohm_per_km,
+                                                     x_ohm_per_km=line.x_ohm_per_km,
+                                                     c_nf_per_km=line.c_nf_per_km,
+                                                     max_i_ka=line.max_i_ka,
+                                                     name=line.dave_name,
+                                                     type='ol',
+                                                     geodata=[list(coord) for coord in line_coords],
+                                                     parallel=line.parallel)
             # additional Informations
-            line_id = pp.get_element_index(net,
-                                           element='line',
-                                           name=line.dave_name)
             net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
@@ -85,14 +79,11 @@ def create_power_grid(grid_data):
     # create buses
     if not grid_data.hv_data.hv_nodes.empty:
         for i, bus in grid_data.hv_data.hv_nodes.iterrows():
-            pp.create_bus(net,
-                          name=bus.dave_name,
-                          vn_kv=bus.voltage_kv,
-                          geodata=bus.geometry.coords[:][0])
+            bus_id = pp.create_bus(net,
+                                   name=bus.dave_name,
+                                   vn_kv=bus.voltage_kv,
+                                   geodata=bus.geometry.coords[:][0])
             # additional Informations
-            bus_id = pp.get_element_index(net,
-                                          element='bus',
-                                          name=bus.dave_name)
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
@@ -115,22 +106,19 @@ def create_power_grid(grid_data):
             # get bus indexes for lines
             from_bus = pp.get_element_index(net, element='bus', name=line.bus0)
             to_bus = pp.get_element_index(net, element='bus', name=line.bus1)
-            pp.create_line_from_parameters(net,
-                                           from_bus=from_bus,
-                                           to_bus=to_bus,
-                                           length_km=line.length_km,
-                                           r_ohm_per_km=line.r_ohm_per_km,
-                                           x_ohm_per_km=line.x_ohm_per_km,
-                                           c_nf_per_km=line.c_nf_per_km,
-                                           max_i_ka=line.max_i_ka,
-                                           name=line.dave_name,
-                                           type='ol',
-                                           geodata=[list(coords) for coords in line_coords],
-                                           parallel=line.parallel)
+            line_id = pp.create_line_from_parameters(net,
+                                                     from_bus=from_bus,
+                                                     to_bus=to_bus,
+                                                     length_km=line.length_km,
+                                                     r_ohm_per_km=line.r_ohm_per_km,
+                                                     x_ohm_per_km=line.x_ohm_per_km,
+                                                     c_nf_per_km=line.c_nf_per_km,
+                                                     max_i_ka=line.max_i_ka,
+                                                     name=line.dave_name,
+                                                     type='ol',
+                                                     geodata=[list(coord) for coord in line_coords],
+                                                     parallel=line.parallel)
             # additional Informations
-            line_id = pp.get_element_index(net,
-                                           element='line',
-                                           name=line.dave_name)
             net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
@@ -141,14 +129,11 @@ def create_power_grid(grid_data):
     # create buses
     if not grid_data.mv_data.mv_nodes.empty:
         for i, bus in grid_data.mv_data.mv_nodes.iterrows():
-            pp.create_bus(net,
-                          name=bus.dave_name,
-                          vn_kv=bus.voltage_kv,
-                          geodata=bus.geometry.coords[:][0])
+            bus_id = pp.create_bus(net,
+                                   name=bus.dave_name,
+                                   vn_kv=bus.voltage_kv,
+                                   geodata=bus.geometry.coords[:][0])
             # additional Informations
-            bus_id = pp.get_element_index(net,
-                                          element='bus',
-                                          name=bus.dave_name)
             if 'node_type' in bus.keys():
                 net.bus.at[bus_id, 'node_type'] = bus.node_type
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
@@ -161,17 +146,15 @@ def create_power_grid(grid_data):
     if not grid_data.mv_data.mv_lines.empty:
         for i, line in grid_data.mv_data.mv_lines.iterrows():
             line_coords = line.geometry.coords[:]
-            pp.create_line(net,
-                           name=line.dave_name,
-                           from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
-                           to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
-                           length_km=line.length_km,
-                           std_type=dave_settings()['mv_line_std_type'],
-                           geodata=[list(coords) for coords in line_coords])
+            line_id = pp.create_line(
+                net,
+                name=line.dave_name,
+                from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
+                to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
+                length_km=line.length_km,
+                std_type=dave_settings()['mv_line_std_type'],
+                geodata=[list(coords) for coords in line_coords])
             # additional Informations
-            line_id = pp.get_element_index(net,
-                                           element='line',
-                                           name=line.dave_name)
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'source'] = line.source
 
@@ -180,14 +163,11 @@ def create_power_grid(grid_data):
     if not grid_data.lv_data.lv_nodes.empty:
         for i, bus in grid_data.lv_data.lv_nodes.iterrows():
             bus_geoedata = bus.geometry.coords[:][0]
-            pp.create_bus(net,
-                          name=bus.dave_name,
-                          vn_kv=bus.voltage_kv,
-                          geodata=bus_geoedata)
+            bus_id = pp.create_bus(net,
+                                   name=bus.dave_name,
+                                   vn_kv=bus.voltage_kv,
+                                   geodata=bus_geoedata)
             # additional Informations
-            bus_id = pp.get_element_index(net,
-                                          element='bus',
-                                          name=bus.dave_name)
             net.bus.at[bus_id, 'node_type'] = bus.node_type
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
@@ -195,17 +175,15 @@ def create_power_grid(grid_data):
     if not grid_data.lv_data.lv_lines.empty:
         for i, line in grid_data.lv_data.lv_lines.iterrows():
             line_coords = line.geometry.coords[:]
-            pp.create_line(net,
-                           name=line.dave_name,
-                           from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
-                           to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
-                           length_km=line.length_km,
-                           std_type=dave_settings()['lv_line_std_type'],
-                           geodata=[list(coords) for coords in line_coords])
+            line_id = pp.create_line(
+                net,
+                name=line.dave_name,
+                from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
+                to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
+                length_km=line.length_km,
+                std_type=dave_settings()['lv_line_std_type'],
+                geodata=[list(coords) for coords in line_coords])
             # additional Informations
-            line_id = pp.get_element_index(net,
-                                           element='line',
-                                           name=line.dave_name)
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'line_type'] = line.line_type
             net.line.at[line_id, 'source'] = line.source
@@ -221,7 +199,7 @@ def create_power_grid(grid_data):
 
             # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
             # aber wie? wenn ich nur r,x,b, gegeben habe
-            pp.create_transformer_from_parameters(
+            trafo_id = pp.create_transformer_from_parameters(
                 net,
                 hv_bus=hv_bus,
                 lv_bus=lv_bus,
@@ -235,9 +213,6 @@ def create_power_grid(grid_data):
                 shift_degree=trafo.phase_shift,
                 name=trafo.dave_name)
             # additional Informations
-            trafo_id = pp.get_element_index(net,
-                                            element='trafo',
-                                            name=trafo.dave_name)
             net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
@@ -252,7 +227,7 @@ def create_power_grid(grid_data):
 
             # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
             # aber wie? wenn ich nur r,x,b, gegeben habe
-            pp.create_transformer_from_parameters(
+            trafo_id = pp.create_transformer_from_parameters(
                 net,
                 hv_bus=hv_bus,
                 lv_bus=lv_bus,
@@ -266,9 +241,6 @@ def create_power_grid(grid_data):
                 shift_degree=trafo.phase_shift,
                 name=trafo.dave_name)
             # additional Informations
-            trafo_id = pp.get_element_index(net,
-                                            element='trafo',
-                                            name=trafo.dave_name)
             net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
@@ -281,15 +253,12 @@ def create_power_grid(grid_data):
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
-            pp.create_transformer(net,
-                                  hv_bus=hv_bus,
-                                  lv_bus=lv_bus,
-                                  std_type=dave_settings()['hvmv_trafo_std_type'],
-                                  name=trafo.dave_name)
+            trafo_id = pp.create_transformer(net,
+                                             hv_bus=hv_bus,
+                                             lv_bus=lv_bus,
+                                             std_type=dave_settings()['hvmv_trafo_std_type'],
+                                             name=trafo.dave_name)
             # additional Informations
-            trafo_id = pp.get_element_index(net,
-                                            element='trafo',
-                                            name=trafo.dave_name)
             net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
@@ -301,15 +270,12 @@ def create_power_grid(grid_data):
         for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
             hv_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
             lv_bus = net.bus[net.bus['name'] == trafo.bus_lv].index[0]
-            pp.create_transformer(net,
-                                  hv_bus=hv_bus,
-                                  lv_bus=lv_bus,
-                                  std_type=dave_settings()['mvlv_trafo_std_type'],
-                                  name=trafo.dave_name)
+            trafo_id = pp.create_transformer(net,
+                                             hv_bus=hv_bus,
+                                             lv_bus=lv_bus,
+                                             std_type=dave_settings()['mvlv_trafo_std_type'],
+                                             name=trafo.dave_name)
             # additional Informations
-            trafo_id = pp.get_element_index(net,
-                                            element='trafo',
-                                            name=trafo.dave_name)
             net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
             net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
             if 'ego_subst_id' in bus.keys():
@@ -324,15 +290,12 @@ def create_power_grid(grid_data):
     if not grid_data.components_power.renewable_powerplants.empty:
         for i, plant in grid_data.components_power.renewable_powerplants.iterrows():
             sgen_bus = net.bus[net.bus['name'] == plant.bus].index[0]
-            pp.create_sgen(net,
-                           bus=sgen_bus,
-                           p_mw=float(plant.electrical_capacity_kw)/1000,
-                           name=plant.dave_name,
-                           type=plant.generation_type)
+            sgen_id = pp.create_sgen(net,
+                                     bus=sgen_bus,
+                                     p_mw=float(plant.electrical_capacity_kw)/1000,
+                                     name=plant.dave_name,
+                                     type=plant.generation_type)
             # additional Informations
-            sgen_id = pp.get_element_index(net,
-                                           element='sgen',
-                                           name=plant.dave_name)
             net.sgen.at[sgen_id, 'geometry'] = plant.geometry
             if 'aggregated' in plant.keys():
                 net.sgen.at[sgen_id, 'aggregated'] = plant.aggregated
@@ -344,15 +307,12 @@ def create_power_grid(grid_data):
     if not grid_data.components_power.conventional_powerplants.empty:
         for i, plant in grid_data.components_power.conventional_powerplants.iterrows():
             gen_bus = net.bus[net.bus['name'] == plant.bus].index[0]
-            pp.create_gen(net,
-                          bus=gen_bus,
-                          p_mw=float(plant.electrical_capacity_mw),
-                          name=plant.dave_name,
-                          type=plant.fuel)
+            gen_id = pp.create_gen(net,
+                                   bus=gen_bus,
+                                   p_mw=float(plant.electrical_capacity_mw),
+                                   name=plant.dave_name,
+                                   type=plant.fuel)
             # additional Informations
-            gen_id = pp.get_element_index(net,
-                                          element='gen',
-                                          name=plant.dave_name)
             net.gen.at[gen_id, 'geometry'] = plant.geometry
             if 'aggregated' in plant.keys():
                 net.gen.at[gen_id, 'aggregated'] = plant.aggregated
@@ -364,16 +324,13 @@ def create_power_grid(grid_data):
     if not grid_data.components_power.loads.empty:
         for i, load in grid_data.components_power.loads.iterrows():
             load_bus = net.bus[net.bus['name'] == load.bus].index[0]
-            pp.create_load(net,
-                           bus=load_bus,
-                           p_mw=load.p_mw,
-                           q_mvar=load.q_mvar,
-                           name=load.dave_name,
-                           type=load.landuse)
+            load_id = pp.create_load(net,
+                                     bus=load_bus,
+                                     p_mw=load.p_mw,
+                                     q_mvar=load.q_mvar,
+                                     name=load.dave_name,
+                                     type=load.landuse)
             # additional Informations
-            load_id = pp.get_element_index(net,
-                                           element='load',
-                                           name=load.dave_name)
             if 'area_km2' in load.keys():
                 net.load.at[load_id, 'area_km2'] = load.area_km2
             net.load.at[load_id, 'voltage_level'] = load.voltage_level
@@ -390,45 +347,33 @@ def create_power_grid(grid_data):
         else:
             # create a ext grid on the first grid bus
             first_bus = grid_data.ehv_data.ehv_nodes.iloc[0].name
-            pp.create_ext_grid(net,
-                               bus=first_bus,
-                               name='ext_grid_1_0')
+            ext_id = pp.create_ext_grid(net,
+                                        bus=first_bus,
+                                        name='ext_grid_1_0')
             # additional Informations
-            ext_id = pp.get_element_index(net,
-                                          element='ext_grid',
-                                          name='ext_grid_1_0')
             net.ext_grid.at[ext_id, 'voltage_level'] = 1
     elif 'HV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
             ext_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
-            pp.create_ext_grid(net,
-                               bus=ext_bus,
-                               name=f'ext_grid_2_{i}')
+            ext_id = pp.create_ext_grid(net,
+                                        bus=ext_bus,
+                                        name=f'ext_grid_2_{i}')
             # additional Informations
-            ext_id = pp.get_element_index(net,
-                                          element='ext_grid',
-                                          name=f'ext_grid_2_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 2
     elif 'MV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
             ext_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
-            pp.create_ext_grid(net,
-                               bus=ext_bus,
-                               name=f'ext_grid_4_{i}')
+            ext_id = pp.create_ext_grid(net,
+                                        bus=ext_bus,
+                                        name=f'ext_grid_4_{i}')
             # additional Informations
-            ext_id = pp.get_element_index(net,
-                                          element='ext_grid',
-                                          name=f'ext_grid_4_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 4
     elif 'LV' in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
             ext_bus = net.bus[net.bus['name'] == trafo.bus_hv].index[0]
-            pp.create_ext_grid(net,
-                               bus=ext_bus,
-                               name=f'ext_grid_6_{i}')
+            ext_id = pp.create_ext_grid(net,
+                                        bus=ext_bus,
+                                        name=f'ext_grid_6_{i}')
             # additional Informations
-            ext_id = pp.get_element_index(net,
-                                          element='ext_grid',
-                                          name=f'ext_grid_6_{i}')
             net.ext_grid.at[ext_id, 'voltage_level'] = 6
     return net
