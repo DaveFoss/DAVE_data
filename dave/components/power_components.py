@@ -1377,7 +1377,7 @@ def transformers(grid_data):
             grid_data.components_power.transformers.hv_mv = \
                 grid_data.components_power.transformers.hv_mv.append(trafo_df)
             # update progress
-            pbar.update(10/len(substations))
+            pbar.update(9.98/len(substations))
         # add dave name
         grid_data.components_power.transformers.hv_mv.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'trafo_4_{x}',
