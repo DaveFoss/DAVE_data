@@ -1318,18 +1318,16 @@ def transformers(grid_data):
             # set points for geometry
             mv_nodes['geometry'] = mv_nodes.point.apply(lambda x: wkb.loads(x, hex=True))
             mv_nodes['node_type'] = 'hvmv_substation'
-            # consider data only if there are more than one node in the target area
-            if len(mv_nodes) > 1:
-                mv_nodes['voltage_level'] = 5
-                mv_nodes['voltage_kv'] = dave_settings()['mv_voltage']
-                # add oep as source
-                mv_nodes['source'] = 'OEP'
-                # add dave name
-                mv_nodes.reset_index(drop=True, inplace=True)
-                name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_nodes.index)))
-                mv_nodes.insert(0, 'dave_name', name)
-                # add mv nodes to grid data
-                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_nodes)
+            mv_nodes['voltage_level'] = 5
+            mv_nodes['voltage_kv'] = dave_settings()['mv_voltage']
+            # add oep as source
+            mv_nodes['source'] = 'OEP'
+            # add dave name
+            mv_nodes.reset_index(drop=True, inplace=True)
+            name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_nodes.index)))
+            mv_nodes.insert(0, 'dave_name', name)
+            # add mv nodes to grid data
+            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_nodes)
         else:
             mv_nodes = grid_data.mv_data.mv_nodes
         # create hv/mv transfromers
@@ -1418,18 +1416,16 @@ def transformers(grid_data):
             # --- in this case the missing mv nodes for the transformator must be created
             mv_buses = copy.deepcopy(substations)
             mv_buses['node_type'] = 'mvlv_substation'
-            # consider data only if there are more than one node in the target area
-            if len(mv_buses) > 1:
-                mv_buses['voltage_level'] = 5
-                mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
-                # add oep as source
-                mv_buses['source'] = 'OEP'
-                # add dave name
-                mv_buses.reset_index(drop=True, inplace=True)
-                name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
-                mv_buses.insert(0, 'dave_name', name)
-                # add mv nodes to grid data
-                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
+            mv_buses['voltage_level'] = 5
+            mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
+            # add oep as source
+            mv_buses['source'] = 'OEP'
+            # add dave name
+            mv_buses.reset_index(drop=True, inplace=True)
+            name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
+            mv_buses.insert(0, 'dave_name', name)
+            # add mv nodes to grid data
+            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         else:
             mv_buses = grid_data.mv_data.mv_nodes
         # --- prepare lv nodes for the transformers
@@ -1438,18 +1434,16 @@ def transformers(grid_data):
             # --- in this case the missing lv nodes for the transformator must be created
             lv_buses = copy.deepcopy(substations)
             lv_buses['node_type'] = 'mvlv_substation'
-            # consider data only if there are more than one node in the target area
-            if len(lv_buses) > 1:
-                lv_buses['voltage_level'] = 7
-                lv_buses['voltage_kv'] = 0.4
-                # add oep as source
-                lv_buses['source'] = 'OEP'
-                # add dave name
-                lv_buses.reset_index(drop=True, inplace=True)
-                name = pd.Series(list(map(lambda x: f'node_7_{x}', lv_buses.index)))
-                lv_buses.insert(0, 'dave_name', name)
-                # add mv nodes to grid data
-                grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
+            lv_buses['voltage_level'] = 7
+            lv_buses['voltage_kv'] = 0.4
+            # add oep as source
+            lv_buses['source'] = 'OEP'
+            # add dave name
+            lv_buses.reset_index(drop=True, inplace=True)
+            name = pd.Series(list(map(lambda x: f'node_7_{x}', lv_buses.index)))
+            lv_buses.insert(0, 'dave_name', name)
+            # add mv nodes to grid data
+            grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
         else:
             lv_buses = grid_data.lv_data.lv_nodes
         # update progress
