@@ -1,6 +1,7 @@
 import pandapower as pp
 from shapely.geometry import MultiLineString
 from shapely.ops import linemerge
+from tqdm import tqdm
 
 from dave.settings import dave_settings
 
@@ -15,6 +16,9 @@ def create_power_grid(grid_data):
     OUTPUT:
         **net** (attrdict) - pandapower attrdict with grid data
     """
+    # set progress bar
+    pbar = tqdm(total=100, desc='create pandapower network:         ', position=0,
+                bar_format=dave_settings()['bar_format'])
     print('create pandapower network')
     print('----------------------------------')
     # create empty network
@@ -38,6 +42,11 @@ def create_power_grid(grid_data):
                 net.bus.at[bus_id, 'tso_name'] = bus.tso_name
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
+            # update progress
+            pbar.update(5/len(grid_data.ehv_data.ehv_nodes))
+    else:
+        # update progress
+        pbar.update(5)
     # create lines
     if not grid_data.ehv_data.ehv_lines.empty:
         for i, line in grid_data.ehv_data.ehv_lines.iterrows():
@@ -73,6 +82,11 @@ def create_power_grid(grid_data):
             net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
             net.line.at[line_id, 'ego_version'] = line.ego_version
             net.line.at[line_id, 'source'] = line.source
+            # update progress
+            pbar.update(5/len(grid_data.ehv_data.ehv_lines))
+    else:
+        # update progress
+        pbar.update(5)
 
     # --- create high voltage topology
     # create buses
@@ -87,6 +101,11 @@ def create_power_grid(grid_data):
             net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
             net.bus.at[bus_id, 'ego_version'] = bus.ego_version
             net.bus.at[bus_id, 'source'] = bus.source
+            # update progress
+            pbar.update(5/len(grid_data.hv_data.hv_nodes))
+    else:
+        # update progress
+        pbar.update(5)
     # create lines
     if not grid_data.hv_data.hv_lines.empty:
         for i, line in grid_data.hv_data.hv_lines.iterrows():
@@ -122,6 +141,11 @@ def create_power_grid(grid_data):
             net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
             net.line.at[line_id, 'ego_version'] = line.ego_version
             net.line.at[line_id, 'source'] = line.source
+            # update progress
+            pbar.update(5/len(grid_data.hv_data.hv_lines))
+    else:
+        # update progress
+        pbar.update(5)
 
     # --- create medium voltage topology
     # create buses
@@ -140,6 +164,11 @@ def create_power_grid(grid_data):
             if 'ego_subst_id' in bus.keys():
                 net.bus.at[bus_id, 'ego_subst_id'] = bus.ego_subst_id
             net.bus.at[bus_id, 'source'] = bus.source
+            # update progress
+            pbar.update(5/len(grid_data.mv_data.mv_nodes))
+    else:
+        # update progress
+        pbar.update(5)
     # create lines
     if not grid_data.mv_data.mv_lines.empty:
         for i, line in grid_data.mv_data.mv_lines.iterrows():
@@ -155,6 +184,11 @@ def create_power_grid(grid_data):
             # additional Informations
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'source'] = line.source
+            # update progress
+            pbar.update(5/len(grid_data.mv_data.mv_lines))
+    else:
+        # update progress
+        pbar.update(5)
 
     # --- create low voltage topology
     # create buses
@@ -168,6 +202,11 @@ def create_power_grid(grid_data):
             net.bus.at[bus_id, 'node_type'] = bus.node_type
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
+            # update progress
+            pbar.update(5/len(grid_data.lv_data.lv_nodes))
+    else:
+        # update progress
+        pbar.update(5)
     # create lines
     if not grid_data.lv_data.lv_lines.empty:
         for i, line in grid_data.lv_data.lv_lines.iterrows():
@@ -183,6 +222,11 @@ def create_power_grid(grid_data):
             net.line.at[line_id, 'voltage_level'] = line.voltage_level
             net.line.at[line_id, 'line_type'] = line.line_type
             net.line.at[line_id, 'source'] = line.source
+            # update progress
+            pbar.update(5/len(grid_data.lv_data.lv_lines))
+    else:
+        # update progress
+        pbar.update(5)
 
     # --- create transformers
     # create ehv/ehv transformers
@@ -212,6 +256,11 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
             net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
             net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
+            # update progress
+            pbar.update(5/len(grid_data.components_power.transformers.ehv_ehv))
+    else:
+        # update progress
+        pbar.update(5)
     # create ehv/hv transformers
     if not grid_data.components_power.transformers.ehv_hv.empty:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
@@ -238,6 +287,11 @@ def create_power_grid(grid_data):
             if 'substation_name' in trafo.index:
                 net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
             net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
+            # update progress
+            pbar.update(5/len(grid_data.components_power.transformers.ehv_hv))
+    else:
+        # update progress
+        pbar.update(5)
     # create hv/mv transformers
     if not grid_data.components_power.transformers.hv_mv.empty:
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
@@ -253,6 +307,11 @@ def create_power_grid(grid_data):
             net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
             net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
             net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
+            # update progress
+            pbar.update(5/len(grid_data.components_power.transformers.hv_mv))
+    else:
+        # update progress
+        pbar.update(5)
 
     # create mv/lv transformers
     if not grid_data.components_power.transformers.mv_lv.empty:
@@ -270,6 +329,11 @@ def create_power_grid(grid_data):
                 net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
             if 'ego_version' in bus.keys():
                 net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
+            # update progress
+            pbar.update(5/len(grid_data.components_power.transformers.mv_lv))
+    else:
+        # update progress
+        pbar.update(5)
 
     # ---create generators
     # create renewable powerplants
@@ -289,6 +353,11 @@ def create_power_grid(grid_data):
             net.sgen.at[sgen_id, 'voltage_level'] = plant.voltage_level
             if 'source' in plant.keys():
                 net.sgen.at[sgen_id, 'source'] = plant.source
+            # update progress
+            pbar.update(15/len(grid_data.components_power.renewable_powerplants))
+    else:
+        # update progress
+        pbar.update(15)
     # create conventional powerplants
     net.gen['geometry'] = None
     if not grid_data.components_power.conventional_powerplants.empty:
@@ -305,6 +374,11 @@ def create_power_grid(grid_data):
             net.gen.at[gen_id, 'voltage_level'] = plant.voltage_level
             if 'source' in plant.keys():
                 net.gen.at[gen_id, 'source'] = plant.source
+            # update progress
+            pbar.update(15/len(grid_data.components_power.conventional_powerplants))
+    else:
+        # update progress
+        pbar.update(15)
 
     # --- create loads
     if not grid_data.components_power.loads.empty:
@@ -319,6 +393,11 @@ def create_power_grid(grid_data):
             if 'area_km2' in load.keys():
                 net.load.at[load_id, 'area_km2'] = load.area_km2
             net.load.at[load_id, 'voltage_level'] = load.voltage_level
+            # update progress
+            pbar.update(10/len(grid_data.components_power.loads))
+    else:
+        # update progress
+        pbar.update(10)
 
     # --- create ext_grid
     if 'EHV' in grid_data.target_input.power_levels[0]:
@@ -357,4 +436,6 @@ def create_power_grid(grid_data):
                                         name=f'ext_grid_6_{i}')
             # additional Informations
             net.ext_grid.at[ext_id, 'voltage_level'] = 6
+    # close progress bar
+    pbar.close()
     return net
