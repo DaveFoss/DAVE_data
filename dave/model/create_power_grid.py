@@ -19,8 +19,6 @@ def create_power_grid(grid_data):
     # set progress bar
     pbar = tqdm(total=100, desc='create pandapower network:         ', position=0,
                 bar_format=dave_settings()['bar_format'])
-    print('create pandapower network')
-    print('----------------------------------')
     # create empty network
     net = pp.create_empty_network()
     # add dave version
@@ -394,10 +392,10 @@ def create_power_grid(grid_data):
                 net.load.at[load_id, 'area_km2'] = load.area_km2
             net.load.at[load_id, 'voltage_level'] = load.voltage_level
             # update progress
-            pbar.update(10/len(grid_data.components_power.loads))
+            pbar.update(9.98/len(grid_data.components_power.loads))
     else:
         # update progress
-        pbar.update(10)
+        pbar.update(9.98)
 
     # --- create ext_grid
     if 'EHV' in grid_data.target_input.power_levels[0]:

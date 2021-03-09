@@ -667,10 +667,10 @@ def renewable_powerplants(grid_data):
                                   grid_data.components_power.renewable_powerplants.index)))
         grid_data.components_power.renewable_powerplants.insert(0, 'dave_name', name)
         # update progress
-        pbar.update(10)
+        pbar.update(9.98)
     else:
         # update progress
-        pbar.update(90)
+        pbar.update(89.98)
     # close progress bar
     pbar.close()
 
