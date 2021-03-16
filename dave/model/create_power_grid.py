@@ -40,6 +40,10 @@ def create_power_grid(grid_data):
                 net.bus.at[bus_id, 'tso_name'] = bus.tso_name
             net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
             net.bus.at[bus_id, 'source'] = bus.source
+            if 'subst_name' in bus.index:
+                net.bus.at[bus_id, 'subst_name'] = bus.subst_name
+            if 'tso' in bus.index:
+                net.bus.at[bus_id, 'tso'] = bus.tso
             # update progress
             pbar.update(5/len(grid_data.ehv_data.ehv_nodes))
     else:
