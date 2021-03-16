@@ -71,7 +71,7 @@ def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
         **aggregate_name** (string) - the original voltage level of the aggregated power plants
     """
     # create list of all diffrent connection transformers
-    trafo_names = list(set(plants_aggr.connection_trafo_dave_name.tolist()))
+    trafo_names = list(set(plants_aggr.connection_trafo_dave_name))
     trafo_names.sort()
     # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'coal', 'gas', 'gas_mine', 'lignite', 'multiple_non_renewable',
@@ -1623,10 +1623,8 @@ def loads(grid_data):
                 if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                     grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
                 # filter non Linestring objects
-                drop_objects = []
-                for j, obj in plz_residential.iterrows():
-                    if not isinstance(obj.geometry, LineString):
-                        drop_objects.append(obj.name)
+                drop_objects = [obj.name for j, obj in plz_residential.iterrows()
+                                if not isinstance(obj.geometry, LineString)]
                 plz_residential.drop(drop_objects, inplace=True)
                 plz_residential = unary_union(list(polygonize(plz_residential.geometry)))
                 # calculate plz  residential area for grid area
@@ -1666,8 +1664,7 @@ def loads(grid_data):
                                                     p=[w_1p, w_2p, w_3p, w_4p, w_5p])[0]
                     else:
                         # selcet  the rest of population
-                        if pop_distribute != 0:
-                            household_size = pop_distribute
+                        household_size = pop_distribute
                     # get power values for household
                     p_mw, q_mvar = get_household_power(consumption_data, household_size)
                     # reduce population to distribute
@@ -1788,8 +1785,7 @@ def loads(grid_data):
         intersection['area_km2'] = intersection_3035.area/1E06
         # --- calculate consumption for the diffrent landuses in every single voronoi polygon
         # create list of all diffrent connection transformers
-        connection_trafos = intersection.dave_name.tolist()
-        trafo_names = list(set(connection_trafos))
+        trafo_names = list(set(intersection.dave_name))
         trafo_names.sort()
         # update progress
         pbar.update(10)
