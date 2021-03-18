@@ -1,9 +1,21 @@
 import pandapower as pp
+import pandas as pd
 from shapely.geometry import MultiLineString
 from shapely.ops import linemerge
 from tqdm import tqdm
 
 from dave.settings import dave_settings
+
+
+def multiline_coords(line_geometry):
+    """
+    This function extracts the coordinates from a MultiLineString
+    """
+    merged_line = linemerge(line_geometry)
+    # sometimes line merge can not merge the lines correctly
+    line_coords = [line.coords[:] for line in merged_line] \
+        if isinstance(merged_line, MultiLineString) else merged_line.coords[:]
+    return line_coords
 
 
 def create_power_grid(grid_data):
@@ -24,391 +36,159 @@ def create_power_grid(grid_data):
     # add dave version
     net['dave_version'] = grid_data.dave_version
 
-    # --- create extra high voltage topology
-    # create buses
-    if not grid_data.ehv_data.ehv_nodes.empty:
-        net.bus['tso_name'] = None
-        for i, bus in grid_data.ehv_data.ehv_nodes.iterrows():
-            bus_id = pp.create_bus(net,
-                                   name=bus.dave_name,
-                                   vn_kv=bus.voltage_kv,
-                                   geodata=bus.geometry.coords[:][0])
-            # additional Informations
-            net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
-            net.bus.at[bus_id, 'ego_version'] = bus.ego_version
-            if 'tso_name' in bus.index:
-                net.bus.at[bus_id, 'tso_name'] = bus.tso_name
-            net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
-            net.bus.at[bus_id, 'source'] = bus.source
-            if 'subst_name' in bus.index:
-                net.bus.at[bus_id, 'subst_name'] = bus.subst_name
-            if 'tso' in bus.index:
-                net.bus.at[bus_id, 'tso'] = bus.tso
-            # update progress
-            pbar.update(5/len(grid_data.ehv_data.ehv_nodes))
-    else:
-        # update progress
-        pbar.update(5)
-    # create lines
-    if not grid_data.ehv_data.ehv_lines.empty:
-        for i, line in grid_data.ehv_data.ehv_lines.iterrows():
-            # get line geometry coordinates
-            if isinstance(line.geometry, MultiLineString):
-                merged_line = linemerge(line.geometry)
-                # sometimes line merge can not merge the lines correctly
-                if isinstance(merged_line, MultiLineString):
-                    line_coords = []
-                    for j in range(0, len(merged_line)):
-                        line_coords += merged_line[j].coords[:]
-                else:
-                    line_coords = merged_line.coords[:]
-            else:
-                line_coords = line.geometry.coords[:]
-            # get bus indexes for the line buses
-            line_id = pp.create_line_from_parameters(
-                net,
-                from_bus=pp.get_element_index(net, element='bus', name=line.bus0),
-                to_bus=pp.get_element_index(net, element='bus', name=line.bus1),
-                length_km=line.length_km,
-                r_ohm_per_km=line.r_ohm_per_km,
-                x_ohm_per_km=line.x_ohm_per_km,
-                c_nf_per_km=line.c_nf_per_km,
-                max_i_ka=line.max_i_ka,
-                name=line.dave_name,
-                type='ol',
-                geodata=[list(coord) for coord in line_coords],
-                parallel=line.parallel)
-            # additional Informations
-            net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
-            net.line.at[line_id, 'voltage_level'] = line.voltage_level
-            net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
-            net.line.at[line_id, 'ego_version'] = line.ego_version
-            net.line.at[line_id, 'source'] = line.source
-            # update progress
-            pbar.update(5/len(grid_data.ehv_data.ehv_lines))
-    else:
-        # update progress
-        pbar.update(5)
+    # --- create buses
+    # collect bus informations and aggregate them
+    all_buses = pd.concat([grid_data.ehv_data.ehv_nodes, grid_data.hv_data.hv_nodes,
+                           grid_data.mv_data.mv_nodes, grid_data.lv_data.lv_nodes])
+    if not all_buses.empty:
+        all_buses.rename(columns={'dave_name': 'name', 'voltage_kv': 'vn_kv'}, inplace=True)
+        all_buses.reset_index(drop=True, inplace=True)
+        # write buses into pandapower structure
+        net.bus = net.bus.append(all_buses)
+        net.bus_geodata['x'] = all_buses.geometry.apply(lambda x: x.coords[:][0][0])
+        net.bus_geodata['y'] = all_buses.geometry.apply(lambda x: x.coords[:][0][1])
+        if all(net.bus.type.isna()):
+            net.bus['type'] = 'b'
+        if all(net.bus.in_service.isna()):
+            net.bus['in_service'] = True
+    # update progress
+    pbar.update(20)
 
-    # --- create high voltage topology
-    # create buses
-    if not grid_data.hv_data.hv_nodes.empty:
-        for i, bus in grid_data.hv_data.hv_nodes.iterrows():
-            bus_id = pp.create_bus(net,
-                                   name=bus.dave_name,
-                                   vn_kv=bus.voltage_kv,
-                                   geodata=bus.geometry.coords[:][0])
-            # additional Informations
-            net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
-            net.bus.at[bus_id, 'ego_bus_id'] = bus.ego_bus_id
-            net.bus.at[bus_id, 'ego_version'] = bus.ego_version
-            net.bus.at[bus_id, 'source'] = bus.source
-            # update progress
-            pbar.update(5/len(grid_data.hv_data.hv_nodes))
+    # --- create lines
+    # create lines ehv + hv
+    lines_ehvhv = pd.concat([grid_data.ehv_data.ehv_lines, grid_data.hv_data.hv_lines])
+    if not lines_ehvhv.empty:
+        lines_ehvhv.rename(columns={'dave_name': 'name'}, inplace=True)
+        lines_ehvhv['from_bus'] = lines_ehvhv.bus0.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        lines_ehvhv['to_bus'] = lines_ehvhv.bus1.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        lines_ehvhv['type'] = 'ol'
+        # geodata
+        coords_ehvhv = pd.DataFrame({'coords': lines_ehvhv.geometry.apply(
+            lambda x: [list(coords) for coords in
+                       (multiline_coords(x) if isinstance(x, MultiLineString) else x.coords[:])])})
     else:
-        # update progress
-        pbar.update(5)
-    # create lines
-    if not grid_data.hv_data.hv_lines.empty:
-        for i, line in grid_data.hv_data.hv_lines.iterrows():
-            # get line geometry coordinates
-            if isinstance(line.geometry, MultiLineString):
-                merged_line = linemerge(line.geometry)
-                # sometimes line merge can not merge the lines correctly
-                if isinstance(merged_line, MultiLineString):
-                    line_coords = []
-                    for j in range(0, len(merged_line)):
-                        line_coords += merged_line[j].coords[:]
-                else:
-                    line_coords = merged_line.coords[:]
-            else:
-                line_coords = line.geometry.coords[:]
-            # get bus indexes for lines
-            line_id = pp.create_line_from_parameters(
-                net,
-                from_bus=pp.get_element_index(net, element='bus', name=line.bus0),
-                to_bus=pp.get_element_index(net, element='bus', name=line.bus1),
-                length_km=line.length_km,
-                r_ohm_per_km=line.r_ohm_per_km,
-                x_ohm_per_km=line.x_ohm_per_km,
-                c_nf_per_km=line.c_nf_per_km,
-                max_i_ka=line.max_i_ka,
-                name=line.dave_name,
-                type='ol',
-                geodata=[list(coord) for coord in line_coords],
-                parallel=line.parallel)
-            # additional Informations
-            net.line.at[line_id, 'voltage_kv'] = line.voltage_kv
-            net.line.at[line_id, 'voltage_level'] = line.voltage_level
-            net.line.at[line_id, 'ego_line_id'] = line.ego_line_id
-            net.line.at[line_id, 'ego_version'] = line.ego_version
-            net.line.at[line_id, 'source'] = line.source
-            # update progress
-            pbar.update(5/len(grid_data.hv_data.hv_lines))
+        coords_ehvhv = pd.DataFrame([])
+    # create lines mv + lv
+    lines_mvlv = pd.concat([grid_data.mv_data.mv_lines, grid_data.lv_data.lv_lines])
+    if not lines_mvlv.empty:
+        lines_mvlv.rename(columns={'dave_name': 'name'}, inplace=True)
+        lines_mvlv['from_bus'] = lines_mvlv.from_bus.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        lines_mvlv['to_bus'] = lines_mvlv.to_bus.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        lines_mvlv['std_type'] = lines_mvlv.voltage_level.apply(lambda x: {
+            5: dave_settings()['mv_line_std_type'], 7: dave_settings()['lv_line_std_type']}[x])
+        net.line = net.line.append(lines_mvlv)
+        # geodata
+        coords_mvlv = pd.DataFrame({'coords': lines_mvlv.geometry.apply(
+            lambda x: [list(coords) for coords in x.coords[:]])})
     else:
-        # update progress
-        pbar.update(5)
-
-    # --- create medium voltage topology
-    # create buses
-    if not grid_data.mv_data.mv_nodes.empty:
-        for i, bus in grid_data.mv_data.mv_nodes.iterrows():
-            bus_id = pp.create_bus(net,
-                                   name=bus.dave_name,
-                                   vn_kv=bus.voltage_kv,
-                                   geodata=bus.geometry.coords[:][0])
-            # additional Informations
-            if 'node_type' in bus.keys():
-                net.bus.at[bus_id, 'node_type'] = bus.node_type
-            net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
-            if 'ego_version' in bus.keys():
-                net.bus.at[bus_id, 'ego_version'] = bus.ego_version
-            if 'ego_subst_id' in bus.keys():
-                net.bus.at[bus_id, 'ego_subst_id'] = bus.ego_subst_id
-            net.bus.at[bus_id, 'source'] = bus.source
-            # update progress
-            pbar.update(5/len(grid_data.mv_data.mv_nodes))
-    else:
-        # update progress
-        pbar.update(5)
-    # create lines
-    if not grid_data.mv_data.mv_lines.empty:
-        for i, line in grid_data.mv_data.mv_lines.iterrows():
-            line_coords = line.geometry.coords[:]
-            line_id = pp.create_line(
-                net,
-                name=line.dave_name,
-                from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
-                to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
-                length_km=line.length_km,
-                std_type=dave_settings()['mv_line_std_type'],
-                geodata=[list(coords) for coords in line_coords])
-            # additional Informations
-            net.line.at[line_id, 'voltage_level'] = line.voltage_level
-            net.line.at[line_id, 'source'] = line.source
-            # update progress
-            pbar.update(5/len(grid_data.mv_data.mv_lines))
-    else:
-        # update progress
-        pbar.update(5)
-
-    # --- create low voltage topology
-    # create buses
-    if not grid_data.lv_data.lv_nodes.empty:
-        for i, bus in grid_data.lv_data.lv_nodes.iterrows():
-            bus_id = pp.create_bus(net,
-                                   name=bus.dave_name,
-                                   vn_kv=bus.voltage_kv,
-                                   geodata=bus.geometry.coords[:][0])
-            # additional Informations
-            net.bus.at[bus_id, 'node_type'] = bus.node_type
-            net.bus.at[bus_id, 'voltage_level'] = bus.voltage_level
-            net.bus.at[bus_id, 'source'] = bus.source
-            # update progress
-            pbar.update(5/len(grid_data.lv_data.lv_nodes))
-    else:
-        # update progress
-        pbar.update(5)
-    # create lines
-    if not grid_data.lv_data.lv_lines.empty:
-        for i, line in grid_data.lv_data.lv_lines.iterrows():
-            line_id = pp.create_line(
-                net,
-                name=line.dave_name,
-                from_bus=pp.get_element_index(net, element='bus', name=line.from_bus),
-                to_bus=pp.get_element_index(net, element='bus', name=line.to_bus),
-                length_km=line.length_km,
-                std_type=dave_settings()['lv_line_std_type'],
-                geodata=[list(coords) for coords in line.geometry.coords[:]])
-            # additional Informations
-            net.line.at[line_id, 'voltage_level'] = line.voltage_level
-            net.line.at[line_id, 'line_type'] = line.line_type
-            net.line.at[line_id, 'source'] = line.source
-            # update progress
-            pbar.update(5/len(grid_data.lv_data.lv_lines))
-    else:
-        # update progress
-        pbar.update(5)
+        coords_mvlv = pd.DataFrame([])
+    # write line data into pandapower structure
+    net.line = net.line.append(pd.concat([lines_ehvhv, lines_mvlv]), ignore_index=True)
+    net.line_geodata = net.line_geodata.append(pd.concat([coords_ehvhv, coords_mvlv]),
+                                               ignore_index=True)
+    # update progress
+    pbar.update(20)
 
     # --- create transformers
-    # create ehv/ehv transformers
-    net.trafo['geometry'] = None
-    net.trafo['tso_name'] = None
-    if not grid_data.components_power.transformers.ehv_ehv.empty:
-        for i, trafo in grid_data.components_power.transformers.ehv_ehv.iterrows():
-            # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
-            # aber wie? wenn ich nur r,x,b, gegeben habe
-            trafo_id = pp.create_transformer_from_parameters(
-                net,
-                hv_bus=net.bus[net.bus['name'] == trafo.bus_hv].index[0],
-                lv_bus=net.bus[net.bus['name'] == trafo.bus_lv].index[0],
-                sn_mva=trafo.s_nom_mva,
-                vn_hv_kv=trafo.voltage_kv_hv,
-                vn_lv_kv=trafo.voltage_kv_lv,
-                vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
-                vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
-                pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
-                i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
-                shift_degree=trafo.phase_shift,
-                name=trafo.dave_name)
-            # additional Informations
-            net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
-            net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
-            net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
-            net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
-            net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
-            net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
-            # update progress
-            pbar.update(5/len(grid_data.components_power.transformers.ehv_ehv))
-    else:
-        # update progress
-        pbar.update(5)
-    # create ehv/hv transformers
-    if not grid_data.components_power.transformers.ehv_hv.empty:
-        for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
-            # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
-            # aber wie? wenn ich nur r,x,b, gegeben habe
-            trafo_id = pp.create_transformer_from_parameters(
-                net,
-                hv_bus=net.bus[net.bus['name'] == trafo.bus_hv].index[0],
-                lv_bus=net.bus[net.bus['name'] == trafo.bus_lv].index[0],
-                sn_mva=trafo.s_nom_mva,
-                vn_hv_kv=trafo.voltage_kv_hv,
-                vn_lv_kv=trafo.voltage_kv_lv,
-                vkr_percent=dave_settings()['trafo_vkr_percent'],  # dummy value
-                vk_percent=dave_settings()['trafo_vk_percent'],  # dummy value
-                pfe_kw=dave_settings()['trafo_pfe_kw'],  # dummy value accepted as ideal
-                i0_percent=dave_settings()['trafo_i0_percent'],  # dummy value accepted as ideal
-                shift_degree=trafo.phase_shift,
-                name=trafo.dave_name)
-            # additional Informations
-            net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
-            net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
-            net.trafo.at[trafo_id, 'ego_trafo_id'] = trafo.ego_trafo_id
-            net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
-            if 'substation_name' in trafo.index:
-                net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
-            net.trafo.at[trafo_id, 'tso_name'] = trafo.tso_name
-            # update progress
-            pbar.update(5/len(grid_data.components_power.transformers.ehv_hv))
-    else:
-        # update progress
-        pbar.update(5)
-    # create hv/mv transformers
-    if not grid_data.components_power.transformers.hv_mv.empty:
-        for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
-            trafo_id = pp.create_transformer(
-                net,
-                hv_bus=net.bus[net.bus['name'] == trafo.bus_hv].index[0],
-                lv_bus=net.bus[net.bus['name'] == trafo.bus_lv].index[0],
-                std_type=dave_settings()['hvmv_trafo_std_type'],
-                name=trafo.dave_name)
-            # additional Informations
-            net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
-            net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
-            net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
-            net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
-            net.trafo.at[trafo_id, 'substation_name'] = trafo.substation_name
-            # update progress
-            pbar.update(5/len(grid_data.components_power.transformers.hv_mv))
-    else:
-        # update progress
-        pbar.update(5)
-
-    # create mv/lv transformers
-    if not grid_data.components_power.transformers.mv_lv.empty:
-        for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
-            trafo_id = pp.create_transformer(
-                net,
-                hv_bus=net.bus[net.bus['name'] == trafo.bus_hv].index[0],
-                lv_bus=net.bus[net.bus['name'] == trafo.bus_lv].index[0],
-                std_type=dave_settings()['mvlv_trafo_std_type'],
-                name=trafo.dave_name)
-            # additional Informations
-            net.trafo.at[trafo_id, 'geometry'] = trafo.geometry
-            net.trafo.at[trafo_id, 'voltage_level'] = trafo.voltage_level
-            if 'ego_subst_id' in bus.keys():
-                net.trafo.at[trafo_id, 'ego_subst_id'] = trafo.ego_subst_id
-            if 'ego_version' in bus.keys():
-                net.trafo.at[trafo_id, 'ego_version'] = trafo.ego_version
-            # update progress
-            pbar.update(5/len(grid_data.components_power.transformers.mv_lv))
-    else:
-        # update progress
-        pbar.update(5)
+    # create ehv/ehv, ehv/hv transformers
+    trafos_ehvhv = pd.concat([grid_data.components_power.transformers.ehv_ehv,
+                              grid_data.components_power.transformers.ehv_hv])
+    if not trafos_ehvhv.empty:
+        trafos_ehvhv.rename(columns={'dave_name': 'name', 's_nom_mva': 'sn_mva',
+                                     'voltage_kv_hv': 'vn_hv_kv', 'voltage_kv_lv': 'vn_lv_kv',
+                                     'phase_shift': 'shift_degree'}, inplace=True)
+        # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
+        # aber wie? wenn ich nur r,x,b, gegeben habe
+        trafos_ehvhv['vkr_percent'] = dave_settings()['trafo_vkr_percent']  # dummy value
+        trafos_ehvhv['vk_percent'] = dave_settings()['trafo_vk_percent']  # dummy value
+        trafos_ehvhv['pfe_kw'] = dave_settings()['trafo_pfe_kw']  # dummy value accepted as ideal
+        trafos_ehvhv['i0_percent'] = dave_settings()['trafo_i0_percent']  # dummy value accepted as ideal
+        trafos_ehvhv['hv_bus'] = trafos_ehvhv.bus_hv.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        trafos_ehvhv['lv_bus'] = trafos_ehvhv.bus_lv.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+    # create hv/mv, mv/lv transformers
+    trafos_mvlv = pd.concat([grid_data.components_power.transformers.hv_mv,
+                             grid_data.components_power.transformers.mv_lv])
+    if not trafos_mvlv.empty:
+        trafos_mvlv.rename(columns={'dave_name': 'name'}, inplace=True)
+        trafos_mvlv['hv_bus'] = trafos_mvlv.bus_hv.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        trafos_mvlv['lv_bus'] = trafos_mvlv.bus_lv.apply(
+            lambda x: net.bus[net.bus['name'] == x].index[0])
+        trafos_mvlv['std_type'] = trafos_mvlv.voltage_level.apply(lambda x: {
+                4: dave_settings()['hvmv_trafo_std_type'],
+                6: dave_settings()['mvlv_trafo_std_type']}[x])
+    # write trafo data into pandapower structure
+    net.trafo = net.trafo.append(pd.concat([trafos_ehvhv, trafos_mvlv]), ignore_index=True)
+    # update progress
+    pbar.update(20)
 
     # ---create generators
     # create renewable powerplants
-    net.sgen['geometry'] = None
-    net.sgen['source'] = None
     if not grid_data.components_power.renewable_powerplants.empty:
-        for i, plant in grid_data.components_power.renewable_powerplants.iterrows():
-            sgen_id = pp.create_sgen(net,
-                                     bus=net.bus[net.bus['name'] == plant.bus].index[0],
-                                     p_mw=float(plant.electrical_capacity_kw)/1000,
-                                     name=plant.dave_name,
-                                     type=plant.generation_type)
-            # additional Informations
-            net.sgen.at[sgen_id, 'geometry'] = plant.geometry
-            if 'aggregated' in plant.keys():
-                net.sgen.at[sgen_id, 'aggregated'] = plant.aggregated
-            net.sgen.at[sgen_id, 'voltage_level'] = plant.voltage_level
-            if 'source' in plant.keys():
-                net.sgen.at[sgen_id, 'source'] = plant.source
-            # update progress
-            pbar.update(15/len(grid_data.components_power.renewable_powerplants))
-    else:
-        # update progress
-        pbar.update(15)
+        renewables = grid_data.components_power.renewable_powerplants.rename(
+            columns={'name': 'plant_name', 'dave_name': 'name', 'generation_type': 'type'})
+        renewables.reset_index(drop=True, inplace=True)
+        net.sgen = net.sgen.append(renewables)
+        net.sgen['bus'] = net.sgen.bus.apply(lambda x: net.bus[net.bus['name'] == x].index[0])
+        net.sgen['p_mw'] = net.sgen.electrical_capacity_kw.apply(lambda x: float(x)/1000)
+        if all(net.sgen.in_service.isna()):
+            net.sgen['in_service'] = True
+        if all(net.sgen.q_mvar.isna()):
+            net.sgen['q_mvar'] = 0
+        if all(net.sgen.scaling.isna()):
+            net.sgen['scaling'] = 1.0
+        net.sgen.drop(columns=['electrical_capacity_kw'], inplace=True)
+    # update progress
+    pbar.update(15)
     # create conventional powerplants
-    net.gen['geometry'] = None
     if not grid_data.components_power.conventional_powerplants.empty:
-        for i, plant in grid_data.components_power.conventional_powerplants.iterrows():
-            gen_id = pp.create_gen(net,
-                                   bus=net.bus[net.bus['name'] == plant.bus].index[0],
-                                   p_mw=float(plant.electrical_capacity_mw),
-                                   name=plant.dave_name,
-                                   type=plant.fuel)
-            # additional Informations
-            net.gen.at[gen_id, 'geometry'] = plant.geometry
-            if 'aggregated' in plant.keys():
-                net.gen.at[gen_id, 'aggregated'] = plant.aggregated
-            net.gen.at[gen_id, 'voltage_level'] = plant.voltage_level
-            if 'source' in plant.keys():
-                net.gen.at[gen_id, 'source'] = plant.source
-            # update progress
-            pbar.update(15/len(grid_data.components_power.conventional_powerplants))
-    else:
-        # update progress
-        pbar.update(15)
+        conventionals = grid_data.components_power.conventional_powerplants.rename(
+            columns={'name': 'plant_name', 'dave_name': 'name', 'fuel': 'type',
+                     'electrical_capacity_mw': 'p_mw'})
+        conventionals.reset_index(drop=True, inplace=True)
+        net.gen = net.gen.append(conventionals)
+        net.gen['bus'] = net.gen.bus.apply(lambda x: net.bus[net.bus['name'] == x].index[0])
+        if all(net.gen.in_service.isna()):
+            net.gen['in_service'] = True
+        if all(net.gen.vm_pu.isna()):
+            net.gen['vm_pu'] = 1.0
+        if all(net.gen.scaling.isna()):
+            net.gen['scaling'] = 1.0
+    # update progress
+    pbar.update(15)
 
     # --- create loads
     if not grid_data.components_power.loads.empty:
-        for i, load in grid_data.components_power.loads.iterrows():
-            load_id = pp.create_load(net,
-                                     bus=net.bus[net.bus['name'] == load.bus].index[0],
-                                     p_mw=load.p_mw,
-                                     q_mvar=load.q_mvar,
-                                     name=load.dave_name,
-                                     type=load.landuse)
-            # additional Informations
-            if 'area_km2' in load.keys():
-                net.load.at[load_id, 'area_km2'] = load.area_km2
-            net.load.at[load_id, 'voltage_level'] = load.voltage_level
-            # update progress
-            pbar.update(9.98/len(grid_data.components_power.loads))
-    else:
-        # update progress
-        pbar.update(9.98)
+        loads = grid_data.components_power.loads.rename(
+            columns={'dave_name': 'name', 'landuse': 'type', 'electrical_capacity_mw': 'p_mw'})
+        loads.reset_index(drop=True, inplace=True)
+        net.load = net.load.append(loads)
+        net.load['bus'] = net.load.bus.apply(lambda x: net.bus[net.bus['name'] == x].index[0])
+        if all(net.load.in_service.isna()):
+            net.load['in_service'] = True
+        if all(net.load.q_mvar.isna()):
+            net.load['q_mvar'] = 0.0
+        if all(net.load.scaling.isna()):
+            net.load['scaling'] = 1.0
+        if all(net.load.const_z_percent.isna()):
+            net.load['const_z_percent'] = 0.0
+        if all(net.load.const_i_percent.isna()):
+            net.load['const_i_percent'] = 0.0
+    # update progress
+    pbar.update(10)
 
     # --- create ext_grid
     if 'EHV' in grid_data.target_input.power_levels[0]:
         # check if their are convolutional power plants in the grid area
         if not net.gen.empty:
-            plant_max = net.gen[net.gen.p_mw == net.gen.p_mw.max()]
-            # set gens as slack bus
-            for i, plant in plant_max.iterrows():
-                net.gen.at[plant.name, 'slack'] = True
+            # set gens with max p_mw as slack bus
+            net.gen.at[net.gen[net.gen.p_mw == net.gen.p_mw.max()].index, 'slack'] = True
         # in case there is no convolutional power plant
         else:
             # create a ext grid on the first ehv grid bus
