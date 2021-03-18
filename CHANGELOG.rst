@@ -1,5 +1,15 @@
 Change Log
 =============
+[1.0.4] - 2021-03-18
+----------------------
+- [CHANGED] pandapower converter function restructured
+- [CHANGED] condition deleted that more than one bus must exist for transformers
+
+[1.0.3] - 2021-03-04
+----------------------
+- [ADDED] description in install tutorial for using DaVe in PyCharm  
+- [ADDED] runtime count
+
 [1.0.2] - 2021-02-10
 ----------------------
 - [ADDED] progress bars

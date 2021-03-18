@@ -144,8 +144,8 @@ def create_lv_topology(grid_data):
                                                                    'source': 'dave internal'}))
     # add dave name
     building_nodes_df.reset_index(drop=True, inplace=True)
-    name = pd.Series(list(map(lambda x: f'node_7_{x}', building_nodes_df.index)))
-    building_nodes_df.insert(0, 'dave_name', name)
+    building_nodes_df.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'node_7_{x}',
+                                                                building_nodes_df.index))))
     # add lv nodes to grid data
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
     grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
@@ -173,8 +173,8 @@ def create_lv_topology(grid_data):
     line_connections(grid_data)
     # add dave name for lv_lines
     grid_data.lv_data.lv_lines.reset_index(drop=True, inplace=True)
-    name = pd.Series(list(map(lambda x: f'line_7_{x}', grid_data.lv_data.lv_lines.index)))
-    grid_data.lv_data.lv_lines.insert(0, 'dave_name', name)
+    grid_data.lv_data.lv_lines.insert(0, 'dave_name', pd.Series(
+        list(map(lambda x: f'line_7_{x}', grid_data.lv_data.lv_lines.index))))
     # update progress
     pbar.update(10)
     # --- create missing road junctions to connect the lines with each other

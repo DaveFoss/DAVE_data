@@ -1,4 +1,7 @@
 import pandapower as pp
+from tqdm import tqdm
+
+from dave.settings import dave_settings
 
 
 def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_loading=100,
@@ -13,26 +16,41 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
     OUTPUT:
         **net** (attrdict) - A cleaned up and if necessary optimized pandapower attrdict
     """
-    print('run power grid processing')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='run power grid processing:         ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # run network diagnostic
     diagnostic = pp.diagnostic(net, report_style='None')
+    # update progress
+    pbar.update(15)
     # --- clean up failures detected by the diagnostic tool
     # delete disconected buses and the elements connected to them
     if 'disconnected_elements' in diagnostic.keys():
-        for idx in range(0, len(diagnostic['disconnected_elements'])):
-            drop_buses = diagnostic['disconnected_elements'][idx]['buses']
-            pp.drop_buses(net, drop_buses)
-    # run network diagnostic
-    diagnostic = pp.diagnostic(net, report_style='None')
+        for idx in range(len(diagnostic['disconnected_elements'])):
+            pp.drop_buses(net, diagnostic['disconnected_elements'][idx]['buses'])
+            pbar.update(10/len(diagnostic['disconnected_elements']))
+        # run network diagnostic
+        diagnostic = pp.diagnostic(net, report_style='None')
+        # update progress
+        pbar.update(15)
+    else:
+        # update progress
+        pbar.update(25)
     # change lines with impedance close to zero to switches
     if 'impedance_values_close_to_zero' in diagnostic.keys():
         lines = diagnostic['impedance_values_close_to_zero'][0]['line']
         for line_index in lines:
             pp.create_replacement_switch_for_branch(net, element='line', idx=line_index)
+            # update progress
+            pbar.update(10/len(lines))
         pp.drop_lines(net, lines=lines)
-    # run network diagnostic
-    diagnostic = pp.diagnostic(net, report_style='None')
+        # run network diagnostic
+        diagnostic = pp.diagnostic(net, report_style='None')
+        # update progress
+        pbar.update(15)
+    else:
+        # update progress
+        pbar.update(25)
     # correct invalid values
     if 'invalid_values' in diagnostic.keys():
         if 'gen' in diagnostic['invalid_values'].keys():
@@ -46,21 +64,38 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                     pp.create_replacement_switch_for_branch(net, element='line', idx=line[0])
                     drop_lines.append(line[0])
             pp.drop_lines(net, lines=drop_lines)
+        # update progress
+        pbar.update(10)
+        # run network diagnostic
+        diagnostic = pp.diagnostic(net, report_style='None')
+        # update progress
+        pbar.update(15)
+    else:
+        # update progress
+        pbar.update(25)
     # delete parallel switches
-    diagnostic = pp.diagnostic(net, report_style='None')
     if 'parallel_switches' in diagnostic.keys():
-        for i in range(0, len(diagnostic['parallel_switches'])):
+        for i in range(len(diagnostic['parallel_switches'])):
             parallel_switches = diagnostic['parallel_switches'][i]
             # keep the first switch and delete the other ones
             for j in range(1, len(parallel_switches)):
                 net.switch = net.switch.drop([parallel_switches[j]])
+            # update progress
+            pbar.update(10/len(diagnostic['parallel_switches']))
+    else:
+        # update progress
+        pbar.update(10)
+    # close progress bar
+    pbar.close()
 
     # --- optimize grid model
     if opt_model:
-        print('run power grid optimization')
-        print('----------------------------------')
+        pbar = tqdm(total=100, desc='run power grid optimization:       ', position=0,
+                    bar_format=dave_settings()['bar_format'])
         # run network diagnostic
         diagnostic = pp.diagnostic(net, report_style='None')
+        # update progress
+        pbar.update(20)
         # clean up overloads
         while 'overload' in diagnostic.keys():
             if (diagnostic['overload']['generation']) and (net.sgen.scaling.min() >= 0.1):
@@ -75,6 +110,8 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                 diagnostic = pp.diagnostic(net, report_style='None')
             else:
                 break
+        # update progress
+        pbar.update(20)
         # check if pf converged and there are no violations, otherwise must use opf
         try:
             # run powerflow
@@ -100,6 +137,8 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
             use_opf = True
             pf_converged = False
             print('power flow did not converged')
+        # update progress
+        pbar.update(10)
         # optimize grid with opf
         if use_opf:
             # --- try opf to find optimized network to network constraints
@@ -162,10 +201,14 @@ def power_processing(net, opt_model, min_vm_pu=0.95, max_vm_pu=1.05, max_line_lo
                     net.gen.vm_pu = net.res_gen.vm_pu
             except:
                 print('optimal power flow did not converged')
+        # update progress
+        pbar.update(50)
         # print results for boundaries parameters
         print('the optimized grid modell has the following charakteristik:')
         print(f'min_vm_pu: {net.res_bus.vm_pu.min()}')
         print(f'max_vm_pu: {net.res_bus.vm_pu.max()}')
         print(f'max_line_loading: {net.res_line.loading_percent.max()}')
         print(f'max_trafo_loading: {net.res_trafo.loading_percent.max()}')
+        # close progress bar
+        pbar.close()
     return net

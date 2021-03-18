@@ -12,10 +12,9 @@ def get_data_path(filename=None, dirname=None):
     """
     This function returns the full os path for a given directory (and filename)
     """
-    if filename:
-        return os.path.join(dave_dir, 'datapool', dirname, filename)
-    else:
-        return os.path.join(dave_dir, 'datapool', dirname)
+    path = os.path.join(dave_dir, 'datapool', dirname, filename) if filename else \
+        os.path.join(dave_dir, 'datapool', dirname)
+    return path
 
 
 def read_postal():
@@ -276,9 +275,7 @@ def read_scigridgas_igginl():
     pipe_segments = igginl_data.get('/pipe_segments')
     pipe_segments.lat = pipe_segments.lat.apply(eval)
     pipe_segments.long = pipe_segments.long.apply(eval)
-    geometry = []
-    for i, pipe in pipe_segments.iterrows():
-        geometry.append(LineString(list(zip(pipe.long, pipe.lat))))
+    geometry = [LineString(list(zip(pipe.long, pipe.lat))) for i, pipe in pipe_segments.iterrows()]
     pipe_segments = gpd.GeoDataFrame(pipe_segments, geometry=pd.Series(geometry),
                                      crs=dave_settings()['crs_main'])
     # productions

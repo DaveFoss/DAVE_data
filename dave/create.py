@@ -1,9 +1,10 @@
 import os
 import shutil
-import pandas as pd
-import geopandas as gpd
 import warnings
 import timeit
+import pandas as pd
+import geopandas as gpd
+
 
 # imports from dave
 from dave.dave_structure import davestructure

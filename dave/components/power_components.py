@@ -71,7 +71,7 @@ def aggregate_plants_con(grid_data, plants_aggr, aggregate_name=None):
         **aggregate_name** (string) - the original voltage level of the aggregated power plants
     """
     # create list of all diffrent connection transformers
-    trafo_names = list(set(plants_aggr.connection_trafo_dave_name.tolist()))
+    trafo_names = list(set(plants_aggr.connection_trafo_dave_name))
     trafo_names.sort()
     # iterate through the trafo_names to aggregate the power plants with the same energy source
     energy_sources = ['biomass', 'coal', 'gas', 'gas_mine', 'lignite', 'multiple_non_renewable',
@@ -667,10 +667,10 @@ def renewable_powerplants(grid_data):
                                   grid_data.components_power.renewable_powerplants.index)))
         grid_data.components_power.renewable_powerplants.insert(0, 'dave_name', name)
         # update progress
-        pbar.update(10)
+        pbar.update(9.98)
     else:
         # update progress
-        pbar.update(90)
+        pbar.update(89.98)
     # close progress bar
     pbar.close()
 
@@ -1318,18 +1318,16 @@ def transformers(grid_data):
             # set points for geometry
             mv_nodes['geometry'] = mv_nodes.point.apply(lambda x: wkb.loads(x, hex=True))
             mv_nodes['node_type'] = 'hvmv_substation'
-            # consider data only if there are more than one node in the target area
-            if len(mv_nodes) > 1:
-                mv_nodes['voltage_level'] = 5
-                mv_nodes['voltage_kv'] = dave_settings()['mv_voltage']
-                # add oep as source
-                mv_nodes['source'] = 'OEP'
-                # add dave name
-                mv_nodes.reset_index(drop=True, inplace=True)
-                name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_nodes.index)))
-                mv_nodes.insert(0, 'dave_name', name)
-                # add mv nodes to grid data
-                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_nodes)
+            mv_nodes['voltage_level'] = 5
+            mv_nodes['voltage_kv'] = dave_settings()['mv_voltage']
+            # add oep as source
+            mv_nodes['source'] = 'OEP'
+            # add dave name
+            mv_nodes.reset_index(drop=True, inplace=True)
+            name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_nodes.index)))
+            mv_nodes.insert(0, 'dave_name', name)
+            # add mv nodes to grid data
+            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_nodes)
         else:
             mv_nodes = grid_data.mv_data.mv_nodes
         # create hv/mv transfromers
@@ -1377,7 +1375,7 @@ def transformers(grid_data):
             grid_data.components_power.transformers.hv_mv = \
                 grid_data.components_power.transformers.hv_mv.append(trafo_df)
             # update progress
-            pbar.update(10/len(substations))
+            pbar.update(9.98/len(substations))
         # add dave name
         grid_data.components_power.transformers.hv_mv.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'trafo_4_{x}',
@@ -1418,18 +1416,16 @@ def transformers(grid_data):
             # --- in this case the missing mv nodes for the transformator must be created
             mv_buses = copy.deepcopy(substations)
             mv_buses['node_type'] = 'mvlv_substation'
-            # consider data only if there are more than one node in the target area
-            if len(mv_buses) > 1:
-                mv_buses['voltage_level'] = 5
-                mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
-                # add oep as source
-                mv_buses['source'] = 'OEP'
-                # add dave name
-                mv_buses.reset_index(drop=True, inplace=True)
-                name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
-                mv_buses.insert(0, 'dave_name', name)
-                # add mv nodes to grid data
-                grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
+            mv_buses['voltage_level'] = 5
+            mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
+            # add oep as source
+            mv_buses['source'] = 'OEP'
+            # add dave name
+            mv_buses.reset_index(drop=True, inplace=True)
+            name = pd.Series(list(map(lambda x: f'node_5_{x}', mv_buses.index)))
+            mv_buses.insert(0, 'dave_name', name)
+            # add mv nodes to grid data
+            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         else:
             mv_buses = grid_data.mv_data.mv_nodes
         # --- prepare lv nodes for the transformers
@@ -1438,18 +1434,16 @@ def transformers(grid_data):
             # --- in this case the missing lv nodes for the transformator must be created
             lv_buses = copy.deepcopy(substations)
             lv_buses['node_type'] = 'mvlv_substation'
-            # consider data only if there are more than one node in the target area
-            if len(lv_buses) > 1:
-                lv_buses['voltage_level'] = 7
-                lv_buses['voltage_kv'] = 0.4
-                # add oep as source
-                lv_buses['source'] = 'OEP'
-                # add dave name
-                lv_buses.reset_index(drop=True, inplace=True)
-                name = pd.Series(list(map(lambda x: f'node_7_{x}', lv_buses.index)))
-                lv_buses.insert(0, 'dave_name', name)
-                # add mv nodes to grid data
-                grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
+            lv_buses['voltage_level'] = 7
+            lv_buses['voltage_kv'] = 0.4
+            # add oep as source
+            lv_buses['source'] = 'OEP'
+            # add dave name
+            lv_buses.reset_index(drop=True, inplace=True)
+            name = pd.Series(list(map(lambda x: f'node_7_{x}', lv_buses.index)))
+            lv_buses.insert(0, 'dave_name', name)
+            # add mv nodes to grid data
+            grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(lv_buses)
         else:
             lv_buses = grid_data.lv_data.lv_nodes
         # update progress
@@ -1629,10 +1623,8 @@ def loads(grid_data):
                 if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                     grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
                 # filter non Linestring objects
-                drop_objects = []
-                for j, obj in plz_residential.iterrows():
-                    if not isinstance(obj.geometry, LineString):
-                        drop_objects.append(obj.name)
+                drop_objects = [obj.name for j, obj in plz_residential.iterrows()
+                                if not isinstance(obj.geometry, LineString)]
                 plz_residential.drop(drop_objects, inplace=True)
                 plz_residential = unary_union(list(polygonize(plz_residential.geometry)))
                 # calculate plz  residential area for grid area
@@ -1672,8 +1664,7 @@ def loads(grid_data):
                                                     p=[w_1p, w_2p, w_3p, w_4p, w_5p])[0]
                     else:
                         # selcet  the rest of population
-                        if pop_distribute != 0:
-                            household_size = pop_distribute
+                        household_size = pop_distribute
                     # get power values for household
                     p_mw, q_mvar = get_household_power(consumption_data, household_size)
                     # reduce population to distribute
@@ -1794,8 +1785,7 @@ def loads(grid_data):
         intersection['area_km2'] = intersection_3035.area/1E06
         # --- calculate consumption for the diffrent landuses in every single voronoi polygon
         # create list of all diffrent connection transformers
-        connection_trafos = intersection.dave_name.tolist()
-        trafo_names = list(set(connection_trafos))
+        trafo_names = list(set(intersection.dave_name))
         trafo_names.sort()
         # update progress
         pbar.update(10)
