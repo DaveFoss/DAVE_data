@@ -171,9 +171,9 @@ def plot_grid_data(grid_data):
             lv_lines.plot(ax=ax, color='b', label='LV Lines')
         # plot mv topology
         if not mv_nodes.empty:
-            mv_nodes.plot(ax=ax, color='b', markersize=6, label='MV Nodes')
+            mv_nodes.plot(ax=ax, color='m', markersize=6, label='MV Nodes')
         if not mv_lines.empty:
-            mv_lines.plot(ax=ax, color='b', label='MV Lines')
+            mv_lines.plot(ax=ax, color='m', label='MV Lines')
         """
         # plot electrical components
         if not renewable_plants.empty:

@@ -83,13 +83,10 @@ def create_hv_topology(grid_data):
                             (hv_lines.bus1.isin(hv_bus_ids)) &
                             (hv_lines.ego_scn_name == 'Status Quo')]
         # --- add additional line parameter and change bus names
-        r_column_index = hv_lines.columns.get_loc('r_ohm')
-        hv_lines.insert(r_column_index+1, 'r_ohm_per_km', None)
-        x_column_index = hv_lines.columns.get_loc('x_ohm')
-        hv_lines.insert(x_column_index+1, 'x_ohm_per_km', None)
-        b_column_index = hv_lines.columns.get_loc('b_s')
-        hv_lines.insert(b_column_index+1, 'c_nf_per_km', None)
-        hv_lines.insert(b_column_index+1, 'c_nf', None)
+        hv_lines.insert(hv_lines.columns.get_loc('r_ohm')+1, 'r_ohm_per_km', None)
+        hv_lines.insert(hv_lines.columns.get_loc('x_ohm')+1, 'x_ohm_per_km', None)
+        hv_lines.insert(hv_lines.columns.get_loc('b_s')+1, 'c_nf_per_km', None)
+        hv_lines.insert(hv_lines.columns.get_loc('b_s')+1, 'c_nf', None)
         # add voltage
         hv_lines['voltage_kv'] = 110
         # update progress

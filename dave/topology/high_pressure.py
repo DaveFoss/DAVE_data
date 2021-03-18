@@ -71,8 +71,8 @@ def create_hp_topology(grid_data):
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
-        hp_pipes.insert(0, 'dave_name', name)
+        hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
+                                                           hp_pipes.index))))
         # add hp lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
         # update progress
@@ -173,7 +173,7 @@ def create_lkd_eu(grid_data):
         hp_pipes['to_junction'] = to_junction_new
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
-        hp_pipes.insert(0, 'dave_name', name)
+        hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
+                                                           hp_pipes.index))))
         # add hd lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
