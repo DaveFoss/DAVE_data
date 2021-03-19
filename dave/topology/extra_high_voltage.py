@@ -35,6 +35,10 @@ def create_ehv_topology(grid_data):
                                     'subst_id': 'ego_subst_id',
                                     'voltage': 'voltage_kv'}, inplace=True)
     ehv_substations = gpd.overlay(ehv_substations, grid_data.area, how='intersection')
+    if not ehv_substations.empty:
+        remove_columns = grid_data.area.keys().tolist()
+        remove_columns.remove('geometry')
+        ehv_substations.drop(columns=remove_columns, inplace=True)
     # update progress
     pbar.update(10)
     # consider data only if there are more than one node in the target area
