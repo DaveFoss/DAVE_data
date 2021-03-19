@@ -21,6 +21,54 @@ def create_hv_topology(grid_data):
     # set progress bar
     pbar = tqdm(total=100, desc='create high voltage topology:      ', position=0,
                 bar_format=dave_settings()['bar_format'])
+    
+    
+    # --- create hv substations
+    # read ehv/hv substation data from OpenEnergyPlatform and adapt names
+    if grid_data.ehv_data.ehv_substations.empty:
+        ehvhv_substations, meta_data = oep_request(schema='grid',
+                                                   table='ego_dp_ehv_substation',
+                                                   where=dave_settings()['ehv_sub_ver'],
+                                                   geometry='polygon')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data 
+        ehvhv_substations.rename(columns={'version': 'ego_version',
+                                          'subst_id': 'ego_subst_id',
+                                          'voltage': 'voltage_kv'}, inplace=True)
+        ehvhv_substations = gpd.overlay(ehvhv_substations, grid_data.area, how='intersection')
+        if not ehvhv_substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            ehvhv_substations.drop(columns=remove_columns, inplace=True)
+    else:
+        ehvhv_substations = grid_data.ehv_data.ehv_substations.copy()
+    
+    # update progress
+    pbar.update(10)
+    # consider data only if there are more than one node in the target area
+    if not ehvhv_substations.empty:
+        ehvhv_substations['voltage_level'] = 2
+        # add dave name
+        ehvhv_substations.reset_index(drop=True, inplace=True)
+        ehvhv_substations.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'substation_1_{x}',
+                                                                    ehv_substations.index))))
+        # add ehv substations to grid data
+        grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
+            ehvhv_substations)
+    # update progress
+    pbar.update(10)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     # --- create hv nodes
     ehvhv_buses, meta_data = oep_request(schema='grid',
                                          table='ego_pf_hv_bus',
