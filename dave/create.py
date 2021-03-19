@@ -50,8 +50,7 @@ def create_empty_dataset():
         'landuse': gpd.GeoDataFrame([]),
         # power grid data
         'ehv_data': davestructure(
-            {'ehv_substations': gpd.GeoDataFrame([]),
-             'ehv_nodes': gpd.GeoDataFrame([]),
+            {'ehv_nodes': gpd.GeoDataFrame([]),
              'ehv_lines': gpd.GeoDataFrame([])
              }),
         'hv_data': davestructure(
@@ -73,6 +72,11 @@ def create_empty_dataset():
              'transformers': davestructure(
                  {'ehv_ehv': gpd.GeoDataFrame([]),
                   'ehv_hv': gpd.GeoDataFrame([]),
+                  'hv_mv': gpd.GeoDataFrame([]),
+                  'mv_lv': gpd.GeoDataFrame([])
+                  }),
+             'substations': davestructure(
+                 {'ehv_hv': gpd.GeoDataFrame([]),
                   'hv_mv': gpd.GeoDataFrame([]),
                   'mv_lv': gpd.GeoDataFrame([])
                   })
