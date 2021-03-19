@@ -81,6 +81,7 @@ def create_ehv_topology(grid_data):
                 if ((bus.geometry.within(sub.geometry)) or
                    (bus.geometry.distance(sub.geometry) < 1E-05)):
                     ehv_buses.at[bus.name, 'ego_subst_id'] = sub.ego_subst_id
+                    ehv_buses.at[bus.name, 'subst_dave_name'] = sub.dave_name
                     ehv_buses.at[bus.name, 'subst_name'] = sub.subst_name
                     break
             # update progress
