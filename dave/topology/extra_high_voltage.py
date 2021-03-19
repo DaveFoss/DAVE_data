@@ -44,7 +44,7 @@ def create_ehv_topology(grid_data):
         ehv_substations['voltage_level'] = 2
         # add dave name
         ehv_substations.reset_index(drop=True, inplace=True)
-        ehv_substations.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'substation_1_{x}',
+        ehv_substations.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'substation_2_{x}',
                                                                   ehv_substations.index))))
         # add ehv substations to grid data
         grid_data.components_power.substations.ehv_hv = \
