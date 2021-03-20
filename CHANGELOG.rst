@@ -1,5 +1,10 @@
 Change Log
 =============
+upcoming release
+----------------------
+- [ADDED] substations for other voltage levels
+- [CHANGED] move ehv substations to components power
+
 [1.0.4] - 2021-03-18
 ----------------------
 - [CHANGED] pandapower converter function restructured
