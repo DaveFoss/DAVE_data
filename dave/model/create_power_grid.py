@@ -64,6 +64,7 @@ def create_power_grid(grid_data):
         lines_ehvhv['to_bus'] = lines_ehvhv.bus1.apply(
             lambda x: net.bus[net.bus['name'] == x].index[0])
         lines_ehvhv['type'] = 'ol'
+        lines_ehvhv['in_service'] = 'True'
         # geodata
         coords_ehvhv = pd.DataFrame({'coords': lines_ehvhv.geometry.apply(
             lambda x: [list(coords) for coords in
@@ -80,7 +81,19 @@ def create_power_grid(grid_data):
             lambda x: net.bus[net.bus['name'] == x].index[0])
         lines_mvlv['std_type'] = lines_mvlv.voltage_level.apply(lambda x: {
             5: dave_settings()['mv_line_std_type'], 7: dave_settings()['lv_line_std_type']}[x])
-        net.line = net.line.append(lines_mvlv)
+        # add data from standart type
+        std_line = pp.available_std_types(net, element='line')
+        lines_mvlv['r_ohm_per_km'] = lines_mvlv.std_type.apply(
+            lambda x: std_line.loc[x].r_ohm_per_km)
+        lines_mvlv['c_nf_per_km'] = lines_mvlv.std_type.apply(
+            lambda x: std_line.loc[x].c_nf_per_km)
+        lines_mvlv['x_ohm_per_km'] = lines_mvlv.std_type.apply(
+            lambda x: std_line.loc[x].x_ohm_per_km)
+        lines_mvlv['type'] = lines_mvlv.std_type.apply(
+            lambda x: std_line.loc[x].type)
+        lines_mvlv['r_ohm_per_km'] = lines_mvlv.std_type.apply(
+            lambda x: std_line.loc[x].r_ohm_per_km)
+        lines_mvlv['in_service'] = True
         # geodata
         coords_mvlv = pd.DataFrame({'coords': lines_mvlv.geometry.apply(
             lambda x: [list(coords) for coords in x.coords[:]])})
@@ -130,6 +143,40 @@ def create_power_grid(grid_data):
         trafos_mvlv['std_type'] = trafos_mvlv.voltage_level.apply(lambda x: {
                 4: dave_settings()['hvmv_trafo_std_type'],
                 6: dave_settings()['mvlv_trafo_std_type']}[x])
+        # add data from standart type
+        std_trafo = pp.available_std_types(net, element='trafo')
+        trafos_mvlv['i0_percent'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].i0_percent)
+        trafos_mvlv['pfe_kw'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].pfe_kw)
+        trafos_mvlv['vkr_percent'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].vkr_percent)
+        trafos_mvlv['sn_mva'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].sn_mva)
+        trafos_mvlv['vn_lv_kv'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].vn_lv_kv)
+        trafos_mvlv['vn_hv_kv'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].vn_hv_kv)
+        trafos_mvlv['vk_percent'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].vk_percent)
+        trafos_mvlv['shift_degree'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].shift_degree)
+        trafos_mvlv['vector_group'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].vector_group)
+        trafos_mvlv['tap_side'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_side)
+        trafos_mvlv['tap_neutral'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_neutral)
+        trafos_mvlv['tap_min'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_min)
+        trafos_mvlv['tap_max'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_max)
+        trafos_mvlv['tap_step_degree'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_step_degree)
+        trafos_mvlv['tap_step_percent'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_step_percent)
+        trafos_mvlv['tap_phase_shifter'] = trafos_mvlv.std_type.apply(
+            lambda x: std_trafo.loc[x].tap_phase_shifter)
     # write trafo data into pandapower structure
     net.trafo = net.trafo.append(pd.concat([trafos_ehvhv, trafos_mvlv]), ignore_index=True)
     # update progress
@@ -228,3 +275,7 @@ def create_power_grid(grid_data):
     # close progress bar
     pbar.close()
     return net
+
+# hotfix std types at lines and trafos auf den unteren ebenen
+#pp.available_std_types(net_power, element='line')
+#pp.available_std_types(net_power, element='trafo')
