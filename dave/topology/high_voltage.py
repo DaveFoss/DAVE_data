@@ -118,8 +118,8 @@ def create_hv_topology(grid_data):
     if len(hv_buses) > 1:
         # search for the substations where the hv nodes are within
         hv_buses.insert(0, 'ego_subst_id', None)
-        hv_buses.insert(1,'subst_dave_name', None)
-        hv_buses.insert(2,'subst_name', None)
+        hv_buses.insert(1, 'subst_dave_name', None)
+        hv_buses.insert(2, 'subst_name', None)
         for i, bus in hv_buses.iterrows():
             ego_subst_id = []
             subst_dave_name = []
