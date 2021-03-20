@@ -6,6 +6,7 @@ from shapely.ops import nearest_points, unary_union
 from tqdm import tqdm
 
 from dave.settings import dave_settings
+from dave.datapool import oep_request
 
 
 def nearest_road(building_centroids, roads):
@@ -120,6 +121,39 @@ def create_lv_topology(grid_data):
     # set progress bar
     pbar = tqdm(total=100, desc='create low voltage topology:       ', position=0,
                 bar_format=dave_settings()['bar_format'])
+    # --- create substations
+    # create mv/lv substations
+    if grid_data.components_power.substations.mv_lv.empty:
+        mvlv_substations, meta_data = oep_request(schema='grid',
+                                                  table='ego_dp_mvlv_substation',
+                                                  where=dave_settings()['mvlv_sub_ver'],
+                                                  geometry='geom')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        mvlv_substations.rename(columns={'version': 'ego_version', 'mvlv_subst_id': 'ego_subst_id'},
+                                inplace=True)
+        # change wrong crs from oep
+        mvlv_substations.crs = dave_settings()['crs_meter']
+        mvlv_substations = mvlv_substations.to_crs(dave_settings()['crs_main'])
+        # filter trafos for target area
+        mvlv_substations = gpd.overlay(mvlv_substations, grid_data.area, how='intersection')
+        if not mvlv_substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            mvlv_substations.drop(columns=remove_columns, inplace=True)
+            mvlv_substations['voltage_level'] = 6
+            # add dave name
+            mvlv_substations.reset_index(drop=True, inplace=True)
+            mvlv_substations.insert(0, 'dave_name', pd.Series(
+                list(map(lambda x: f'substation_6_{x}', mvlv_substations.index))))
+            # add ehv substations to grid data
+            grid_data.components_power.substations.mv_lv = \
+                grid_data.components_power.substations.mv_lv.append(mvlv_substations)
+    else:
+        mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
+    # update progress
+    pbar.update(5)
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)
@@ -142,6 +176,17 @@ def create_lv_topology(grid_data):
                                                                    'voltage_level': 7,
                                                                    'voltage_kv': 0.4,
                                                                    'source': 'dave internal'}))
+    # search for the substations where the lv nodes are within
+    for i, bus in building_nodes_df.iterrows():
+        for j, sub in mvlv_substations.iterrows():
+            if ((bus.geometry.within(sub.geometry)) or
+               (bus.geometry.distance(sub.geometry) < 1E-05)):
+                building_nodes_df.at[bus.name, 'ego_subst_id'] = sub.ego_subst_id
+                building_nodes_df.at[bus.name, 'subst_dave_name'] = sub.dave_name
+                building_nodes_df.at[bus.name, 'subst_name'] = sub.subst_name
+                break
+        # update progress
+        pbar.update(5/len(building_nodes_df))
     # add dave name
     building_nodes_df.reset_index(drop=True, inplace=True)
     building_nodes_df.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'node_7_{x}',
@@ -150,7 +195,7 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
     grid_data.lv_data.lv_nodes.crs = dave_settings()['crs_main']
     # update progress
-    pbar.update(10)
+    pbar.update(5)
     # --- create lines for building connections
     line_buildings = gpd.GeoSeries(list(map(lambda x, y: LineString([x, y]),
                                             building_connections['building_centroid'],
@@ -176,7 +221,7 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_lines.insert(0, 'dave_name', pd.Series(
         list(map(lambda x: f'line_7_{x}', grid_data.lv_data.lv_lines.index))))
     # update progress
-    pbar.update(10)
+    pbar.update(5)
     # --- create missing road junctions to connect the lines with each other
     # get line bus names for each line and add to line data
     lv_nodes = grid_data.lv_data.lv_nodes

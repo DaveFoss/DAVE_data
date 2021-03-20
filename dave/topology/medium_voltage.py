@@ -24,6 +24,75 @@ def create_mv_topology(grid_data):
     # set progress bar
     pbar = tqdm(total=100, desc='create medium voltage topology:    ', position=0,
                 bar_format=dave_settings()['bar_format'])
+    # --- create substations
+    # create hv/mv substations
+    if grid_data.components_power.substations.hv_mv.empty:
+        hvmv_substations, meta_data = oep_request(schema='grid',
+                                                  table='ego_dp_hvmv_substation',
+                                                  where=dave_settings()['hvmv_sub_ver'],
+                                                  geometry='polygon')  # take polygon for full area
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        hvmv_substations.rename(columns={'version': 'ego_version',
+                                         'subst_id': 'ego_subst_id',
+                                         'voltage': 'voltage_kv',
+                                         'ags_0': 'Gemeindeschluessel'}, inplace=True)
+        # filter substations with point as geometry
+        drop_substations = [sub.name for i, sub in hvmv_substations.iterrows()
+                            if isinstance(sub.geometry, (Point, LineString))]
+        hvmv_substations.drop(drop_substations, inplace=True)
+        # check for substations in the target area
+        hvmv_substations = gpd.overlay(hvmv_substations, grid_data.area, how='intersection')
+        if not hvmv_substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            hvmv_substations.drop(columns=remove_columns, inplace=True)
+            hvmv_substations['voltage_level'] = 4
+            # add dave name
+            hvmv_substations.reset_index(drop=True, inplace=True)
+            hvmv_substations.insert(0, 'dave_name', pd.Series(
+                list(map(lambda x: f'substation_4_{x}', hvmv_substations.index))))
+            # add ehv substations to grid data
+            grid_data.components_power.substations.hv_mv = \
+                grid_data.components_power.substations.hv_mv.append(hvmv_substations)
+    else:
+        hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
+    # update progress
+    pbar.update(5)
+    # create mv/lv substations
+    if grid_data.components_power.substations.mv_lv.empty:
+        mvlv_substations, meta_data = oep_request(schema='grid',
+                                                  table='ego_dp_mvlv_substation',
+                                                  where=dave_settings()['mvlv_sub_ver'],
+                                                  geometry='geom')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        mvlv_substations.rename(columns={'version': 'ego_version', 'mvlv_subst_id': 'ego_subst_id'},
+                                inplace=True)
+        # change wrong crs from oep
+        mvlv_substations.crs = dave_settings()['crs_meter']
+        mvlv_substations = mvlv_substations.to_crs(dave_settings()['crs_main'])
+        # filter trafos for target area
+        mvlv_substations = gpd.overlay(mvlv_substations, grid_data.area, how='intersection')
+        if not mvlv_substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            mvlv_substations.drop(columns=remove_columns, inplace=True)
+            mvlv_substations['voltage_level'] = 6
+            # add dave name
+            mvlv_substations.reset_index(drop=True, inplace=True)
+            mvlv_substations.insert(0, 'dave_name', pd.Series(
+                list(map(lambda x: f'substation_6_{x}', mvlv_substations.index))))
+            # add ehv substations to grid data
+            grid_data.components_power.substations.mv_lv = \
+                grid_data.components_power.substations.mv_lv.append(mvlv_substations)
+    else:
+        mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
+    # update progress
+    pbar.update(5)
+
     # --- create mv nodes
     # nodes for mv/lv traofs hv side
     mvlv_buses, meta_data = oep_request(schema='grid',
@@ -47,7 +116,7 @@ def create_mv_topology(grid_data):
         mvlv_buses.drop(columns=remove_columns, inplace=True)
     mvlv_buses['node_type'] = 'mvlv_substation'
     # update progress
-    pbar.update(10)
+    pbar.update(5)
     # nodes for hv/mv trafos us side
     hvmv_buses, meta_data = oep_request(schema='grid',
                                         table='ego_dp_hvmv_substation',
@@ -69,10 +138,37 @@ def create_mv_topology(grid_data):
                     inplace=True)
     hvmv_buses['node_type'] = 'hvmv_substation'
     # update progress
-    pbar.update(10)
+    pbar.update(5)
     # consider data only if there are more than one node in the target area
     mv_buses = mvlv_buses.append(hvmv_buses)
     if len(mv_buses) > 1:
+        # search for the substations where the mv nodes are within
+        mv_buses.insert(0, 'ego_subst_id', None)
+        mv_buses.insert(1, 'subst_dave_name', None)
+        mv_buses.insert(2, 'subst_name', None)
+        for i, bus in mv_buses.iterrows():
+            ego_subst_id = []
+            subst_dave_name = []
+            subst_name = []
+            for j, sub in hvmv_substations.iterrows():
+                if ((bus.geometry.within(sub.geometry)) or
+                   (bus.geometry.distance(sub.geometry) < 1E-05)):
+                    ego_subst_id.append(sub.ego_subst_id)
+                    subst_dave_name.append(sub.dave_name)
+                    subst_name.append(sub.subst_name)
+                    break
+            for k, sub in mvlv_substations.iterrows():
+                if ((bus.geometry.within(sub.geometry)) or
+                   (bus.geometry.distance(sub.geometry) < 1E-05)):
+                    ego_subst_id.append(sub.ego_subst_id)
+                    subst_dave_name.append(sub.dave_name)
+                    subst_name.append(sub.subst_name)
+                    break
+            mv_buses.at[bus.name, 'ego_subst_id'] = ego_subst_id
+            mv_buses.at[bus.name, 'subst_dave_name'] = subst_dave_name
+            mv_buses.at[bus.name, 'subst_name'] = subst_name
+            # update progress
+            pbar.update(10/len(mv_buses))
         mv_buses['voltage_level'] = 5
         mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
         # add oep as source
@@ -98,7 +194,7 @@ def create_mv_topology(grid_data):
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
             # update progress
-            pbar.update(20/len(mv_buses))
+            pbar.update(10/len(mv_buses))
         mv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         mv_lines.reset_index(drop=True, inplace=True)
         # connect line segments with each other
@@ -209,5 +305,8 @@ def create_mv_topology(grid_data):
             pbar.update(20/len(mv_lines))
         # add mv lines to grid data
         grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)
+    else:
+        # update progress
+        pbar.update(80)
     # close progress bar
     pbar.close()
