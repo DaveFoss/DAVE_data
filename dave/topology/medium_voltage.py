@@ -116,7 +116,7 @@ def create_mv_topology(grid_data):
         mvlv_buses.drop(columns=remove_columns, inplace=True)
     mvlv_buses['node_type'] = 'mvlv_substation'
     # update progress
-    pbar.update(5)
+    pbar.update(10)
     # nodes for hv/mv trafos us side
     hvmv_buses, meta_data = oep_request(schema='grid',
                                         table='ego_dp_hvmv_substation',
@@ -138,37 +138,15 @@ def create_mv_topology(grid_data):
                     inplace=True)
     hvmv_buses['node_type'] = 'hvmv_substation'
     # update progress
-    pbar.update(5)
+    pbar.update(10)
     # consider data only if there are more than one node in the target area
     mv_buses = mvlv_buses.append(hvmv_buses)
     if len(mv_buses) > 1:
-        # search for the substations where the mv nodes are within
-        mv_buses.insert(0, 'ego_subst_id', None)
-        mv_buses.insert(1, 'subst_dave_name', None)
-        mv_buses.insert(2, 'subst_name', None)
-        for i, bus in mv_buses.iterrows():
-            ego_subst_id = []
-            subst_dave_name = []
-            subst_name = []
-            for j, sub in hvmv_substations.iterrows():
-                if ((bus.geometry.within(sub.geometry)) or
-                   (bus.geometry.distance(sub.geometry) < 1E-05)):
-                    ego_subst_id.append(sub.ego_subst_id)
-                    subst_dave_name.append(sub.dave_name)
-                    subst_name.append(sub.subst_name)
-                    break
-            for k, sub in mvlv_substations.iterrows():
-                if ((bus.geometry.within(sub.geometry)) or
-                   (bus.geometry.distance(sub.geometry) < 1E-05)):
-                    ego_subst_id.append(sub.ego_subst_id)
-                    subst_dave_name.append(sub.dave_name)
-                    subst_name.append(sub.subst_name)
-                    break
-            mv_buses.at[bus.name, 'ego_subst_id'] = ego_subst_id
-            mv_buses.at[bus.name, 'subst_dave_name'] = subst_dave_name
-            mv_buses.at[bus.name, 'subst_name'] = subst_name
-            # update progress
-            pbar.update(10/len(mv_buses))
+
+        # search for the substations dave name
+        substations_rel = pd.concat([hvmv_substations, mvlv_substations])
+        mv_buses['subs_dave_name'] = mv_buses.ego_subst_id.apply(
+            lambda x: substations_rel[substations_rel.ego_subst_id == x].iloc[0].dave_name)
         mv_buses['voltage_level'] = 5
         mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
         # add oep as source
