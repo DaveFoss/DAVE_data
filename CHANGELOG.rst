@@ -1,9 +1,11 @@
 Change Log
 =============
-upcoming release
+
+[1.0.5] - 2021-03-21
 ----------------------
 - [ADDED] substations for other voltage levels
 - [CHANGED] move ehv substations to components power
+- [FIXED] missing line and trafo data within pandapower converting
 
 [1.0.4] - 2021-03-18
 ----------------------
