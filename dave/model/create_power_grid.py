@@ -52,7 +52,7 @@ def create_power_grid(grid_data):
         if all(net.bus.in_service.isna()):
             net.bus['in_service'] = True
     # update progress
-    pbar.update(20)
+    pbar.update(15)
 
     # --- create lines
     # create lines ehv + hv
@@ -92,6 +92,13 @@ def create_power_grid(grid_data):
                                                ignore_index=True)
     # update progress
     pbar.update(20)
+
+    # ---create substations
+    net['substations'] = pd.concat([grid_data.components_power.substations.ehv_hv,
+                                    grid_data.components_power.substations.hv_mv,
+                                    grid_data.components_power.substations.mv_lv])
+    # update progress
+    pbar.update(5)
 
     # --- create transformers
     # create ehv/ehv, ehv/hv transformers

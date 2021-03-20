@@ -2,6 +2,7 @@ import math
 import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
+from shapely.geometry import Point, LineString
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
@@ -21,6 +22,74 @@ def create_hv_topology(grid_data):
     # set progress bar
     pbar = tqdm(total=100, desc='create high voltage topology:      ', position=0,
                 bar_format=dave_settings()['bar_format'])
+
+    # --- create substations
+    # create ehv/hv substations
+    if grid_data.components_power.substations.ehv_hv.empty:
+        ehvhv_substations, meta_data = oep_request(schema='grid',
+                                                   table='ego_dp_ehv_substation',
+                                                   where=dave_settings()['ehv_sub_ver'],
+                                                   geometry='polygon')
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        ehvhv_substations.rename(columns={'version': 'ego_version',
+                                          'subst_id': 'ego_subst_id',
+                                          'voltage': 'voltage_kv'}, inplace=True)
+        # filter ehv/hv substations
+        ehvhv_substations = ehvhv_substations[pd.Series(
+            list(map(lambda x: True if '110000' in x else False, ehvhv_substations.voltage_kv)))]
+        ehvhv_substations = gpd.overlay(ehvhv_substations, grid_data.area, how='intersection')
+        if not ehvhv_substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            ehvhv_substations.drop(columns=remove_columns, inplace=True)
+            ehvhv_substations['voltage_level'] = 2
+            # add dave name
+            ehvhv_substations.reset_index(drop=True, inplace=True)
+            ehvhv_substations.insert(0, 'dave_name', pd.Series(
+                list(map(lambda x: f'substation_2_{x}', ehvhv_substations.index))))
+            # add ehv substations to grid data
+            grid_data.components_power.substations.ehv_hv = \
+                grid_data.components_power.substations.ehv_hv.append(ehvhv_substations)
+    else:
+        ehvhv_substations = grid_data.components_power.substations.ehv_hv.copy()
+    # create hv/mv substations
+    if grid_data.components_power.substations.hv_mv.empty:
+        hvmv_substations, meta_data = oep_request(schema='grid',
+                                                  table='ego_dp_hvmv_substation',
+                                                  where=dave_settings()['hvmv_sub_ver'],
+                                                  geometry='polygon')  # take polygon for full area
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        hvmv_substations.rename(columns={'version': 'ego_version',
+                                         'subst_id': 'ego_subst_id',
+                                         'voltage': 'voltage_kv',
+                                         'ags_0': 'Gemeindeschluessel'}, inplace=True)
+        # filter substations with point as geometry
+        drop_substations = [sub.name for i, sub in hvmv_substations.iterrows()
+                            if isinstance(sub.geometry, (Point, LineString))]
+        hvmv_substations.drop(drop_substations, inplace=True)
+        # check for substations in the target area
+        hvmv_substations = gpd.overlay(hvmv_substations, grid_data.area, how='intersection')
+        if not hvmv_substations.empty:
+            remove_columns = grid_data.area.keys().tolist()
+            remove_columns.remove('geometry')
+            hvmv_substations.drop(columns=remove_columns, inplace=True)
+            hvmv_substations['voltage_level'] = 4
+            # add dave name
+            hvmv_substations.reset_index(drop=True, inplace=True)
+            hvmv_substations.insert(0, 'dave_name', pd.Series(
+                list(map(lambda x: f'substation_4_{x}', hvmv_substations.index))))
+            # add ehv substations to grid data
+            grid_data.components_power.substations.hv_mv = \
+                grid_data.components_power.substations.hv_mv.append(hvmv_substations)
+    else:
+        hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
+    # update progress
+    pbar.update(10)
+
     # --- create hv nodes
     ehvhv_buses, meta_data = oep_request(schema='grid',
                                          table='ego_pf_hv_bus',
@@ -47,6 +116,33 @@ def create_hv_topology(grid_data):
     hv_buses = hv_buses.drop(columns=(['current_type', 'v_mag_pu_min', 'v_mag_pu_max', 'geom']))
     # consider data only if there are more than one node in the target area
     if len(hv_buses) > 1:
+        # search for the substations where the hv nodes are within
+        hv_buses.insert(0, 'ego_subst_id', None)
+        hv_buses.insert(1, 'subst_dave_name', None)
+        hv_buses.insert(2, 'subst_name', None)
+        for i, bus in hv_buses.iterrows():
+            ego_subst_id = []
+            subst_dave_name = []
+            subst_name = []
+            for j, sub in ehvhv_substations.iterrows():
+                if ((bus.geometry.within(sub.geometry)) or
+                   (bus.geometry.distance(sub.geometry) < 1E-05)):
+                    ego_subst_id.append(sub.ego_subst_id)
+                    subst_dave_name.append(sub.dave_name)
+                    subst_name.append(sub.subst_name)
+                    break
+            for k, sub in hvmv_substations.iterrows():
+                if ((bus.geometry.within(sub.geometry)) or
+                   (bus.geometry.distance(sub.geometry) < 1E-05)):
+                    ego_subst_id.append(sub.ego_subst_id)
+                    subst_dave_name.append(sub.dave_name)
+                    subst_name.append(sub.subst_name)
+                    break
+            hv_buses.at[bus.name, 'ego_subst_id'] = ego_subst_id
+            hv_buses.at[bus.name, 'subst_dave_name'] = subst_dave_name
+            hv_buses.at[bus.name, 'subst_name'] = subst_name
+            # update progress
+            pbar.update(10/len(hv_buses))
         # add oep as source
         hv_buses['source'] = 'OEP'
         # add dave name
@@ -55,8 +151,6 @@ def create_hv_topology(grid_data):
         hv_buses.insert(0, 'dave_name', name)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
-        # update progress
-        pbar.update(10)
         # --- create hv lines
         hv_lines, meta_data = oep_request(schema='grid',
                                           table='ego_pf_hv_line',
@@ -89,8 +183,6 @@ def create_hv_topology(grid_data):
         hv_lines.insert(hv_lines.columns.get_loc('b_s')+1, 'c_nf', None)
         # add voltage
         hv_lines['voltage_kv'] = 110
-        # update progress
-        pbar.update(10)
         bus0_new = []
         bus1_new = []
         for i, line in hv_lines.iterrows():
@@ -128,6 +220,6 @@ def create_hv_topology(grid_data):
         pbar.update(9.999)
     else:
         # update progress
-        pbar.update(90)
+        pbar.update(80)
     # close progress bar
     pbar.close()

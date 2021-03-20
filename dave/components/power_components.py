@@ -1236,32 +1236,33 @@ def transformers(grid_data):
 
     # --- create hv/mv trafos
     if any(map(lambda x: x in power_levels, ['HV', 'MV'])):
-        # read transformator data from OEP, filter relevant parameters and rename paramter names
-        substations, meta_data = oep_request(schema='grid',
-                                             table='ego_dp_hvmv_substation',
-                                             where=dave_settings()['hvmv_sub_ver'],
-                                             geometry='polygon')  # polygon to get the full area
-        # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        substations.rename(columns={'version': 'ego_version',
-                                    'subst_id': 'ego_subst_id',
-                                    'voltage': 'voltage_kv',
-                                    'ags_0': 'Gemeindeschluessel'}, inplace=True)
+        if grid_data.components_power.substations.hv_mv.empty:
+            # read transformator data from OEP, filter relevant parameters and rename paramter names
+            substations, meta_data = oep_request(schema='grid',
+                                                 table='ego_dp_hvmv_substation',
+                                                 where=dave_settings()['hvmv_sub_ver'],
+                                                 geometry='polygon')  # polygon to get the full area
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+            substations.rename(columns={'version': 'ego_version',
+                                        'subst_id': 'ego_subst_id',
+                                        'voltage': 'voltage_kv',
+                                        'ags_0': 'Gemeindeschluessel'}, inplace=True)
+            # filter substations with point as geometry
+            drop_substations = [sub.name for i, sub in substations.iterrows()
+                                if isinstance(sub.geometry, (Point, LineString))]
+            substations.drop(drop_substations, inplace=True)
+            # check for substations in the target area
+            substations = gpd.overlay(substations, grid_data.area, how='intersection')
+            if not substations.empty:
+                remove_columns = grid_data.area.keys().tolist()
+                remove_columns.remove('geometry')
+                substations.drop(columns=remove_columns, inplace=True)
+        else:
+            substations = grid_data.components_power.substations.hv_mv.copy()
         substations.drop(columns=['power_type', 'substation', 'frequency', 'ref', 'dbahn', 'status',
                                   'otg_id', 'geom'], inplace=True)
-        # filter substations with point as geometry
-        drop_substations = []
-        for i, sub in substations.iterrows():
-            if isinstance(sub.geometry, (Point, LineString)):
-                drop_substations.append(sub.name)
-        substations.drop(drop_substations, inplace=True)
-        # check for substations in the target area
-        substations = gpd.overlay(substations, grid_data.area, how='intersection')
-        if not substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove('geometry')
-            substations.drop(columns=remove_columns, inplace=True)
         # update progress
         pbar.update(10)
         # --- prepare hv nodes for the transformers
@@ -1387,27 +1388,30 @@ def transformers(grid_data):
 
     # --- create mv/lv trafos
     if any(map(lambda x: x in power_levels, ['MV', 'LV'])):
-        # get transformator data from OEP
-        substations, meta_data = oep_request(schema='grid',
-                                             table='ego_dp_mvlv_substation',
-                                             where=dave_settings()['mvlv_sub_ver'],
-                                             geometry='geom')
-        # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        if grid_data.components_power.substations.mv_lv.empty:
+            # get transformator data from OEP
+            substations, meta_data = oep_request(schema='grid',
+                                                 table='ego_dp_mvlv_substation',
+                                                 where=dave_settings()['mvlv_sub_ver'],
+                                                 geometry='geom')
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+            substations.rename(columns={'version': 'ego_version', 'mvlv_subst_id': 'ego_subst_id'},
+                               inplace=True)
+            # change wrong crs from oep
+            substations.crs = dave_settings()['crs_meter']
+            substations = substations.to_crs(dave_settings()['crs_main'])
+            # filter trafos for target area
+            substations = gpd.overlay(substations, grid_data.area, how='intersection')
+            if not substations.empty:
+                remove_columns = grid_data.area.keys().tolist()
+                remove_columns.remove('geometry')
+                substations.drop(columns=remove_columns, inplace=True)
+        else:
+            substations = grid_data.components_power.substations.mv_lv.copy()
         substations.drop(columns=(['la_id', 'geom', 'subst_id', 'is_dummy', 'subst_cnt']),
                          inplace=True)
-        substations.rename(columns={'version': 'ego_version', 'mvlv_subst_id': 'ego_subst_id'},
-                           inplace=True)
-        # change wrong crs from oep
-        substations.crs = dave_settings()['crs_meter']
-        substations = substations.to_crs(dave_settings()['crs_main'])
-        # filter trafos for target area
-        substations = gpd.overlay(substations, grid_data.area, how='intersection')
-        if not substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove('geometry')
-            substations.drop(columns=remove_columns, inplace=True)
         # update progress
         pbar.update(10)
         # --- prepare mv nodes for the transformers
@@ -1432,7 +1436,7 @@ def transformers(grid_data):
         # check if the lv nodes already exist, otherwise create them
         if grid_data.lv_data.lv_nodes.empty:
             # --- in this case the missing lv nodes for the transformator must be created
-            lv_buses = copy.deepcopy(substations)
+            lv_buses = substations.copy()
             lv_buses['node_type'] = 'mvlv_substation'
             lv_buses['voltage_level'] = 7
             lv_buses['voltage_kv'] = 0.4

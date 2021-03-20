@@ -22,7 +22,7 @@ def create_ehv_topology(grid_data):
     # set progress bar
     pbar = tqdm(total=100, desc='create extra high voltage topology:', position=0,
                 bar_format=dave_settings()['bar_format'])
-    # --- create ehv substations
+    # --- create ehv/ehv and ehv/hv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
     ehv_substations, meta_data = oep_request(schema='grid',
                                              table='ego_dp_ehv_substation',
@@ -37,16 +37,18 @@ def create_ehv_topology(grid_data):
     ehv_substations = gpd.overlay(ehv_substations, grid_data.area, how='intersection')
     # update progress
     pbar.update(10)
-    # consider data only if there are more than one node in the target area
-    if len(ehv_substations) > 1:
-        ehv_substations['voltage_level'] = 1
+    if not ehv_substations.empty:
+        remove_columns = grid_data.area.keys().tolist()
+        remove_columns.remove('geometry')
+        ehv_substations.drop(columns=remove_columns, inplace=True)
+        ehv_substations['voltage_level'] = 2
         # add dave name
         ehv_substations.reset_index(drop=True, inplace=True)
-        ehv_substations.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'substation_1_{x}',
+        ehv_substations.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'substation_2_{x}',
                                                                   ehv_substations.index))))
         # add ehv substations to grid data
-        grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
-            ehv_substations)
+        grid_data.components_power.substations.ehv_hv = \
+            grid_data.components_power.substations.ehv_hv.append(ehv_substations)
     # update progress
     pbar.update(10)
     # --- create ehv nodes
@@ -81,6 +83,7 @@ def create_ehv_topology(grid_data):
                 if ((bus.geometry.within(sub.geometry)) or
                    (bus.geometry.distance(sub.geometry) < 1E-05)):
                     ehv_buses.at[bus.name, 'ego_subst_id'] = sub.ego_subst_id
+                    ehv_buses.at[bus.name, 'subst_dave_name'] = sub.dave_name
                     ehv_buses.at[bus.name, 'subst_name'] = sub.subst_name
                     break
             # update progress
