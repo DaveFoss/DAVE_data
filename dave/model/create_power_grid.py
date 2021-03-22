@@ -47,10 +47,12 @@ def create_power_grid(grid_data):
         net.bus = net.bus.append(all_buses)
         net.bus_geodata['x'] = all_buses.geometry.apply(lambda x: x.coords[:][0][0])
         net.bus_geodata['y'] = all_buses.geometry.apply(lambda x: x.coords[:][0][1])
-        if all(net.bus.type.isna()):
-            net.bus['type'] = 'b'
-        if all(net.bus.in_service.isna()):
-            net.bus['in_service'] = bool(True)
+        # check necessary parameters and add pandapower standart if needed
+        net.bus['type'] = 'b' if all(net.bus.type.isna()) else net.bus.type.apply(
+            lambda x: 'b' if pd.isna(x) else x)
+        net.bus['in_service'] = bool(True) if all(net.bus.in_service.isna()) else \
+            net.bus.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+
     # update progress
     pbar.update(15)
 
@@ -63,8 +65,7 @@ def create_power_grid(grid_data):
             lambda x: net.bus[net.bus['name'] == x].index[0])
         lines_ehvhv['to_bus'] = lines_ehvhv.bus1.apply(
             lambda x: net.bus[net.bus['name'] == x].index[0])
-        lines_ehvhv['type'] = 'ol'
-        lines_ehvhv['in_service'] = bool(True)
+        lines_ehvhv['type'] = lines_ehvhv.type.apply(lambda x: 'ol' if pd.isna(x) else x)
         # geodata
         coords_ehvhv = pd.DataFrame({'coords': lines_ehvhv.geometry.apply(
             lambda x: [list(coords) for coords in
@@ -93,7 +94,6 @@ def create_power_grid(grid_data):
             lambda x: std_line.loc[x].type)
         lines_mvlv['r_ohm_per_km'] = lines_mvlv.std_type.apply(
             lambda x: std_line.loc[x].r_ohm_per_km)
-        lines_mvlv['in_service'] = bool(True)
         # geodata
         coords_mvlv = pd.DataFrame({'coords': lines_mvlv.geometry.apply(
             lambda x: [list(coords) for coords in x.coords[:]])})
@@ -103,6 +103,13 @@ def create_power_grid(grid_data):
     net.line = net.line.append(pd.concat([lines_ehvhv, lines_mvlv]), ignore_index=True)
     net.line_geodata = net.line_geodata.append(pd.concat([coords_ehvhv, coords_mvlv]),
                                                ignore_index=True)
+    # check necessary parameters and add pandapower standart if needed
+    net.line['in_service'] = bool(True) if all(net.line.in_service.isna()) else \
+        net.line.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+    net.line['df'] = float(1) if all(net.line.df.isna()) else net.line.df.apply(
+        lambda x: float(1) if pd.isna(x) else x)
+    net.line['parallel'] = int(1) if all(net.line.parallel.isna()) else net.line.parallel.apply(
+        lambda x: int(1) if pd.isna(x) else x)
     # update progress
     pbar.update(20)
 
@@ -127,6 +134,7 @@ def create_power_grid(grid_data):
         trafos_ehvhv['vk_percent'] = dave_settings()['trafo_vk_percent']  # dummy value
         trafos_ehvhv['pfe_kw'] = dave_settings()['trafo_pfe_kw']  # dummy value accepted as ideal
         trafos_ehvhv['i0_percent'] = dave_settings()['trafo_i0_percent']  # dummy value accepted as ideal
+        trafos_ehvhv['tap_phase_shifter'] = False  # dummy value accepted as ideal
         trafos_ehvhv['hv_bus'] = trafos_ehvhv.bus_hv.apply(
             lambda x: net.bus[net.bus['name'] == x].index[0])
         trafos_ehvhv['lv_bus'] = trafos_ehvhv.bus_lv.apply(
@@ -179,6 +187,17 @@ def create_power_grid(grid_data):
             lambda x: std_trafo.loc[x].tap_phase_shifter)
     # write trafo data into pandapower structure
     net.trafo = net.trafo.append(pd.concat([trafos_ehvhv, trafos_mvlv]), ignore_index=True)
+    # check necessary parameters and add pandapower standart if needed
+    net.trafo['in_service'] = bool(True) if all(net.trafo.in_service.isna()) else \
+        net.trafo.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+    net.trafo['df'] = float(1) if all(net.trafo.df.isna()) else net.trafo.df.apply(
+        lambda x: float(1) if pd.isna(x) else x)
+    net.trafo['parallel'] = int(1) if all(net.trafo.parallel.isna()) else net.trafo.parallel.apply(
+        lambda x: int(1) if pd.isna(x) else x)
+    net.trafo['shift_degree'] = float(0) if all(net.trafo.shift_degree.isna()) else \
+        net.trafo.shift_degree.apply(lambda x: float(0) if pd.isna(x) else x)
+    net.trafo['tap_phase_shifter'] = bool(False) if all(net.trafo.tap_phase_shifter.isna()) else \
+        net.trafo.tap_phase_shifter.apply(lambda x: bool(False) if pd.isna(x) else x)
     # update progress
     pbar.update(20)
 
@@ -191,13 +210,18 @@ def create_power_grid(grid_data):
         net.sgen = net.sgen.append(renewables)
         net.sgen['bus'] = net.sgen.bus.apply(lambda x: net.bus[net.bus['name'] == x].index[0])
         net.sgen['p_mw'] = net.sgen.electrical_capacity_kw.apply(lambda x: float(x)/1000)
-        if all(net.sgen.in_service.isna()):
-            net.sgen['in_service'] = True
-        if all(net.sgen.q_mvar.isna()):
-            net.sgen['q_mvar'] = 0
-        if all(net.sgen.scaling.isna()):
-            net.sgen['scaling'] = 1.0
         net.sgen.drop(columns=['electrical_capacity_kw'], inplace=True)
+        # check necessary parameters and add pandapower standart if needed
+        net.sgen['in_service'] = bool(True) if all(net.sgen.in_service.isna()) else \
+            net.sgen.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+        net.sgen['q_mvar'] = float(0) if all(net.sgen.q_mvar.isna()) else net.sgen.q_mvar.apply(
+            lambda x: float(0) if pd.isna(x) else x)
+        net.sgen['scaling'] = float(1) if all(net.sgen.scaling.isna()) else net.sgen.scaling.apply(
+            lambda x: float(1) if pd.isna(x) else x)
+        net.sgen['current_source'] = bool(True) if all(net.sgen.current_source.isna()) else \
+            net.sgen.current_source.apply(lambda x: bool(True) if pd.isna(x) else x)
+        net.sgen['type'] = 'wye' if all(net.sgen.type.isna()) else net.sgen.type.apply(
+            lambda x: 'wye' if pd.isna(x) else x)
     # update progress
     pbar.update(15)
     # create conventional powerplants
@@ -208,12 +232,15 @@ def create_power_grid(grid_data):
         conventionals.reset_index(drop=True, inplace=True)
         net.gen = net.gen.append(conventionals)
         net.gen['bus'] = net.gen.bus.apply(lambda x: net.bus[net.bus['name'] == x].index[0])
-        if all(net.gen.in_service.isna()):
-            net.gen['in_service'] = True
-        if all(net.gen.vm_pu.isna()):
-            net.gen['vm_pu'] = 1.0
-        if all(net.gen.scaling.isna()):
-            net.gen['scaling'] = 1.0
+        # check necessary parameters and add pandapower standart if needed
+        net.gen['in_service'] = bool(True) if all(net.gen.in_service.isna()) else \
+            net.gen.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+        net.gen['vm_pu'] = float(1) if all(net.gen.vm_pu.isna()) else net.gen.vm_pu.apply(
+            lambda x: float(1) if pd.isna(x) else x)
+        net.gen['scaling'] = float(1) if all(net.gen.scaling.isna()) else net.gen.scaling.apply(
+            lambda x: float(1) if pd.isna(x) else x)
+        net.gen['slack'] = bool(False) if all(net.gen.slack.isna()) else net.gen.slack.apply(
+            lambda x: bool(False) if pd.isna(x) else x)
     # update progress
     pbar.update(15)
 
@@ -224,16 +251,19 @@ def create_power_grid(grid_data):
         loads.reset_index(drop=True, inplace=True)
         net.load = net.load.append(loads)
         net.load['bus'] = net.load.bus.apply(lambda x: net.bus[net.bus['name'] == x].index[0])
-        if all(net.load.in_service.isna()):
-            net.load['in_service'] = True
-        if all(net.load.q_mvar.isna()):
-            net.load['q_mvar'] = 0.0
-        if all(net.load.scaling.isna()):
-            net.load['scaling'] = 1.0
-        if all(net.load.const_z_percent.isna()):
-            net.load['const_z_percent'] = 0.0
-        if all(net.load.const_i_percent.isna()):
-            net.load['const_i_percent'] = 0.0
+        # check necessary parameters and add pandapower standart if needed
+        net.load['in_service'] = bool(True) if all(net.load.in_service.isna()) else \
+            net.load.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+        net.load['q_mvar'] = float(0) if all(net.load.q_mvar.isna()) else net.load.q_mvar.apply(
+            lambda x: float(0) if pd.isna(x) else x)
+        net.load['type'] = 'wye' if all(net.load.type.isna()) else net.load.type.apply(
+            lambda x: 'wye' if pd.isna(x) else x)
+        net.load['scaling'] = float(1) if all(net.load.scaling.isna()) else net.load.scaling.apply(
+            lambda x: float(1) if pd.isna(x) else x)
+        net.load['const_z_percent'] = float(0) if all(net.load.const_z_percent.isna()) else \
+            net.load.const_z_percent.apply(lambda x: float(0) if pd.isna(x) else x)
+        net.load['const_i_percent'] = float(0) if all(net.load.const_i_percent.isna()) else \
+            net.load.const_i_percent.apply(lambda x: float(0) if pd.isna(x) else x)
     # update progress
     pbar.update(10)
 
@@ -275,7 +305,3 @@ def create_power_grid(grid_data):
     # close progress bar
     pbar.close()
     return net
-
-# hotfix std types at lines and trafos auf den unteren ebenen
-#pp.available_std_types(net_power, element='line')
-#pp.available_std_types(net_power, element='trafo')
