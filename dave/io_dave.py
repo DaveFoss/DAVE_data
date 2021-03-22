@@ -152,21 +152,21 @@ def read_dataset(dataset_path):
             grid_data.components_power.transformers.mv_lv = \
                 grid_data.components_power.transformers.mv_lv.append(gpd.GeoDataFrame(mv_lv,
                                                                                       crs=crs))
-        ehv_hv = _convert_data_from(file, '/components_power/substation/ehv_hv')
+        ehv_hv = _convert_data_from(file, '/components_power/substations/ehv_hv')
         if not ehv_hv.empty:
-            grid_data.components_power.substation.ehv_hv = \
-                grid_data.components_power.substation.ehv_hv.append(gpd.GeoDataFrame(ehv_hv,
-                                                                                     crs=crs))
-        hv_mv = _convert_data_from(file, '/components_power/substation/hv_mv')
+            grid_data.components_power.substations.ehv_hv = \
+                grid_data.components_power.substations.ehv_hv.append(gpd.GeoDataFrame(ehv_hv,
+                                                                                      crs=crs))
+        hv_mv = _convert_data_from(file, '/components_power/substations/hv_mv')
         if not hv_mv.empty:
-            grid_data.components_power.substation.hv_mv = \
-                grid_data.components_power.substation.hv_mv.append(gpd.GeoDataFrame(hv_mv,
-                                                                                    crs=crs))
-        mv_lv = _convert_data_from(file, '/components_power/substation/mv_lv')
+            grid_data.components_power.substations.hv_mv = \
+                grid_data.components_power.substations.hv_mv.append(gpd.GeoDataFrame(hv_mv,
+                                                                                     crs=crs))
+        mv_lv = _convert_data_from(file, '/components_power/substations/mv_lv')
         if not mv_lv.empty:
-            grid_data.components_power.substation.mv_lv = \
-                grid_data.components_power.substation.mv_lv.append(gpd.GeoDataFrame(mv_lv,
-                                                                                    crs=crs))
+            grid_data.components_power.substations.mv_lv = \
+                grid_data.components_power.substations.mv_lv.append(gpd.GeoDataFrame(mv_lv,
+                                                                                     crs=crs))
         # hp data
         hp_junctions = _convert_data_from(file, '/hp_data/hp_junctions')
         if not hp_junctions.empty:

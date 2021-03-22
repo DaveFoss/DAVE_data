@@ -6,3 +6,4 @@
 **/.pylint.d/**
 tutorials/.ipynb_checkpoints
 dave/datapool/dave_archiv
+.idea/
