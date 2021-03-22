@@ -1,5 +1,4 @@
 import math
-import copy
 import geopandas as gpd
 import pandas as pd
 import warnings
@@ -1315,7 +1314,9 @@ def transformers(grid_data):
         # Otherwise create missing mv nodes
         if grid_data.mv_data.mv_nodes.empty:
             # --- in this case the missing mv nodes for the transformers must be created
-            mv_nodes = copy.deepcopy(substations)
+            mv_nodes = substations.copy()
+            if 'dave_name' in mv_nodes.keys():
+                mv_nodes.drop(columns=['dave_name'], inplace=True)
             # set points for geometry
             mv_nodes['geometry'] = mv_nodes.point.apply(lambda x: wkb.loads(x, hex=True))
             mv_nodes['node_type'] = 'hvmv_substation'
@@ -1418,7 +1419,9 @@ def transformers(grid_data):
         # check if the mv nodes already exist, otherwise create them
         if grid_data.mv_data.mv_nodes.empty:
             # --- in this case the missing mv nodes for the transformator must be created
-            mv_buses = copy.deepcopy(substations)
+            mv_buses = substations.copy()
+            if 'dave_name' in mv_buses.keys():
+                mv_buses.drop(columns=['dave_name'], inplace=True)
             mv_buses['node_type'] = 'mvlv_substation'
             mv_buses['voltage_level'] = 5
             mv_buses['voltage_kv'] = dave_settings()['mv_voltage']
