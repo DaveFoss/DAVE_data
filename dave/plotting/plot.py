@@ -114,7 +114,6 @@ def plot_grid_data(grid_data):
     mv_lines = grid_data.mv_data.mv_lines
     mv_nodes = grid_data.mv_data.mv_nodes
     ehv_nodes = grid_data.ehv_data.ehv_nodes
-    ehv_substations = grid_data.ehv_data.ehv_substations
     ehv_lines = grid_data.ehv_data.ehv_lines
     hv_nodes = grid_data.hv_data.hv_nodes
     hv_lines = grid_data.hv_data.hv_lines
@@ -125,6 +124,8 @@ def plot_grid_data(grid_data):
     buildings_for_living = grid_data.buildings.for_living
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
+    substations = pd.concat([grid_data.components_power.substations.ehv_hv,
+                             grid_data.components_power.substations.hv_mv])
     # check if there is any data in target area otherwise plot only the area
     data = [roads_plot,
             roads,
@@ -132,6 +133,7 @@ def plot_grid_data(grid_data):
             buildings_for_living,
             buildings_commercial,
             buildings_other,
+            substations,
             lv_nodes,
             lv_lines,
             mv_lines,
@@ -139,7 +141,6 @@ def plot_grid_data(grid_data):
             renewable_plants,
             conventional_plants,
             ehv_nodes,
-            ehv_substations,
             ehv_lines,
             hv_nodes,
             hv_lines,
@@ -184,8 +185,6 @@ def plot_grid_data(grid_data):
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')
-        if not ehv_substations.empty:
-            ehv_substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
         if not ehv_lines.empty:
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
@@ -203,6 +202,9 @@ def plot_grid_data(grid_data):
             hp_junctions.plot(ax=ax, color='k', markersize=6, label='HP Junctions')
         if not hp_pipes.empty:
             hp_pipes.plot(ax=ax, color='k', zorder=1, label='HP Pipes')
+        # plot substations
+        if not substations.empty:
+            substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
         # legende
         ax.legend()
         # titel

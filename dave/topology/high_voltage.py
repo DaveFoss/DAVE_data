@@ -138,9 +138,12 @@ def create_hv_topology(grid_data):
                     subst_dave_name.append(sub.dave_name)
                     subst_name.append(sub.subst_name)
                     break
-            hv_buses.at[bus.name, 'ego_subst_id'] = ego_subst_id
-            hv_buses.at[bus.name, 'subst_dave_name'] = subst_dave_name
-            hv_buses.at[bus.name, 'subst_name'] = subst_name
+            if len(ego_subst_id) != 0:
+                hv_buses.at[bus.name, 'ego_subst_id'] = ego_subst_id
+            if len(subst_dave_name) != 0:
+                hv_buses.at[bus.name, 'subst_dave_name'] = subst_dave_name
+            if len(subst_name) != 0:
+                hv_buses.at[bus.name, 'subst_name'] = subst_name
             # update progress
             pbar.update(10/len(hv_buses))
         # add oep as source
