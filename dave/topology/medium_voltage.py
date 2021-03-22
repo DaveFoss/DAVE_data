@@ -142,7 +142,6 @@ def create_mv_topology(grid_data):
     # consider data only if there are more than one node in the target area
     mv_buses = mvlv_buses.append(hvmv_buses)
     if len(mv_buses) > 1:
-
         # search for the substations dave name
         substations_rel = pd.concat([hvmv_substations, mvlv_substations])
         mv_buses['subs_dave_name'] = mv_buses.ego_subst_id.apply(
