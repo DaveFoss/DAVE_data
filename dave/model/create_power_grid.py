@@ -50,7 +50,7 @@ def create_power_grid(grid_data):
         if all(net.bus.type.isna()):
             net.bus['type'] = 'b'
         if all(net.bus.in_service.isna()):
-            net.bus['in_service'] = True
+            net.bus['in_service'] = bool(True)
     # update progress
     pbar.update(15)
 
@@ -64,7 +64,7 @@ def create_power_grid(grid_data):
         lines_ehvhv['to_bus'] = lines_ehvhv.bus1.apply(
             lambda x: net.bus[net.bus['name'] == x].index[0])
         lines_ehvhv['type'] = 'ol'
-        lines_ehvhv['in_service'] = 'True'
+        lines_ehvhv['in_service'] = bool(True)
         # geodata
         coords_ehvhv = pd.DataFrame({'coords': lines_ehvhv.geometry.apply(
             lambda x: [list(coords) for coords in
@@ -93,7 +93,7 @@ def create_power_grid(grid_data):
             lambda x: std_line.loc[x].type)
         lines_mvlv['r_ohm_per_km'] = lines_mvlv.std_type.apply(
             lambda x: std_line.loc[x].r_ohm_per_km)
-        lines_mvlv['in_service'] = True
+        lines_mvlv['in_service'] = bool(True)
         # geodata
         coords_mvlv = pd.DataFrame({'coords': lines_mvlv.geometry.apply(
             lambda x: [list(coords) for coords in x.coords[:]])})
