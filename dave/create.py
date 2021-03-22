@@ -1,7 +1,10 @@
 import os
 import shutil
+import warnings
+import timeit
 import pandas as pd
 import geopandas as gpd
+
 
 # imports from dave
 from dave.dave_structure import davestructure
@@ -47,8 +50,7 @@ def create_empty_dataset():
         'landuse': gpd.GeoDataFrame([]),
         # power grid data
         'ehv_data': davestructure(
-            {'ehv_substations': gpd.GeoDataFrame([]),
-             'ehv_nodes': gpd.GeoDataFrame([]),
+            {'ehv_nodes': gpd.GeoDataFrame([]),
              'ehv_lines': gpd.GeoDataFrame([])
              }),
         'hv_data': davestructure(
@@ -70,6 +72,11 @@ def create_empty_dataset():
              'transformers': davestructure(
                  {'ehv_ehv': gpd.GeoDataFrame([]),
                   'ehv_hv': gpd.GeoDataFrame([]),
+                  'hv_mv': gpd.GeoDataFrame([]),
+                  'mv_lv': gpd.GeoDataFrame([])
+                  }),
+             'substations': davestructure(
+                 {'ehv_hv': gpd.GeoDataFrame([]),
                   'hv_mv': gpd.GeoDataFrame([]),
                   'mv_lv': gpd.GeoDataFrame([])
                   })
@@ -167,6 +174,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
                                  convert = False)
 
     """
+    # start runtime
+    _start_time = timeit.default_timer()
     # create empty datastructure
     grid_data = create_empty_dataset()
 
@@ -195,7 +204,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for EHV, HV and HP
         roads, roads_plot, buildings = False, False, False
-        landuse = bool(loads)  # landuse is needed for load calculation
+        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
     file_exists, file_name = target_area(grid_data, power_levels=power_levels,
                                          gas_levels=gas_levels, postalcode=postalcode,
                                          town_name=town_name, federal_state=federal_state,
@@ -261,14 +270,14 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         grid_data = from_archiv(f'{file_name}.h5')
 
     # create dave output folder on desktop for DaVe dataset, plotting and converted model
-    print('Save DaVe output data at the following path:')
-    print(dave_output_dir)
-    print('----------------------------------')
+    print(f'\nSave DaVe output data at the following path: {dave_output_dir}')
     if not os.path.exists(dave_output_dir):
         os.makedirs(dave_output_dir)
 
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
+        """ this function is taken out for development
+
         # Vorrübergehend aus für testzwecke
         print('Save DaVe dataset to archiv')
         print('----------------------------------')
@@ -283,8 +292,12 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         output_file_path = dave_output_dir + '\\' + f'{file_name}.h5'
         if os.path.exists(archiv_file_path):
             shutil.copyfile(archiv_file_path, output_file_path)
+        """
     else:
-        write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
+        with warnings.catch_warnings():
+            # filter warnings because of the PerformanceWarning from pytables at the geometry type
+            warnings.simplefilter('ignore')
+            write_dataset(grid_data, dataset_path=dave_output_dir+'\\'+'dave_dataset.h5')
 
     # plot informations
     if plot:
@@ -308,7 +321,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
     else:
         net_gas = None
 
-    # return
+    # return runtime
+    _stop_time = timeit.default_timer()
+    print('runtime = ' + str(round((_stop_time - _start_time)/60, 2)) + ' min')
+
+    # return data
     if net_power and net_gas:
         return grid_data, net_power, net_gas
     elif net_power:

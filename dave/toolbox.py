@@ -1,5 +1,6 @@
 import geopandas as gpd
 import numpy as np
+import warnings
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint
 from shapely.ops import polygonize, cascaded_union
@@ -24,7 +25,10 @@ def create_interim_area(areas):
         for i, area in areas.iterrows():
             # check if the considered area adjoining an other one
             areas_other = areas.drop([i])
-            distance = areas_other.geometry.distance(area.geometry)
+            with warnings.catch_warnings():
+                # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
+                distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
                 areas_iso.append((i, distance[distance == distance.min()].index[0]))
         # if their are isolated areas, check for a connection on the highest grid level
@@ -48,7 +52,7 @@ def create_interim_area(areas):
 
 def voronoi(points):
     """
-    This function calculates the voronoi diagram for given points within germany
+    This function calculates the voronoi diagram for given points
 
     INPUT:
         **voronoi_points** (GeoDataFrame) - all nodes for voronoi analysis
@@ -57,6 +61,7 @@ def voronoi(points):
         **voronoi polygons** (GeoDataFrame) - all voronoi areas for the given points
     """
     # define points for voronoi centroids
+    points = points.reset_index(drop=True)  # don't use inplace
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
     voronoi_points = np.array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
@@ -67,10 +72,8 @@ def voronoi(points):
     voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
     vor = Voronoi(voronoi_points)
-    # select finit lines and create LineStrings
-    lines = [LineString(vor.vertices[line])
-             for line in vor.ridge_vertices
-             if -1 not in line]  # filtering regions with -1 because these are infinit
+    # select finit lines and create LineStrings (regions with -1 are infinit)
+    lines = [LineString(vor.vertices[line]) for line in vor.ridge_vertices if -1 not in line]
     # create polygons from the lines
     polygons = np.array(list(polygonize(lines)))
     # create GeoDataFrame with polygons

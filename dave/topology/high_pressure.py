@@ -1,7 +1,9 @@
 import geopandas as gpd
 import pandas as pd
+from tqdm import tqdm
 
 from dave.datapool import read_hp_data, read_scigridgas_igginl
+from dave.settings import dave_settings
 
 
 def create_hp_topology(grid_data):
@@ -15,14 +17,16 @@ def create_hp_topology(grid_data):
     OUTPUT:
         Writes data in the DaVe dataset
     """
-    # print to inform user
-    print('create high pressure topology')
-    print('----------------------------------')
+    # set progress bar
+    pbar = tqdm(total=100, desc='create high pressure topology:     ', position=0,
+                bar_format=dave_settings()['bar_format'])
     # read high pressure grid data from dave datapool (scigridgas igginl)
     scigrid_data, meta_data = read_scigridgas_igginl()
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    # update progress
+    pbar.update(20)
     # create hp junctions (nodes)
     hp_junctions = scigrid_data['nodes']
     # prepare data
@@ -34,6 +38,8 @@ def create_hp_topology(grid_data):
     keys = grid_data.area.keys().tolist()
     keys.remove('geometry')
     hp_junctions = hp_junctions.drop(columns=(keys))
+    # update progress
+    pbar.update(20)
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name
@@ -42,6 +48,8 @@ def create_hp_topology(grid_data):
                             pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index))))
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
+        # update progress
+        pbar.update(20)
         # --- create hp pipes
         hp_pipes = scigrid_data['pipe_segments']
         # filter relevant pipelines by checking if both endpoints are in the target area
@@ -54,6 +62,8 @@ def create_hp_topology(grid_data):
         hp_pipes.rename(columns={'id': 'scigrid_id', 'name': 'scigrid_name'}, inplace=True)
         hp_pipes['source'] = 'scigridgas'
         hp_pipes['pressure_level'] = 1
+        # update progress
+        pbar.update(20)
         # change pipeline junction names from scigrid id to dave name
         hp_pipes['from_junction'] = hp_pipes.from_junction.apply(
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
@@ -61,10 +71,14 @@ def create_hp_topology(grid_data):
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
-        hp_pipes.insert(0, 'dave_name', name)
+        hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
+                                                           hp_pipes.index))))
         # add hp lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
+        # update progress
+        pbar.update(20)
+    # close progress bar
+    pbar.close()
 
 
 def create_lkd_eu(grid_data):
@@ -159,7 +173,7 @@ def create_lkd_eu(grid_data):
         hp_pipes['to_junction'] = to_junction_new
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
-        hp_pipes.insert(0, 'dave_name', name)
+        hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
+                                                           hp_pipes.index))))
         # add hd lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
