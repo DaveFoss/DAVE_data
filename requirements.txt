@@ -1,3 +1,4 @@
+# conda
 Shapely
 GDAL
 Fiona
@@ -10,4 +11,6 @@ geopy
 contextily
 descartes
 pandapower
+# pip
+tables
 pandapipes
