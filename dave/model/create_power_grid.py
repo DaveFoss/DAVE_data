@@ -110,6 +110,8 @@ def create_power_grid(grid_data):
         lambda x: float(1) if pd.isna(x) else x)
     net.line['parallel'] = int(1) if all(net.line.parallel.isna()) else net.line.parallel.apply(
         lambda x: int(1) if pd.isna(x) else x)
+    net.line['std_type'] = None if all(net.line.std_type.isna()) else net.line.std_type.apply(
+        lambda x: None if pd.isna(x) else x)
     # update progress
     pbar.update(20)
 
@@ -198,6 +200,8 @@ def create_power_grid(grid_data):
         net.trafo.shift_degree.apply(lambda x: float(0) if pd.isna(x) else x)
     net.trafo['tap_phase_shifter'] = bool(False) if all(net.trafo.tap_phase_shifter.isna()) else \
         net.trafo.tap_phase_shifter.apply(lambda x: bool(False) if pd.isna(x) else x)
+    net.trafo['std_type'] = None if all(net.trafo.std_type.isna()) else net.trafo.std_type.apply(
+        lambda x: None if pd.isna(x) else x)
     # update progress
     pbar.update(20)
 
