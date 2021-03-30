@@ -94,8 +94,6 @@ def create_power_grid(grid_data):
         lines_mvlv['r_ohm_per_km'] = lines_mvlv.std_type.apply(
             lambda x: std_line.loc[x].r_ohm_per_km)
         lines_mvlv['max_i_ka'] = lines_mvlv.std_type.apply(lambda x: std_line.loc[x].max_i_ka)
-        lines_mvlv['g_us_per_km '] = lines_mvlv.std_type.apply(
-            lambda x: std_line.loc[x].g_us_per_km)
         # geodata
         coords_mvlv = pd.DataFrame({'coords': lines_mvlv.geometry.apply(
             lambda x: [list(coords) for coords in x.coords[:]])})
@@ -116,8 +114,6 @@ def create_power_grid(grid_data):
         lambda x: None if pd.isna(x) else x)
     net.line['g_us_per_km'] = float(0) if all(net.line.g_us_per_km.isna()) else \
         net.line.g_us_per_km.apply(lambda x: float(0) if pd.isna(x) else x)
-    net.line['g0_us_per_km'] = float(0) if all(net.line.g0_us_per_km.isna()) else \
-        net.line.g0_us_per_km.apply(lambda x: float(0) if pd.isna(x) else x)
     # update progress
     pbar.update(20)
 
