@@ -90,10 +90,10 @@ def create_power_grid(grid_data):
             lambda x: std_line.loc[x].c_nf_per_km)
         lines_mvlv['x_ohm_per_km'] = lines_mvlv.std_type.apply(
             lambda x: std_line.loc[x].x_ohm_per_km)
-        lines_mvlv['type'] = lines_mvlv.std_type.apply(
-            lambda x: std_line.loc[x].type)
+        lines_mvlv['type'] = lines_mvlv.std_type.apply(lambda x: std_line.loc[x].type)
         lines_mvlv['r_ohm_per_km'] = lines_mvlv.std_type.apply(
             lambda x: std_line.loc[x].r_ohm_per_km)
+        lines_mvlv['max_i_ka'] = lines_mvlv.std_type.apply(lambda x: std_line.loc[x].max_i_ka)
         # geodata
         coords_mvlv = pd.DataFrame({'coords': lines_mvlv.geometry.apply(
             lambda x: [list(coords) for coords in x.coords[:]])})
