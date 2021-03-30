@@ -268,9 +268,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
 
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
-        """ this function is taken out for development
-
-        # Vorrübergehend aus für testzwecke
+        """ this function is temporary taken out for development
         print('Save DaVe dataset to archiv')
         print('----------------------------------')
         # check if archiv folder exists otherwise create one
@@ -279,17 +277,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
             os.makedirs(archiv_dir)
         # save dataset to archiv
         file_name = to_archiv(grid_data)
-        # copy file from archiv folder to output folder
-        archiv_file_path = archiv_dir + f'{file_name}.h5'
-        output_file_path = output_folder + '\\' + f'{file_name}.h5'
-        if os.path.exists(archiv_file_path):
-            shutil.copyfile(archiv_file_path, output_file_path)
         """
-    else:
-        with warnings.catch_warnings():
-            # filter warnings because of the PerformanceWarning from pytables at the geometry type
-            warnings.simplefilter('ignore')
-            write_dataset(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
+    with warnings.catch_warnings():
+        # filter warnings because of the PerformanceWarning from pytables at the geometry type
+        warnings.simplefilter('ignore')
+        write_dataset(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
 
     # plot informations
     if plot:
