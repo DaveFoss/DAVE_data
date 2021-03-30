@@ -294,9 +294,9 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
     # plot informations
     if plot:
         if 'LV' in power_levels:
-            plot_target_area(grid_data)
-        plot_grid_data(grid_data)
-        #plot_landuse(grid_data)
+            plot_target_area(grid_data, output_folder)
+        plot_grid_data(grid_data, output_folder)
+        #plot_landuse(grid_data, output_folder)
 
     # convert into pandapower and pandapipes
     if convert and power_levels:
