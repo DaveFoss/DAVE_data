@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from pandapower import to_json, from_json
 from shapely.wkb import loads, dumps
-from shapely.geometry import Point
+from shapely.geometry import Point, LineString
 
 import dave.create
 from dave.settings import dave_settings
@@ -303,6 +303,10 @@ def pp_to_json(net, file_path):
     This functions converts a pandapower model into a json file
     """
     # convert geometry
+    if not net.bus.empty and all(list(map(lambda x: isinstance(x, Point), net.bus.geometry))):
+        net.bus['geometry'] = net.bus.geometry.apply(lambda x: dumps(x, hex=True))
+    if not net.line.empty and all(list(map(lambda x: isinstance(x, LineString), net.line.geometry))):
+        net.line['geometry'] = net.line.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.trafo.empty and all(list(map(lambda x: isinstance(x, Point), net.trafo.geometry))):
         net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.gen.empty and all(list(map(lambda x: isinstance(x, Point), net.gen.geometry))):
@@ -317,6 +321,10 @@ def json_to_pp(file_path):
     # read json file and convert to pp model
     net = from_json(file_path)
     # convert geometry
+    if not net.bus.empty and all(list(map(lambda x: isinstance(x, str), net.bus.geometry))):
+        net.bus['geometry'] = net.bus.geometry.apply(lambda x: loads(x, hex=True))
+    if not net.line.empty and all(list(map(lambda x: isinstance(x, str), net.line.geometry))):
+        net.line['geometry'] = net.line.geometry.apply(lambda x: loads(x, hex=True))
     if not net.trafo.empty and all(list(map(lambda x: isinstance(x, str), net.trafo.geometry))):
         net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: loads(x, hex=True))
     if not net.gen.empty and all(list(map(lambda x: isinstance(x, str), net.gen.geometry))):
