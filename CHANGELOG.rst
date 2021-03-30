@@ -3,6 +3,7 @@ Change Log
 
 [1.0.6] - 2021--
 ----------------------
+- [ADDED] option for output folder path
 - [FIXED] wrong/missing types at pandapower converter
 
 [1.0.5] - 2021-03-21

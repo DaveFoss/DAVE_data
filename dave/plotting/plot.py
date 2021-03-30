@@ -31,12 +31,15 @@ def plot_land(area, only_area=False):
         return ax
 
 
-def plot_target_area(grid_data):
+def plot_target_area(grid_data, output_folder=None):
     """
     This function plots the geographical informations in the target area
 
     INPUT:
         **grid_data** (attrdict) - all Informations about the target area
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **target area plot** (svg file) - plot as vektor graphic
@@ -90,18 +93,22 @@ def plot_target_area(grid_data):
         ax.legend()
         # titel
         plt.title('Target Area')
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\target_area.svg'
-        plt.savefig(file_path, dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\target_area.svg'
+            plt.savefig(file_path, dpi=300)
 
 
-def plot_grid_data(grid_data):
+def plot_grid_data(grid_data, output_folder=None):
     """
     This function plots primary the grid data and auxillary greyed out the
     geographical informations in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **grid data plot** (svg file) - plot as vektor graphic
@@ -209,19 +216,23 @@ def plot_grid_data(grid_data):
         ax.legend()
         # titel
         plt.title('Grid Data')
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\grid_data.svg'
-        plt.savefig(file_path, dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\grid_data.svg'
+            plt.savefig(file_path, dpi=300)
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die
     # verschiedenen Spannungs und Druck ebenen.
 
 
-def plot_grid_data_osm(grid_data):
+def plot_grid_data_osm(grid_data, output_folder):
     """
     This function plots primary the grid data with a osm map in the background
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **grid data osm plot** (svg file) - plot as vektor graphic
@@ -296,17 +307,21 @@ def plot_grid_data_osm(grid_data):
         # plot background osm
         ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
         # ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)  # stamen design
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\grid_data.svg'
-        plt.savefig(file_path, format='svg', dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\grid_data.svg'
+            plt.savefig(file_path, format='svg', dpi=300)
 
 
-def plot_landuse(grid_data):
+def plot_landuse(grid_data, output_folder):
     """
     This function plots the landuses in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **landuse plot** (svg file) - plot as vektor graphic
@@ -336,9 +351,10 @@ def plot_landuse(grid_data):
         plt.legend(handles=plot_patch)
         # titel
         plt.title('Landuse')
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\landuse.svg'
-        plt.savefig(file_path, dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\landuse.svg'
+            plt.savefig(file_path, dpi=300)
 
 
 def plot_generator():
