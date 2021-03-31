@@ -112,6 +112,8 @@ def create_power_grid(grid_data):
         lambda x: int(1) if pd.isna(x) else x)
     net.line['std_type'] = None if all(net.line.std_type.isna()) else net.line.std_type.apply(
         lambda x: None if pd.isna(x) else x)
+    net.line['g_us_per_km'] = float(0) if all(net.line.g_us_per_km.isna()) else \
+        net.line.g_us_per_km.apply(lambda x: float(0) if pd.isna(x) else x)
     # update progress
     pbar.update(20)
 
