@@ -118,9 +118,9 @@ def create_power_grid(grid_data):
     pbar.update(20)
 
     # ---create substations
-    net['substations'] = pd.concat([grid_data.components_power.substations.ehv_hv,
-                                    grid_data.components_power.substations.hv_mv,
-                                    grid_data.components_power.substations.mv_lv])
+    net['substations'] = pd.DataFrame(pd.concat([grid_data.components_power.substations.ehv_hv,
+                                                 grid_data.components_power.substations.hv_mv,
+                                                 grid_data.components_power.substations.mv_lv]))
     # update progress
     pbar.update(5)
 
