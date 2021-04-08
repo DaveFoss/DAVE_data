@@ -12,6 +12,7 @@ pandapower
 rasterio
 contextily
 tqdm
+pytest
 # via pip
 #pandapipes
 #tables
