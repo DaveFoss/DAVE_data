@@ -11,7 +11,9 @@ def run_all_tests():
     """
     This function execute all DaVe tests
     """
-    pytest.main([test_dir])
+    # n_cpu = 4
+    # pytest.main([test_dir, '-n', str(n_cpu)])
+    exit_code = pytest.main([test_dir])
 
 
 if __name__ == "__main__":

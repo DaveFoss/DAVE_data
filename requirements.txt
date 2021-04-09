@@ -13,6 +13,7 @@ rasterio
 contextily
 tqdm
 pytest
+pytest-xdist
 # via pip
 #pandapipes
 #tables
