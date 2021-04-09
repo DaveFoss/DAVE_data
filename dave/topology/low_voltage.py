@@ -103,7 +103,8 @@ def line_connections(grid_data):
                                   'length_km': line_length/1000,
                                   'voltage_kv': 0.4,
                                   'voltage_level': 7,
-                                  'source': 'dave internal'})
+                                  'source': 'dave internal'},
+                                 crs=dave_settings()['crs_main'])
     grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(lines_gdf)
 
 
@@ -200,7 +201,7 @@ def create_lv_topology(grid_data):
     line_buildings = gpd.GeoSeries(list(map(lambda x, y: LineString([x, y]),
                                             building_connections['building_centroid'],
                                             building_connections['nearest_point'])),
-                                   crs='EPSG:4326')
+                                   crs=dave_settings()['crs_main'])
     # calculate line length
     line_buildings = line_buildings.set_crs(dave_settings()['crs_main'])
     line_buildings_3035 = line_buildings.to_crs(dave_settings()['crs_meter'])
@@ -312,6 +313,8 @@ def create_lv_topology(grid_data):
                         junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = dave_name
         grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
+        # set crs
+        grid_data.lv_data.lv_nodes.set_crs(dave_settings()['crs_main'], inplace=True)
         # update progress
         pbar.update(80/len(grid_data.lv_data.lv_lines))
     # close progress bar

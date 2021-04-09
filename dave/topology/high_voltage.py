@@ -49,6 +49,8 @@ def create_hv_topology(grid_data):
             ehvhv_substations.reset_index(drop=True, inplace=True)
             ehvhv_substations.insert(0, 'dave_name', pd.Series(
                 list(map(lambda x: f'substation_2_{x}', ehvhv_substations.index))))
+            # set crs
+            ehvhv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.ehv_hv = \
                 grid_data.components_power.substations.ehv_hv.append(ehvhv_substations)
@@ -82,6 +84,8 @@ def create_hv_topology(grid_data):
             hvmv_substations.reset_index(drop=True, inplace=True)
             hvmv_substations.insert(0, 'dave_name', pd.Series(
                 list(map(lambda x: f'substation_4_{x}', hvmv_substations.index))))
+            # set crs
+            hvmv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.hv_mv = \
                 grid_data.components_power.substations.hv_mv.append(hvmv_substations)
@@ -152,6 +156,8 @@ def create_hv_topology(grid_data):
         hv_buses.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'node_3_{x}', hv_buses.index)))
         hv_buses.insert(0, 'dave_name', name)
+        # set crs
+        hv_buses.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
         # --- create hv lines
@@ -217,6 +223,8 @@ def create_hv_topology(grid_data):
         hv_lines.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'line_3_{x}', hv_lines.index)))
         hv_lines.insert(0, 'dave_name', name)
+        # set crs
+        hv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hv lines to grid data
         grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)
         # update progress

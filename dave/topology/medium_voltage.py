@@ -53,6 +53,8 @@ def create_mv_topology(grid_data):
             hvmv_substations.reset_index(drop=True, inplace=True)
             hvmv_substations.insert(0, 'dave_name', pd.Series(
                 list(map(lambda x: f'substation_4_{x}', hvmv_substations.index))))
+            # set crs
+            hvmv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.hv_mv = \
                 grid_data.components_power.substations.hv_mv.append(hvmv_substations)
@@ -154,6 +156,8 @@ def create_mv_topology(grid_data):
         mv_buses.reset_index(drop=True, inplace=True)
         mv_buses.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'node_5_{x}',
                                                            mv_buses.index))))
+        # set crs
+        mv_buses.set_crs(dave_settings()['crs_main'], inplace=True)
         # add mv nodes to grid data
         grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         # --- create mv lines
@@ -280,6 +284,8 @@ def create_mv_topology(grid_data):
             mv_lines.at[line.name, 'source'] = 'dave internal'
             # update progress
             pbar.update(20/len(mv_lines))
+        # set crs
+        mv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         # add mv lines to grid data
         grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)
     else:

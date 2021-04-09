@@ -46,6 +46,8 @@ def create_ehv_topology(grid_data):
         ehv_substations.reset_index(drop=True, inplace=True)
         ehv_substations.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'substation_2_{x}',
                                                                   ehv_substations.index))))
+        # set crs
+        ehv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
         # add ehv substations to grid data
         grid_data.components_power.substations.ehv_hv = \
             grid_data.components_power.substations.ehv_hv.append(ehv_substations)
@@ -139,6 +141,8 @@ def create_ehv_topology(grid_data):
         ehv_buses.reset_index(drop=True, inplace=True)
         ehv_buses.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'node_1_{x}',
                                                             ehv_buses.index))))
+        # set crs
+        ehv_buses.set_crs(dave_settings()['crs_main'], inplace=True)
         # add ehv nodes to grid data
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(ehv_buses)
         # --- create ehv lines
@@ -239,6 +243,8 @@ def create_ehv_topology(grid_data):
         ehv_lines.reset_index(drop=True, inplace=True)
         ehv_lines.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'line_1_{x}',
                                                             ehv_lines.index))))
+        # set crs
+        ehv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         # add ehv lines to grid data
         grid_data.ehv_data.ehv_lines = grid_data.ehv_data.ehv_lines.append(ehv_lines)
         # update progress

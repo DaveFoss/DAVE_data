@@ -46,6 +46,8 @@ def create_hp_topology(grid_data):
         hp_junctions.reset_index(drop=True, inplace=True)
         hp_junctions.insert(0, 'dave_name',
                             pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index))))
+        # set crs
+        hp_junctions.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
         # update progress
@@ -73,6 +75,8 @@ def create_hp_topology(grid_data):
         hp_pipes.reset_index(drop=True, inplace=True)
         hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
                                                            hp_pipes.index))))
+        # set crs
+        hp_pipes.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hp lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
         # update progress
