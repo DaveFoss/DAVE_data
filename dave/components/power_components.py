@@ -305,7 +305,7 @@ def power_plant_lines(grid_data):
                         grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(
                             auxillary_line).reset_index(drop=True)
             # update progress
-            pbar.update(90/len(plants_rel_3035))
+            pbar.update(89.98/len(plants_rel_3035))
     else:
         # update progress
         pbar.update(90)
