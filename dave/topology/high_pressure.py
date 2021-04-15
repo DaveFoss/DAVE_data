@@ -166,7 +166,7 @@ def create_lkd_eu(grid_data):
         # change pipeline junction names from id to dave name
         from_junction_new = []
         to_junction_new = []
-        for i, pipe in hp_pipes.iterrows():
+        for _, pipe in hp_pipes.iterrows():
             from_junction_dave = hp_junctions[
                 hp_junctions.original_id == pipe.from_junction].iloc[0].dave_name
             to_junction_dave = hp_junctions[

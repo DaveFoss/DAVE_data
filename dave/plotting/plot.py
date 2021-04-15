@@ -4,8 +4,6 @@ import geopandas as gpd
 import pandas as pd
 import contextily as ctx
 
-from dave import dave_output_dir
-
 
 def plot_land(area, only_area=False):
     """

@@ -1491,7 +1491,7 @@ def transformers(grid_data):
                 # find closest mv node to the substation
                 multipoints_mv = MultiPoint(mv_buses.geometry.tolist())
                 nearest_point = nearest_points(sub.geometry, multipoints_mv)[1]
-                for j, node in mv_buses.iterrows():
+                for _, node in mv_buses.iterrows():
                     if nearest_point == node.geometry:
                         bus_hv = node.dave_name
                         break
@@ -1503,7 +1503,7 @@ def transformers(grid_data):
                 # find closest lv node to the substation
                 multipoints_lv = MultiPoint(lv_buses.geometry.tolist())
                 nearest_point = nearest_points(sub.geometry, multipoints_lv)[1]
-                for j, node in lv_buses.iterrows():
+                for _, node in lv_buses.iterrows():
                     if nearest_point == node.geometry:
                         bus_lv = node.dave_name
                         break
