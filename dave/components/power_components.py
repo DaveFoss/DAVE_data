@@ -1,7 +1,7 @@
+import warnings
 import math
 import geopandas as gpd
 import pandas as pd
-import warnings
 from tqdm import tqdm
 from geopy.geocoders import ArcGIS
 from shapely import wkb
@@ -131,7 +131,7 @@ def power_plant_lines(grid_data):
         # considered voltage level
         considered_levels = list(map(lambda x: {'EHV': 1, 'HV': 3, 'MV': 5, 'LV': 7}[x],
                                      grid_data.target_input.power_levels[0]))
-        for i, plant in plants_rel_3035.iterrows():
+        for _, plant in plants_rel_3035.iterrows():
             plant_bus = all_nodes_3035[all_nodes_3035.dave_name == plant.bus].iloc[0]
             distance = plant.geometry.distance(plant_bus.geometry)  # in meter
             if (distance > 50) and (plant_bus.voltage_level in considered_levels):
@@ -1362,7 +1362,7 @@ def transformers(grid_data):
                 # find closest hv node to the substation
                 multipoints_hv = MultiPoint(hv_nodes.geometry.tolist())
                 nearest_point = nearest_points(sub.geometry.centroid, multipoints_hv)[1]
-                for j, node in hv_nodes.iterrows():
+                for _, node in hv_nodes.iterrows():
                     if nearest_point == node.geometry:
                         bus_hv = node.dave_name
                         break
@@ -1376,7 +1376,7 @@ def transformers(grid_data):
                 # find closest mv node to the substation
                 multipoints_hv = MultiPoint(mv_nodes.geometry.tolist())
                 nearest_point = nearest_points(sub.geometry.centroid, multipoints_hv)[1]
-                for j, node in hv_nodes.iterrows():
+                for _, node in hv_nodes.iterrows():
                     if nearest_point == node.geometry:
                         bus_lv = node.dave_name
                         break
