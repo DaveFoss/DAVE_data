@@ -1,4 +1,3 @@
-import copy
 import warnings
 import geopandas as gpd
 import pandas as pd
@@ -181,21 +180,16 @@ def create_mv_topology(grid_data):
         # connect line segments with each other
         while True:
             # search for related lines and merge them
-            mv_lines_rel = copy.deepcopy(mv_lines)
-            for i, bus in mv_buses.iterrows():
+            mv_lines_rel = mv_lines.copy()
+            for _, bus in mv_buses.iterrows():
                 # check if bus is conected to more than one line
                 lines_intersect = mv_lines_rel[mv_lines_rel.intersects(bus.geometry)]
                 if len(lines_intersect) > 1:
                     # get list with line objects
                     lines_list = lines_intersect.tolist()
                     # search for multilines and split them
-                    new_line = []
-                    for line in lines_list:
-                        if isinstance(line, MultiLineString):
-                            for segment in line:
-                                new_line.append(segment)
-                        else:
-                            new_line.append(line)
+                    new_line = [([segment for segment in line] if isinstance(line, MultiLineString)
+                                 else [line]) for line in lines_list]
                     # merge found lines and add new line to line quantity
                     mv_lines_rel[len(mv_lines)] = linemerge(new_line)
                     # delete found lines from line quantity
