@@ -94,10 +94,9 @@ def line_connections(grid_data):
     line_connect = gpd.GeoSeries(line_connect, crs=dave_settings()['crs_main'])
     # calculate line length
     line_connections_3035 = line_connect.to_crs(dave_settings()['crs_meter'])
-    line_length = line_connections_3035.length
     lines_gdf = gpd.GeoDataFrame({'geometry': line_connect,
                                   'line_type': 'line_connections',
-                                  'length_km': line_length/1000,
+                                  'length_km': line_connections_3035.length/1000,
                                   'voltage_kv': 0.4,
                                   'voltage_level': 7,
                                   'source': 'dave internal'},

@@ -471,9 +471,8 @@ def renewable_powerplants(grid_data):
                 intersection.rename(columns={'dave_name': 'trafo_name'}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.mv_lv
-                for i, plant in intersection.iterrows():
-                    intersection.at[plant.name, 'bus'] = trafos[
-                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
+                intersection['bus'] = intersection.trafo_name.apply(
+                    lambda x: trafos[trafos.dave_name == x].iloc[0].bus_lv)
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
@@ -564,9 +563,8 @@ def renewable_powerplants(grid_data):
                 intersection.rename(columns={'dave_name': 'trafo_name'}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.hv_mv
-                for i, plant in intersection.iterrows():
-                    intersection.at[plant.name, 'bus'] = trafos[
-                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
+                intersection['bus'] = intersection.trafo_name.apply(
+                    lambda x: trafos[trafos.dave_name == x].iloc[0].bus_lv)
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
@@ -643,9 +641,8 @@ def renewable_powerplants(grid_data):
                 intersection.rename(columns={'dave_name': 'trafo_name'}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.ehv_hv
-                for i, plant in intersection.iterrows():
-                    intersection.at[plant.name, 'bus'] = trafos[
-                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
+                intersection['bus'] = intersection.trafo_name.apply(
+                    lambda x: trafos[trafos.dave_name == x].iloc[0].bus_lv)
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.renewable_powerplants = \
                     grid_data.components_power.renewable_powerplants.append(intersection)
@@ -846,9 +843,8 @@ def conventional_powerplants(grid_data):
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.mv_lv
-                for i, plant in intersection.iterrows():
-                    intersection.at[plant.name, 'bus'] = trafos[
-                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
+                intersection['bus'] = intersection.trafo_name.apply(
+                    lambda x: trafos[trafos.dave_name == x].iloc[0].bus_lv)
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
                     grid_data.components_power.conventional_powerplants.append(intersection)
@@ -939,9 +935,8 @@ def conventional_powerplants(grid_data):
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.hv_mv
-                for i, plant in intersection.iterrows():
-                    intersection.at[plant.name, 'bus'] = trafos[
-                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
+                intersection['bus'] = intersection.trafo_name.apply(
+                    lambda x: trafos[trafos.dave_name == x].iloc[0].bus_lv)
                 #intersection = intersection.drop(columns=['index_right', 'centroid', 'trafo_name'])
                 intersection.drop(columns=['trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
@@ -1018,9 +1013,8 @@ def conventional_powerplants(grid_data):
                                              'capacity_mw': 'electrical_capacity_mw'}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.ehv_hv
-                for i, plant in intersection.iterrows():
-                    intersection.at[plant.name, 'bus'] = trafos[
-                        trafos.dave_name == plant.trafo_name].iloc[0].bus_lv
+                intersection['bus'] = intersection.trafo_name.apply(
+                    lambda x: trafos[trafos.dave_name == x].iloc[0].bus_lv)
                 intersection.drop(columns=['index_right', 'centroid', 'trafo_name'], inplace=True)
                 grid_data.components_power.conventional_powerplants = \
                     grid_data.components_power.conventional_powerplants.append(intersection)
@@ -1143,13 +1137,11 @@ def transformers(grid_data):
                             hv_bus0['voltage_level'] = 3
                             hv_bus0['source'] = 'OEP'
                             grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
-                        else:
-                            if grid_data.hv_data.hv_nodes[
-                                    grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0].empty:
-                                hv_bus0['voltage_level'] = 3
-                                hv_bus0['source'] = 'OEP'
-                                grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(
-                                    hv_bus0)
+                        elif grid_data.hv_data.hv_nodes[
+                                grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0].empty:
+                            hv_bus0['voltage_level'] = 3
+                            hv_bus0['source'] = 'OEP'
+                            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_bus0)
             if 'HV' in power_levels:
                 hv_bus0 = grid_data.hv_data.hv_nodes[
                     grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0]
@@ -1168,13 +1160,12 @@ def transformers(grid_data):
                             ehv_bus1['source'] = 'OEP'
                             grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
                                 ehv_bus1)
-                        else:
-                            if grid_data.ehv_data.ehv_nodes[
+                        elif grid_data.ehv_data.ehv_nodes[
                                     grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus1].empty:
-                                ehv_bus1['voltage_level'] = 1
-                                ehv_bus1['source'] = 'OEP'
-                                grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
-                                    ehv_bus1)
+                            ehv_bus1['voltage_level'] = 1
+                            ehv_bus1['source'] = 'OEP'
+                            grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
+                                ehv_bus1)
             # update progress
             pbar.update(10/len(hv_trafos))
         # add dave name for nodes which are created for the transformers
