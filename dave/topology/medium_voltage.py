@@ -188,8 +188,9 @@ def create_mv_topology(grid_data):
                     # get list with line objects
                     lines_list = lines_intersect.tolist()
                     # search for multilines and split them
-                    new_line = [([segment for segment in line] if isinstance(line, MultiLineString)
-                                 else [line]) for line in lines_list]
+                    new_line = list(map(lambda x: list(map(lambda y: y, x))
+                                        if isinstance(x, MultiLineString) else [x], lines_list))
+                    new_line = [line for sublist in new_line for line in sublist]
                     # merge found lines and add new line to line quantity
                     mv_lines_rel[len(mv_lines)] = linemerge(new_line)
                     # delete found lines from line quantity
@@ -206,10 +207,8 @@ def create_mv_topology(grid_data):
                 nearest_line_idx = distance[distance == distance.min()].index[0]
                 # get line coordinates
                 if isinstance(line, MultiLineString):
-                    line_points = []
-                    for segment in line:
-                        line_points += [Point(coords) for coords in segment.coords[:]]
-                    line_points = gpd.GeoSeries(line_points)
+                    line_points = gpd.GeoSeries([Point(coords) for segment in line for coords in
+                                                 segment.coords[:]])
                 else:
                     line_points = gpd.GeoSeries([Point(coords) for coords in line.coords[:]])
                 # set crs
@@ -217,10 +216,8 @@ def create_mv_topology(grid_data):
                 # get nearest line coordinates
                 nearest_line = mv_lines_rel.loc[nearest_line_idx]
                 if isinstance(nearest_line, MultiLineString):
-                    nearest_line_points = []
-                    for segment in nearest_line:
-                        nearest_line_points += [Point(coords) for coords in segment.coords[:]]
-                    nearest_line_points = gpd.GeoSeries(nearest_line_points)
+                    nearest_line_points = gpd.GeoSeries([Point(coords) for segment in nearest_line
+                                                         for coords in segment.coords[:]])
                 else:
                     nearest_line_points = gpd.GeoSeries([Point(mv_lines_rel.loc[
                         nearest_line_idx].coords[:][j])
