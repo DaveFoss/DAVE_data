@@ -85,7 +85,7 @@ def voronoi(points):
         for _, point in points.iterrows():
             if polygon.geometry.contains(point.geometry):
                 voronoi_polygons.at[polygon.name, 'centroid'] = point.geometry
-                if not points.dave_name.empty:
+                if not point.dave_name is None:
                     voronoi_polygons.at[polygon.name, 'dave_name'] = point.dave_name
                 break
     return voronoi_polygons
