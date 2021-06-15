@@ -462,6 +462,9 @@ class target_area():
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
+            # check crs and project to the right one if needed
+            if (self.target.crs) and (not self.target.crs == 'EPSG:4326'):
+                self.target = self.target.to_crs(dave_settings()['crs_main'])
             if 'id' in self.target.keys():
                 self.target = self.target.drop(columns=['id'])
             target_area._own_area_postal(self)
