@@ -1,6 +1,6 @@
+import warnings
 import geopandas as gpd
 import pandas as pd
-import warnings
 from shapely.geometry import Point, LineString, MultiPoint
 from shapely.ops import nearest_points, unary_union
 from tqdm import tqdm
@@ -25,11 +25,8 @@ def nearest_road(building_centroids, roads):
     # create multistring of relevant roads and intersect radial lines with it
     multiline_roads = unary_union(roads.geometry)
     # finding nearest connection between the building centroids and the roads
-    near_points = gpd.GeoSeries([])
-    for centroid in building_centroids:
-        # finding nearest point
-        building_index = building_centroids[building_centroids == centroid].index[0]
-        near_points[building_index] = nearest_points(centroid, multiline_roads)[1]
+    near_points = gpd.GeoSeries(list(map(lambda x: nearest_points(x, multiline_roads)[1],
+                                         building_centroids)), crs='EPSG:4326')
     building_connections = pd.concat([building_centroids, near_points], axis=1)
     building_connections.columns = ['building_centroid', 'nearest_point']
     return building_connections
@@ -47,7 +44,7 @@ def line_connections(grid_data):
                            grid_data.roads.road_junctions]).drop_duplicates()
     # search line connections
     line_connect = []
-    for i, road in grid_data.roads.roads.iterrows():
+    for _, road in grid_data.roads.roads.iterrows():
         road_course = road.geometry.coords[:]
         # change road direction to become a uniformly road style
         if road_course[0] > road_course[len(road_course)-1]:
@@ -89,21 +86,21 @@ def line_connections(grid_data):
                     end_index -= 1
                 # add points
                 line_points.append(grid_nodes_sort[j])  # start point
-                for p in range(start_index, end_index+1):  # points to follow the road course
-                    line_points.append(road_course[p])
+                for k in range(start_index, end_index+1):  # points to follow the road course
+                    line_points.append(road_course[k])
                 line_points.append(grid_nodes_sort[j+1])  # end point
                 # create a lineString and add them to the line connection list
                 line_connect.append(LineString(line_points))
     line_connect = gpd.GeoSeries(line_connect, crs=dave_settings()['crs_main'])
     # calculate line length
     line_connections_3035 = line_connect.to_crs(dave_settings()['crs_meter'])
-    line_length = line_connections_3035.length
     lines_gdf = gpd.GeoDataFrame({'geometry': line_connect,
                                   'line_type': 'line_connections',
-                                  'length_km': line_length/1000,
+                                  'length_km': line_connections_3035.length/1000,
                                   'voltage_kv': 0.4,
                                   'voltage_level': 7,
-                                  'source': 'dave internal'})
+                                  'source': 'dave internal'},
+                                 crs=dave_settings()['crs_main'])
     grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(lines_gdf)
 
 
@@ -177,8 +174,8 @@ def create_lv_topology(grid_data):
                                                                    'voltage_kv': 0.4,
                                                                    'source': 'dave internal'}))
     # search for the substations where the lv nodes are within
-    for i, bus in building_nodes_df.iterrows():
-        for j, sub in mvlv_substations.iterrows():
+    for _, bus in building_nodes_df.iterrows():
+        for _, sub in mvlv_substations.iterrows():
             if ((bus.geometry.within(sub.geometry)) or
                (bus.geometry.distance(sub.geometry) < 1E-05)):
                 building_nodes_df.at[bus.name, 'ego_subst_id'] = sub.ego_subst_id
@@ -200,7 +197,7 @@ def create_lv_topology(grid_data):
     line_buildings = gpd.GeoSeries(list(map(lambda x, y: LineString([x, y]),
                                             building_connections['building_centroid'],
                                             building_connections['nearest_point'])),
-                                   crs='EPSG:4326')
+                                   crs=dave_settings()['crs_main'])
     # calculate line length
     line_buildings = line_buildings.set_crs(dave_settings()['crs_main'])
     line_buildings_3035 = line_buildings.to_crs(dave_settings()['crs_meter'])
@@ -227,7 +224,7 @@ def create_lv_topology(grid_data):
     lv_nodes = grid_data.lv_data.lv_nodes
     # get road junctions
     road_junctions_origin = grid_data.roads.road_junctions
-    for i, line in grid_data.lv_data.lv_lines.iterrows():
+    for _, line in grid_data.lv_data.lv_lines.iterrows():
         road_junctions_grid = grid_data.lv_data.lv_nodes[
             grid_data.lv_data.lv_nodes.node_type == 'road_junction']
         line_coords_from = line.geometry.coords[:][0]
@@ -312,6 +309,8 @@ def create_lv_topology(grid_data):
                         junction_point_gdf)
             grid_data.lv_data.lv_lines.at[line.name, 'to_bus'] = dave_name
         grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
+        # set crs
+        grid_data.lv_data.lv_nodes.set_crs(dave_settings()['crs_main'], inplace=True)
         # update progress
         pbar.update(80/len(grid_data.lv_data.lv_lines))
     # close progress bar

@@ -4,8 +4,6 @@ import geopandas as gpd
 import pandas as pd
 import contextily as ctx
 
-from dave import dave_output_dir
-
 
 def plot_land(area, only_area=False):
     """
@@ -182,13 +180,11 @@ def plot_grid_data(grid_data, output_folder=None):
             mv_nodes.plot(ax=ax, color='m', markersize=6, label='MV Nodes')
         if not mv_lines.empty:
             mv_lines.plot(ax=ax, color='m', label='MV Lines')
-        """
         # plot electrical components
         if not renewable_plants.empty:
             renewable_plants.plot(ax=ax, color='g',label='renewable power plants')
         if not conventional_plants.empty:
             conventional_plants.plot(ax=ax, color='m',label='conventional power plants')
-        """
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')

@@ -38,7 +38,7 @@ def create_hv_topology(grid_data):
                                           'voltage': 'voltage_kv'}, inplace=True)
         # filter ehv/hv substations
         ehvhv_substations = ehvhv_substations[pd.Series(
-            list(map(lambda x: True if '110000' in x else False, ehvhv_substations.voltage_kv)))]
+            list(map(lambda x: bool('110000' in x), ehvhv_substations.voltage_kv)))]
         ehvhv_substations = gpd.overlay(ehvhv_substations, grid_data.area, how='intersection')
         if not ehvhv_substations.empty:
             remove_columns = grid_data.area.keys().tolist()
@@ -49,6 +49,8 @@ def create_hv_topology(grid_data):
             ehvhv_substations.reset_index(drop=True, inplace=True)
             ehvhv_substations.insert(0, 'dave_name', pd.Series(
                 list(map(lambda x: f'substation_2_{x}', ehvhv_substations.index))))
+            # set crs
+            ehvhv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.ehv_hv = \
                 grid_data.components_power.substations.ehv_hv.append(ehvhv_substations)
@@ -82,6 +84,8 @@ def create_hv_topology(grid_data):
             hvmv_substations.reset_index(drop=True, inplace=True)
             hvmv_substations.insert(0, 'dave_name', pd.Series(
                 list(map(lambda x: f'substation_4_{x}', hvmv_substations.index))))
+            # set crs
+            hvmv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.hv_mv = \
                 grid_data.components_power.substations.hv_mv.append(hvmv_substations)
@@ -120,18 +124,18 @@ def create_hv_topology(grid_data):
         hv_buses.insert(0, 'ego_subst_id', None)
         hv_buses.insert(1, 'subst_dave_name', None)
         hv_buses.insert(2, 'subst_name', None)
-        for i, bus in hv_buses.iterrows():
+        for _, bus in hv_buses.iterrows():
             ego_subst_id = []
             subst_dave_name = []
             subst_name = []
-            for j, sub in ehvhv_substations.iterrows():
+            for _, sub in ehvhv_substations.iterrows():
                 if ((bus.geometry.within(sub.geometry)) or
                    (bus.geometry.distance(sub.geometry) < 1E-05)):
                     ego_subst_id.append(sub.ego_subst_id)
                     subst_dave_name.append(sub.dave_name)
                     subst_name.append(sub.subst_name)
                     break
-            for k, sub in hvmv_substations.iterrows():
+            for _, sub in hvmv_substations.iterrows():
                 if ((bus.geometry.within(sub.geometry)) or
                    (bus.geometry.distance(sub.geometry) < 1E-05)):
                     ego_subst_id.append(sub.ego_subst_id)
@@ -152,6 +156,8 @@ def create_hv_topology(grid_data):
         hv_buses.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'node_3_{x}', hv_buses.index)))
         hv_buses.insert(0, 'dave_name', name)
+        # set crs
+        hv_buses.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
         # --- create hv lines
@@ -188,7 +194,7 @@ def create_hv_topology(grid_data):
         hv_lines['voltage_kv'] = 110
         bus0_new = []
         bus1_new = []
-        for i, line in hv_lines.iterrows():
+        for _, line in hv_lines.iterrows():
             # calculate and add r,x,c per km
             hv_lines.at[line.name, 'r_ohm_per_km'] = float(line.r_ohm)/line.length_km
             hv_lines.at[line.name, 'x_ohm_per_km'] = float(line.x_ohm)/line.length_km
@@ -217,6 +223,8 @@ def create_hv_topology(grid_data):
         hv_lines.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f'line_3_{x}', hv_lines.index)))
         hv_lines.insert(0, 'dave_name', name)
+        # set crs
+        hv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hv lines to grid data
         grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)
         # update progress

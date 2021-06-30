@@ -1,4 +1,3 @@
-import copy
 import warnings
 import geopandas as gpd
 import pandas as pd
@@ -53,6 +52,8 @@ def create_mv_topology(grid_data):
             hvmv_substations.reset_index(drop=True, inplace=True)
             hvmv_substations.insert(0, 'dave_name', pd.Series(
                 list(map(lambda x: f'substation_4_{x}', hvmv_substations.index))))
+            # set crs
+            hvmv_substations.set_crs(dave_settings()['crs_main'], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.hv_mv = \
                 grid_data.components_power.substations.hv_mv.append(hvmv_substations)
@@ -154,6 +155,8 @@ def create_mv_topology(grid_data):
         mv_buses.reset_index(drop=True, inplace=True)
         mv_buses.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'node_5_{x}',
                                                            mv_buses.index))))
+        # set crs
+        mv_buses.set_crs(dave_settings()['crs_main'], inplace=True)
         # add mv nodes to grid data
         grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
         # --- create mv lines
@@ -177,21 +180,17 @@ def create_mv_topology(grid_data):
         # connect line segments with each other
         while True:
             # search for related lines and merge them
-            mv_lines_rel = copy.deepcopy(mv_lines)
-            for i, bus in mv_buses.iterrows():
+            mv_lines_rel = mv_lines.copy()
+            for _, bus in mv_buses.iterrows():
                 # check if bus is conected to more than one line
                 lines_intersect = mv_lines_rel[mv_lines_rel.intersects(bus.geometry)]
                 if len(lines_intersect) > 1:
                     # get list with line objects
                     lines_list = lines_intersect.tolist()
                     # search for multilines and split them
-                    new_line = []
-                    for line in lines_list:
-                        if isinstance(line, MultiLineString):
-                            for segment in line:
-                                new_line.append(segment)
-                        else:
-                            new_line.append(line)
+                    new_line = list(map(lambda x: list(map(lambda y: y, x))
+                                        if isinstance(x, MultiLineString) else [x], lines_list))
+                    new_line = [line for sublist in new_line for line in sublist]
                     # merge found lines and add new line to line quantity
                     mv_lines_rel[len(mv_lines)] = linemerge(new_line)
                     # delete found lines from line quantity
@@ -208,10 +207,8 @@ def create_mv_topology(grid_data):
                 nearest_line_idx = distance[distance == distance.min()].index[0]
                 # get line coordinates
                 if isinstance(line, MultiLineString):
-                    line_points = []
-                    for segment in line:
-                        line_points += [Point(coords) for coords in segment.coords[:]]
-                    line_points = gpd.GeoSeries(line_points)
+                    line_points = gpd.GeoSeries([Point(coords) for segment in line for coords in
+                                                 segment.coords[:]])
                 else:
                     line_points = gpd.GeoSeries([Point(coords) for coords in line.coords[:]])
                 # set crs
@@ -219,10 +216,8 @@ def create_mv_topology(grid_data):
                 # get nearest line coordinates
                 nearest_line = mv_lines_rel.loc[nearest_line_idx]
                 if isinstance(nearest_line, MultiLineString):
-                    nearest_line_points = []
-                    for segment in nearest_line:
-                        nearest_line_points += [Point(coords) for coords in segment.coords[:]]
-                    nearest_line_points = gpd.GeoSeries(nearest_line_points)
+                    nearest_line_points = gpd.GeoSeries([Point(coords) for segment in nearest_line
+                                                         for coords in segment.coords[:]])
                 else:
                     nearest_line_points = gpd.GeoSeries([Point(mv_lines_rel.loc[
                         nearest_line_idx].coords[:][j])
@@ -280,6 +275,8 @@ def create_mv_topology(grid_data):
             mv_lines.at[line.name, 'source'] = 'dave internal'
             # update progress
             pbar.update(20/len(mv_lines))
+        # set crs
+        mv_lines.set_crs(dave_settings()['crs_main'], inplace=True)
         # add mv lines to grid data
         grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)
     else:
