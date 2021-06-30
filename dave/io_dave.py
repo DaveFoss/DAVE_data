@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from pandapower import to_json, from_json
 from shapely.wkb import loads, dumps
-from shapely.geometry import Point
+from shapely.geometry import Point, LineString, MultiLineString
 
 import dave.create
 from dave.settings import dave_settings
@@ -89,10 +89,6 @@ def read_dataset(dataset_path):
         if not ehv_nodes.empty:
             grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
                 gpd.GeoDataFrame(ehv_nodes, crs=crs))
-        ehv_substations = _convert_data_from(file, '/ehv_data/ehv_substations')
-        if not ehv_substations.empty:
-            grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
-                gpd.GeoDataFrame(ehv_substations, crs=crs))
         # hv data
         hv_nodes = _convert_data_from(file, '/hv_data/hv_nodes')
         if not hv_nodes.empty:
@@ -156,6 +152,21 @@ def read_dataset(dataset_path):
             grid_data.components_power.transformers.mv_lv = \
                 grid_data.components_power.transformers.mv_lv.append(gpd.GeoDataFrame(mv_lv,
                                                                                       crs=crs))
+        ehv_hv = _convert_data_from(file, '/components_power/substations/ehv_hv')
+        if not ehv_hv.empty:
+            grid_data.components_power.substations.ehv_hv = \
+                grid_data.components_power.substations.ehv_hv.append(gpd.GeoDataFrame(ehv_hv,
+                                                                                      crs=crs))
+        hv_mv = _convert_data_from(file, '/components_power/substations/hv_mv')
+        if not hv_mv.empty:
+            grid_data.components_power.substations.hv_mv = \
+                grid_data.components_power.substations.hv_mv.append(gpd.GeoDataFrame(hv_mv,
+                                                                                     crs=crs))
+        mv_lv = _convert_data_from(file, '/components_power/substations/mv_lv')
+        if not mv_lv.empty:
+            grid_data.components_power.substations.mv_lv = \
+                grid_data.components_power.substations.mv_lv.append(gpd.GeoDataFrame(mv_lv,
+                                                                                     crs=crs))
         # hp data
         hp_junctions = _convert_data_from(file, '/hp_data/hp_junctions')
         if not hp_junctions.empty:
@@ -236,8 +247,6 @@ def write_dataset(grid_data, dataset_path):
     # ehv data
     archiv_file.put('/ehv_data/ehv_lines', _convert_data_to(grid_data.ehv_data.ehv_lines))
     archiv_file.put('/ehv_data/ehv_nodes', _convert_data_to(grid_data.ehv_data.ehv_nodes))
-    archiv_file.put('/ehv_data/ehv_substations',
-                    _convert_data_to(grid_data.ehv_data.ehv_substations))
     # hv data
     archiv_file.put('/hv_data/hv_nodes', _convert_data_to(grid_data.hv_data.hv_nodes))
     archiv_file.put('/hv_data/hv_lines', _convert_data_to(grid_data.hv_data.hv_lines))
@@ -261,6 +270,12 @@ def write_dataset(grid_data, dataset_path):
                     _convert_data_to(grid_data.components_power.transformers.hv_mv))
     archiv_file.put('/components_power/transformers/mv_lv',
                     _convert_data_to(grid_data.components_power.transformers.mv_lv))
+    archiv_file.put('/components_power/substations/ehv_hv',
+                    _convert_data_to(grid_data.components_power.substations.ehv_hv))
+    archiv_file.put('/components_power/substations/hv_mv',
+                    _convert_data_to(grid_data.components_power.substations.hv_mv))
+    archiv_file.put('/components_power/substations/mv_lv',
+                    _convert_data_to(grid_data.components_power.substations.mv_lv))
     # hp data
     archiv_file.put('/hp_data/hp_junctions', _convert_data_to(grid_data.hp_data.hp_junctions))
     archiv_file.put('/hp_data/hp_pipes', _convert_data_to(grid_data.hp_data.hp_pipes))
@@ -288,6 +303,11 @@ def pp_to_json(net, file_path):
     This functions converts a pandapower model into a json file
     """
     # convert geometry
+    if not net.bus.empty and all(list(map(lambda x: isinstance(x, Point), net.bus.geometry))):
+        net.bus['geometry'] = net.bus.geometry.apply(lambda x: dumps(x, hex=True))
+    if not net.line.empty and all(list(map(lambda x: isinstance(x, LineString) or
+                                           isinstance(x, MultiLineString), net.line.geometry))):
+        net.line['geometry'] = net.line.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.trafo.empty and all(list(map(lambda x: isinstance(x, Point), net.trafo.geometry))):
         net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.gen.empty and all(list(map(lambda x: isinstance(x, Point), net.gen.geometry))):
@@ -302,6 +322,10 @@ def json_to_pp(file_path):
     # read json file and convert to pp model
     net = from_json(file_path)
     # convert geometry
+    if not net.bus.empty and all(list(map(lambda x: isinstance(x, str), net.bus.geometry))):
+        net.bus['geometry'] = net.bus.geometry.apply(lambda x: loads(x, hex=True))
+    if not net.line.empty and all(list(map(lambda x: isinstance(x, str), net.line.geometry))):
+        net.line['geometry'] = net.line.geometry.apply(lambda x: loads(x, hex=True))
     if not net.trafo.empty and all(list(map(lambda x: isinstance(x, str), net.trafo.geometry))):
         net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: loads(x, hex=True))
     if not net.gen.empty and all(list(map(lambda x: isinstance(x, str), net.gen.geometry))):

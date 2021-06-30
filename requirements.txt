@@ -11,6 +11,7 @@ descartes
 pandapower
 rasterio
 contextily
+tqdm
 # via pip
 #pandapipes
 #tables

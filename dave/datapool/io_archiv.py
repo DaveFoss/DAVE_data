@@ -139,8 +139,6 @@ def to_archiv(grid_data):
                         _convert_to_archiv_data(grid_data.ehv_data.ehv_lines))
         archiv_file.put('/ehv_data/ehv_nodes',
                         _convert_to_archiv_data(grid_data.ehv_data.ehv_nodes))
-        archiv_file.put('/ehv_data/ehv_substations',
-                        _convert_to_archiv_data(grid_data.ehv_data.ehv_substations))
         # hv data
         archiv_file.put('/hv_data/hv_nodes', _convert_to_archiv_data(grid_data.hv_data.hv_nodes))
         archiv_file.put('/hv_data/hv_lines', _convert_to_archiv_data(grid_data.hv_data.hv_lines))
@@ -166,6 +164,12 @@ def to_archiv(grid_data):
                         _convert_to_archiv_data(grid_data.components_power.transformers.hv_mv))
         archiv_file.put('/components_power/transformers/mv_lv',
                         _convert_to_archiv_data(grid_data.components_power.transformers.mv_lv))
+        archiv_file.put('/components_power/substations/ehv_hv',
+                        _convert_to_archiv_data(grid_data.components_power.substations.ehv_hv))
+        archiv_file.put('/components_power/substations/hv_mv',
+                        _convert_to_archiv_data(grid_data.components_power.substations.hv_mv))
+        archiv_file.put('/components_power/substations/mv_lv',
+                        _convert_to_archiv_data(grid_data.components_power.substations.mv_lv))
         # hp data
         archiv_file.put('/hp_data/hp_junctions',
                         _convert_to_archiv_data(grid_data.hp_data.hp_junctions))
@@ -243,9 +247,6 @@ def from_archiv(dataset_name):
         grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
             gpd.GeoDataFrame(_convert_from_archiv_data(archiv_file, '/ehv_data/ehv_nodes'),
                              crs=crs))
-        grid_data.ehv_data.ehv_substations = grid_data.ehv_data.ehv_substations.append(
-            gpd.GeoDataFrame(_convert_from_archiv_data(archiv_file, '/ehv_data/ehv_substations'),
-                             crs=crs))
         # hv data
         grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(
             gpd.GeoDataFrame(_convert_from_archiv_data(archiv_file, '/hv_data/hv_nodes'), crs=crs))
@@ -288,6 +289,18 @@ def from_archiv(dataset_name):
         grid_data.components_power.transformers.mv_lv = \
             grid_data.components_power.transformers.mv_lv.append(gpd.GeoDataFrame(
                 _convert_from_archiv_data(archiv_file, '/components_power/transformers/mv_lv'),
+                crs=crs))
+        grid_data.components_power.substations.ehv_hv = \
+            grid_data.components_power.substations.ehv_hv.append(gpd.GeoDataFrame(
+                _convert_from_archiv_data(archiv_file, '/components_power/substations/ehv_hv'),
+                crs=crs))
+        grid_data.components_power.substations.hv_mv = \
+            grid_data.components_power.substations.hv_mv.append(gpd.GeoDataFrame(
+                _convert_from_archiv_data(archiv_file, '/components_power/substations/hv_mv'),
+                crs=crs))
+        grid_data.components_power.substations.mv_lv = \
+            grid_data.components_power.substations.mv_lv.append(gpd.GeoDataFrame(
+                _convert_from_archiv_data(archiv_file, '/components_power/substations/mv_lv'),
                 crs=crs))
         # hp data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(gpd.GeoDataFrame(

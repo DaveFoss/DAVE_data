@@ -46,6 +46,8 @@ def create_hp_topology(grid_data):
         hp_junctions.reset_index(drop=True, inplace=True)
         hp_junctions.insert(0, 'dave_name',
                             pd.Series(list(map(lambda x: f'junction_1_{x}', hp_junctions.index))))
+        # set crs
+        hp_junctions.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
         # update progress
@@ -71,8 +73,10 @@ def create_hp_topology(grid_data):
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name)
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
-        hp_pipes.insert(0, 'dave_name', name)
+        hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
+                                                           hp_pipes.index))))
+        # set crs
+        hp_pipes.set_crs(dave_settings()['crs_main'], inplace=True)
         # add hp lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
         # update progress
@@ -162,7 +166,7 @@ def create_lkd_eu(grid_data):
         # change pipeline junction names from id to dave name
         from_junction_new = []
         to_junction_new = []
-        for i, pipe in hp_pipes.iterrows():
+        for _, pipe in hp_pipes.iterrows():
             from_junction_dave = hp_junctions[
                 hp_junctions.original_id == pipe.from_junction].iloc[0].dave_name
             to_junction_dave = hp_junctions[
@@ -173,7 +177,7 @@ def create_lkd_eu(grid_data):
         hp_pipes['to_junction'] = to_junction_new
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f'pipe_1_{x}', hp_pipes.index)))
-        hp_pipes.insert(0, 'dave_name', name)
+        hp_pipes.insert(0, 'dave_name', pd.Series(list(map(lambda x: f'pipe_1_{x}',
+                                                           hp_pipes.index))))
         # add hd lines to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)

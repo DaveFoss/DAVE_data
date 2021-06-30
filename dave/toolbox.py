@@ -1,3 +1,4 @@
+import warnings
 import geopandas as gpd
 import numpy as np
 from scipy.spatial import Voronoi
@@ -24,7 +25,10 @@ def create_interim_area(areas):
         for i, area in areas.iterrows():
             # check if the considered area adjoining an other one
             areas_other = areas.drop([i])
-            distance = areas_other.geometry.distance(area.geometry)
+            with warnings.catch_warnings():
+                # filter crs warning because it is not relevant
+                warnings.filterwarnings('ignore', category=UserWarning)
+                distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
                 areas_iso.append((i, distance[distance == distance.min()].index[0]))
         # if their are isolated areas, check for a connection on the highest grid level
@@ -77,11 +81,11 @@ def voronoi(points):
     # search voronoi centroids and dave name
     voronoi_polygons['centroid'] = None
     voronoi_polygons['dave_name'] = None
-    for i, polygon in voronoi_polygons.iterrows():
-        for j, point in points.iterrows():
+    for _, polygon in voronoi_polygons.iterrows():
+        for _, point in points.iterrows():
             if polygon.geometry.contains(point.geometry):
                 voronoi_polygons.at[polygon.name, 'centroid'] = point.geometry
-                if not points.dave_name.empty:
+                if not point.dave_name is None:
                     voronoi_polygons.at[polygon.name, 'dave_name'] = point.dave_name
                 break
     return voronoi_polygons

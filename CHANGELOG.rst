@@ -1,5 +1,28 @@
 Change Log
 =============
+
+[1.0.6] - 2021--
+----------------------
+- [ADDED] option for output folder path
+- [FIXED] wrong/missing types at pandapower converter
+- [FIXED] missing crs definitions
+
+[1.0.5] - 2021-03-21
+----------------------
+- [ADDED] substations for other voltage levels
+- [CHANGED] move ehv substations to components power
+- [FIXED] missing line and trafo data within pandapower converting
+
+[1.0.4] - 2021-03-18
+----------------------
+- [CHANGED] pandapower converter function restructured
+- [CHANGED] condition deleted that more than one bus must exist for transformers
+
+[1.0.3] - 2021-03-04
+----------------------
+- [ADDED] description in install tutorial for using DaVe in PyCharm  
+- [ADDED] runtime count
+
 [1.0.2] - 2021-02-10
 ----------------------
 - [ADDED] progress bars

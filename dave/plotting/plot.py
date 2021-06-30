@@ -4,8 +4,6 @@ import geopandas as gpd
 import pandas as pd
 import contextily as ctx
 
-from dave import dave_output_dir
-
 
 def plot_land(area, only_area=False):
     """
@@ -31,12 +29,15 @@ def plot_land(area, only_area=False):
         return ax
 
 
-def plot_target_area(grid_data):
+def plot_target_area(grid_data, output_folder=None):
     """
     This function plots the geographical informations in the target area
 
     INPUT:
         **grid_data** (attrdict) - all Informations about the target area
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **target area plot** (svg file) - plot as vektor graphic
@@ -90,18 +91,22 @@ def plot_target_area(grid_data):
         ax.legend()
         # titel
         plt.title('Target Area')
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\target_area.svg'
-        plt.savefig(file_path, dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\target_area.svg'
+            plt.savefig(file_path, dpi=300)
 
 
-def plot_grid_data(grid_data):
+def plot_grid_data(grid_data, output_folder=None):
     """
     This function plots primary the grid data and auxillary greyed out the
     geographical informations in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **grid data plot** (svg file) - plot as vektor graphic
@@ -114,7 +119,6 @@ def plot_grid_data(grid_data):
     mv_lines = grid_data.mv_data.mv_lines
     mv_nodes = grid_data.mv_data.mv_nodes
     ehv_nodes = grid_data.ehv_data.ehv_nodes
-    ehv_substations = grid_data.ehv_data.ehv_substations
     ehv_lines = grid_data.ehv_data.ehv_lines
     hv_nodes = grid_data.hv_data.hv_nodes
     hv_lines = grid_data.hv_data.hv_lines
@@ -125,6 +129,8 @@ def plot_grid_data(grid_data):
     buildings_for_living = grid_data.buildings.for_living
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
+    substations = pd.concat([grid_data.components_power.substations.ehv_hv,
+                             grid_data.components_power.substations.hv_mv])
     # check if there is any data in target area otherwise plot only the area
     data = [roads_plot,
             roads,
@@ -132,6 +138,7 @@ def plot_grid_data(grid_data):
             buildings_for_living,
             buildings_commercial,
             buildings_other,
+            substations,
             lv_nodes,
             lv_lines,
             mv_lines,
@@ -139,7 +146,6 @@ def plot_grid_data(grid_data):
             renewable_plants,
             conventional_plants,
             ehv_nodes,
-            ehv_substations,
             ehv_lines,
             hv_nodes,
             hv_lines,
@@ -171,21 +177,17 @@ def plot_grid_data(grid_data):
             lv_lines.plot(ax=ax, color='b', label='LV Lines')
         # plot mv topology
         if not mv_nodes.empty:
-            mv_nodes.plot(ax=ax, color='b', markersize=6, label='MV Nodes')
+            mv_nodes.plot(ax=ax, color='m', markersize=6, label='MV Nodes')
         if not mv_lines.empty:
-            mv_lines.plot(ax=ax, color='b', label='MV Lines')
-        """
+            mv_lines.plot(ax=ax, color='m', label='MV Lines')
         # plot electrical components
         if not renewable_plants.empty:
             renewable_plants.plot(ax=ax, color='g',label='renewable power plants')
         if not conventional_plants.empty:
             conventional_plants.plot(ax=ax, color='m',label='conventional power plants')
-        """
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')
-        if not ehv_substations.empty:
-            ehv_substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
         if not ehv_lines.empty:
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
@@ -203,23 +205,30 @@ def plot_grid_data(grid_data):
             hp_junctions.plot(ax=ax, color='k', markersize=6, label='HP Junctions')
         if not hp_pipes.empty:
             hp_pipes.plot(ax=ax, color='k', zorder=1, label='HP Pipes')
+        # plot substations
+        if not substations.empty:
+            substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
         # legende
         ax.legend()
         # titel
         plt.title('Grid Data')
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\grid_data.svg'
-        plt.savefig(file_path, dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\grid_data.svg'
+            plt.savefig(file_path, dpi=300)
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die
     # verschiedenen Spannungs und Druck ebenen.
 
 
-def plot_grid_data_osm(grid_data):
+def plot_grid_data_osm(grid_data, output_folder):
     """
     This function plots primary the grid data with a osm map in the background
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **grid data osm plot** (svg file) - plot as vektor graphic
@@ -294,17 +303,21 @@ def plot_grid_data_osm(grid_data):
         # plot background osm
         ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
         # ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)  # stamen design
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\grid_data.svg'
-        plt.savefig(file_path, format='svg', dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\grid_data.svg'
+            plt.savefig(file_path, format='svg', dpi=300)
 
 
-def plot_landuse(grid_data):
+def plot_landuse(grid_data, output_folder):
     """
     This function plots the landuses in the target area
 
     INPUT:
         **grid_data** (dict) - all Informations about the target area and the grid
+
+    OPTIONAL:
+        **output_folder*** (string) - absolute path to the folder where the plot should be saved
 
     OUTPUT:
         **landuse plot** (svg file) - plot as vektor graphic
@@ -334,9 +347,10 @@ def plot_landuse(grid_data):
         plt.legend(handles=plot_patch)
         # titel
         plt.title('Landuse')
-        # save plot in the dave output folder
-        file_path = dave_output_dir + '\\landuse.svg'
-        plt.savefig(file_path, dpi=300)
+        if output_folder:
+            # save plot in the dave output folder
+            file_path = output_folder + '\\landuse.svg'
+            plt.savefig(file_path, dpi=300)
 
 
 def plot_generator():

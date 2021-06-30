@@ -279,6 +279,7 @@ class target_area():
             # write road junctions into grid_data
             road_junctions.set_crs(dave_settings()['crs_main'], inplace=True)
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
+            
 
     def _target_by_postalcode(self):
         """
@@ -394,14 +395,14 @@ class target_area():
         # change crs
         nuts_3.set_crs(dave_settings()['crs_meter'], inplace=True, allow_override=True)
         nuts_3.to_crs(dave_settings()['crs_main'], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0].capitalize() == 'ALL':
+        if len(self.nuts_region) == 1 and self.nuts_region[0].upper() == 'ALL':
             # in this case all federal states will be choosen
             target = nuts_3
         else:
             for i, region in enumerate(self.nuts_region):
                 # bring name in right format
                 area = list(region)
-                area = [letter.capitalize() for letter in area if letter.isalpha()]
+                area = [letter.upper() for letter in area if letter.isalpha()]
                 self.nuts_region[i] = ''.join(area)
                 # get area for nuts region
                 target = nuts_3[nuts_3['nuts_code'].str.contains(region)] if i == 0 \
@@ -461,6 +462,9 @@ class target_area():
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
+            # check crs and project to the right one if needed
+            if (self.target.crs) and (not self.target.crs == 'EPSG:4326'):
+                self.target = self.target.to_crs(dave_settings()['crs_main'])
             if 'id' in self.target.keys():
                 self.target = self.target.drop(columns=['id'])
             target_area._own_area_postal(self)
@@ -473,7 +477,7 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        self.grid_data.area = self.grid_data.area.set_crs(dave_settings()['crs_main'])
+        self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
@@ -508,7 +512,6 @@ class target_area():
             self.grid_data.landuse.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.for_living.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.commercial.reset_index(drop=True, inplace=True)
-            self.grid_data.buildings.other.reset_index(drop=True, inplace=True)
             # find road junctions
             target_area.road_junctions(self)
             # close progress bar

@@ -26,10 +26,9 @@ def oep_request(schema, table, where=None, geometry=None):
     """
     oep_url = 'http://oep.iks.cs.ovgu.de/'
     if where:
-        request = requests.get(
-            oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/?where='+where,)
+        request = requests.get(''.join([oep_url,'/api/v0/schema/',schema,'/tables/',table,'/rows/?where=',where]))
     else:
-        request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/rows/',)
+        request = requests.get(''.join([oep_url,'/api/v0/schema/',schema,'/tables/',table,'/rows/']))
     # convert data to dataframe
     if request.status_code == 200:  # 200 is the code of a successful request
         # if request is empty their will be an JSONDecodeError
@@ -50,7 +49,7 @@ def oep_request(schema, table, where=None, geometry=None):
                                         geometry=request_data.geometry)
 
     # --- request meta informations for a dataset
-    request = requests.get(oep_url+'/api/v0/schema/'+schema+'/tables/'+table+'/meta/',)
+    request = requests.get(''.join([oep_url,'/api/v0/schema/',schema,'/tables/',table,'/meta/']))
     # convert data to meta dict
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
