@@ -5,6 +5,7 @@ Change Log
 ----------------------
 - [ADDED] option for output folder path
 - [FIXED] wrong/missing types at pandapower converter
+- [FIXED] missing crs definitions
 
 [1.0.5] - 2021-03-21
 ----------------------

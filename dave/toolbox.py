@@ -1,6 +1,6 @@
+import warnings
 import geopandas as gpd
 import numpy as np
-import warnings
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint
 from shapely.ops import polygonize, cascaded_union
@@ -81,11 +81,11 @@ def voronoi(points):
     # search voronoi centroids and dave name
     voronoi_polygons['centroid'] = None
     voronoi_polygons['dave_name'] = None
-    for i, polygon in voronoi_polygons.iterrows():
-        for j, point in points.iterrows():
+    for _, polygon in voronoi_polygons.iterrows():
+        for _, point in points.iterrows():
             if polygon.geometry.contains(point.geometry):
                 voronoi_polygons.at[polygon.name, 'centroid'] = point.geometry
-                if not points.dave_name.empty:
+                if not point.dave_name is None:
                     voronoi_polygons.at[polygon.name, 'dave_name'] = point.dave_name
                 break
     return voronoi_polygons

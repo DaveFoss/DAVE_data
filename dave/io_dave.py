@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from pandapower import to_json, from_json
 from shapely.wkb import loads, dumps
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point, LineString, MultiLineString
 
 import dave.create
 from dave.settings import dave_settings
@@ -305,7 +305,8 @@ def pp_to_json(net, file_path):
     # convert geometry
     if not net.bus.empty and all(list(map(lambda x: isinstance(x, Point), net.bus.geometry))):
         net.bus['geometry'] = net.bus.geometry.apply(lambda x: dumps(x, hex=True))
-    if not net.line.empty and all(list(map(lambda x: isinstance(x, LineString), net.line.geometry))):
+    if not net.line.empty and all(list(map(lambda x: isinstance(x, LineString) or
+                                           isinstance(x, MultiLineString), net.line.geometry))):
         net.line['geometry'] = net.line.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.trafo.empty and all(list(map(lambda x: isinstance(x, Point), net.trafo.geometry))):
         net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: dumps(x, hex=True))
