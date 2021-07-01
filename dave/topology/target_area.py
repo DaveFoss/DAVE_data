@@ -477,7 +477,10 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
+        if self.grid_data.area.crs != dave_settings()['crs_main']:
+            self.grid_data.area.to_crs(dave_settings()['crs_main'], inplace=True)
+        elif self.grid_data.area.crs is None:
+            self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
