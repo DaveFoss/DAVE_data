@@ -223,7 +223,7 @@ class target_area():
                 for_living = dave_settings()['buildings_for_living']
                 commercial = dave_settings()['buildings_commercial']
                 # improve building tag with landuse parameter
-                if not landuse.empty:
+                if self.landuse and not landuse.empty:
                     landuse_retail = unary_union(landuse[landuse.landuse == 'retail'].geometry)
                     landuse_industrial = unary_union(
                         landuse[landuse.landuse == 'industrial'].geometry)
