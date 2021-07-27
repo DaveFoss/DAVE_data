@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -6,21 +7,27 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # initialize voltage levels
-request = []
+request = [] # muss nach request nur wieder gelöscht werden
+# daraus noch ein dict machen
 
 
-# create request class
-class Parameters(BaseModel):
+# create request body
+class Input(BaseModel):
+    postalcode: Optional[list] = None
+    # town_name: list
+    # federal_state: list
+    # nuts_regions: list
     voltage_level: list
+    gas_level: list
 
 
 # set a get
-@app.get('/')
+@app.get('/api')
 def index():
-    return request
+    return request[0]
 
 # hand over parameters to DaVe
-@app.post('/')
-def create_parameters(parameters: Parameters):
+@app.post('/api')
+def create_parameters(parameters: Input):
     request.append(parameters)
     return request[-1]
