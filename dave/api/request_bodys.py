@@ -25,4 +25,4 @@ class Dataset_param(BaseModel):
     compressors: Optional[bool] = True
     sources: Optional[bool] = True
     storages_gas: Optional[bool] = True
-    outputfolder: Optional[str] = dave_output_dir
+    output_folder: Optional[str] = dave_output_dir
