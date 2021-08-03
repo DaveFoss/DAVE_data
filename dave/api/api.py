@@ -9,17 +9,10 @@ from dave.api import request_bodys
 # initialize app object
 app = FastAPI()
 
-# initialize voltage levels
-request = [] # muss nach request nur wieder gelöscht werden
-# daraus noch ein dict machen
-
-
 
 class dave_request:
-    # run DaVe main function
     def create_dataset(self, parameters):
-        #grid_data = {'test': parameters.postalcode}
-        #grid_data = create_empty_dataset()
+        # run DaVe main function to create a dataset
         grid_data = create_grid(postalcode=parameters.postalcode,
                                 town_name=parameters.town_name,
                                 federal_state=parameters.federal_state,
@@ -39,17 +32,18 @@ class dave_request:
                                 sources=parameters.sources,
                                 storages_gas=parameters.storages_gas,
                                 output_folder=parameters.output_folder)
-        grid_data = json.dumps(grid_data)
+        # hier muss noch eine umwandlung in ein json string durchgeführt werden
+        #grid_data = json.dumps(grid_data)
         return grid_data
 
 
-# set a get
+# get method for dave dataset request
 @app.get('/request_dataset')
 def index(parameters: request_bodys.Dataset_param, dave: dave_request = Depends(dave_request)):
     grid_data = dave.create_dataset(parameters)
     return grid_data
 
-
+"""
 # hand over parameters to DaVe
 @app.post('/request_dataset')
 def create_parameters(parameters: request_bodys.Dataset_param):
@@ -57,15 +51,8 @@ def create_parameters(parameters: request_bodys.Dataset_param):
     # return request[-1]
     # create_dataset(parameters)
     return parameters
-
-
 """
-# set a get
-@app.get('/api')
-def create(postalcode: list[], test: str):
-    plz={'test': test}
-    return plz
-"""
+
 
 
 """
