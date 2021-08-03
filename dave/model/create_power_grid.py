@@ -233,7 +233,7 @@ def create_power_grid(grid_data):
     # create conventional powerplants
     if not grid_data.components_power.conventional_powerplants.empty:
         conventionals = grid_data.components_power.conventional_powerplants.rename(
-            columns={'name': 'plant_name', 'dave_name': 'name', 'fuel': 'type',
+            columns={'name': 'plant_name', 'dave_name': 'name', 'type': 'type_2', 'fuel': 'type',
                      'electrical_capacity_mw': 'p_mw'})
         conventionals.reset_index(drop=True, inplace=True)
         net.gen = net.gen.append(conventionals)
