@@ -119,6 +119,7 @@ def create_ehv_topology(grid_data):
             pbar.update(10/len(ehv_data['ehv_nodes']))
         # add oep as source
         ehv_buses['source'] = 'OEP'
+        """ the license of the open tso data is not clarified
         # add missing tso ehv nodes which are not in the ego node data
         ehv_buses_tso_names = ehv_buses.tso_name.to_list()
         area = grid_data.area.drop(columns=['name']) if 'name' in grid_data.area.keys() \
@@ -133,6 +134,7 @@ def create_ehv_topology(grid_data):
                                                                'tso_name': tso_name,
                                                                'tso': tso_bus.tso,
                                                                'source': 'tso data'}))
+        """
         # update progress
         pbar.update(10)
         # add voltage level
@@ -202,6 +204,7 @@ def create_ehv_topology(grid_data):
         ehv_lines['bus1'] = bus1_new
         # add oep as source
         ehv_lines['source'] = 'OEP'
+        """ the license of the open tso data is not clarified
         # add missing tso ehv lines which are not in the ego line data
         ehv_buses_from_tso = ehv_buses[ehv_buses.source == 'tso data'].tso_name.tolist()
         for _, line in ehv_data['ehv_lines'].iterrows():
@@ -237,6 +240,7 @@ def create_ehv_topology(grid_data):
                          'max_i_ka': line.max_i_ka,
                          'source': 'tso data',
                          'parallel': 1}))
+        """
         # add voltage level
         ehv_lines['voltage_level'] = 1
         # add dave name
