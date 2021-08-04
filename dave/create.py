@@ -10,14 +10,13 @@ import geopandas as gpd
 from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
-from dave.io import to_hdf, pp_to_json
+from dave.io import to_hdf, pp_to_json, from_archiv, to_archiv
 from dave.topology import (target_area, create_ehv_topology, create_hv_topology, create_mv_topology,
                            create_lv_topology, create_hp_topology, create_mp_topology,
                            create_lp_topology)
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
 from dave.components import power_components, gas_components
 from dave.model import create_power_grid, power_processing, create_gas_grid, gas_processing
-from dave.datapool import from_archiv, to_archiv
 from dave.toolbox import create_interim_area
 
 

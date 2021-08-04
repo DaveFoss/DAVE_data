@@ -8,7 +8,8 @@ from shapely.geometry import Point, LineString, MultiLineString
 import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
-from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, archiv_inventory
+from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb
+from dave.io.io_utils import archiv_inventory
 
 
 def from_hdf(dataset_path):
