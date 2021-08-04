@@ -8,7 +8,6 @@ from shapely.geometry import Point, LineString, MultiLineString
 
 import dave.create
 from dave.settings import dave_settings
-from dave.io import dave_settings
 
 
 def wkb_to_wkt(file, key):
@@ -38,9 +37,9 @@ def wkt_to_wkb(data_key):
     return data
 
 
-def read_dataset(dataset_path):
+def from_hdf(dataset_path):
     """
-    This functions reads a dave dataset from a user given path
+    This functions reads a dave dataset in HDF5 format from a user given path
 
     Output  grid_data - dave dataset
 
@@ -225,9 +224,9 @@ def read_dataset(dataset_path):
         print('Their is no suitable file at the given path')
 
 
-def write_dataset(grid_data, dataset_path):
+def to_hdf(grid_data, dataset_path):
     """
-    This functions stores a dave dataset at a given path
+    This functions stores a dave dataset at a given path in the HDF5 format
     """
     # --- create file
     archiv_file = pd.HDFStore(dataset_path)

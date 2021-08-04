@@ -10,7 +10,7 @@ import geopandas as gpd
 from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
-from dave.io_dave import write_dataset, pp_to_json
+from dave.io_dave import to_hdf, pp_to_json
 from dave.topology import (target_area, create_ehv_topology, create_hv_topology, create_mv_topology,
                            create_lv_topology, create_hp_topology, create_mp_topology,
                            create_lp_topology)
@@ -281,7 +281,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
     with warnings.catch_warnings():
         # filter warnings because of the PerformanceWarning from pytables at the geometry type
         warnings.simplefilter('ignore')
-        write_dataset(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
+        to_hdf(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
 
     # plot informations
     if plot:
