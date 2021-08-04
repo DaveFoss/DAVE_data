@@ -191,8 +191,8 @@ class target_area():
                 landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])
                 landuse['area_km2'] = landuse_3035.area/1E06
                 # write landuse into grid_data
-                landuse.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+                self.grid_data.landuse.set_crs(dave_settings()['crs_main'], inplace=True)
             # add time delay
             time.sleep(time_delay)
             # update progress
@@ -477,10 +477,10 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        if self.grid_data.area.crs != dave_settings()['crs_main']:
-            self.grid_data.area.to_crs(dave_settings()['crs_main'], inplace=True)
-        elif self.grid_data.area.crs is None:
+        if self.grid_data.area.crs is None:
             self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
+        elif self.grid_data.area.crs != dave_settings()['crs_main']:
+            self.grid_data.area.to_crs(dave_settings()['crs_main'], inplace=True)
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
