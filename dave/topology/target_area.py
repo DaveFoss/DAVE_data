@@ -1,5 +1,4 @@
 import time
-import copy
 import pandas as pd
 import geopandas as gpd
 from tqdm import tqdm
@@ -254,7 +253,7 @@ class target_area():
         """
         This function searches junctions for the relevant roads in the target area
         """
-        roads = copy.deepcopy(self.grid_data.roads.roads)
+        roads = self.grid_data.roads.roads.copy(deep=True)
         if not roads.empty:
             junction_points = []
             while len(roads) > 1:
@@ -279,7 +278,6 @@ class target_area():
             # write road junctions into grid_data
             road_junctions.set_crs(dave_settings()['crs_main'], inplace=True)
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
-            
 
     def _target_by_postalcode(self):
         """
