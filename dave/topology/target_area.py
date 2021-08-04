@@ -6,7 +6,8 @@ from tqdm import tqdm
 from shapely.ops import unary_union
 from shapely.geometry import Polygon, LineString, Point
 
-from dave.datapool import query_osm, oep_request, read_postal, read_federal_states, archiv_inventory
+from dave.datapool import query_osm, oep_request, read_postal, read_federal_states
+from dave.io import archiv_inventory
 from dave.settings import dave_settings
 
 
