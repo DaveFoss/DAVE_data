@@ -10,7 +10,7 @@ import geopandas as gpd
 from dave.dave_structure import davestructure
 from dave import __version__
 from dave import dave_output_dir, dave_dir
-from dave.io_dave import to_hdf, pp_to_json
+from dave.io import to_hdf, pp_to_json
 from dave.topology import (target_area, create_ehv_topology, create_hv_topology, create_mv_topology,
                            create_lv_topology, create_hp_topology, create_mp_topology,
                            create_lp_topology)
