@@ -285,8 +285,8 @@ def pp_to_json(net, file_path):
     # convert geometry
     if not net.bus.empty and all(list(map(lambda x: isinstance(x, Point), net.bus.geometry))):
         net.bus['geometry'] = net.bus.geometry.apply(lambda x: dumps(x, hex=True))
-    if not net.line.empty and all(list(map(lambda x: isinstance(x, LineString) or
-                                           isinstance(x, MultiLineString), net.line.geometry))):
+    if not net.line.empty and all(list(map(lambda x: isinstance(x, (LineString, MultiLineString)),
+                                           net.line.geometry))):
         net.line['geometry'] = net.line.geometry.apply(lambda x: dumps(x, hex=True))
     if not net.trafo.empty and all(list(map(lambda x: isinstance(x, Point), net.trafo.geometry))):
         net.trafo['geometry'] = net.trafo.geometry.apply(lambda x: dumps(x, hex=True))
@@ -299,6 +299,9 @@ def pp_to_json(net, file_path):
 
 
 def json_to_pp(file_path):
+    """
+    This functions converts a json file into a pandapower model
+    """
     # read json file and convert to pp model
     net = from_json(file_path)
     # convert geometry
