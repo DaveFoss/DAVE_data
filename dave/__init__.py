@@ -7,5 +7,4 @@ dave_output_dir = os.path.expanduser(r'~\Desktop\DaVe_output')
 from dave.create import *
 from dave.dave_structure import *
 from dave.settings import *
-from dave.io_dave import *
 from dave.toolbox import *
