@@ -8,33 +8,7 @@ from shapely.geometry import Point, LineString, MultiLineString
 
 import dave.create
 from dave.settings import dave_settings
-
-
-def wkb_to_wkt(file, key):
-    """
-    This function converts geometry data from WKB (hexadecimal string) to WKT (geometric object)
-    format
-    """
-    data = file.get(key)
-    if (not data.empty) and ('geometry' in data.keys()):
-        data['geometry'] = data.geometry.apply(loads)
-    data = gpd.GeoDataFrame(data)
-    return data
-
-
-def wkt_to_wkb(data_key):
-    """
-    This function converts a geometry data from WKT (geometric object) to WKB (hexadecimal string)
-    format
-    """
-    data = copy.deepcopy(data_key)
-    if not data.empty:
-        data = pd.DataFrame(data)
-        if 'geometry' in data.keys():
-            data['geometry'] = data.geometry.apply(dumps)
-    else:
-        data = pd.DataFrame([])
-    return data
+from dave.io import wkb_to_wkt, wkt_to_wkb
 
 
 def from_hdf(dataset_path):
