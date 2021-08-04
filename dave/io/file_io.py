@@ -1,5 +1,4 @@
 import os
-import copy
 import geopandas as gpd
 import pandas as pd
 from pandapower import to_json, from_json
@@ -216,7 +215,7 @@ def to_hdf(grid_data, dataset_path):
     # roads
     archiv_file.put('/roads/roads', wkt_to_wkb(grid_data.roads.roads))
     archiv_file.put('/roads/roads_plot', wkt_to_wkb(grid_data.roads.roads_plot))
-    road_junctions = copy.deepcopy(grid_data.roads.road_junctions)
+    road_junctions = grid_data.roads.road_junctions.copy(deep=True)
     if not road_junctions.empty:
         road_junctions = pd.DataFrame({'geometry': road_junctions})
         road_junctions['geometry'] = road_junctions.geometry.apply(dumps)
