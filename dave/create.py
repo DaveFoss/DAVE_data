@@ -274,8 +274,11 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         archiv_dir = dave_dir + '\\datapool\\dave_archiv\\'
         if not os.path.exists(archiv_dir):
             os.makedirs(archiv_dir)
-        # save dataset to archiv
-        file_name = to_archiv(grid_data)
+        with warnings.catch_warnings():
+            # filter warnings because of the PerformanceWarning from pytables at the geometry type
+            warnings.simplefilter('ignore')
+            # save dataset to archiv
+            file_name = to_archiv(grid_data)
         """
     with warnings.catch_warnings():
         # filter warnings because of the PerformanceWarning from pytables at the geometry type

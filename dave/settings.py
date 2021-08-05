@@ -66,11 +66,12 @@ def dave_settings():
         # lines standard types
         'mv_line_std_type': 'NA2XS2Y 1x240 RM/25 12/20 kV',  # dummy value, must be changed
         'lv_line_std_type': 'NAYY 4x150 SE',  # dummy value, must be changed
-        # trafo parameters for ehv/ehv and  ehv/hv
-        'trafo_vkr_percent': 0,  # dummy value
-        'trafo_vk_percent': 10,  # dummy value
-        'trafo_pfe_kw':      0,  # dummy value accepted as ideal
-        'trafo_i0_percent':  0,  # dummy value accepted as ideal
+        # trafo parameters for ehv/ehv and  ehv/hv. The dummy values are based on the pandapower
+        # standarttype "160 MVA 380/110 kV" which is the biggest model
+        'trafo_vkr_percent': 0.25,  # dummy value
+        'trafo_vk_percent': 12.2,  # dummy value
+        'trafo_pfe_kw':      60,  # dummy value
+        'trafo_i0_percent':  0.06,  # dummy value
         # trafo standard types
         'hvmv_trafo_std_type': '63 MVA 110/20 kV',  # dummy value, must be changed
         'mvlv_trafo_std_type': '0.63 MVA 20/0.4 kV',  # dummy value, must be changed

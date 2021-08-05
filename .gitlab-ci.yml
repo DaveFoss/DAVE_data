@@ -1,9 +1,19 @@
+# define environment via docker container
+# image: add something 
+
 # define stages
 stages:
     - test
+	#- build
+	#- deploy
+	#-lint  # create stage to check codestyle with pylint?
     
+# define task which should execute before each jobs
+before_script:
+    # add something
+
 # define jobs
 test:
     stage: test
     script:
-    - echo "This job test something"
+    # - script / pytest

@@ -207,7 +207,7 @@ def plot_grid_data(grid_data, output_folder=None):
             hp_pipes.plot(ax=ax, color='k', zorder=1, label='HP Pipes')
         # plot substations
         if not substations.empty:
-            substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
+            substations.plot(ax=ax, color='k', alpha=0.2, label='Substations')
         # legende
         ax.legend()
         # titel
@@ -220,7 +220,7 @@ def plot_grid_data(grid_data, output_folder=None):
     # verschiedenen Spannungs und Druck ebenen.
 
 
-def plot_grid_data_osm(grid_data, output_folder):
+def plot_grid_data_osm(grid_data, output_folder=None):
     """
     This function plots primary the grid data with a osm map in the background
 
@@ -236,22 +236,23 @@ def plot_grid_data_osm(grid_data, output_folder):
     lv_nodes = grid_data.lv_data.lv_nodes
     lv_lines = grid_data.lv_data.lv_lines
     ehv_nodes = grid_data.ehv_data.ehv_nodes
-    ehv_substations = grid_data.ehv_data.ehv_substations
     ehv_lines = grid_data.ehv_data.ehv_lines
     hv_nodes = grid_data.hv_data.hv_nodes
     hv_lines = grid_data.hv_data.hv_lines
     renewable_plants = grid_data.components_power.renewable_powerplants
     conventional_plants = grid_data.components_power.conventional_powerplants
+    substations = pd.concat([grid_data.components_power.substations.ehv_hv,
+                             grid_data.components_power.substations.hv_mv])
     # check if there is any data in target area otherwise plot only the area
     data = [lv_nodes,
             lv_lines,
             renewable_plants,
             conventional_plants,
             ehv_nodes,
-            ehv_substations,
             ehv_lines,
             hv_nodes,
-            hv_lines]
+            hv_lines, 
+            substations]
     data_check = pd.concat(data)
     if data_check.empty:
         # plot target area
@@ -277,9 +278,6 @@ def plot_grid_data_osm(grid_data, output_folder):
         if not ehv_nodes.empty:
             ehv_nodes = ehv_nodes.to_crs(epsg=3857)
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')
-        if not ehv_substations.empty:
-            ehv_substations = ehv_substations.to_crs(epsg=3857)
-            ehv_substations.plot(ax=ax, color='k', alpha=0.2, label='EHV Substations')
         if not ehv_lines.empty:
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
@@ -296,6 +294,9 @@ def plot_grid_data_osm(grid_data, output_folder):
         if not hv_lines.empty:
             hv_lines = hv_lines.to_crs(epsg=3857)
             hv_lines.plot(ax=ax, color='green', zorder=1, label='110 kV lines')
+        # plot substations
+        if not substations.empty:
+            substations.plot(ax=ax, color='k', alpha=0.2, label='Substations')
         # legende
         ax.legend()
         # titel
