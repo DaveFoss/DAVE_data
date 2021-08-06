@@ -5,8 +5,8 @@
 stages:
     - test
     #- build
-	#- deploy
-	#-lint  # create stage to check codestyle with pylint?
+    #- deploy
+    #-lint  # create stage to check codestyle with pylint?
     
 # define task which should execute before each jobs
 before_script:
