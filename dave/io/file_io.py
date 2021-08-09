@@ -1,3 +1,4 @@
+import json
 import os
 import geopandas as gpd
 import pandas as pd
@@ -9,7 +10,34 @@ import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
 from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb
-from dave.io.io_utils import archiv_inventory
+from dave.io.io_utils import archiv_inventory, DaVeJSONEncoder, encrypt_string
+
+
+def to_json(grid_data, file_path=None, encryption_key=None):
+    """
+    This function converts the DaVe dataset into the JSON format. 
+    
+    Input:
+        grid data
+        file_path - absoulut path of the file. If None is given the function returns a JSON string
+    """
+    # convert DaVe dataset into a json string with custom encoder
+    json_string = json.dumps(grid_data, cls=DaVeJSONEncoder, indent=2)
+    
+    # encrypt json string
+    if encryption_key is not None:
+        json_string = encrypt_string(json_string, encryption_key)
+        
+    # only return json string
+    if file_path is None:
+        return json_string
+    
+    # save json string at given file path
+    if hasattr(file_path, 'write'):
+        file_path.write(json_string)
+    else:
+        with open(file_path, "w"):
+            file_path.write(json_string)
 
 
 def from_hdf(dataset_path):
