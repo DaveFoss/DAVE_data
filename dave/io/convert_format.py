@@ -1,21 +1,24 @@
-import copy
+from copy import deepcopy
 import pandas as pd
 import geopandas as gpd
 from shapely.wkb import loads, dumps
 
+
 from dave.dave_structure import davestructure
 
 
-def wkb_to_wkt(file, key):
+def wkb_to_wkt(data_df, crs):
     """
     This function converts geometry data from WKB (hexadecimal string) to WKT (geometric object)
-    format for a given dataframe stored in a hdf5 file
+    format for a given dataframe and convert it to a geodataframe
+	
+	Input pandas dataframe
+	Output geodataframe	
     """
-    data = file.get(key)
-    if (not data.empty) and ('geometry' in data.keys()):
-        data['geometry'] = data.geometry.apply(loads)
-    data = gpd.GeoDataFrame(data)
-    return data
+    if (not data_df.empty) and ('geometry' in data_df.keys()):
+        data_df['geometry'] = data_df.geometry.apply(loads)
+    data_df = gpd.GeoDataFrame(data_df, crs=crs)
+    return data_df
 
 
 def wkb_to_wkt_dataset(grid_data):
@@ -44,7 +47,7 @@ def wkt_to_wkb_dataset(grid_data):
     This function converts all geometry data from WKT (geometric object) to WKB (hexadecimal string)
     format for a given DaVe dataset
     """
-    dataset = copy.deepcopy(grid_data)
+    dataset = deepcopy(grid_data)
     for key in dataset.keys():
         if isinstance(dataset[key], davestructure):
             for key_sec in dataset[key].keys():
