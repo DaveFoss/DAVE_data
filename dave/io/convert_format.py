@@ -1,6 +1,6 @@
+import copy
 import pandas as pd
 import geopandas as gpd
-import copy
 from shapely.wkb import loads, dumps
 
 from dave.dave_structure import davestructure
@@ -16,6 +16,12 @@ def wkb_to_wkt(file, key):
         data['geometry'] = data.geometry.apply(loads)
     data = gpd.GeoDataFrame(data)
     return data
+
+
+def wkb_to_wkt_dataset(grid_data):
+    pass
+    # hier noch funktion schreiben welche die geometrien zurück in objekte konvertiert
+    # dazu auch die normale wkb_to_wkt function verallgemeinern und die from hdf function anpassen
 
 
 def wkt_to_wkb(data_df):
