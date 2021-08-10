@@ -11,6 +11,7 @@ from dave.settings import dave_settings
 from dave.datapool import get_data_path
 from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, wkt_to_wkb_dataset
 from dave.io.io_utils import archiv_inventory, DaVeJSONEncoder, encrypt_string
+from dave.dave_structure import davestructure
 
 
 def to_json(grid_data, file_path=None, encryption_key=None):
@@ -85,80 +86,34 @@ def to_hdf(grid_data, dataset_path):
     """
     This functions stores a dave dataset at a given path in the HDF5 format
     """
-    # --- create file
-    archiv_file = pd.HDFStore(dataset_path)
-    # area
-    area = wkt_to_wkb(grid_data.area)
-    archiv_file.put('/area', area)
-    # target input
-    archiv_file.put('/target_input', grid_data.target_input)
-    # buildings
-    archiv_file.put('/buildings/commercial', wkt_to_wkb(grid_data.buildings.commercial))
-    archiv_file.put('/buildings/for_living', wkt_to_wkb(grid_data.buildings.for_living))
-    archiv_file.put('/buildings/other', wkt_to_wkb(grid_data.buildings.other))
-    # roads
-    archiv_file.put('/roads/roads', wkt_to_wkb(grid_data.roads.roads))
-    archiv_file.put('/roads/roads_plot', wkt_to_wkb(grid_data.roads.roads_plot))
-    road_junctions = grid_data.roads.road_junctions.copy(deep=True)
-    if not road_junctions.empty:
-        road_junctions = pd.DataFrame({'geometry': road_junctions})
-        road_junctions['geometry'] = road_junctions.geometry.apply(dumps)
-    else:
-        road_junctions = pd.DataFrame([])
-    archiv_file.put('/roads/road_junctions', road_junctions)
-    # landuse
-    archiv_file.put('/landuse', wkt_to_wkb(grid_data.landuse))
-    # ehv data
-    archiv_file.put('/ehv_data/ehv_lines', wkt_to_wkb(grid_data.ehv_data.ehv_lines))
-    archiv_file.put('/ehv_data/ehv_nodes', wkt_to_wkb(grid_data.ehv_data.ehv_nodes))
-    # hv data
-    archiv_file.put('/hv_data/hv_nodes', wkt_to_wkb(grid_data.hv_data.hv_nodes))
-    archiv_file.put('/hv_data/hv_lines', wkt_to_wkb(grid_data.hv_data.hv_lines))
-    # mv data
-    archiv_file.put('/mv_data/mv_nodes', wkt_to_wkb(grid_data.mv_data.mv_nodes))
-    archiv_file.put('/mv_data/mv_lines', wkt_to_wkb(grid_data.mv_data.mv_lines))
-    # lv data
-    archiv_file.put('/lv_data/lv_nodes', wkt_to_wkb(grid_data.lv_data.lv_nodes))
-    archiv_file.put('/lv_data/lv_lines', wkt_to_wkb(grid_data.lv_data.lv_lines))
-    # components_power
-    archiv_file.put('/components_power/conventional_powerplants',
-                    wkt_to_wkb(grid_data.components_power.conventional_powerplants))
-    archiv_file.put('/components_power/renewable_powerplants',
-                    wkt_to_wkb(grid_data.components_power.renewable_powerplants))
-    archiv_file.put('/components_power/loads', wkt_to_wkb(grid_data.components_power.loads))
-    archiv_file.put('/components_power/transformers/ehv_ehv',
-                    wkt_to_wkb(grid_data.components_power.transformers.ehv_ehv))
-    archiv_file.put('/components_power/transformers/ehv_hv',
-                    wkt_to_wkb(grid_data.components_power.transformers.ehv_hv))
-    archiv_file.put('/components_power/transformers/hv_mv',
-                    wkt_to_wkb(grid_data.components_power.transformers.hv_mv))
-    archiv_file.put('/components_power/transformers/mv_lv',
-                    wkt_to_wkb(grid_data.components_power.transformers.mv_lv))
-    archiv_file.put('/components_power/substations/ehv_hv',
-                    wkt_to_wkb(grid_data.components_power.substations.ehv_hv))
-    archiv_file.put('/components_power/substations/hv_mv',
-                    wkt_to_wkb(grid_data.components_power.substations.hv_mv))
-    archiv_file.put('/components_power/substations/mv_lv',
-                    wkt_to_wkb(grid_data.components_power.substations.mv_lv))
-    # hp data
-    archiv_file.put('/hp_data/hp_junctions', wkt_to_wkb(grid_data.hp_data.hp_junctions))
-    archiv_file.put('/hp_data/hp_pipes', wkt_to_wkb(grid_data.hp_data.hp_pipes))
-    # mp data
-    archiv_file.put('/mp_data/mp_junctions', wkt_to_wkb(grid_data.mp_data.mp_junctions))
-    archiv_file.put('/mp_data/mp_pipes', wkt_to_wkb(grid_data.mp_data.mp_pipes))
-    # lp data
-    archiv_file.put('/lp_data/lp_junctions', wkt_to_wkb(grid_data.lp_data.lp_junctions))
-    archiv_file.put('/lp_data/lp_pipes', wkt_to_wkb(grid_data.lp_data.lp_pipes))
-    # components gas
-    archiv_file.put('/components_gas/compressors', wkt_to_wkb(grid_data.components_gas.compressors))
-    archiv_file.put('/components_gas/sources', wkt_to_wkb(grid_data.components_gas.sources))
-    archiv_file.put('/components_gas/storages_gas',
-                    wkt_to_wkb(grid_data.components_gas.storages_gas))
-    # dave version
-    archiv_file.put('/dave_version', pd.DataFrame({'dave_version': grid_data.dave_version},
-                                                  index=[0]))
+    # create hdf file
+    file = pd.HDFStore(dataset_path)
+    # go trough the dave dataset keys and save each data in the hdf5 file
+    for key in grid_data.keys():
+        if isinstance(grid_data[key], davestructure):
+            for key_sec in grid_data[key].keys():
+                if isinstance(grid_data[key][key_sec], davestructure):
+                    for key_trd in grid_data[key][key_sec].keys():
+                        if isinstance(grid_data[key][key_sec][key_trd], gpd.GeoDataFrame):
+                            file.put(f'/{key}/{key_sec}/{key_trd}',
+                                     wkt_to_wkb(grid_data[key][key_sec][key_trd]))
+                elif isinstance(grid_data[key][key_sec], gpd.GeoDataFrame):
+                    file.put(f'/{key}/{key_sec}', wkt_to_wkb(grid_data[key][key_sec]))
+                elif isinstance(grid_data[key][key_sec], gpd.GeoSeries):
+                    if not grid_data[key][key_sec].empty:
+                        data = pd.DataFrame({'geometry': grid_data[key][key_sec]})
+                        data['geometry'] = data.geometry.apply(dumps)
+                        file.put(f'/{key}/{key_sec}', data)
+                elif isinstance(grid_data[key][key_sec], pd.DataFrame):
+                    file.put(f'/{key}/{key_sec}', grid_data[key][key_sec])
+        elif isinstance(grid_data[key], gpd.GeoDataFrame):
+            file.put(f'/{key}', wkt_to_wkb(grid_data[key]))
+        elif isinstance(grid_data[key], pd.DataFrame):
+            file.put(f'/{key}', grid_data[key])
+        elif isinstance(grid_data[key], str):
+            file.put(f'/{key}', pd.DataFrame({key: grid_data[key]}, index=[0]))
     # close file
-    archiv_file.close()
+    file.close()
 
 
 def from_archiv(dataset_name):
