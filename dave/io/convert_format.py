@@ -63,9 +63,10 @@ def wkt_to_wkb_dataset(grid_data):
     return dataset
 
 
-def remove_empty_gdf(grid_data):
+def change_empty_gpd(grid_data):
     """
-    This function replaces all empty geodataframes with empty dataframes
+    This function replaces all empty geodataframes with empty dataframes and all empty geoseries
+    with empty series
     """
     dataset = deepcopy(grid_data)
     for key in dataset.keys():
@@ -76,10 +77,19 @@ def remove_empty_gdf(grid_data):
                         if isinstance(dataset[key][key_sec][key_trd], gpd.GeoDataFrame):
                             if dataset[key][key_sec][key_trd].empty:
                                 dataset[key][key_sec][key_trd] = pd.DataFrame([])
+                        elif isinstance(dataset[key][key_sec][key_trd], gpd.GeoSeries):
+                            if dataset[key][key_sec][key_trd].empty:
+                                dataset[key][key_sec][key_trd] = pd.Series([], dtype='object')
                 elif isinstance(dataset[key][key_sec], gpd.GeoDataFrame):
                     if dataset[key][key_sec].empty:
                         dataset[key][key_sec] = pd.DataFrame([])
+                elif isinstance(dataset[key][key_sec], gpd.GeoSeries):
+                    if dataset[key][key_sec].empty:
+                        dataset[key][key_sec] = pd.Series([], dtype='object')
         elif isinstance(dataset[key], gpd.GeoDataFrame):
             if dataset[key].empty:
                 dataset[key] = pd.DataFrame([])
+        elif isinstance(dataset[key], gpd.GeoSeries):
+            if dataset[key].empty:
+                dataset[key] = pd.Series([], dtype='object')
     return dataset
