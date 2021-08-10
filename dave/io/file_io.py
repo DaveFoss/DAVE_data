@@ -24,15 +24,12 @@ def to_json(grid_data, file_path=None, encryption_key=None):
     grid_data_geo = wkt_to_wkb_dataset(grid_data)
     # convert DaVe dataset into a json string with custom encoder
     json_string = json.dumps(grid_data_geo, cls=DaVeJSONEncoder, indent=2)
-    
     # encrypt json string
     if encryption_key is not None:
         json_string = encrypt_string(json_string, encryption_key)
-        
     # only return json string
     if file_path is None:
         return json_string
-    
     # save json string at given file path
     if hasattr(file_path, 'write'):
         file_path.write(json_string)
@@ -52,177 +49,33 @@ def from_hdf(dataset_path):
     crs = dave_settings()['crs_main']
     # check if path exist
     if os.path.exists(dataset_path):
-        # read data
-        file = pd.HDFStore(dataset_path)
         # create empty dave dataset
         grid_data = dave.create.create_empty_dataset()
+        # open hdf file
+        file = pd.HDFStore(dataset_path)
         # --- create dave dataset from archiv file
-        # area
-        area = wkb_to_wkt(file, '/area')
-        area = gpd.GeoDataFrame(area, crs=crs)
-        grid_data.area = grid_data.area.append(area)
-        # target input
-        grid_data.target_input = grid_data.target_input.append(file.get('/target_input'))
-        # buildings
-        commercial = wkb_to_wkt(file, '/buildings/commercial')
-        if not commercial.empty:
-            grid_data.buildings.commercial = grid_data.buildings.commercial.append(gpd.GeoDataFrame(
-                commercial, crs=crs))
-        for_living = wkb_to_wkt(file, '/buildings/for_living')
-        if not for_living.empty:
-            grid_data.buildings.for_living = grid_data.buildings.for_living.append(gpd.GeoDataFrame(
-                for_living, crs=crs))
-        other = wkb_to_wkt(file, '/buildings/other')
-        if not other.empty:
-            grid_data.buildings.other = grid_data.buildings.other.append(gpd.GeoDataFrame(other,
-                                                                                          crs=crs))
-        # roads
-        roads = wkb_to_wkt(file, '/roads/roads')
-        if not roads.empty:
-            grid_data.roads.roads = grid_data.roads.roads.append(gpd.GeoDataFrame(roads, crs=crs))
-        roads_plot = wkb_to_wkt(file, '/roads/roads_plot')
-        if not roads_plot.empty:
-            grid_data.roads.roads_plot = grid_data.roads.roads_plot.append(gpd.GeoDataFrame(
-                roads_plot, crs=crs))
-        road_junctions = wkb_to_wkt(file, '/roads/road_junctions')
-        if not road_junctions.empty:
-            road_junctions = gpd.GeoSeries(road_junctions['geometry'], crs=crs)
-            grid_data.roads.road_junctions = grid_data.roads.road_junctions.append(road_junctions)
-        # landuse
-        landuse = wkb_to_wkt(file, '/landuse')
-        if not landuse.empty:
-            grid_data.landuse = grid_data.landuse.append(gpd.GeoDataFrame(landuse, crs=crs))
-        # ehv data
-        ehv_lines = wkb_to_wkt(file, '/ehv_data/ehv_lines')
-        if not ehv_lines.empty:
-            grid_data.ehv_data.ehv_lines = grid_data.ehv_data.ehv_lines.append(
-                gpd.GeoDataFrame(ehv_lines, crs=crs))
-        ehv_nodes = wkb_to_wkt(file, '/ehv_data/ehv_nodes')
-        if not ehv_nodes.empty:
-            grid_data.ehv_data.ehv_nodes = grid_data.ehv_data.ehv_nodes.append(
-                gpd.GeoDataFrame(ehv_nodes, crs=crs))
-        # hv data
-        hv_nodes = wkb_to_wkt(file, '/hv_data/hv_nodes')
-        if not hv_nodes.empty:
-            grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(gpd.GeoDataFrame(
-                hv_nodes, crs=crs))
-        hv_lines = wkb_to_wkt(file, '/hv_data/hv_lines')
-        if not hv_lines.empty:
-            grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(gpd.GeoDataFrame(
-                hv_lines, crs=crs))
-        # mv data
-        mv_nodes = wkb_to_wkt(file, '/mv_data/mv_nodes')
-        if not mv_nodes.empty:
-            grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(gpd.GeoDataFrame(
-                mv_nodes, crs=crs))
-        mv_lines = wkb_to_wkt(file, '/mv_data/mv_lines')
-        if not mv_lines.empty:
-            grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(gpd.GeoDataFrame(
-                mv_lines, crs=crs))
-        # lv data
-        lv_nodes = wkb_to_wkt(file, '/lv_data/lv_nodes')
-        if not lv_nodes.empty:
-            grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(gpd.GeoDataFrame(
-                lv_nodes, crs=crs))
-        lv_lines = wkb_to_wkt(file, '/lv_data/lv_lines')
-        if not lv_lines.empty:
-            grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(gpd.GeoDataFrame(
-                lv_lines, crs=crs))
-        # components_power
-        conventional_powerplants = wkb_to_wkt(file, '/components_power/conventional_powerplants')
-        if not conventional_powerplants.empty:
-            grid_data.components_power.conventional_powerplants = \
-                grid_data.components_power.conventional_powerplants.append(gpd.GeoDataFrame(
-                    conventional_powerplants, crs=crs))
-        renewable_powerplants = wkb_to_wkt(file, '/components_power/renewable_powerplants')
-        if not renewable_powerplants.empty:
-            grid_data.components_power.renewable_powerplants = \
-                grid_data.components_power.renewable_powerplants.append(gpd.GeoDataFrame(
-                    renewable_powerplants, crs=crs))
-        load = wkb_to_wkt(file, '/components_power/loads')
-        if not load.empty:
-            grid_data.components_power.loads = grid_data.components_power.loads.append(
-                gpd.GeoDataFrame(load))
-        ehv_ehv = wkb_to_wkt(file, '/components_power/transformers/ehv_ehv')
-        if not ehv_ehv.empty:
-            grid_data.components_power.transformers.ehv_ehv = \
-                grid_data.components_power.transformers.ehv_ehv.append(gpd.GeoDataFrame(ehv_ehv,
-                                                                                        crs=crs))
-        ehv_hv = wkb_to_wkt(file, '/components_power/transformers/ehv_hv')
-        if not ehv_hv.empty:
-            grid_data.components_power.transformers.ehv_hv = \
-                grid_data.components_power.transformers.ehv_hv.append(gpd.GeoDataFrame(ehv_hv,
-                                                                                       crs=crs))
-        hv_mv = wkb_to_wkt(file, '/components_power/transformers/hv_mv')
-        if not hv_mv.empty:
-            grid_data.components_power.transformers.hv_mv = \
-                grid_data.components_power.transformers.hv_mv.append(gpd.GeoDataFrame(hv_mv,
-                                                                                      crs=crs))
-        mv_lv = wkb_to_wkt(file, '/components_power/transformers/mv_lv')
-        if not mv_lv.empty:
-            grid_data.components_power.transformers.mv_lv = \
-                grid_data.components_power.transformers.mv_lv.append(gpd.GeoDataFrame(mv_lv,
-                                                                                      crs=crs))
-        ehv_hv = wkb_to_wkt(file, '/components_power/substations/ehv_hv')
-        if not ehv_hv.empty:
-            grid_data.components_power.substations.ehv_hv = \
-                grid_data.components_power.substations.ehv_hv.append(gpd.GeoDataFrame(ehv_hv,
-                                                                                      crs=crs))
-        hv_mv = wkb_to_wkt(file, '/components_power/substations/hv_mv')
-        if not hv_mv.empty:
-            grid_data.components_power.substations.hv_mv = \
-                grid_data.components_power.substations.hv_mv.append(gpd.GeoDataFrame(hv_mv,
-                                                                                     crs=crs))
-        mv_lv = wkb_to_wkt(file, '/components_power/substations/mv_lv')
-        if not mv_lv.empty:
-            grid_data.components_power.substations.mv_lv = \
-                grid_data.components_power.substations.mv_lv.append(gpd.GeoDataFrame(mv_lv,
-                                                                                     crs=crs))
-        # hp data
-        hp_junctions = wkb_to_wkt(file, '/hp_data/hp_junctions')
-        if not hp_junctions.empty:
-            grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(
-                gpd.GeoDataFrame(hp_junctions, crs=crs))
-        hp_pipes = wkb_to_wkt(file, '/hp_data/hp_pipes')
-        if not hp_pipes.empty:
-            grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(gpd.GeoDataFrame(
-                hp_pipes, crs=crs))
-        # mp data
-        mp_junctions = wkb_to_wkt(file, '/mp_data/mp_junctions')
-        if not mp_junctions.empty:
-            grid_data.mp_data.mp_junctions = grid_data.mp_data.mp_junctions.append(
-                gpd.GeoDataFrame(mp_junctions, crs=crs))
-        mp_pipes = wkb_to_wkt(file, '/mp_data/mp_pipes')
-        if not mp_pipes.empty:
-            grid_data.mp_data.mp_pipes = grid_data.mp_data.mp_pipes.append(gpd.GeoDataFrame(
-                mp_pipes, crs=crs))
-        # lp data
-        lp_junctions = wkb_to_wkt(file, '/lp_data/lp_junctions')
-        if not lp_junctions.empty:
-            grid_data.lp_data.lp_junctions = grid_data.lp_data.lp_junctions.append(gpd.GeoDataFrame(
-                lp_junctions, crs=crs))
-        lp_pipes = wkb_to_wkt(file, '/lp_data/lp_pipes')
-        if not lp_pipes.empty:
-            grid_data.lp_data.lp_pipes = grid_data.lp_data.lp_pipes.append(gpd.GeoDataFrame(
-                lp_pipes, crs=crs))
-        # components gas
-        compressors = wkb_to_wkt(file, '/components_gas/compressors')
-        if not compressors.empty:
-            grid_data.components_gas.compressors = grid_data.components_gas.compressors.append(
-                gpd.GeoDataFrame(compressors, crs=crs))
-        sources = wkb_to_wkt(file, '/components_gas/sources')
-        if not sources.empty:
-            grid_data.components_gas.sources = grid_data.components_gas.sources.append(
-                gpd.GeoDataFrame(sources, crs=crs))
-        storages_gas = wkb_to_wkt(file, '/components_gas/storages_gas')
-        if not storages_gas.empty:
-            grid_data.components_gas.storages_gas = grid_data.components_gas.storages_gas.append(
-                gpd.GeoDataFrame(storages_gas, crs=crs))
-        # dave version
-        grid_data.dave_version = file.get('/dave_version')['dave_version'][0]
+        for key in file.keys():
+            # read data from file and convert geometry
+            data = file.get(key)
+            if 'geometry' in data.keys():
+                data = wkb_to_wkt(data, crs)
+            if not data.empty:
+                # seperate the keys
+                key_parts = key[1:].split('/')
+                # assign data to the dave dataset
+                if len(key_parts) == 1:
+                    if key_parts[0] == 'dave_version':
+                        grid_data.dave_version = data['dave_version'][0]
+                    else:
+                        grid_data[key_parts[0]] = grid_data[key_parts[0]].append(data)
+                elif len(key_parts) == 2:
+                    grid_data[key_parts[0]][key_parts[1]] = grid_data[
+                        key_parts[0]][key_parts[1]].append(data)
+                elif len(key_parts) == 3:
+                    grid_data[key_parts[0]][key_parts[1]][key_parts[2]] = grid_data[
+                        key_parts[0]][key_parts[1]][key_parts[2]].append(data)
         # close file
         file.close()
-
         return grid_data
     else:
         print('Their is no suitable file at the given path')
