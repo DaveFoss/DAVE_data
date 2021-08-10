@@ -2,7 +2,7 @@ import json
 import os
 import geopandas as gpd
 import pandas as pd
-from pandapower import to_json, from_json
+import pandapower as pp
 from shapely.wkb import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 
@@ -161,7 +161,7 @@ def pp_to_json(net, file_path):
     if not net.sgen.empty and all(list(map(lambda x: isinstance(x, Point), net.sgen.geometry))):
         net.sgen['geometry'] = net.sgen.geometry.apply(lambda x: dumps(x, hex=True))
     # convert pp model to json and save the file
-    to_json(net, filename=file_path)
+    pp.to_json(net, filename=file_path)
 
 
 def json_to_pp(file_path):
@@ -169,7 +169,7 @@ def json_to_pp(file_path):
     This functions converts a json file into a pandapower model
     """
     # read json file and convert to pp model
-    net = from_json(file_path)
+    net = pp.from_json(file_path)
     # convert geometry
     if not net.bus.empty and all(list(map(lambda x: isinstance(x, str), net.bus.geometry))):
         net.bus['geometry'] = net.bus.geometry.apply(lambda x: loads(x, hex=True))
