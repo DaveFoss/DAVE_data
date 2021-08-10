@@ -65,8 +65,7 @@ def wkt_to_wkb_dataset(grid_data):
 
 def change_empty_gpd(grid_data):
     """
-    This function replaces all empty geodataframes with empty dataframes and all empty geoseries
-    with empty series
+    This function replaces all empty geopandas objects with empty empty pandas objects
     """
     dataset = deepcopy(grid_data)
     for key in dataset.keys():
