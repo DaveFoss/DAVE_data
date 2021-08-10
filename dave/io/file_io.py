@@ -9,20 +9,21 @@ from shapely.geometry import Point, LineString, MultiLineString
 import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
-from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb
+from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, wkt_to_wkb_dataset
 from dave.io.io_utils import archiv_inventory, DaVeJSONEncoder, encrypt_string
 
 
 def to_json(grid_data, file_path=None, encryption_key=None):
     """
-    This function converts the DaVe dataset into the JSON format. 
-    
+    This function converts the DaVe dataset into the JSON format.
     Input:
         grid data
         file_path - absoulut path of the file. If None is given the function returns a JSON string
     """
+    # convert geometric data in dave dataset
+    grid_data_geo = wkt_to_wkb_dataset(grid_data)
     # convert DaVe dataset into a json string with custom encoder
-    json_string = json.dumps(grid_data, cls=DaVeJSONEncoder, indent=2)
+    json_string = json.dumps(grid_data_geo, cls=DaVeJSONEncoder, indent=2)
     
     # encrypt json string
     if encryption_key is not None:
