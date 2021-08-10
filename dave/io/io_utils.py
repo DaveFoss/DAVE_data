@@ -1,7 +1,10 @@
 import os
 import pandas as pd
+import geopandas as gpd
+from pandapower.io_utils import with_signature, to_serializable
 
 from dave.datapool import get_data_path
+from dave.dave_structure import davestructure
 
 
 def archiv_inventory(grid_data, read_only=False):
@@ -69,3 +72,12 @@ def archiv_inventory(grid_data, read_only=False):
                                            'dave_version': grid_data.dave_version})
             inventory_list.to_csv(inventory_path, index=False)
         return False, file_name
+
+
+@to_serializable.register(davestructure)
+def json_dave(obj):
+    net_dict = {k: item for k, item in obj.items() if not k.startswith("_")}
+    d = with_signature(obj, net_dict)
+    return d
+
+
