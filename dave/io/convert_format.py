@@ -61,3 +61,25 @@ def wkt_to_wkb_dataset(grid_data):
         elif isinstance(dataset[key], gpd.GeoDataFrame):
             dataset[key] = wkt_to_wkb(grid_data[key])
     return dataset
+
+
+def remove_empty_gdf(grid_data):
+    """
+    This function replaces all empty geodataframes with empty dataframes
+    """
+    dataset = deepcopy(grid_data)
+    for key in dataset.keys():
+        if isinstance(dataset[key], davestructure):
+            for key_sec in dataset[key].keys():
+                if isinstance(dataset[key][key_sec], davestructure):
+                    for key_trd in dataset[key][key_sec].keys():
+                        if isinstance(dataset[key][key_sec][key_trd], gpd.GeoDataFrame):
+                            if dataset[key][key_sec][key_trd].empty:
+                                dataset[key][key_sec][key_trd] = pd.DataFrame([])
+                elif isinstance(dataset[key][key_sec], gpd.GeoDataFrame):
+                    if dataset[key][key_sec].empty:
+                        dataset[key][key_sec] = pd.DataFrame([])
+        elif isinstance(dataset[key], gpd.GeoDataFrame):
+            if dataset[key].empty:
+                dataset[key] = pd.DataFrame([])
+    return dataset
