@@ -3,14 +3,15 @@ import os
 import geopandas as gpd
 import pandas as pd
 import pandapower as pp
+from pandapower.io_utils import PPJSONEncoder
 from shapely.wkb import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 
 import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
-from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, wkt_to_wkb_dataset
-from dave.io.io_utils import archiv_inventory, DaVeJSONEncoder, encrypt_string
+from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, wkt_to_wkb_dataset, change_empty_gpd
+from dave.io.io_utils import archiv_inventory
 from dave.dave_structure import davestructure
 
 
@@ -21,10 +22,15 @@ def to_json(grid_data, file_path=None, encryption_key=None):
         grid data
         file_path - absoulut path of the file. If None is given the function returns a JSON string
     """
+    
+    """ Brauch ich das oder geht geopandas register auch?
     # convert geometric data in dave dataset
     grid_data_geo = wkt_to_wkb_dataset(grid_data)
+    """
+    # convert all empty geopandas objects to empty pandas objects
+    grid_data = change_empty_gpd(grid_data)
     # convert DaVe dataset into a json string with custom encoder
-    json_string = json.dumps(grid_data_geo, cls=DaVeJSONEncoder, indent=2)
+    json_string = json.dumps(grid_data, cls=PPJSONEncoder, indent=2)
     # encrypt json string
     if encryption_key is not None:
         json_string = encrypt_string(json_string, encryption_key)
