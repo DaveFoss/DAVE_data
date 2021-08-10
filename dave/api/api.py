@@ -1,8 +1,8 @@
 import uvicorn
-import json
 from fastapi import FastAPI, Depends
 
-from dave.create import create_grid, create_empty_dataset
+from dave.create import create_grid
+from dave.io import to_json
 from dave.api import request_bodys
 
 
@@ -32,9 +32,9 @@ class dave_request:
                                 sources=parameters.sources,
                                 storages_gas=parameters.storages_gas,
                                 output_folder=parameters.output_folder)
-        # hier muss noch eine umwandlung in ein json string durchgeführt werden
-        #grid_data = json.dumps(grid_data)
-        return grid_data
+        # convert dave dataset to JSON string
+        grid_data_json = to_json(grid_data)
+        return grid_data_json
 
 
 # get method for dave dataset request
