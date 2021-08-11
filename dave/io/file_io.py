@@ -3,7 +3,7 @@ import os
 import geopandas as gpd
 import pandas as pd
 import pandapower as pp
-from pandapower.io_utils import PPJSONEncoder
+from pandapower.io_utils import PPJSONEncoder, encrypt_string
 from shapely.wkb import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 
