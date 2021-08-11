@@ -1,10 +1,13 @@
 import os
+import importlib
 import pandas as pd
 import geopandas as gpd
-from pandapower.io_utils import with_signature, to_serializable
+from copy import deepcopy
+from pandapower.io_utils import with_signature, to_serializable, FromSerializableRegistry
 
 from dave.datapool import get_data_path
 from dave.dave_structure import davestructure
+from dave.create import create_empty_dataset
 
 
 def archiv_inventory(grid_data, read_only=False):
@@ -72,6 +75,25 @@ def archiv_inventory(grid_data, read_only=False):
                                            'dave_version': grid_data.dave_version})
             inventory_list.to_csv(inventory_path, index=False)
         return False, file_name
+
+
+class FromSerializableRegistryDaVe(FromSerializableRegistry):
+    from_serializable = deepcopy(FromSerializableRegistry.from_serializable)
+    class_name = ''
+    module_name = ''
+
+    def __init__(self, obj, d, dave_hook):
+        super().__init__(obj, d, dave_hook)
+
+    @from_serializable.register(class_name='davestructure', module_name='dave.davestructure')
+    def davestructure(self):
+        if isinstance(self.obj, str):  # backwards compatibility
+            from dave import from_json_string
+            return from_json_string(self.obj)
+        else:
+            dataset = create_empty_dataset()
+            dataset.update(self.obj)
+            return dataset
 
 
 @to_serializable.register(davestructure)

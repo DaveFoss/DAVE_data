@@ -3,7 +3,9 @@ import os
 import geopandas as gpd
 import pandas as pd
 import pandapower as pp
-from pandapower.io_utils import PPJSONEncoder, encrypt_string
+from functools import partial
+from pandapower.io_utils import (PPJSONEncoder, PPJSONDecoder, encrypt_string, decrypt_string,
+                                 pp_hook)
 from shapely.wkb import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 
@@ -11,8 +13,34 @@ import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
 from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, change_empty_gpd
-from dave.io.io_utils import archiv_inventory
+from dave.io.io_utils import archiv_inventory, FromSerializableRegistryDaVe
 from dave.dave_structure import davestructure
+
+
+def from_json(filename, encryption_key=None):
+    """
+    Load a dave dataset from a JSON file or string.
+    """
+    if hasattr(filename, 'read'):
+        json_string = filename.read()
+    elif not os.path.isfile(filename):
+        raise UserWarning("File {} does not exist!!".format(filename))
+    else:
+        with open(filename) as fp:
+            json_string = fp.read()
+    return from_json_string(json_string, encryption_key=encryption_key)
+
+
+def from_json_string(json_string, encryption_key=None):
+    """
+    Load a dave dataset from a JSON string.
+    """
+    if encryption_key is not None:
+        json_string = decrypt_string(json_string, encryption_key)
+
+    net = json.loads(json_string, cls=PPJSONDecoder,
+                     object_hook=partial(pp_hook, registry_class=FromSerializableRegistryDaVe))
+    return net
 
 
 def to_json(grid_data, file_path=None, encryption_key=None):
@@ -39,8 +67,8 @@ def to_json(grid_data, file_path=None, encryption_key=None):
     if hasattr(file_path, 'write'):
         file_path.write(json_string)
     else:
-        with open(file_path, "w"):
-            file_path.write(json_string)
+        with open(file_path, "w") as fp:
+            fp.write(json_string)
 
 
 def from_hdf(dataset_path):
