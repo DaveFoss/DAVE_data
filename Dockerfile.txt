@@ -8,7 +8,16 @@ ADD . /dave
 WORKDIR /dave
 
 # install necessary packages
-RUN pip install uvicorn
+RUN apt-get update && apt-get install -y git
+RUN pip install -U pip
+RUN pip install -r requirements.txt
+
+# Clean up
+RUN apt-get clean && pip cache purge && rm -rf .git/
 
 # run uvicorn to connect to dave via api 
 CMD ["uvicorn", "dave.dave.api:app", "--host", "0.0.0.0", "--port", "80"]
+
+
+
+
