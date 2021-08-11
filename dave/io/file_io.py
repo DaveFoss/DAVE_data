@@ -10,22 +10,21 @@ from shapely.geometry import Point, LineString, MultiLineString
 import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
-from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, wkt_to_wkb_dataset, change_empty_gpd
+from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, change_empty_gpd
 from dave.io.io_utils import archiv_inventory
 from dave.dave_structure import davestructure
 
 
 def to_json(grid_data, file_path=None, encryption_key=None):
     """
-    This function converts the DaVe dataset into the JSON format.
-    Input:
-        grid data
-        file_path - absoulut path of the file. If None is given the function returns a JSON string
-    """
-    
-    """ Brauch ich das oder geht geopandas register auch?
-    # convert geometric data in dave dataset
-    grid_data_geo = wkt_to_wkb_dataset(grid_data)
+    This function saves a DaVe dataset in JSON format.
+    INPUT:
+        **grid_data** (dict) - all Informations about the grid area
+        **file_path** (str , default None) - absoulut path where the JSON file will be stored. If
+                                             None is given the function returns only a JSON string
+    OUTPUT:
+        **file** (json) - the dave dataset in JSON format
+
     """
     # convert all empty geopandas objects to empty pandas objects
     grid_data = change_empty_gpd(grid_data)
@@ -37,7 +36,6 @@ def to_json(grid_data, file_path=None, encryption_key=None):
     # only return json string
     if file_path is None:
         return json_string
-    # save json string at given file path
     if hasattr(file_path, 'write'):
         file_path.write(json_string)
     else:
