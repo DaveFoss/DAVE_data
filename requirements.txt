@@ -1,4 +1,4 @@
-# via conda forge
+# necessary python packages for DaVe
 Shapely
 GDAL
 Fiona
@@ -12,6 +12,6 @@ pandapower
 rasterio
 contextily
 tqdm
-# via pip
-#pandapipes
-#tables
+pandapipes
+tables
+uvicorn
