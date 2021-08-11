@@ -81,3 +81,8 @@ def json_dave(obj):
     return d
 
 
+@to_serializable.register(gpd.GeoSeries)
+def json_series(obj):
+    d = with_signature(obj, obj.to_json())
+    d.update({'dtype': str(obj.dtypes), 'typ': 'geoseries', 'crs': obj.crs})
+    return d
