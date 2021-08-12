@@ -5,5 +5,7 @@ stages:
 # define jobs
 test:
     stage: test
+    tags:
+    - ci-shared
     script:
     - echo "This job test something"
