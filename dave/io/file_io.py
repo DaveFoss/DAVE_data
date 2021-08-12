@@ -13,7 +13,7 @@ import dave.create
 from dave.settings import dave_settings
 from dave.datapool import get_data_path
 from dave.io.convert_format import wkb_to_wkt, wkt_to_wkb, change_empty_gpd
-from dave.io.io_utils import archiv_inventory, FromSerializableRegistryDaVe
+from dave.io.io_utils import archiv_inventory, FromSerializableRegistryDaVe, isinstance_partial
 from dave.dave_structure import davestructure
 
 
@@ -57,7 +57,7 @@ def to_json(grid_data, file_path=None, encryption_key=None):
     # convert all empty geopandas objects to empty pandas objects
     grid_data = change_empty_gpd(grid_data)
     # convert DaVe dataset into a json string with custom encoder
-    json_string = json.dumps(grid_data, cls=PPJSONEncoder, indent=2)
+    json_string = json.dumps(grid_data, cls=PPJSONEncoder, indent=2, isinstance_func=isinstance_partial)
     # encrypt json string
     if encryption_key is not None:
         json_string = encrypt_string(json_string, encryption_key)
