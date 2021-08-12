@@ -16,7 +16,7 @@ before_script:
 test:
     stage: test
     tags:
-    - ci-shared
+    - gitlab-srbi-01
     script:
     - echo "This job tests something"
     # - script / pytest
