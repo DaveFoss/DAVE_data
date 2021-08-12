@@ -1,4 +1,4 @@
-# necessary python packages for DaVe
+# via conda forge
 Shapely
 GDAL
 Fiona
@@ -12,6 +12,7 @@ pandapower
 rasterio
 contextily
 tqdm
-pandapipes
-tables
 uvicorn
+# via pip
+#pandapipes
+#tables
