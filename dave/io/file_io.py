@@ -17,16 +17,16 @@ from dave.io.io_utils import archiv_inventory, FromSerializableRegistryDaVe
 from dave.dave_structure import davestructure
 
 
-def from_json(filename, encryption_key=None):
+def from_json(file_path, encryption_key=None):
     """
     Load a dave dataset from a JSON file or string.
     """
-    if hasattr(filename, 'read'):
-        json_string = filename.read()
-    elif not os.path.isfile(filename):
-        raise UserWarning("File {} does not exist!!".format(filename))
+    if hasattr(file_path, 'read'):
+        json_string = file_path.read()
+    elif not os.path.isfile(file_path):
+        raise UserWarning("File {} does not exist!!".format(file_path))
     else:
-        with open(filename) as fp:
+        with open(file_path) as fp:
             json_string = fp.read()
     return from_json_string(json_string, encryption_key=encryption_key)
 
