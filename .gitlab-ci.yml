@@ -16,7 +16,7 @@ before_script:
 test:
     stage: test
     tags:
-    - gitlab-srbi-01
+    - asprunner
     script:
     - echo "This job tests something"
     # - script / pytest
