@@ -12,6 +12,7 @@ pandapower
 rasterio
 contextily
 tqdm
+fastapi
 uvicorn
 # via pip
 #pandapipes
