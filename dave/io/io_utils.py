@@ -97,7 +97,18 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
             from dave.io import from_json_string
             return from_json_string(self.obj)
         else:
-            dataset = dave.create_empty_dataset()
+            dave_dataset = dave.create_empty_dataset()
+            dataset = None
+            for key in dave_dataset.keys():
+                if (not isinstance(dave_dataset[key], str)) and (
+                        next(iter(self.obj)) in dave_dataset[key].keys()):
+                    dataset = dave_dataset[key]
+                elif isinstance(dave_dataset[key], davestructure):
+                    for key_sec in dave_dataset[key].keys():
+                        if next(iter(self.obj)) in dave_dataset[key][key_sec].keys():
+                            dataset = dave_dataset[key][key_sec]
+            if dataset is None:
+                dataset = dave_dataset
             dataset.update(self.obj)
             return dataset
 
