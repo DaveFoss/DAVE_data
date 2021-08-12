@@ -10,7 +10,6 @@ from dave.datapool import get_data_path
 from dave.dave_structure import davestructure
 
 
-
 def archiv_inventory(grid_data, read_only=False):
     """
     This function check if a the dave archiv already contain the dataset.
@@ -78,6 +77,12 @@ def archiv_inventory(grid_data, read_only=False):
         return False, file_name
 
 
+def isinstance_partial(obj, cls):
+    if isinstance(obj, davestructure):
+        return False
+    return isinstance(obj, cls)
+
+
 class FromSerializableRegistryDaVe(FromSerializableRegistry):
     from_serializable = deepcopy(FromSerializableRegistry.from_serializable)
     class_name = ''
@@ -86,7 +91,7 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
     def __init__(self, obj, d, dave_hook):
         super().__init__(obj, d, dave_hook)
 
-    @from_serializable.register(class_name='davestructure', module_name='dave.davestructure')
+    @from_serializable.register(class_name='davestructure', module_name='dave.dave_structure')
     def davestructure(self):
         if isinstance(self.obj, str):  # backwards compatibility
             from dave.io import from_json_string
