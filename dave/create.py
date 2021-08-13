@@ -109,7 +109,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
                 own_area=None, power_levels=[], gas_levels=[], plot=True, convert=True,
                 opt_model=True, combine_areas=[], transformers=True, renewable_powerplants=True,
                 conventional_powerplants=True, loads=True, compressors=True, sources=True,
-                storages_gas=True, output_folder=dave_output_dir):
+                storages_gas=True, output_folder=dave_output_dir, api_use=True):
     """
     This is the main function of dave. This function generates automaticly grid models for power 
     and gas networks in the defined target area
@@ -152,6 +152,8 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         **storages_gas** (boolean, default True) - if true, gas storages are added to the grid model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
             generated data should be saved. if for this path no folder exists, dave will be create one
+        **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
+            local folder
 
     OUTPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure \n
@@ -261,9 +263,10 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         grid_data = from_archiv(f'{file_name}.h5')
 
     # create dave output folder on desktop for DaVe dataset, plotting and converted model
-    print(f'\nSave DaVe output data at the following path: {output_folder}')
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    if not api_use:
+        print(f'\nSave DaVe output data at the following path: {output_folder}')
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
 
     # save DaVe dataset to archiv and also in the output folder
     if not grid_data.target_input.iloc[0].typ == 'own area':
@@ -280,25 +283,28 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
             # save dataset to archiv
             file_name = to_archiv(grid_data)
         """
-    with warnings.catch_warnings():
-        # filter warnings because of the PerformanceWarning from pytables at the geometry type
-        warnings.simplefilter('ignore')
-        to_hdf(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
+    # save DaVe dataset to the output folder
+    if not api_use:
+        with warnings.catch_warnings():
+            # filter warnings because of the PerformanceWarning from pytables at the geometry type
+            warnings.simplefilter('ignore')
+            to_hdf(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
 
     # plot informations
     if plot:
         if 'LV' in power_levels:
-            plot_target_area(grid_data, output_folder)
-        plot_grid_data(grid_data, output_folder)
-        #plot_landuse(grid_data, output_folder)
+            plot_target_area(grid_data, api_use, output_folder)
+        plot_grid_data(grid_data, api_use, output_folder)
+        #plot_landuse(grid_data, api_use, output_folder)
 
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder
-        file_path = output_folder + '\\dave_power_grid.json'
-        pp_to_json(net_power, file_path)
+        if not api_use:
+            file_path = output_folder + '\\dave_power_grid.json'
+            pp_to_json(net_power, file_path)
     else:
         net_power = None
     if convert and gas_levels:

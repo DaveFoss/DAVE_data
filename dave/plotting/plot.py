@@ -29,7 +29,7 @@ def plot_land(area, only_area=False):
         return ax
 
 
-def plot_target_area(grid_data, output_folder=None):
+def plot_target_area(grid_data, api_use, output_folder=None):
     """
     This function plots the geographical informations in the target area
 
@@ -93,11 +93,12 @@ def plot_target_area(grid_data, output_folder=None):
         plt.title('Target Area')
         if output_folder:
             # save plot in the dave output folder
-            file_path = output_folder + '\\target_area.svg'
-            plt.savefig(file_path, dpi=300)
+            if not api_use:
+                file_path = output_folder + '\\target_area.svg'
+                plt.savefig(file_path, dpi=300)
 
 
-def plot_grid_data(grid_data, output_folder=None):
+def plot_grid_data(grid_data, api_use, output_folder=None):
     """
     This function plots primary the grid data and auxillary greyed out the
     geographical informations in the target area
@@ -182,9 +183,9 @@ def plot_grid_data(grid_data, output_folder=None):
             mv_lines.plot(ax=ax, color='m', label='MV Lines')
         # plot electrical components
         if not renewable_plants.empty:
-            renewable_plants.plot(ax=ax, color='g',label='renewable power plants')
+            renewable_plants.plot(ax=ax, color='g', label='renewable power plants')
         if not conventional_plants.empty:
-            conventional_plants.plot(ax=ax, color='m',label='conventional power plants')
+            conventional_plants.plot(ax=ax, color='m', label='conventional power plants')
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color='k', markersize=6, label='EHV Nodes')
@@ -214,13 +215,14 @@ def plot_grid_data(grid_data, output_folder=None):
         plt.title('Grid Data')
         if output_folder:
             # save plot in the dave output folder
-            file_path = output_folder + '\\grid_data.svg'
-            plt.savefig(file_path, dpi=300)
+            if not api_use:
+                file_path = output_folder + '\\grid_data.svg'
+                plt.savefig(file_path, dpi=300)
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die
     # verschiedenen Spannungs und Druck ebenen.
 
 
-def plot_grid_data_osm(grid_data, output_folder=None):
+def plot_grid_data_osm(grid_data, api_use, output_folder=None):
     """
     This function plots primary the grid data with a osm map in the background
 
@@ -251,7 +253,7 @@ def plot_grid_data_osm(grid_data, output_folder=None):
             ehv_nodes,
             ehv_lines,
             hv_nodes,
-            hv_lines, 
+            hv_lines,
             substations]
     data_check = pd.concat(data)
     if data_check.empty:
@@ -306,11 +308,12 @@ def plot_grid_data_osm(grid_data, output_folder=None):
         # ctx.add_basemap(ax, source=ctx.providers.Stamen.TonerLite)  # stamen design
         if output_folder:
             # save plot in the dave output folder
-            file_path = output_folder + '\\grid_data.svg'
-            plt.savefig(file_path, format='svg', dpi=300)
+            if not api_use:
+                file_path = output_folder + '\\grid_data.svg'
+                plt.savefig(file_path, format='svg', dpi=300)
 
 
-def plot_landuse(grid_data, output_folder):
+def plot_landuse(grid_data, api_use, output_folder):
     """
     This function plots the landuses in the target area
 
@@ -350,8 +353,9 @@ def plot_landuse(grid_data, output_folder):
         plt.title('Landuse')
         if output_folder:
             # save plot in the dave output folder
-            file_path = output_folder + '\\landuse.svg'
-            plt.savefig(file_path, dpi=300)
+            if not api_use:
+                file_path = output_folder + '\\landuse.svg'
+                plt.savefig(file_path, dpi=300)
 
 
 def plot_generator():
