@@ -1,9 +1,9 @@
 import json
 import os
+from functools import partial
 import geopandas as gpd
 import pandas as pd
 import pandapower as pp
-from functools import partial
 from pandapower.io_utils import (PPJSONEncoder, PPJSONDecoder, encrypt_string, decrypt_string,
                                  pp_hook)
 from shapely.wkb import loads, dumps
@@ -26,8 +26,8 @@ def from_json(file_path, encryption_key=None):
     elif not os.path.isfile(file_path):
         raise UserWarning("File {} does not exist!!".format(file_path))
     else:
-        with open(file_path) as fp:
-            json_string = fp.read()
+        with open(file_path) as file:
+            json_string = file.read()
     return from_json_string(json_string, encryption_key=encryption_key)
 
 
@@ -38,9 +38,9 @@ def from_json_string(json_string, encryption_key=None):
     if encryption_key is not None:
         json_string = decrypt_string(json_string, encryption_key)
 
-    net = json.loads(json_string, cls=PPJSONDecoder,
-                     object_hook=partial(pp_hook, registry_class=FromSerializableRegistryDaVe))
-    return net
+    dataset = json.loads(json_string, cls=PPJSONDecoder,
+                         object_hook=partial(pp_hook, registry_class=FromSerializableRegistryDaVe))
+    return dataset
 
 
 def to_json(grid_data, file_path=None, encryption_key=None):
@@ -57,7 +57,8 @@ def to_json(grid_data, file_path=None, encryption_key=None):
     # convert all empty geopandas objects to empty pandas objects
     grid_data = change_empty_gpd(grid_data)
     # convert DaVe dataset into a json string with custom encoder
-    json_string = json.dumps(grid_data, cls=PPJSONEncoder, indent=2, isinstance_func=isinstance_partial)
+    json_string = json.dumps(grid_data, cls=PPJSONEncoder, indent=2,
+                             isinstance_func=isinstance_partial)
     # encrypt json string
     if encryption_key is not None:
         json_string = encrypt_string(json_string, encryption_key)
@@ -67,8 +68,8 @@ def to_json(grid_data, file_path=None, encryption_key=None):
     if hasattr(file_path, 'write'):
         file_path.write(json_string)
     else:
-        with open(file_path, "w") as fp:
-            fp.write(json_string)
+        with open(file_path, "w") as file:
+            file.write(json_string)
 
 
 def from_hdf(dataset_path):

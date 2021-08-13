@@ -11,9 +11,9 @@ def wkb_to_wkt(data_df, crs):
     """
     This function converts geometry data from WKB (hexadecimal string) to WKT (geometric object)
     format for a given dataframe and convert it to a geodataframe
-	
-	Input pandas dataframe
-	Output geodataframe	
+
+    Input pandas dataframe
+    Output geodataframe
     """
     if (not data_df.empty) and ('geometry' in data_df.keys()):
         data_df['geometry'] = data_df.geometry.apply(loads)

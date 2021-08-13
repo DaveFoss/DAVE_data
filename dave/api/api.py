@@ -10,7 +10,7 @@ from dave.api import request_bodys
 app = FastAPI()
 
 
-class dave_request:
+class DaveRequest:
     def create_dataset(self, parameters):
         # run DaVe main function to create a dataset
         grid_data = create_grid(postalcode=parameters.postalcode,
@@ -39,7 +39,7 @@ class dave_request:
 
 # get method for dave dataset request
 @app.get('/request_dataset')
-def index(parameters: request_bodys.Dataset_param, dave: dave_request = Depends(dave_request)):
+def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
     grid_data = dave.create_dataset(parameters)
     return grid_data
 

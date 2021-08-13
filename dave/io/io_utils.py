@@ -88,9 +88,6 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
     class_name = ''
     module_name = ''
 
-    def __init__(self, obj, d, dave_hook):
-        super().__init__(obj, d, dave_hook)
-
     @from_serializable.register(class_name='davestructure', module_name='dave.dave_structure')
     def davestructure(self):
         if isinstance(self.obj, str):  # backwards compatibility
@@ -116,12 +113,12 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
 @to_serializable.register(davestructure)
 def json_dave(obj):
     net_dict = {k: item for k, item in obj.items() if not k.startswith("_")}
-    d = with_signature(obj, net_dict)
-    return d
+    data = with_signature(obj, net_dict)
+    return data
 
 
 @to_serializable.register(gpd.GeoSeries)
 def json_series(obj):
-    d = with_signature(obj, obj.to_json())
-    d.update({'dtype': str(obj.dtypes), 'typ': 'geoseries', 'crs': obj.crs})
-    return d
+    data = with_signature(obj, obj.to_json())
+    data.update({'dtype': str(obj.dtypes), 'typ': 'geoseries', 'crs': obj.crs})
+    return data
