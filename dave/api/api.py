@@ -53,8 +53,6 @@ def create_parameters(parameters: request_bodys.Dataset_param):
     return parameters
 """
 
-
-
 """
 Außerdem noch zwei weitere Pfade (Endpunkte):
 (Die beiden Punkte evt nur für Entwickler?)
