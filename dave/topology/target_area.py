@@ -1,12 +1,12 @@
 import time
-import copy
 import pandas as pd
 import geopandas as gpd
 from tqdm import tqdm
 from shapely.ops import unary_union
 from shapely.geometry import Polygon, LineString, Point
 
-from dave.datapool import query_osm, oep_request, read_postal, read_federal_states, archiv_inventory
+from dave.datapool import query_osm, oep_request, read_postal, read_federal_states
+from dave.io import archiv_inventory
 from dave.settings import dave_settings
 
 
@@ -191,8 +191,8 @@ class target_area():
                 landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])
                 landuse['area_km2'] = landuse_3035.area/1E06
                 # write landuse into grid_data
-                landuse.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+                self.grid_data.landuse.set_crs(dave_settings()['crs_main'], inplace=True)
             # add time delay
             time.sleep(time_delay)
             # update progress
@@ -223,7 +223,7 @@ class target_area():
                 for_living = dave_settings()['buildings_for_living']
                 commercial = dave_settings()['buildings_commercial']
                 # improve building tag with landuse parameter
-                if not landuse.empty:
+                if self.landuse and not landuse.empty:
                     landuse_retail = unary_union(landuse[landuse.landuse == 'retail'].geometry)
                     landuse_industrial = unary_union(
                         landuse[landuse.landuse == 'industrial'].geometry)
@@ -254,7 +254,7 @@ class target_area():
         """
         This function searches junctions for the relevant roads in the target area
         """
-        roads = copy.deepcopy(self.grid_data.roads.roads)
+        roads = self.grid_data.roads.roads.copy(deep=True)
         if not roads.empty:
             junction_points = []
             while len(roads) > 1:
@@ -461,6 +461,9 @@ class target_area():
             self.grid_data.target_input = target_input
         elif self.own_area:
             self.target = gpd.read_file(self.own_area)
+            # check crs and project to the right one if needed
+            if (self.target.crs) and (not self.target.crs == 'EPSG:4326'):
+                self.target = self.target.to_crs(dave_settings()['crs_main'])
             if 'id' in self.target.keys():
                 self.target = self.target.drop(columns=['id'])
             target_area._own_area_postal(self)
@@ -473,7 +476,10 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        self.grid_data.area = self.grid_data.area.set_crs(dave_settings()['crs_main'])
+        if self.grid_data.area.crs is None:
+            self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
+        elif self.grid_data.area.crs != dave_settings()['crs_main']:
+            self.grid_data.area.to_crs(dave_settings()['crs_main'], inplace=True)
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
@@ -508,7 +514,6 @@ class target_area():
             self.grid_data.landuse.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.for_living.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.commercial.reset_index(drop=True, inplace=True)
-            self.grid_data.buildings.other.reset_index(drop=True, inplace=True)
             # find road junctions
             target_area.road_junctions(self)
             # close progress bar

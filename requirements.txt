@@ -12,6 +12,8 @@ pandapower
 rasterio
 contextily
 tqdm
+fastapi
+uvicorn
 pytest
 pytest-xdist
 # via pip
