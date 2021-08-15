@@ -1857,8 +1857,6 @@ def loads(grid_data):
                               grid_data.components_power.loads.voltage_level,
                               grid_data.components_power.loads.index)))
     grid_data.components_power.loads.insert(0, 'dave_name', name)
-    # set crs
-    grid_data.components_power.loads.set_crs(dave_settings()['crs_main'], inplace=True)
     # close progress bar
     pbar.close()
 

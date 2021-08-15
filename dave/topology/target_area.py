@@ -1,5 +1,4 @@
 import time
-import copy
 import pandas as pd
 import geopandas as gpd
 from tqdm import tqdm
@@ -191,8 +190,8 @@ class target_area():
                 landuse_3035 = landuse.to_crs(dave_settings()['crs_meter'])
                 landuse['area_km2'] = landuse_3035.area/1E06
                 # write landuse into grid_data
-                landuse.set_crs(dave_settings()['crs_main'], inplace=True)
                 self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+                self.grid_data.landuse.set_crs(dave_settings()['crs_main'], inplace=True)
             # add time delay
             time.sleep(time_delay)
             # update progress
@@ -223,7 +222,7 @@ class target_area():
                 for_living = dave_settings()['buildings_for_living']
                 commercial = dave_settings()['buildings_commercial']
                 # improve building tag with landuse parameter
-                if not landuse.empty:
+                if self.landuse and not landuse.empty:
                     landuse_retail = unary_union(landuse[landuse.landuse == 'retail'].geometry)
                     landuse_industrial = unary_union(
                         landuse[landuse.landuse == 'industrial'].geometry)
@@ -254,7 +253,7 @@ class target_area():
         """
         This function searches junctions for the relevant roads in the target area
         """
-        roads = copy.deepcopy(self.grid_data.roads.roads)
+        roads = self.grid_data.roads.roads.copy(deep=True)
         if not roads.empty:
             junction_points = []
             while len(roads) > 1:
@@ -279,7 +278,6 @@ class target_area():
             # write road junctions into grid_data
             road_junctions.set_crs(dave_settings()['crs_main'], inplace=True)
             self.grid_data.roads.road_junctions = road_junctions.rename('geometry')
-            
 
     def _target_by_postalcode(self):
         """
@@ -477,7 +475,10 @@ class target_area():
             raise SyntaxError('target area wasn`t defined')
         # write area informations into grid_data
         self.grid_data.area = self.grid_data.area.append(self.target)
-        self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
+        if self.grid_data.area.crs is None:
+            self.grid_data.area.set_crs(dave_settings()['crs_main'], inplace=True)
+        elif self.grid_data.area.crs != dave_settings()['crs_main']:
+            self.grid_data.area.to_crs(dave_settings()['crs_main'], inplace=True)
         # check if requested model is already in the archiv
         if not self.grid_data.target_input.iloc[0].typ == 'own area':
             file_exists, file_name = archiv_inventory(self.grid_data, read_only=True)
