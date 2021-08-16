@@ -1,5 +1,5 @@
 # define environment via docker container
-# image: add something 
+image: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
 
 # define stages
 stages:
