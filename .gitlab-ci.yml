@@ -23,4 +23,5 @@ test:
     only:
     - master
     - develop
+    - docker
     
