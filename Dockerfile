@@ -20,6 +20,10 @@ RUN pip install -U pip
 RUN pip install pandapipes
 RUN pip install tables
 
+# install dave
+RUN python setup.py install && \
+    python setup.py clean --all
+
 # Clean up
 RUN apt-get clean && pip cache purge && rm -rf .git/
 
