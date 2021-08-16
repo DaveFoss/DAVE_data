@@ -4,7 +4,7 @@ import pytest
 from dave import dave_dir
 
 # get path of the DaVe test directory
-test_dir = os.path.join(dave_dir, 'test')
+test_dir = os.path.join(dave_dir, 'tests')
 
 
 def run_all_tests():
