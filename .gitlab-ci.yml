@@ -51,8 +51,8 @@ build_develop_container:
     - asprunner
   script:
     - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    #- echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$CI_REGISTRY_TOKEN\"}, \"registry.gitlab.cc-asp.fraunhofer.de/dave/dave\":{\"auth\":\"$CI_CC_TOKEN\"}}}" > /kaniko/.docker/config.json
+    51Vbkna9y-yVAxYDy3jJ
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$CI_REGISTRY_TOKEN\"}, \"registry.gitlab.cc-asp.fraunhofer.de/dave/dave\":{\"auth\":\"$CI_REGISTRY_TOKEN_PW\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
   only:
     - develop
