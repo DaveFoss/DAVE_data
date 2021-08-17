@@ -23,3 +23,31 @@ test:
     only:
     - master
     - develop
+
+# build release docker container from master branch
+# push to gwdg
+# build_release_container:
+#   stage: docker
+#   image:
+#     name: gcr.io/kaniko-project/executor:debug
+#     entrypoint: [""]
+#   script:
+#     - mkdir -p /kaniko/.docker
+#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$CI_REGISTRY_TOKEN\"}, \"registry.gitlab.cc-asp.fraunhofer.de:4567\":{\"auth\":\"$CI_CC_TOKEN\"}}}" > /kaniko/.docker/config.json
+#     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/spinai_ui:release --insecure --skip-tls-verify --insecure-pull --cleanup
+#   only:
+#     - master
+
+# build develop docker container from develop branch (push to git zv)
+build_develop_container:
+  stage: docker
+  when: manual
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$CI_REGISTRY_TOKEN\"}, \"registry.gitlab.cc-asp.fraunhofer.de/dave/dave\":{\"auth\":\"$CI_CC_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
+  only:
+    - develop
