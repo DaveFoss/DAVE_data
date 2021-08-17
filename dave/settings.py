@@ -1,6 +1,6 @@
 def dave_settings():
     """
-    This function returns a dataframe with the DaVe settings for used data and assumptions
+    This function returns a dictonary with the DaVe settings for used data and assumptions
     """
     settings = {
         # structural definitions:
