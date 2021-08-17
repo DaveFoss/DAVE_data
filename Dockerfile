@@ -28,4 +28,4 @@ RUN python setup.py install && \
 RUN apt-get clean && pip cache purge && rm -rf .git/
 
 # run uvicorn to connect to dave via api 
-CMD ["uvicorn", "dave.api.api:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "dave.api.api:app", "--host", "0.0.0.0"]
