@@ -52,7 +52,7 @@ build_develop_container:
   script:
     - mkdir -p /kaniko/.docker
     - AUTH=$(echo -n "${CI_REGISTRY_TOKEN_USER}:${CI_REGISTRY_TOKEN_PW}" | base64)
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"${AUTH}\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"${AUTH}\"}, \"registry.gitlab.cc-asp.fraunhofer.de/dave/dave\":{\"auth\":\"${AUTH}\"}}}" > /kaniko/.docker/config.json
     #- echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_TOKEN_USER\",\"password\":\"$CI_REGISTRY_TOKEN_PW\"}}}" > /kaniko/.docker/config.json
     #- echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$CI_REGISTRY_TOKEN\"}, \"registry.gitlab.cc-asp.fraunhofer.de/dave/dave\":{\"auth\":\"$CI_REGISTRY_TOKEN_PW\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
