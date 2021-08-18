@@ -31,7 +31,7 @@ class DaveRequest:
                                 compressors=parameters.compressors,
                                 sources=parameters.sources,
                                 storages_gas=parameters.storages_gas,
-                                output_folder=parameters.output_folder)
+                                )
         # convert dave dataset to JSON string
         grid_data_json = to_json(grid_data)
         return grid_data_json
