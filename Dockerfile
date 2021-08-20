@@ -25,7 +25,7 @@ RUN python setup.py install && \
     python setup.py clean --all
 
 # Clean up
-RUN apt-get clean && pip cache purge && rm -rf .git/
+RUN apt-get clean && conda clean -a && pip cache purge && rm -rf .git/
 
 # run uvicorn to connect to dave via api 
 CMD ["uvicorn", "dave.api.api:app", "--host", "0.0.0.0"]
