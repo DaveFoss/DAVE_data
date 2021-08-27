@@ -26,3 +26,8 @@ class Dataset_param(BaseModel):
     sources: Optional[bool] = True
     storages_gas: Optional[bool] = True
     output_folder: Optional[str] = dave_output_dir
+
+
+# create request body for the database request
+class Db_param(BaseModel):
+    data_name: str
