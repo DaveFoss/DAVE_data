@@ -17,17 +17,17 @@ test:
       name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
       entrypoint: [""]
     tags:
-    - asprunner
+      - asprunner
     script:
-	  - pip install pytest-cov
+      - pip install pytest-cov
       - pytest dave/tests --disable-warnings --cov-report=html --cov=dave
     artifacts:
       paths:
         - coverage
       expire_in: 30 days
     only:
-    - master
-    - develop
+      - master
+      - develop
 
 # build release docker container from master branch
 # push to gwdg
