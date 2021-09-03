@@ -19,7 +19,12 @@ test:
     tags:
     - asprunner
     script:
-    - pytest dave/tests --disable-warnings
+	  - pip install pytest-cov
+      - pytest dave/tests --disable-warnings --cov-report=html --cov=dave
+    artifacts:
+      paths:
+        - coverage
+      expire_in: 30 days
     only:
     - master
     - develop
