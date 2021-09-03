@@ -12,3 +12,7 @@ exclude_lines =
     if 0:
     if __name__ == .__main__.:
     pragma: no cover
+
+omit =
+    tests/*
+    */__init__.py
