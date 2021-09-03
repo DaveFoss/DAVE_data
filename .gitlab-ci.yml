@@ -24,7 +24,7 @@ test:
     # artifacts:
     #   paths:
     #     - coverage
-      expire_in: 30 days
+    #  expire_in: 30 days
     only:
       - master
       - develop
