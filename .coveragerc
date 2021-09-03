@@ -1,6 +1,14 @@
+# execlude test folder from coverage
+[run]
+omit = 
+    tests/*
+    */__init__.py
+
 [html]
 directory = coverage
 
 [report]
 exclude_lines =
+    if 0:
     if __name__ == .__main__.:
+    pragma: no cover

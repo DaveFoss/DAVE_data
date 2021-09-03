@@ -20,7 +20,7 @@ test:
       - asprunner
     script:
       - pip install pytest-cov
-      - pytest dave/tests --disable-warnings --cov-report=html --cov=dave
+      - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov-report=html --cov=dave
     artifacts:
       paths:
         - coverage
