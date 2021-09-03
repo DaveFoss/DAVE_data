@@ -20,10 +20,10 @@ test:
       - asprunner
     script:
       - pip install pytest-cov
-      - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov-report=html --cov=dave
-    artifacts:
-      paths:
-        - coverage
+      - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
+    # artifacts:
+    #   paths:
+    #     - coverage
       expire_in: 30 days
     only:
       - master

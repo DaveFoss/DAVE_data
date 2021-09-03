@@ -4,8 +4,8 @@ omit =
     tests/*
     */__init__.py
 
-[html]
-directory = coverage
+#[html]
+#directory = coverage
 
 [report]
 exclude_lines =
