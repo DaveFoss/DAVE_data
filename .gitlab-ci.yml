@@ -19,6 +19,7 @@ test:
     tags:
       - asprunner
     script:
+      - pip install pytest-cov
       - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
     # artifacts:
     #   paths:
