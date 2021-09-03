@@ -14,28 +14,30 @@ app = FastAPI()
 class DaveRequest:
     def create_dataset(self, parameters):
         # run DaVe main function to create a dataset
-        grid_data = create_grid(postalcode=parameters.postalcode,
-                                town_name=parameters.town_name,
-                                federal_state=parameters.federal_state,
-                                nuts_region=parameters.nuts_regions,
-                                own_area=parameters.own_area,
-                                power_levels=parameters.power_levels,
-                                gas_levels=parameters.gas_levels,
-                                plot=parameters.plot,
-                                convert=parameters.convert,
-                                opt_model=parameters.opt_model,
-                                combine_areas=parameters.combine_areas,
-                                transformers=parameters.transformers,
-                                renewable_powerplants=parameters.renewable_powerplants,
-                                conventional_powerplants=parameters.conventional_powerplants,
-                                loads=parameters.loads,
-                                compressors=parameters.compressors,
-                                sources=parameters.sources,
-                                storages_gas=parameters.storages_gas,
-                                )
+        grid_data = create_grid(
+            postalcode=parameters.postalcode,
+            town_name=parameters.town_name,
+            federal_state=parameters.federal_state,
+            nuts_region=parameters.nuts_regions,
+            own_area=parameters.own_area,
+            power_levels=parameters.power_levels,
+            gas_levels=parameters.gas_levels,
+            plot=parameters.plot,
+            convert=parameters.convert,
+            opt_model=parameters.opt_model,
+            combine_areas=parameters.combine_areas,
+            transformers=parameters.transformers,
+            renewable_powerplants=parameters.renewable_powerplants,
+            conventional_powerplants=parameters.conventional_powerplants,
+            loads=parameters.loads,
+            compressors=parameters.compressors,
+            sources=parameters.sources,
+            storages_gas=parameters.storages_gas,
+        )
         # convert dave dataset to JSON string
         grid_data_json = to_json(grid_data)
         return grid_data_json
+
 
 class DbRequest:
     def get_postalcodes(self):
@@ -54,20 +56,20 @@ class DbRequest:
 
 
 # get method for dave dataset request
-@app.get('/request_dataset')
+@app.get("/request_dataset")
 def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
     grid_data = dave.create_dataset(parameters)
     return grid_data
 
 
 # get method for data from database request
-@app.get('/request_db')
+@app.get("/request_db")
 def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
-    if parameters.data_name == 'postalcode':
-        data=db.get_postalcodes()
-    elif parameters.data_name == 'town_name':
-        data=db.get_town_names()
-    #data = db.create_dataset()
+    if parameters.data_name == "postalcode":
+        data = db.get_postalcodes()
+    elif parameters.data_name == "town_name":
+        data = db.get_town_names()
+    # data = db.create_dataset()
     return data
 
 

@@ -15,8 +15,8 @@ def wkb_to_wkt(data_df, crs):
     Input pandas dataframe
     Output geodataframe
     """
-    if (not data_df.empty) and ('geometry' in data_df.keys()):
-        data_df['geometry'] = data_df.geometry.apply(loads)
+    if (not data_df.empty) and ("geometry" in data_df.keys()):
+        data_df["geometry"] = data_df.geometry.apply(loads)
     data_df = gpd.GeoDataFrame(data_df, crs=crs)
     return data_df
 
@@ -35,8 +35,8 @@ def wkt_to_wkb(data_df):
     data = data_df.copy(deep=True)
     if not data.empty:
         data = pd.DataFrame(data)
-        if 'geometry' in data.keys():
-            data['geometry'] = data.geometry.apply(dumps)
+        if "geometry" in data.keys():
+            data["geometry"] = data.geometry.apply(dumps)
     else:
         data = pd.DataFrame([])
     return data
@@ -55,7 +55,8 @@ def wkt_to_wkb_dataset(grid_data):
                     for key_trd in dataset[key][key_sec].keys():
                         if isinstance(dataset[key][key_sec][key_trd], gpd.GeoDataFrame):
                             dataset[key][key_sec][key_trd] = wkt_to_wkb(
-                                dataset[key][key_sec][key_trd])
+                                dataset[key][key_sec][key_trd]
+                            )
                 elif isinstance(dataset[key][key_sec], gpd.GeoDataFrame):
                     dataset[key][key_sec] = wkt_to_wkb(grid_data[key][key_sec])
         elif isinstance(dataset[key], gpd.GeoDataFrame):
@@ -78,17 +79,17 @@ def change_empty_gpd(grid_data):
                                 dataset[key][key_sec][key_trd] = pd.DataFrame([])
                         elif isinstance(dataset[key][key_sec][key_trd], gpd.GeoSeries):
                             if dataset[key][key_sec][key_trd].empty:
-                                dataset[key][key_sec][key_trd] = pd.Series([], dtype='object')
+                                dataset[key][key_sec][key_trd] = pd.Series([], dtype="object")
                 elif isinstance(dataset[key][key_sec], gpd.GeoDataFrame):
                     if dataset[key][key_sec].empty:
                         dataset[key][key_sec] = pd.DataFrame([])
                 elif isinstance(dataset[key][key_sec], gpd.GeoSeries):
                     if dataset[key][key_sec].empty:
-                        dataset[key][key_sec] = pd.Series([], dtype='object')
+                        dataset[key][key_sec] = pd.Series([], dtype="object")
         elif isinstance(dataset[key], gpd.GeoDataFrame):
             if dataset[key].empty:
                 dataset[key] = pd.DataFrame([])
         elif isinstance(dataset[key], gpd.GeoSeries):
             if dataset[key].empty:
-                dataset[key] = pd.Series([], dtype='object')
+                dataset[key] = pd.Series([], dtype="object")
     return dataset
