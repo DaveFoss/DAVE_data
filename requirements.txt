@@ -17,6 +17,7 @@ uvicorn
 pytest
 pytest-cov
 pytest-xdist
+pre-commit
 # via pip
 #pandapipes
 #tables
