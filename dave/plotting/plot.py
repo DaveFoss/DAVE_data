@@ -1,8 +1,8 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import geopandas as gpd
-import pandas as pd
 import contextily as ctx
+import geopandas as gpd
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def plot_land(area, only_area=False):

@@ -1,11 +1,12 @@
 import time
-import pandas as pd
-import geopandas as gpd
-from tqdm import tqdm
-from shapely.ops import unary_union
-from shapely.geometry import Polygon, LineString, Point
 
-from dave.datapool import query_osm, oep_request, read_postal, read_federal_states
+import geopandas as gpd
+import pandas as pd
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import unary_union
+from tqdm import tqdm
+
+from dave.datapool import oep_request, query_osm, read_federal_states, read_postal
 from dave.io import archiv_inventory
 from dave.settings import dave_settings
 

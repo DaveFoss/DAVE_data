@@ -1,21 +1,21 @@
-import warnings
 import math
+import warnings
+
 import geopandas as gpd
+import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from geopy.geocoders import ArcGIS
 from shapely import wkb
-from shapely.geometry import Point, MultiPoint, LineString, Polygon
-from shapely.ops import polygonize, unary_union, nearest_points
-import numpy as np
-
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
+from shapely.ops import nearest_points, polygonize, unary_union
+from tqdm import tqdm
 
 from dave.datapool import (
     oep_request,
     query_osm,
-    read_postal,
     read_federal_states,
     read_household_consumption,
+    read_postal,
 )
 from dave.settings import dave_settings
 from dave.toolbox import voronoi

@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
-import shapely
 import requests
+import shapely
 
 from dave.settings import dave_settings
 

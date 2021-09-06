@@ -1,13 +1,13 @@
 import collections
 import xml.etree.ElementTree as ET
 from urllib.parse import urlencode
-from pandas.io.common import urlopen
+
 import pandas as pd
-from shapely.geometry import Point, LineString
+from pandas.io.common import urlopen
+from shapely.geometry import LineString, Point
 from six import string_types
 
 from dave.datapool import get_data_path
-
 
 """
 This functions are based on the geopandas_osm python package, which was published under the

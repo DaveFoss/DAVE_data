@@ -1,9 +1,9 @@
 import os
 from copy import deepcopy
-import pandas as pd
-import geopandas as gpd
 
-from pandapower.io_utils import with_signature, to_serializable, FromSerializableRegistry
+import geopandas as gpd
+import pandas as pd
+from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
 
 import dave
 from dave.datapool import get_data_path

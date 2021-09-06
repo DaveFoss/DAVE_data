@@ -1,9 +1,10 @@
 import warnings
+
 import geopandas as gpd
 import pandas as pd
-from tqdm import tqdm
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
+from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings

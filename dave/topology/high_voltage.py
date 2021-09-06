@@ -1,8 +1,9 @@
 import math
+
 import geopandas as gpd
 import pandas as pd
+from shapely.geometry import LineString, Point
 from tqdm import tqdm
-from shapely.geometry import Point, LineString
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings

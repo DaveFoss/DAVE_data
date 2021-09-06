@@ -1,11 +1,10 @@
 import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 
+from dave.api import request_bodys
 from dave.create import create_grid
 from dave.datapool import read_postal
 from dave.io import to_json
-from dave.api import request_bodys
-
 
 # initialize app object
 app = FastAPI()

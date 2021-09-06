@@ -1,7 +1,7 @@
 import geopandas as gpd
+import pandas as pd
 import shapely.geometry
 from shapely import affinity
-import pandas as pd
 
 
 def create_lp_topology(grid_data):

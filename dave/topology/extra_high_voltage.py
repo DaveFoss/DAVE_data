@@ -1,10 +1,11 @@
 import math
+
 import geopandas as gpd
 import pandas as pd
-from tqdm import tqdm
 from shapely.geometry import LineString
+from tqdm import tqdm
 
-from dave.datapool import read_ehv_data, oep_request
+from dave.datapool import oep_request, read_ehv_data
 from dave.settings import dave_settings
 
 

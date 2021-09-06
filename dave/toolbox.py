@@ -1,9 +1,10 @@
 import warnings
+
 import geopandas as gpd
 import numpy as np
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint
-from shapely.ops import polygonize, cascaded_union
+from shapely.ops import cascaded_union, polygonize
 
 from dave.settings import dave_settings
 

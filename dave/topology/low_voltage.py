@@ -1,12 +1,13 @@
 import warnings
+
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import Point, LineString, MultiPoint
+from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points, unary_union
 from tqdm import tqdm
 
-from dave.settings import dave_settings
 from dave.datapool import oep_request
+from dave.settings import dave_settings
 
 
 def nearest_road(building_centroids, roads):
