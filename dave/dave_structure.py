@@ -1,4 +1,4 @@
-import copy
+from copy import deepcopy
 
 import pandas as pd
 from pandapower.auxiliary import ADict
@@ -15,9 +15,6 @@ class davestructure(ADict):
             net = args[0]
             self.clear()
             self.update(**net.deepcopy())
-
-    def deepcopy(self):
-        return copy.deepcopy(self)
 
     def __repr__(self):  # pragma: no cover
         titel = "This DaVe dataset includes the following parameter tables:"
