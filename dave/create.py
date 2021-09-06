@@ -6,7 +6,7 @@ import warnings
 import geopandas as gpd
 import pandas as pd
 
-from dave import __version__, dave_dir, dave_output_dir
+from dave import __version__
 from dave.components import gas_components, power_components
 
 # imports from dave
@@ -14,6 +14,7 @@ from dave.dave_structure import davestructure
 from dave.io import from_archiv, pp_to_json, to_archiv, to_hdf
 from dave.model import create_gas_grid, create_power_grid, gas_processing, power_processing
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
+from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
 from dave.topology import (
     create_ehv_topology,
@@ -138,7 +139,7 @@ def create_grid(
     compressors=True,
     sources=True,
     storages_gas=True,
-    output_folder=dave_output_dir,
+    output_folder=dave_settings()["dave_output_dir"],
     api_use=True,
 ):
     """
@@ -320,7 +321,7 @@ def create_grid(
         print('Save DaVe dataset to archiv')
         print('----------------------------------')
         # check if archiv folder exists otherwise create one
-        archiv_dir = dave_dir + '\\datapool\\dave_archiv\\'
+        archiv_dir = dave_settings()["dave_dir"] + '\\datapool\\dave_archiv\\'
         if not os.path.exists(archiv_dir):
             os.makedirs(archiv_dir)
         with warnings.catch_warnings():

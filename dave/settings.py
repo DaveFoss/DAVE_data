@@ -1,8 +1,14 @@
+import os
+
+
 def dave_settings():
     """
     This function returns a dictonary with the DaVe settings for used data and assumptions
     """
     settings = {
+        # main definitions
+        "dave_dir": os.path.dirname(os.path.realpath(__file__)),
+        "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:

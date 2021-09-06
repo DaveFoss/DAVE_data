@@ -5,7 +5,6 @@ import pandas as pd
 from shapely.geometry import LineString
 from shapely.wkb import loads
 
-from dave import dave_dir
 from dave.settings import dave_settings
 
 
@@ -14,9 +13,9 @@ def get_data_path(filename=None, dirname=None):
     This function returns the full os path for a given directory (and filename)
     """
     path = (
-        os.path.join(dave_dir, "datapool", dirname, filename)
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
         if filename
-        else os.path.join(dave_dir, "datapool", dirname)
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
     )
     return path
 
