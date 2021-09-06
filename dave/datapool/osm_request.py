@@ -7,7 +7,7 @@ from pandas.io.common import urlopen
 from shapely.geometry import LineString, Point
 from six import string_types
 
-from dave.datapool import get_data_path
+from dave.datapool.read_data import get_data_path
 
 # This functions are based on the geopandas_osm python package, which was published under the
 # following licens:
