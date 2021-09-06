@@ -8,7 +8,7 @@ This is a example file for testing dave
 
 ########## Examples for grid area definition #########################
 # test target by plz
-_postalcode_1 = ['34225']  # Baunatal
+_postalcode_1 = ["34225"]  # Baunatal
 _postalcode_2 = ["37085", "37075", "37083", "37079", "37081", "37073", "37077"]  # Göttingen
 _postalcode_3 = ["ALL"]  # all postal code areas in germany
 
