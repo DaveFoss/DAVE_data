@@ -142,7 +142,7 @@ def create_grid(
     api_use=True,
 ):
     """
-    This is the main function of dave. This function generates automaticly grid models for power 
+    This is the main function of dave. This function generates automaticly grid models for power
     and gas networks in the defined target area
 
     INPUT:
@@ -165,24 +165,29 @@ def create_grid(
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
             considered. options: 'HP','MP','LP', []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
-        **plot** (boolean, default True) - if this value is true dave creates plottings automaticly \n
+        **plot** (boolean, default True) - if this value is true dave creates plottings \
+            automaticly \n
         **convert** (boolean, default True) - if this value is true dave will be convert the grid \
             automaticly to pandapower and pandapipes \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations \n
         **combine_areas** (list, default []) - this parameter defines on which power levels not \
             connected areas should combined. options: 'EHV','HV','MV','LV', [] \n
-        **transformers** (boolean, default True) - if true, transformers are added to the grid model \n
+        **transformers** (boolean, default True) - if true, transformers are added to the grid \
+            model \n
         **renewable_powerplants** (boolean, default True) - if true, renewable powerplans are \
             added to the grid model \n
         **conventional_powerplants** (boolean, default True) - if true, conventional powerplans \
             are added to the grid model \n
         **loads** (boolean, default True) - if true, loads are added to the grid model \n
-        **compressors** (boolean, default True) - if true, compressors are added to the grid model \n
+        **compressors** (boolean, default True) - if true, compressors are added to the grid \
+            model \n
         **sources** (boolean, default True) - if true, gas sources are added to the grid model \n
-        **storages_gas** (boolean, default True) - if true, gas storages are added to the grid model \n
+        **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
+            model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
-            generated data should be saved. if for this path no folder exists, dave will be create one
+            generated data should be saved. if for this path no folder exists, dave will be \
+                create one
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
