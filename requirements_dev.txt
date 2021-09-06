@@ -18,5 +18,7 @@ pytest
 pytest-cov
 pytest-xdist
 pytables
+pre-commit
+isort
 # via pip
 #pandapipes
