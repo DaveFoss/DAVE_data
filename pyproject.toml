@@ -19,6 +19,6 @@ omit = ["tests/*",
 
 [tool.isort]
 profile = "black"
-line-lnegth = 100
+line-length = 100
 multi_line_output = 3
 
