@@ -1,4 +1,6 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
+from dave import __version__
 
 # read information files
 with open("README.rst", "rb") as f:
@@ -12,7 +14,7 @@ long_description = "\n\n".join((readme, changelog))
 # define setup
 setup(
     name="dave",
-    version="1.0.5",
+    version=__version__,
     author="Tobias Banze",
     author_email="tobias.banze@iee.fraunhofer.de",
     description="DaVe is a tool for automatic energy grid generation",
