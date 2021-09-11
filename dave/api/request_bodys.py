@@ -30,5 +30,13 @@ class Dataset_param(BaseModel):
 
 
 # create request body for the database request
-class Db_param(BaseModel):
+class Datapool_param(BaseModel):
     data_name: str
+
+
+# create request body for the database request
+class Db_param(BaseModel):
+    database: str
+    collection: str
+    filter_method: Optional[str] = None
+    geometry: Optional[str] = None
