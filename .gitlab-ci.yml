@@ -28,7 +28,7 @@ test:
       - master
       - develop
 
-# build release docker container from master branch
+# build release docker image from master branch
 # push to gwdg
 # build_release_container:
 #   stage: docker
@@ -44,7 +44,7 @@ test:
 #   only:
 #     - master
 
-# build develop docker container from develop branch (push to git zv)
+# build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
   stage: docker
   when: manual
