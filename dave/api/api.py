@@ -3,8 +3,8 @@ from fastapi import Depends, FastAPI
 
 from dave.api import request_bodys
 from dave.create import create_grid
-from dave.datapool import mongo_request, read_postal
-from dave.io import to_json
+from dave.datapool import read_postal
+from dave.io import from_mongo, to_json
 
 # initialize app object
 app = FastAPI()
@@ -55,7 +55,7 @@ class DatapoolRequest:
 class DbRequest:
     def db_request(self, parameters):
         # read data from mongo db
-        data = mongo_request(
+        data = from_mongo(
             parameters.database,
             parameters.collection,
             parameters.filter_method,
@@ -93,20 +93,9 @@ def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbReque
 
 
 """
-# hand over parameters to DaVe
-@app.post('/request_dataset')
-def create_parameters(parameters: request_bodys.Dataset_param):
-    request.append(parameters)
-    # return request[-1]
-    # create_dataset(parameters)
-    return parameters
-"""
-
-"""
 Außerdem noch zwei weitere Pfade (Endpunkte):
 (Die beiden Punkte evt nur für Entwickler?)
 /input_database: um Daten in die Datenbank zu schreiben
-/request_database: um rohdaten aus der DB zu holen
 """
 
 """
