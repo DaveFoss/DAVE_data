@@ -3,7 +3,7 @@ from fastapi import Depends, FastAPI
 
 from dave.api import request_bodys
 from dave.create import create_grid
-from dave.datapool import read_postal
+from dave.datapool import mongo_request, read_postal
 from dave.io import to_json
 
 # initialize app object
@@ -34,11 +34,10 @@ class DaveRequest:
             storages_gas=parameters.storages_gas,
         )
         # convert dave dataset to JSON string
-        grid_data_json = to_json(grid_data)
-        return grid_data_json
+        return to_json(grid_data)
 
 
-class DbRequest:
+class DatapoolRequest:
     def get_postalcodes(self):
         # read postalcode area data from datapool
         postal, meta_data = read_postal()
@@ -50,8 +49,20 @@ class DbRequest:
         # read postalcode area data from datapool
         postal, meta_data = read_postal()
         # convert town_names to JSON string
-        town_json = postal.town.to_json()
-        return town_json
+        return postal.town.to_json()
+
+
+class DbRequest:
+    def db_request(self, parameters):
+        # read data from mongo db
+        data = mongo_request(
+            parameters.database,
+            parameters.collection,
+            parameters.filter_method,
+            parameters.geometry,
+        )
+        # convert postalcodes to JSON string
+        return data.to_json()
 
 
 # get method for dave dataset request
@@ -62,13 +73,22 @@ def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(D
 
 
 # get method for data from database request
+@app.get("/request_datapool")
+def index_datapool(
+    parameters: request_bodys.Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)
+):
+    if parameters.data_name == "postalcode":
+        data = pool.get_postalcodes()
+    elif parameters.data_name == "town_name":
+        data = pool.get_town_names()
+    # data = db.create_dataset()
+    return data
+
+
+# get method for data from database request
 @app.get("/request_db")
 def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
-    if parameters.data_name == "postalcode":
-        data = db.get_postalcodes()
-    elif parameters.data_name == "town_name":
-        data = db.get_town_names()
-    # data = db.create_dataset()
+    data = db.db_request(parameters)
     return data
 
 
