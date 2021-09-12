@@ -2,6 +2,8 @@ import geopandas as gpd
 import pandas as pd
 import requests
 import shapely
+from pymongo import GEOSPHERE, MongoClient
+from shapely.geometry import mapping, shape
 
 from dave.settings import dave_settings
 
@@ -94,3 +96,30 @@ def oep_request(schema, table, where=None, geometry=None):
     else:
         meta_data = pd.DataFrame()
     return request_data, meta_data
+
+
+def mongo_request(database, collection, filter_method=None, geometry=None):
+    """
+    This function requests data from the mongo db
+    """
+    # define data source
+    client = MongoClient(
+        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
+    )
+    db = client[database]
+    if filter_method and geometry:
+        # add funtion for data request with filter option
+        pass
+    else:
+        # request all data from defined collection
+        data_list = list(db[collection].find())
+        # transform geometries to shapely objects
+        for row in data_list:
+            row["geometry"] = shape(row["geometry"])
+        if len(data_list) > 0:
+            df = gpd.GeoDataFrame(data_list)
+        elif len(data_list) == 0:
+            df = gpd.GeoDataFrame([data_list[0]])
+
+        #!!! add option for data with no geometry (convert to normal dataframe)
+    return df
