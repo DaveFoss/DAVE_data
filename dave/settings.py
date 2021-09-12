@@ -9,6 +9,10 @@ def dave_settings():
         # main definitions
         "dave_dir": os.path.dirname(os.path.realpath(__file__)),
         "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
+        # database definitions (mongo db)
+        "db_user": "root",
+        "db_pw": "example",
+        "db_ip": "127.0.0.1:27017",
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
