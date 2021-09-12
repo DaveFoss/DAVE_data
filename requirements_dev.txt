@@ -20,5 +20,6 @@ pytest-xdist
 pytables
 pre-commit
 isort
+pymongo
 # via pip
 #pandapipes
