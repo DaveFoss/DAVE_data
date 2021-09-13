@@ -20,9 +20,9 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
         f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
     )
     db = client[database]
-    # transform geometry from string to shapely object
-    geometry = loads(geometry)
     if (filter_method is not None) and (geometry is not None):
+        # transform geometry from string to shapely object
+        geometry = loads(geometry)
         # request data with geometrical filtering
         request = db[collection].find(
             {"geometry": {f"${filter_method}": {"$geometry": mapping(geometry)}}}
@@ -40,4 +40,26 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
         df = gpd.GeoDataFrame([data_list[0]])
     else:
         df = pd.DataFrame([])
+    # remove mongo db id object
+    df.drop(columns=["_id"], inplace=True)
     return df
+
+
+"""
+def to_mongo(database, collection, geometry):
+    # define data source and create new database
+    client = MongoClient(
+        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
+    )
+    db = client[database]
+    collection = db[collection]
+    if geometry is not None:
+        collection.create_index([('geometry', GEOSPHERE)])
+    
+    
+    
+    # convert geometry to geojson
+    plz['geometry'] = plz['geometry'].apply(lambda x: mapping(x))
+    # convert gdf to dict
+    data = plz.to_dict(orient='records')
+"""
