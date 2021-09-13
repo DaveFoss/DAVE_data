@@ -45,21 +45,22 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
     return df
 
 
-"""
-def to_mongo(database, collection, geometry):
+def to_mongo(database, collection, data_df):
     # define data source and create new database
     client = MongoClient(
         f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
     )
     db = client[database]
     collection = db[collection]
-    if geometry is not None:
-        collection.create_index([('geometry', GEOSPHERE)])
-    
-    
-    
-    # convert geometry to geojson
-    plz['geometry'] = plz['geometry'].apply(lambda x: mapping(x))
-    # convert gdf to dict
-    data = plz.to_dict(orient='records')
-"""
+    if isinstance(data_df, gpd.GeoDataFrame):
+        # define that collection includes geometrical data
+        collection.create_index([("geometry", GEOSPHERE)])
+        # convert geometry to geojson
+        data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
+    # convert df to dict
+    data = data_df.to_dict(orient="records")
+    # insert data to database
+    if len(data) > 1:
+        collection.insert_many(data)
+    elif len(data) == 1:
+        collection.insert(data[0])
