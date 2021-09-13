@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from dave import dave_output_dir
+from dave.settings import dave_settings
 
 
 # create request body for the DaVe dataset request
@@ -26,7 +26,7 @@ class Dataset_param(BaseModel):
     compressors: Optional[bool] = True
     sources: Optional[bool] = True
     storages_gas: Optional[bool] = True
-    output_folder: Optional[str] = dave_output_dir
+    output_folder: Optional[str] = dave_settings()["dave_output_dir"]
 
 
 # create request body for the database request
