@@ -56,10 +56,10 @@ class DbRequest:
     def db_request(self, parameters):
         # read data from mongo db
         data = from_mongo(
-            parameters.database,
-            parameters.collection,
-            parameters.filter_method,
-            parameters.geometry,
+            database=parameters.database,
+            collection=parameters.collection,
+            filter_method=parameters.filter_method,
+            geometry=parameters.geometry,
         )
         # convert postalcodes to JSON string
         return data.to_json()
