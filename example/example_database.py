@@ -1,5 +1,6 @@
 import json
 
+import geopandas as gpd
 import pandas as pd
 import requests
 from shapely.geometry import Point
@@ -14,8 +15,7 @@ request_a = requests.get(
 )
 
 # convert to data frame
-data_a = pd.read_json(request_a.json(), orient="index")
-
+data_a = gpd.GeoDataFrame.from_features(json.loads(request_a.json()))
 
 # get postalcodes which intersects with a special geometrical point
 point = Point(9.42035423449941, 51.23178804610007)
@@ -33,4 +33,5 @@ request_b = requests.get(
 )
 
 # convert to data frame
+data_b = gpd.GeoDataFrame.from_features(json.loads(request_b.json()))
 data_b = pd.read_json(request_b.json(), orient="index")
