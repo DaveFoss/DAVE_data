@@ -40,3 +40,11 @@ class Db_param(BaseModel):
     collection: str
     filter_method: Optional[str] = None
     geometry: Optional[str] = None
+
+
+# create request body for upload to the database
+class Db_up_param(BaseModel):
+    database: str
+    collection: str
+    data: str
+    # meta_data ?

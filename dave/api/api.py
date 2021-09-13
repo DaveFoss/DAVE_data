@@ -1,10 +1,14 @@
+import json
+
+import geopandas as gpd
+import pandas as pd
 import uvicorn
 from fastapi import Depends, FastAPI
 
 from dave.api import request_bodys
 from dave.create import create_grid
 from dave.datapool import read_postal
-from dave.io import from_mongo, to_json
+from dave.io import from_mongo, to_json, to_mongo
 
 # initialize app object
 app = FastAPI()
@@ -65,6 +69,21 @@ class DbRequest:
         return data.to_json()
 
 
+class DbPost:
+    def db_post(self, parameters):
+        # convert string to geodataframe
+        database = parameters.database
+        collection = parameters.collection
+        data = json.loads(parameters.data)
+        # check if data from type geodataframe or dataframe
+        if ("type" in data.keys()) and (data["type"] == "FeatureCollection"):
+            data_df = gpd.GeoDataFrame.from_features(data)
+        else:
+            data_df = pd.DataFrame(data)
+        # upload data into database
+        to_mongo(database, collection, data_df)
+
+
 # get method for dave dataset request
 @app.get("/request_dataset")
 def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
@@ -72,7 +91,7 @@ def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(D
     return grid_data
 
 
-# get method for data from database request
+# get method for datapool request
 @app.get("/request_datapool")
 def index_datapool(
     parameters: request_bodys.Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)
@@ -85,18 +104,18 @@ def index_datapool(
     return data
 
 
-# get method for data from database request
+# get method for database request
 @app.get("/request_db")
 def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
     data = db.db_request(parameters)
     return data
 
 
-"""
-Außerdem noch zwei weitere Pfade (Endpunkte):
-(Die beiden Punkte evt nur für Entwickler?)
-/input_database: um Daten in die Datenbank zu schreiben
-"""
+# post method to upload data to database
+@app.post("/post_db")
+def upload_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
+    db.db_post(parameters)
+
 
 """
 if __name__ == "__main__":
