@@ -6,7 +6,7 @@ import requests
 from shapely.geometry import Point
 
 # local url of the dave api
-url = "http://127.0.0.1:8000"
+url = "http://141.5.108.4:8000"
 
 # --- get DaVe database informations
 request_info = requests.get(url + "/db_info")
