@@ -8,7 +8,11 @@ from shapely.geometry import Point
 # local url of the dave api
 url = "http://127.0.0.1:8000"
 
+# --- get DaVe database informations
+request_info = requests.get(url + "/db_info")
 
+
+# --- get data from DaVe database
 # get full data of a collection (e.g. postalcodes)
 request_a = requests.get(
     url + "/request_db", data=json.dumps({"database": "geodata", "collection": "postalcodes"})
@@ -31,7 +35,16 @@ request_b = requests.get(
         }
     ),
 )
-
 # convert to data frame
 data_b = gpd.GeoDataFrame.from_features(json.loads(request_b.json()))
-data_b = pd.read_json(request_b.json(), orient="index")
+
+
+# --- upload data to DaVe database
+d = {"col1": ["name1", "name2"], "geometry": [Point(1, 2), Point(2, 1)]}
+gdf = gpd.GeoDataFrame(d, crs="EPSG:4326")
+gdf_json = gdf.to_json()
+
+r = requests.post(
+    url + "/post_db",
+    data=json.dumps({"database": "geodata", "collection": "upload_test", "data": gdf_json}),
+)
