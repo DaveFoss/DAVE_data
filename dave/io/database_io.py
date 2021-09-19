@@ -7,6 +7,13 @@ from shapely.wkt import loads
 from dave.settings import dave_settings
 
 
+def db_client():
+    # define data source
+    return MongoClient(
+        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
+    )
+
+
 def from_mongo(database, collection, filter_method=None, geometry=None):
     """
     This function requests data from the mongo db
@@ -15,10 +22,7 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
         **filter_method** (string) - method for the geometrical data filtering
         **geometry** (string) - shapely geometry object as string for the filtering
     """
-    # define data source
-    client = MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
-    )
+    client = db_client()
     db = client[database]
     if (filter_method is not None) and (geometry is not None):
         # transform geometry from string to shapely object
@@ -46,10 +50,7 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
 
 
 def to_mongo(database, collection, data_df):
-    # define data source and create new database
-    client = MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
-    )
+    client = db_client()
     db = client[database]
     collection = db[collection]
     if isinstance(data_df, gpd.GeoDataFrame):
@@ -64,3 +65,16 @@ def to_mongo(database, collection, data_df):
         collection.insert_many(data)
     elif len(data) == 1:
         collection.insert(data[0])
+
+
+def info_mongo():
+    info_mongo = {}
+    client = db_client()
+    # wirte databases
+    for db in list(client.list_databases()):
+        db_name = client[db["name"]]
+        collections = []
+        for collection in list(db_name.list_collections()):
+            collections.append(collection["name"])
+        db["collections"] = collections
+        info_mongo[db["name"]] = db

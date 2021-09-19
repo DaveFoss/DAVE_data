@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI
 from dave.api import request_bodys
 from dave.create import create_grid
 from dave.datapool import read_postal
-from dave.io import from_mongo, to_json, to_mongo
+from dave.io import from_mongo, info_mongo, to_json, to_mongo
 
 # initialize app object
 app = FastAPI()
@@ -115,6 +115,12 @@ def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbReque
 @app.post("/post_db")
 def upload_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
     db.db_post(parameters)
+
+
+# get method for database informations
+@app.get("/db_info")
+def info_db():
+    return info_mongo()
 
 
 """
