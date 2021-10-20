@@ -44,8 +44,8 @@ build_release_container:
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
     # --- trigger gwdg server to pull new image and restart docker network
     # install ansible
-    apt update
-    apt -y install ansible
+    - apt update
+    - apt -y install ansible
   only:
     - master
 
