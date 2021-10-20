@@ -28,21 +28,26 @@ test:
       - master
       - develop
 
-# build release docker image from master branch
-# push to gwdg
-# build_release_container:
-#   stage: docker
-#   image:
-#     name: gcr.io/kaniko-project/executor:debug
-#     entrypoint: [""]
-#   tags:
-#   - asprunner
-#   script:
-#     - mkdir -p /kaniko/.docker
-#     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$CI_REGISTRY_TOKEN\"}, \"registry.gitlab.cc-asp.fraunhofer.de:4567\":{\"auth\":\"$CI_CC_TOKEN\"}}}" > /kaniko/.docker/config.json
-#     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/spinai_ui:release --insecure --skip-tls-verify --insecure-pull --cleanup
-#   only:
-#     - master
+# build release docker image from master branch (incl. push to gwdg server)
+build_release_container:
+  stage: docker
+  when: manual
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+  - asprunner
+  script:
+    # create docker image for DaVe
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
+    # --- trigger gwdg server to pull new image and restart docker network
+    # install ansible
+    apt update
+    apt -y install ansible
+  only:
+    - master
 
 # build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
