@@ -1,4 +1,5 @@
-import copy
+from copy import deepcopy
+
 import pandas as pd
 from pandapower.auxiliary import ADict
 
@@ -15,26 +16,27 @@ class davestructure(ADict):
             self.clear()
             self.update(**net.deepcopy())
 
-    def deepcopy(self):
-        return copy.deepcopy(self)
-
     def __repr__(self):  # pragma: no cover
-        r = 'This DaVe dataset includes the following parameter tables:'
-        for tb in list(self.keys()):
-            if isinstance(self[tb], pd.DataFrame) and not self[tb].empty:
-                length = len(self[tb])
-                r += f'\n   - {tb} ({length} {"elements" if length > 1 else "element"})'
-            if isinstance(self[tb], davestructure):
-                r += f'\n   - {tb}:'
-                for utb in list(self[tb].keys()):
-                    if isinstance(self[tb][utb], pd.DataFrame) and not self[tb][utb].empty:
-                        length = len(self[tb][utb])
-                        r += f'\n\t   - {utb} ({length} {"elements" if length > 1 else "element"})'
-                    if isinstance(self[tb][utb], davestructure):
-                        r += f'\n\t   - {utb}:'
-                        for uutb in list(self[tb][utb].keys()):
-                            if (isinstance(self[tb][utb][uutb], pd.DataFrame) and not
-                               self[tb][utb][uutb].empty):
-                                length = len(self[tb][utb][uutb])
-                                r += f'\n\t\t   - {uutb} ({length} {"elements" if length > 1 else "element"})'
-        return r
+        titel = "This DaVe dataset includes the following parameter tables:"
+        for key in list(self.keys()):
+            if isinstance(self[key], pd.DataFrame) and not self[key].empty:
+                length = len(self[key])
+                titel += f'\n   - {key} ({length} {"elements" if length > 1 else "element"})'
+            if isinstance(self[key], davestructure):
+                titel += f"\n   - {key}:"
+                for key2 in list(self[key].keys()):
+                    if isinstance(self[key][key2], pd.DataFrame) and not self[key][key2].empty:
+                        length = len(self[key][key2])
+                        titel += (
+                            f'\n\t   - {key2} ({length} {"elements" if length > 1 else "element"})'
+                        )
+                    if isinstance(self[key][key2], davestructure):
+                        titel += f"\n\t   - {key2}:"
+                        for key3 in list(self[key][key2].keys()):
+                            if (
+                                isinstance(self[key][key2][key3], pd.DataFrame)
+                                and not self[key][key2][key3].empty
+                            ):
+                                length = len(self[key][key2][key3])
+                                titel += f'\n\t\t   - {key3} ({length} {"elements" if length > 1 else "element"})'
+        return titel

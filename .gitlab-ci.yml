@@ -1,19 +1,66 @@
-# define environment via docker container
-# image: add something 
-
 # define stages
 stages:
     - test
-	#- build
-	#- deploy
-	#-lint  # create stage to check codestyle with pylint?
+    - docker
+    #- build
+    #- deploy
+    #- lint  # create stage to check codestyle with pylint?
     
 # define task which should execute before each jobs
 before_script:
     # add something
 
-# define jobs
+# testing changes 
 test:
     stage: test
+    image: 
+      name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
+      entrypoint: [""]
+    tags:
+      - asprunner
     script:
-    # - script / pytest
+      - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
+    # artifacts:
+    #   paths:
+    #     - coverage
+    #  expire_in: 30 days
+    only:
+      - master
+      - develop
+
+# build release docker image from master branch (incl. push to gwdg server)
+build_release_container:
+  stage: docker
+  when: manual
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+  - asprunner
+  script:
+    # create docker image for DaVe
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
+    # --- trigger gwdg server to pull new image and restart docker network
+    # install ansible
+    - apt update
+    - apt -y install ansible
+  only:
+    - master
+
+# build develop docker image from develop branch (push to git zv container registry)
+build_develop_container:
+  stage: docker
+  when: manual
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+    - asprunner
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
+  only:
+    - develop

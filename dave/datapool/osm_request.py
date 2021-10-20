@@ -1,64 +1,64 @@
 import collections
 import xml.etree.ElementTree as ET
 from urllib.parse import urlencode
-from pandas.io.common import urlopen
+
 import pandas as pd
-from shapely.geometry import Point, LineString
+from pandas.io.common import urlopen
+from shapely.geometry import LineString, Point
 from six import string_types
 
-from dave.datapool import get_data_path
+from dave.datapool.read_data import get_data_path
+
+# This functions are based on the geopandas_osm python package, which was published under the
+# following licens:
+
+# The MIT License (MIT)
+
+# Copyright (c) 2014 Jacob Wasserman
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 
-"""
-This functions are based on the geopandas_osm python package, which was published under the
-following licens:
-
-The MIT License (MIT)
-
-Copyright (c) 2014 Jacob Wasserman
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
-
-OSMData = collections.namedtuple('OSMData', ('nodes', 'waynodes', 'waytags',
-                                             'relmembers', 'reltags'))
-_crs = 'epsg:4326'
+OSMData = collections.namedtuple(
+    "OSMData", ("nodes", "waynodes", "waytags", "relmembers", "reltags")
+)
+_crs = "epsg:4326"
 
 # Tags to remove so we don't clobber the output. This list comes from
 # osmtogeojson's index.js (https://github.com/tyrasd/osmtogeojson)
-uninteresting_tags = set([
-    "source",
-    "source_ref",
-    "source:ref",
-    "history",
-    "attribution",
-    "created_by",
-    "tiger:county",
-    "tiger:tlid",
-    "tiger:upload_uuid",
-])
+uninteresting_tags = set(
+    [
+        "source",
+        "source_ref",
+        "source:ref",
+        "history",
+        "attribution",
+        "created_by",
+        "tiger:county",
+        "tiger:tlid",
+        "tiger:upload_uuid",
+    ]
+)
 
 
 # http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
-def query_osm(typ, bbox=None, recurse=None, tags='', raw=False,
-              meta=False, **kwargs):
+def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kwargs):
     """
     Query the Overpass API to obtain OpenStreetMap data.
 
@@ -122,55 +122,57 @@ def query_osm(typ, bbox=None, recurse=None, tags='', raw=False,
         content = response.read()
 
     # get meta informations
-    meta_data = pd.read_excel(get_data_path('osm_meta.xlsx', 'data'), sheet_name=None)
+    meta_data = pd.read_excel(get_data_path("osm_meta.xlsx", "data"), sheet_name=None)
 
     if raw:
         return content, meta_data
     return read_osm(content, **kwargs), meta_data
 
 
-def _build_url(typ, bbox=None, recurse=None, tags='', meta=False):
+def _build_url(typ, bbox=None, recurse=None, tags="", meta=False):
     recurse_map = {
-        'up': '<',
-        'uprel': '<<',
-        'down': '>',
-        'downrel': '>>',
+        "up": "<",
+        "uprel": "<<",
+        "down": ">",
+        "downrel": ">>",
     }
     if recurse is None:
-        recursestr = ''
+        recursestr = ""
     else:
         try:
             recursestr = recurse_map[recurse]
         except KeyError:
-            raise ValueError("Unrecognized recurse value '{}'. "
-                             "Must be one of: {}."
-                             .format(recurse, ', '.join(recurse_map.keys())))
+            raise ValueError(
+                "Unrecognized recurse value '{}'. "
+                "Must be one of: {}.".format(recurse, ", ".join(recurse_map.keys()))
+            )
 
     # Allow tags to be a single string
     if isinstance(tags, string_types) and tags:
         tags = [tags]
-    queries = ''.join('[{}]'.format(t) for t in tags)
+    queries = "".join("[{}]".format(t) for t in tags)
 
     # Overpass QL takes the bounding box as
     # (min latitude, min longitude, max latitude, max longitude)
     if bbox is None:
-        bboxstr = ''
+        bboxstr = ""
     else:
-        #bboxstr = "({})".format(
-            #','.join(str(b) for b in (bbox[1], bbox[0], bbox[3], bbox[2])))
+        # bboxstr = "({})".format(
+        #','.join(str(b) for b in (bbox[1], bbox[0], bbox[3], bbox[2])))
         bboxstr = '(poly:"{}")'.format(
-            ' '.join('{c[1]} {c[0]}'.format(c=c) for c in bbox.exterior.coords))
+            " ".join("{c[1]} {c[0]}".format(c=c) for c in bbox.exterior.coords)
+        )
 
     if meta:
-        metastr = 'meta'
+        metastr = "meta"
     else:
-        metastr = ''
+        metastr = ""
 
-    query = '({typ}{bbox}{queries};{recurse};);out {meta};'.format(
-        typ=typ, bbox=bboxstr, queries=queries, recurse=recursestr, meta=metastr)
+    query = "({typ}{bbox}{queries};{recurse};);out {meta};".format(
+        typ=typ, bbox=bboxstr, queries=queries, recurse=recursestr, meta=metastr
+    )
 
-    url = ''.join(['http://www.overpass-api.de/api/interpreter?',
-                   urlencode({'data': query})])
+    url = "".join(["http://www.overpass-api.de/api/interpreter?", urlencode({"data": query})])
 
     return url
 
@@ -188,7 +190,7 @@ def read_osm(content, render=True, **kwargs):
     relmembers, reltags = read_relations(doc)
 
     # check if all requested variables are empty
-    #if nodes.empty and waynodes.empty and waytags.empty and relmembers.empty and reltags.empty:
+    # if nodes.empty and waynodes.empty and waytags.empty and relmembers.empty and reltags.empty:
 
     data = OSMData(nodes, waynodes, waytags, relmembers, reltags)
 
@@ -204,29 +206,29 @@ def read_nodes(doc):
     #       <tag k="highway" v="crossing"/>
     #       <tag k="source" v="Bing"/>
     #   </node>
-    nodes = [_element_to_dict(xmlnode) for xmlnode in doc.findall('node')]
+    nodes = [_element_to_dict(xmlnode) for xmlnode in doc.findall("node")]
     nodes = _dict_to_dataframe(nodes)
     if not nodes.empty:
-        nodes['lon'] = nodes['lon'].astype(float)
-        nodes['lat'] = nodes['lat'].astype(float)
+        nodes["lon"] = nodes["lon"].astype(float)
+        nodes["lat"] = nodes["lat"].astype(float)
 
     return nodes
 
 
 def _element_to_dict(element):
     d = element.attrib.copy()
-    for t in element.findall('tag'):
-        k = t.attrib['k']
+    for t in element.findall("tag"):
+        k = t.attrib["k"]
         if k not in uninteresting_tags:
-            d[k] = t.attrib['v']
+            d[k] = t.attrib["v"]
 
     return d
 
 
 def _dict_to_dataframe(d):
     df = pd.DataFrame.from_dict(d)
-    if 'timestamp' in df:
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+    if "timestamp" in df:
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     return df
 
@@ -249,12 +251,12 @@ def read_ways(doc):
     #   </way>
     waytags = []
     waynodes = []
-    for xmlway in doc.findall('way'):
-        wayid = xmlway.attrib['id']
-        for i, xmlnd in enumerate(xmlway.findall('nd')):
+    for xmlway in doc.findall("way"):
+        wayid = xmlway.attrib["id"]
+        for i, xmlnd in enumerate(xmlway.findall("nd")):
             d = xmlnd.attrib.copy()
-            d['id'] = wayid
-            d['index'] = i
+            d["id"] = wayid
+            d["index"] = i
             waynodes.append(d)
 
         tags = _element_to_dict(xmlway)
@@ -284,12 +286,12 @@ def read_relations(doc):
     #   </relation>
     reltags = []
     relmembers = []
-    for xmlrel in doc.findall('relation'):
-        relid = xmlrel.attrib['id']
-        for i, xmlmember in enumerate(xmlrel.findall('member')):
+    for xmlrel in doc.findall("relation"):
+        relid = xmlrel.attrib["id"]
+        for i, xmlmember in enumerate(xmlrel.findall("member")):
             d = xmlmember.attrib.copy()
-            d['id'] = relid
-            d['index'] = i
+            d["id"] = relid
+            d["index"] = i
             relmembers.append(d)
 
         tags = _element_to_dict(xmlrel)
@@ -305,19 +307,19 @@ def render_to_gdf(osmdata, drop_untagged=True):
     ways = render_ways(osmdata.nodes, osmdata.waynodes, osmdata.waytags)
 
     # set landuse tag from origin relation at relation members who has no landuse tag
-    if (ways is not None) and ('landuse' in ways.keys()) and (not osmdata.relmembers.empty):
+    if (ways is not None) and ("landuse" in ways.keys()) and (not osmdata.relmembers.empty):
         for i, way in ways.iterrows():
             # get and add origin relation id
             rel_id = osmdata.relmembers[osmdata.relmembers.ref == way.id].iloc[0].id
-            ways.at[i, 'relation_id'] = rel_id
+            ways.at[i, "relation_id"] = rel_id
             # get and add origin relation landuse if needed
             rel_landuse = osmdata.reltags[osmdata.reltags.id == rel_id].iloc[0].landuse
-            if str(way.landuse) == 'nan':
-                ways.at[i, 'landuse'] = rel_landuse
+            if str(way.landuse) == "nan":
+                ways.at[i, "landuse"] = rel_landuse
 
     if ways is not None:
         # We should get append working
-        nodes = nodes.append(ways).set_geometry('geometry', crs=_crs)
+        nodes = nodes.append(ways).set_geometry("geometry", crs=_crs)
 
     return nodes
 
@@ -327,10 +329,9 @@ def render_nodes(nodes, drop_untagged=True):
     if not nodes.empty:
         # Drop nodes that have no tags, convert lon/lat to points
         if drop_untagged:
-            nodes = nodes.dropna(subset=nodes.columns.drop(['id', 'lon', 'lat']),
-                                 how='all')
-        points = [Point(x['lon'], x['lat']) for i, x in nodes.iterrows()]
-        nodes = nodes.drop(['lon', 'lat'], axis=1)
+            nodes = nodes.dropna(subset=nodes.columns.drop(["id", "lon", "lat"]), how="all")
+        points = [Point(x["lon"], x["lat"]) for i, x in nodes.iterrows()]
+        nodes = nodes.drop(["lon", "lat"], axis=1)
         nodes = nodes.set_geometry(points, crs=_crs)
 
     return nodes
@@ -340,21 +341,20 @@ def render_ways(nodes, waynodes, waytags):
     if waynodes is None or waynodes.empty:
         return None
 
-    node_points = nodes[['id', 'lon', 'lat']]
+    node_points = nodes[["id", "lon", "lat"]]
 
     def wayline(df):
-        #df = df.sort_index(by='index')[['lon', 'lat']]  # for older pandas version
-        df = df.sort_values(by='index')[['lon', 'lat']]
+        # df = df.sort_index(by='index')[['lon', 'lat']]  # for older pandas version
+        df = df.sort_values(by="index")[["lon", "lat"]]
         if len(df) > 1:
             return LineString(df.values)
 
     # Group the ways and create a LineString for each one.  way_lines is a
     # Series where the index is the way id and the value is the LineString.
     # Merge it with the waytags to get a single GeoDataFrame of ways
-    waynodes = waynodes.merge(node_points, left_on='ref', right_on='id',
-                              suffixes=('', '_nodes'))
-    way_lines = waynodes.groupby('id').apply(wayline)
-    ways = waytags.set_index('id').set_geometry(way_lines, crs=_crs)
+    waynodes = waynodes.merge(node_points, left_on="ref", right_on="id", suffixes=("", "_nodes"))
+    way_lines = waynodes.groupby("id").apply(wayline)
+    ways = waytags.set_index("id").set_geometry(way_lines, crs=_crs)
     ways.reset_index(inplace=True)
 
     return ways
