@@ -1,24 +1,31 @@
 import os
 import shutil
-import warnings
 import timeit
-import pandas as pd
-import geopandas as gpd
+import warnings
 
+import geopandas as gpd
+import pandas as pd
+
+from dave import __version__
+from dave.components import gas_components, power_components
 
 # imports from dave
 from dave.dave_structure import davestructure
-from dave import __version__
-from dave import dave_output_dir, dave_dir
-from dave.io_dave import write_dataset, pp_to_json
-from dave.topology import (target_area, create_ehv_topology, create_hv_topology, create_mv_topology,
-                           create_lv_topology, create_hp_topology, create_mp_topology,
-                           create_lp_topology)
+from dave.io import from_archiv, pp_to_json, to_archiv, to_hdf
+from dave.model import create_gas_grid, create_power_grid, gas_processing, power_processing
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
-from dave.components import power_components, gas_components
-from dave.model import create_power_grid, power_processing, create_gas_grid, gas_processing
-from dave.datapool import from_archiv, to_archiv
+from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
+from dave.topology import (
+    create_ehv_topology,
+    create_hp_topology,
+    create_hv_topology,
+    create_lp_topology,
+    create_lv_topology,
+    create_mp_topology,
+    create_mv_topology,
+    target_area,
+)
 
 
 def create_empty_dataset():
@@ -33,86 +40,110 @@ def create_empty_dataset():
 
     """
     # define dave structure
-    grid_data = davestructure({
-        # target data
-        'area': gpd.GeoDataFrame([]),
-        'target_input': pd.DataFrame(),
-        'buildings': davestructure(
-            {'commercial': gpd.GeoDataFrame([]),
-             'for_living': gpd.GeoDataFrame([]),
-             'other': gpd.GeoDataFrame([])
-             }),
-        'roads': davestructure(
-            {'roads': gpd.GeoDataFrame([]),
-             'roads_plot': gpd.GeoDataFrame([]),
-             'road_junctions': gpd.GeoSeries([])
-             }),
-        'landuse': gpd.GeoDataFrame([]),
-        # power grid data
-        'ehv_data': davestructure(
-            {'ehv_nodes': gpd.GeoDataFrame([]),
-             'ehv_lines': gpd.GeoDataFrame([])
-             }),
-        'hv_data': davestructure(
-            {'hv_nodes': gpd.GeoDataFrame([]),
-             'hv_lines': gpd.GeoDataFrame([])
-             }),
-        'mv_data': davestructure(
-            {'mv_nodes': gpd.GeoDataFrame([]),
-             'mv_lines': gpd.GeoDataFrame([])
-             }),
-        'lv_data': davestructure(
-            {'lv_nodes': gpd.GeoDataFrame([]),
-             'lv_lines': gpd.GeoDataFrame([])
-             }),
-        'components_power': davestructure(
-            {'loads': gpd.GeoDataFrame([]),
-             'renewable_powerplants': gpd.GeoDataFrame([]),
-             'conventional_powerplants': gpd.GeoDataFrame([]),
-             'transformers': davestructure(
-                 {'ehv_ehv': gpd.GeoDataFrame([]),
-                  'ehv_hv': gpd.GeoDataFrame([]),
-                  'hv_mv': gpd.GeoDataFrame([]),
-                  'mv_lv': gpd.GeoDataFrame([])
-                  }),
-             'substations': davestructure(
-                 {'ehv_hv': gpd.GeoDataFrame([]),
-                  'hv_mv': gpd.GeoDataFrame([]),
-                  'mv_lv': gpd.GeoDataFrame([])
-                  })
-             }),
-        # gas grid data
-        'hp_data': davestructure(
-            {'hp_junctions': gpd.GeoDataFrame([]),
-             'hp_pipes': gpd.GeoDataFrame([])
-             }),
-        'mp_data': davestructure(
-            {'mp_junctions': gpd.GeoDataFrame([]),
-             'mp_pipes': gpd.GeoDataFrame([])
-             }),
-        'lp_data': davestructure(
-            {'lp_junctions': gpd.GeoDataFrame([]),
-             'lp_pipes': gpd.GeoDataFrame([])
-             }),
-        'components_gas': davestructure(
-            {'compressors': gpd.GeoDataFrame([]),
-             'sources': gpd.GeoDataFrame([]),
-             'storages_gas': gpd.GeoDataFrame([])
-             }),
-        # auxillary
-        'dave_version': __version__,
-        'meta_data': {}
-        })
+    grid_data = davestructure(
+        {
+            # target data
+            "area": gpd.GeoDataFrame([]),
+            "target_input": pd.DataFrame(),
+            "buildings": davestructure(
+                {
+                    "commercial": gpd.GeoDataFrame([]),
+                    "for_living": gpd.GeoDataFrame([]),
+                    "other": gpd.GeoDataFrame([]),
+                }
+            ),
+            "roads": davestructure(
+                {
+                    "roads": gpd.GeoDataFrame([]),
+                    "roads_plot": gpd.GeoDataFrame([]),
+                    "road_junctions": gpd.GeoSeries([]),
+                }
+            ),
+            "landuse": gpd.GeoDataFrame([]),
+            # power grid data
+            "ehv_data": davestructure(
+                {"ehv_nodes": gpd.GeoDataFrame([]), "ehv_lines": gpd.GeoDataFrame([])}
+            ),
+            "hv_data": davestructure(
+                {"hv_nodes": gpd.GeoDataFrame([]), "hv_lines": gpd.GeoDataFrame([])}
+            ),
+            "mv_data": davestructure(
+                {"mv_nodes": gpd.GeoDataFrame([]), "mv_lines": gpd.GeoDataFrame([])}
+            ),
+            "lv_data": davestructure(
+                {"lv_nodes": gpd.GeoDataFrame([]), "lv_lines": gpd.GeoDataFrame([])}
+            ),
+            "components_power": davestructure(
+                {
+                    "loads": gpd.GeoDataFrame([]),
+                    "renewable_powerplants": gpd.GeoDataFrame([]),
+                    "conventional_powerplants": gpd.GeoDataFrame([]),
+                    "transformers": davestructure(
+                        {
+                            "ehv_ehv": gpd.GeoDataFrame([]),
+                            "ehv_hv": gpd.GeoDataFrame([]),
+                            "hv_mv": gpd.GeoDataFrame([]),
+                            "mv_lv": gpd.GeoDataFrame([]),
+                        }
+                    ),
+                    "substations": davestructure(
+                        {
+                            "ehv_hv": gpd.GeoDataFrame([]),
+                            "hv_mv": gpd.GeoDataFrame([]),
+                            "mv_lv": gpd.GeoDataFrame([]),
+                        }
+                    ),
+                }
+            ),
+            # gas grid data
+            "hp_data": davestructure(
+                {"hp_junctions": gpd.GeoDataFrame([]), "hp_pipes": gpd.GeoDataFrame([])}
+            ),
+            "mp_data": davestructure(
+                {"mp_junctions": gpd.GeoDataFrame([]), "mp_pipes": gpd.GeoDataFrame([])}
+            ),
+            "lp_data": davestructure(
+                {"lp_junctions": gpd.GeoDataFrame([]), "lp_pipes": gpd.GeoDataFrame([])}
+            ),
+            "components_gas": davestructure(
+                {
+                    "compressors": gpd.GeoDataFrame([]),
+                    "sources": gpd.GeoDataFrame([]),
+                    "storages_gas": gpd.GeoDataFrame([]),
+                }
+            ),
+            # auxillary
+            "dave_version": __version__,
+            "meta_data": {},
+        }
+    )
     return grid_data
 
 
-def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region=None,
-                own_area=None, power_levels=[], gas_levels=[], plot=True, convert=True,
-                opt_model=True, combine_areas=[], transformers=True, renewable_powerplants=True,
-                conventional_powerplants=True, loads=True, compressors=True, sources=True,
-                storages_gas=True, output_folder=dave_output_dir):
+def create_grid(
+    postalcode=None,
+    town_name=None,
+    federal_state=None,
+    nuts_region=None,
+    own_area=None,
+    power_levels=[],
+    gas_levels=[],
+    plot=True,
+    convert=True,
+    opt_model=True,
+    combine_areas=[],
+    transformers=True,
+    renewable_powerplants=True,
+    conventional_powerplants=True,
+    loads=True,
+    compressors=True,
+    sources=True,
+    storages_gas=True,
+    output_folder=dave_settings()["dave_output_dir"],
+    api_use=True,
+):
     """
-    This is the main function of dave. This function generates automaticly grid models for power 
+    This is the main function of dave. This function generates automaticly grid models for power
     and gas networks in the defined target area
 
     INPUT:
@@ -135,24 +166,31 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
             considered. options: 'HP','MP','LP', []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
-        **plot** (boolean, default True) - if this value is true dave creates plottings automaticly \n
+        **plot** (boolean, default True) - if this value is true dave creates plottings \
+            automaticly \n
         **convert** (boolean, default True) - if this value is true dave will be convert the grid \
             automaticly to pandapower and pandapipes \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations \n
         **combine_areas** (list, default []) - this parameter defines on which power levels not \
             connected areas should combined. options: 'EHV','HV','MV','LV', [] \n
-        **transformers** (boolean, default True) - if true, transformers are added to the grid model \n
+        **transformers** (boolean, default True) - if true, transformers are added to the grid \
+            model \n
         **renewable_powerplants** (boolean, default True) - if true, renewable powerplans are \
             added to the grid model \n
         **conventional_powerplants** (boolean, default True) - if true, conventional powerplans \
             are added to the grid model \n
         **loads** (boolean, default True) - if true, loads are added to the grid model \n
-        **compressors** (boolean, default True) - if true, compressors are added to the grid model \n
+        **compressors** (boolean, default True) - if true, compressors are added to the grid \
+            model \n
         **sources** (boolean, default True) - if true, gas sources are added to the grid model \n
-        **storages_gas** (boolean, default True) - if true, gas storages are added to the grid model \n
+        **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
+            model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
-            generated data should be saved. if for this path no folder exists, dave will be create one
+            generated data should be saved. if for this path no folder exists, dave will be \
+                create one
+        **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
+            local folder
 
     OUTPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure \n
@@ -177,32 +215,41 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
     gas_levels = list(map(str.upper, gas_levels))
     combine_areas = list(map(str.upper, combine_areas))
     # convert input value 'ALL'
-    if power_levels == ['ALL']:
-        power_levels = ['EHV', 'HV', 'MV', 'LV']
-    if gas_levels == ['ALL']:
-        gas_levels = ['HP', 'MP', 'LP']
+    if power_levels == ["ALL"]:
+        power_levels = ["EHV", "HV", "MV", "LV"]
+    if gas_levels == ["ALL"]:
+        gas_levels = ["HP", "MP", "LP"]
     # sort level inputs
-    order_power = ['EHV', 'HV', 'MV', 'LV']
+    order_power = ["EHV", "HV", "MV", "LV"]
     power_sort = sorted(list(map(order_power.index, power_levels)))
     power_levels = list(map(lambda x: order_power[x], power_sort))
-    order_gas = ['HP', 'MP', 'LP']
+    order_gas = ["HP", "MP", "LP"]
     gas_sort = sorted(list(map(order_gas.index, gas_levels)))
     gas_levels = list(map(lambda x: order_gas[x], gas_sort))
     # --- create target area informations
-    if ('LV' in power_levels) or ('LP' in gas_levels):
+    if ("LV" in power_levels) or ("LP" in gas_levels):
         roads, roads_plot, buildings, landuse = True, True, True, True
-    elif ('MV' in power_levels) or ('MP' in gas_levels):
+    elif ("MV" in power_levels) or ("MP" in gas_levels):
         roads, roads_plot, buildings = True, True, False
         landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for EHV, HV and HP
         roads, roads_plot, buildings = False, False, False
         landuse = bool(loads and power_levels)  # landuse is needed for load calculation
-    file_exists, file_name = target_area(grid_data, power_levels=power_levels,
-                                         gas_levels=gas_levels, postalcode=postalcode,
-                                         town_name=town_name, federal_state=federal_state,
-                                         nuts_region=nuts_region, own_area=own_area, buffer=0,
-                                         roads=roads, roads_plot=roads_plot, buildings=buildings,
-                                         landuse=landuse).target()
+    file_exists, file_name = target_area(
+        grid_data,
+        power_levels=power_levels,
+        gas_levels=gas_levels,
+        postalcode=postalcode,
+        town_name=town_name,
+        federal_state=federal_state,
+        nuts_region=nuts_region,
+        own_area=own_area,
+        buffer=0,
+        roads=roads,
+        roads_plot=roads_plot,
+        buildings=buildings,
+        landuse=landuse,
+    ).target()
     if not file_exists:
         # create extended grid area to combine not connected areas
         if combine_areas:
@@ -216,41 +263,42 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
             if level in combine_areas:
                 # temporary use of extended grid area
                 grid_data.area = combined_area
-            if level == 'EHV':
+            if level == "EHV":
                 create_ehv_topology(grid_data)
-            elif level == 'HV':
+            elif level == "HV":
                 create_hv_topology(grid_data)
-            elif level == 'MV':
+            elif level == "MV":
                 create_mv_topology(grid_data)
-            elif level == 'LV':
+            elif level == "LV":
                 create_lv_topology(grid_data)
             else:
-                print('no voltage level was choosen or their is a failure in the input value.')
-                print(f'the input for the power levels was: {power_levels}')
-                print('---------------------------------------------------')
+                print("no voltage level was choosen or their is a failure in the input value.")
+                print(f"the input for the power levels was: {power_levels}")
+                print("---------------------------------------------------")
             # replace grid area with the origin one for further steps
             if level in combine_areas:
                 grid_data.area = origin_area
         # create power grid components
         if power_levels:
-            power_components(grid_data, transformers, renewable_powerplants,
-                             conventional_powerplants, loads)
+            power_components(
+                grid_data, transformers, renewable_powerplants, conventional_powerplants, loads
+            )
         # --- create desired gas grid levels
         for level in gas_levels:
             # temporary extend grid area to combine not connected areas
             if level in combine_areas:
                 # temporary use of extended grid area
                 grid_data.area = combined_area
-            if level == 'HP':
+            if level == "HP":
                 create_hp_topology(grid_data)
-            elif level == 'MP':
+            elif level == "MP":
                 create_mp_topology(grid_data)
-            elif level == 'LP':
+            elif level == "LP":
                 create_lp_topology(grid_data)
             else:
-                print('no gas level was choosen or their is a failure in the input value.')
-                print(f'the input for the gas levels was: {gas_levels}')
-                print('-----------------------------------------------')
+                print("no gas level was choosen or their is a failure in the input value.")
+                print(f"the input for the gas levels was: {gas_levels}")
+                print("-----------------------------------------------")
             # replace grid area with the origin one for further steps
             if level in combine_areas:
                 grid_data.area = origin_area
@@ -259,44 +307,51 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
             gas_components(grid_data, compressors, sources, storages_gas)
     else:
         # read dataset from archiv
-        grid_data = from_archiv(f'{file_name}.h5')
+        grid_data = from_archiv(f"{file_name}.h5")
 
     # create dave output folder on desktop for DaVe dataset, plotting and converted model
-    print(f'\nSave DaVe output data at the following path: {output_folder}')
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    if not api_use:
+        print(f"\nSave DaVe output data at the following path: {output_folder}")
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
 
     # save DaVe dataset to archiv and also in the output folder
-    if not grid_data.target_input.iloc[0].typ == 'own area':
-        """ this function is temporary taken out for development
+    if not grid_data.target_input.iloc[0].typ == "own area":
+        """this function is temporary taken out for development
         print('Save DaVe dataset to archiv')
         print('----------------------------------')
         # check if archiv folder exists otherwise create one
-        archiv_dir = dave_dir + '\\datapool\\dave_archiv\\'
+        archiv_dir = dave_settings()["dave_dir"] + '\\datapool\\dave_archiv\\'
         if not os.path.exists(archiv_dir):
             os.makedirs(archiv_dir)
-        # save dataset to archiv
-        file_name = to_archiv(grid_data)
+        with warnings.catch_warnings():
+            # filter warnings because of the PerformanceWarning from pytables at the geometry type
+            warnings.simplefilter('ignore')
+            # save dataset to archiv
+            file_name = to_archiv(grid_data)
         """
-    with warnings.catch_warnings():
-        # filter warnings because of the PerformanceWarning from pytables at the geometry type
-        warnings.simplefilter('ignore')
-        write_dataset(grid_data, dataset_path=output_folder+'\\'+'dave_dataset.h5')
+    # save DaVe dataset to the output folder
+    if not api_use:
+        with warnings.catch_warnings():
+            # filter warnings because of the PerformanceWarning from pytables at the geometry type
+            warnings.simplefilter("ignore")
+            to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
 
     # plot informations
     if plot:
-        if 'LV' in power_levels:
-            plot_target_area(grid_data, output_folder)
-        plot_grid_data(grid_data, output_folder)
-        #plot_landuse(grid_data, output_folder)
+        if "LV" in power_levels:
+            plot_target_area(grid_data, api_use, output_folder)
+        plot_grid_data(grid_data, api_use, output_folder)
+        # plot_landuse(grid_data, api_use, output_folder)
 
     # convert into pandapower and pandapipes
     if convert and power_levels:
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder
-        file_path = output_folder + '\\dave_power_grid.json'
-        pp_to_json(net_power, file_path)
+        if not api_use:
+            file_path = output_folder + "\\dave_power_grid.json"
+            pp_to_json(net_power, file_path)
     else:
         net_power = None
     if convert and gas_levels:
@@ -307,7 +362,7 @@ def create_grid(postalcode=None, town_name=None, federal_state=None, nuts_region
 
     # return runtime
     _stop_time = timeit.default_timer()
-    print('runtime = ' + str(round((_stop_time - _start_time)/60, 2)) + ' min')
+    print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
 
     # return data
     if net_power and net_gas:

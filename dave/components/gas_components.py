@@ -1,5 +1,3 @@
-
-
 def sources(grid_data):
     """
     This function collects the data for production

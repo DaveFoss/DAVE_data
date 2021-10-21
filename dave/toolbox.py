@@ -1,9 +1,10 @@
 import warnings
+
 import geopandas as gpd
 import numpy as np
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint
-from shapely.ops import polygonize, cascaded_union
+from shapely.ops import cascaded_union, polygonize
 
 from dave.settings import dave_settings
 
@@ -27,7 +28,7 @@ def create_interim_area(areas):
             areas_other = areas.drop([i])
             with warnings.catch_warnings():
                 # filter crs warning because it is not relevant
-                warnings.filterwarnings('ignore', category=UserWarning)
+                warnings.filterwarnings("ignore", category=UserWarning)
                 distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
                 areas_iso.append((i, distance[distance == distance.min()].index[0]))
@@ -43,8 +44,9 @@ def create_interim_area(areas):
                 difference = convex_hull.difference(geom1)
                 difference = difference.difference(geom2)
                 # add difference area to areas
-                areas = areas.append(gpd.GeoDataFrame({'name': 'interim area',
-                                                       'geometry': [difference]}))
+                areas = areas.append(
+                    gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})
+                )
                 areas.reset_index(drop=True, inplace=True)
 
     return areas
@@ -66,8 +68,12 @@ def voronoi(points):
     voronoi_points = np.array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
     bound_points = MultiPoint(points.geometry).convex_hull.buffer(1).bounds
-    points_boundary = [[bound_points[0], bound_points[1]], [bound_points[0], bound_points[3]],
-                       [bound_points[2], bound_points[1]], [bound_points[2], bound_points[3]]]
+    points_boundary = [
+        [bound_points[0], bound_points[1]],
+        [bound_points[0], bound_points[3]],
+        [bound_points[2], bound_points[1]],
+        [bound_points[2], bound_points[3]],
+    ]
     # append boundary points to avoid infinit polygons with relevant nodes
     voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
@@ -77,15 +83,15 @@ def voronoi(points):
     # create polygons from the lines
     polygons = np.array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
-    voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()['crs_main'])
+    voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
     # search voronoi centroids and dave name
-    voronoi_polygons['centroid'] = None
-    voronoi_polygons['dave_name'] = None
+    voronoi_polygons["centroid"] = None
+    voronoi_polygons["dave_name"] = None
     for _, polygon in voronoi_polygons.iterrows():
         for _, point in points.iterrows():
             if polygon.geometry.contains(point.geometry):
-                voronoi_polygons.at[polygon.name, 'centroid'] = point.geometry
+                voronoi_polygons.at[polygon.name, "centroid"] = point.geometry
                 if not point.dave_name is None:
-                    voronoi_polygons.at[polygon.name, 'dave_name'] = point.dave_name
+                    voronoi_polygons.at[polygon.name, "dave_name"] = point.dave_name
                 break
     return voronoi_polygons
