@@ -12,7 +12,7 @@ from dave.components import gas_components, power_components
 
 # imports from dave
 from dave.dave_structure import davestructure
-from dave.io import from_archiv, pp_to_json, to_archiv, to_hdf
+from dave.io import from_archiv, pp_to_json, ppi_to_json, to_archiv, to_hdf
 from dave.model import create_gas_grid, create_power_grid, gas_processing, power_processing
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
 from dave.settings import dave_settings
@@ -358,6 +358,10 @@ def create_grid(
     if convert and gas_levels:
         net_gas = create_gas_grid(grid_data)
         # net_gas = gas_processing(net_gas)
+        # save grid model in the dave output folder
+        if not api_use:
+            file_path = output_folder + "\\dave_gas_grid.json"
+            ppi_to_json(net_gas, file_path)
     else:
         net_gas = None
 
