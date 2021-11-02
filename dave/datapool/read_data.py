@@ -333,3 +333,115 @@ def read_scigridgas_igginl():
     # read meta data
     meta_data = pd.read_excel(get_data_path("scigridgas_igginl_meta.xlsx", "data"), sheet_name=None)
     return storage_data, meta_data
+
+
+def read_scigridgas_iggielgn():
+    """
+    This data includes informations for the europe gas grid produced by scigridgas.
+    The dataset is know as "iggielgn".
+
+    OUTPUT:
+         **scigridgas iggielgn data** (dict) - Informations for the europe gas grid
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         scigridgas_iggielgn = data.read_scigridgas_iggielgn()
+    """
+    # --- read data
+    iggielgn_data = pd.HDFStore(get_data_path("scigridgas_iggielgn.h5", "data"))
+    # border_points
+    border_points = iggielgn_data.get("/border_points")
+    border_points = gpd.GeoDataFrame(
+        border_points,
+        geometry=gpd.points_from_xy(border_points.long, border_points.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # compressors
+    compressors = iggielgn_data.get("/compressors")
+    compressors = gpd.GeoDataFrame(
+        compressors,
+        geometry=gpd.points_from_xy(compressors.long, compressors.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # connection points
+    connection_points = iggielgn_data.get("/connection_points")
+    connection_points = gpd.GeoDataFrame(
+        connection_points,
+        geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # comsumer
+    consumers = iggielgn_data.get("/consumers")
+    consumers = gpd.GeoDataFrame(
+        consumers,
+        geometry=gpd.points_from_xy(consumers.long, consumers.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # entry_points
+    entry_points = iggielgn_data.get("/entry_points")
+    entry_points = gpd.GeoDataFrame(
+        entry_points,
+        geometry=gpd.points_from_xy(entry_points.long, entry_points.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # inter_connection_points
+    connection_points = iggielgn_data.get("/inter_connection_points")
+    inter_connection_points = gpd.GeoDataFrame(
+        connection_points,
+        geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # lngss
+    lngs = iggielgn_data.get("/lngs")
+    lngs = gpd.GeoDataFrame(
+        lngs, geometry=gpd.points_from_xy(lngs.long, lngs.lat), crs=dave_settings()["crs_main"]
+    )
+    # nodes
+    nodes = iggielgn_data.get("/nodes")
+    nodes = gpd.GeoDataFrame(
+        nodes, geometry=gpd.points_from_xy(nodes.long, nodes.lat), crs=dave_settings()["crs_main"]
+    )
+    # pipe_segments
+    pipe_segments = iggielgn_data.get("/pipe_segments")
+    pipe_segments.lat = pipe_segments.lat.apply(eval)
+    pipe_segments.long = pipe_segments.long.apply(eval)
+    geometry = [LineString(list(zip(pipe.long, pipe.lat))) for i, pipe in pipe_segments.iterrows()]
+    pipe_segments = gpd.GeoDataFrame(
+        pipe_segments, geometry=pd.Series(geometry), crs=dave_settings()["crs_main"]
+    )
+    # productions
+    productions = iggielgn_data.get("/productions")
+    productions = gpd.GeoDataFrame(
+        productions,
+        geometry=gpd.points_from_xy(productions.long, productions.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # storages
+    storages = iggielgn_data.get("/storages")
+    storages = gpd.GeoDataFrame(
+        storages,
+        geometry=gpd.points_from_xy(storages.long, storages.lat),
+        crs=dave_settings()["crs_main"],
+    )
+    # close file
+    iggielgn_data.close()
+    # create dictonary
+    storage_data = {
+        "border_points": border_points,
+        "compressors": compressors,
+        "connection_points": connection_points,
+        "consumers": consumers,
+        "entry_points": entry_points,
+        "inter_connection_points": inter_connection_points,
+        "lngs": lngs,
+        "nodes": nodes,
+        "pipe_segments": pipe_segments,
+        "productions": productions,
+        "storages": storages,
+    }
+    # read meta data
+    meta_data = pd.read_excel(
+        get_data_path("scigridgas_iggielgn_meta.xlsx", "data"), sheet_name=None
+    )
+    return storage_data, meta_data
