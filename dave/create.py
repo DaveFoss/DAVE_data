@@ -357,7 +357,7 @@ def create_grid(
         net_power = None
     if convert and gas_levels:
         net_gas = create_gas_grid(grid_data)
-        # net_gas = gas_processing(net_gas)
+        net_gas = gas_processing(net_gas)
         # save grid model in the dave output folder
         if not api_use:
             file_path = output_folder + "\\dave_gas_grid.json"
