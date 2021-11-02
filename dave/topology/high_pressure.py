@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
-from dave.datapool import read_hp_data, read_scigridgas_igginl
+from dave.datapool import read_hp_data, read_scigridgas_iggielgn
 from dave.settings import dave_settings
 
 
@@ -25,7 +25,7 @@ def create_hp_topology(grid_data):
         bar_format=dave_settings()["bar_format"],
     )
     # read high pressure grid data from dave datapool (scigridgas igginl)
-    scigrid_data, meta_data = read_scigridgas_igginl()
+    scigrid_data, meta_data = read_scigridgas_iggielgn()
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
