@@ -3,7 +3,7 @@ import json
 import geopandas as gpd
 import pandas as pd
 import uvicorn
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 
 from dave.api import request_bodys
 from dave.create import create_grid
@@ -11,7 +11,7 @@ from dave.datapool import read_postal
 from dave.io import from_mongo, info_mongo, to_json, to_mongo
 
 # initialize app object
-app = FastAPI()
+app = FastAPI(root_path="/dave")
 
 
 class DaveRequest:
@@ -82,6 +82,12 @@ class DbPost:
             data_df = pd.DataFrame(data)
         # upload data into database
         to_mongo(database, collection, data_df)
+
+
+# main page with root path information
+@app.get("/app")
+def read_main(request: Request):
+    return {"message": "Welcome to the DaVe API", "root_path": request.scope.get("root_path")}
 
 
 # get method for dave dataset request
