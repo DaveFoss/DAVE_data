@@ -147,7 +147,7 @@ def create_power_grid(grid_data):
     net.line_geodata = net.line_geodata.append(
         pd.concat([coords_ehvhv, coords_mvlv]), ignore_index=True
     )
-    # check necessary parameters and add pandapower standart if needed
+    # check necessary parameters and add pandapower standard if needed
     net.line["in_service"] = (
         bool(True)
         if all(net.line.in_service.isna())
