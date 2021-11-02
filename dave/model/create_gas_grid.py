@@ -1,9 +1,10 @@
-import pandas as pd
-from tqdm import tqdm
 import pandapipes as ppi
-from dave.settings import dave_settings
+import pandas as pd
 from shapely.geometry import MultiLineString
 from shapely.ops import linemerge
+from tqdm import tqdm
+
+from dave.settings import dave_settings
 
 
 def multiline_coords(line_geometry):
@@ -30,9 +31,6 @@ def create_gas_grid(grid_data):
     OUTPUT:
         **net** (attrdict) - pandapipes attrdict with grid data
     """
-    print('create pandapipes network')
-    print('----------------------------------')
-
     # set progress bar
     pbar = tqdm(
         total=100,
@@ -43,9 +41,9 @@ def create_gas_grid(grid_data):
     # create empty network
     net = ppi.create_empty_network()
     # add dave version
-    net['dave_version'] = grid_data.dave_version
+    net["dave_version"] = grid_data.dave_version
 
-    # --- create high pressure topology
+    # --- create junctions
     # collect junction informations and aggregate them
     all_junctions = pd.concat(
         [
@@ -56,17 +54,17 @@ def create_gas_grid(grid_data):
     )
 
     if not all_junctions.empty:
-        all_junctions.rename(columns={"dave_name": "name", "pressure_level": "pn_bar"}, inplace=True)
+        all_junctions.rename(columns={"dave_name": "name"}, inplace=True)
         all_junctions.reset_index(drop=True, inplace=True)
-        # write buses into pandapower structure
+        # write junctions into pandapipes structure
         net.junction = net.junction.append(all_junctions)
         net.junction_geodata["x"] = all_junctions.geometry.apply(lambda x: x.coords[:][0][0])
         net.junction_geodata["y"] = all_junctions.geometry.apply(lambda x: x.coords[:][0][1])
-        # check necessary parameters and add pandapower standart if needed
+        # check necessary parameters and add pandapipes standart if needed
         net.junction["type"] = (
-            "p" # not currently used in pandapipes
-            # if all(net.bus.type.isna())
-            # else net.junction.type.apply(lambda x: "b" if pd.isna(x) else x)
+            "junction"
+            if all(net.bus.type.isna())
+            else net.junction.type.apply(lambda x: "junction" if pd.isna(x) else x)
         )
         net.junction["in_service"] = (
             bool(True)
@@ -78,7 +76,6 @@ def create_gas_grid(grid_data):
             if all(net.junction.tfluid_k.isna())
             else net.junction.tfluid_k.apply(lambda x: float(320) if pd.isna(x) else x)
         )
-
     # update progress
     pbar.update(15)
 
@@ -87,7 +84,16 @@ def create_gas_grid(grid_data):
     pipes_hp = grid_data.hp_data.hp_pipes
     if not pipes_hp.empty:
         pipes_hp.rename(columns={"dave_name": "name"}, inplace=True)
-        pipes_hp["type"] = 'pipe' # pipes_hp.type.apply(lambda x: "ol" if pd.isna(x) else x)
+        # conver diameter from mm to m
+        pipes_hp["diameter_m"] = pipes_hp.diameter_mm.apply(lambda x: x / 1000)
+        pipes_hp.drop(columns=["diameter_mm"])
+        # change from/to junction names to ids
+        pipes_hp["from_junction"] = pipes_hp.from_junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        pipes_hp["to_junction"] = pipes_hp.to_junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
         # geodata
         coords_hp = pd.DataFrame(
             {
@@ -111,12 +117,17 @@ def create_gas_grid(grid_data):
     coords_mp = pd.DataFrame([])
     coords_lp = pd.DataFrame([])
 
-    # write line data into pandapower structure
-    net.pipe = net.line.append(pd.concat([pipes_hp, pipes_mp, pipes_lp]), ignore_index=True)
-    net.pipe_geodata = net.line_geodata.append(
+    # write pipeline data into pandapipes structure
+    net.pipe = net.pipe.append(pd.concat([pipes_hp, pipes_mp, pipes_lp]), ignore_index=True)
+    net.pipe_geodata = net.pipe_geodata.append(
         pd.concat([coords_hp, coords_mp, coords_lp]), ignore_index=True
     )
-    # check necessary parameters and add pandapower standard if needed
+    # check necessary parameters and add pandapipes standard if needed
+    net.pipe["type"] = (
+        "pipe"
+        if all(net.pipe.type.isna())
+        else net.pipe.type.apply(lambda x: "pipe" if pd.isna(x) else x)
+    )
     net.pipe["in_service"] = (
         bool(True)
         if all(net.pipe.in_service.isna())
@@ -157,12 +168,5 @@ def create_gas_grid(grid_data):
         if all(net.pipe.qext_w.isna())
         else net.pipe.qext_w.apply(lambda x: float(0) if pd.isna(x) else x)
     )
-    net.pipe["diameter_m"] = (
-        float(0.1)
-        if all(net.pipe.diameter_m.isna())
-        else net.pipe.diameter_m.apply(lambda x: float(0.1) if pd.isna(x) else x)
-    )
-
-
     # update progress
     pbar.update(20)
