@@ -2,6 +2,7 @@ import warnings
 
 import geopandas as gpd
 import numpy as np
+from geopy.geocoders import ArcGIS
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint
 from shapely.ops import cascaded_union, polygonize
@@ -95,3 +96,20 @@ def voronoi(points):
                     voronoi_polygons.at[polygon.name, "dave_name"] = point.dave_name
                 break
     return voronoi_polygons
+
+
+def adress_to_coords(adress):
+    """
+    This function request geocoordinates to a given adress.
+
+    INPUT:
+        **Adress** (string) - format: street_name housenummber postal_code city
+                              example: 'Königstor 59 34119 Kassel'
+
+    OUTPUT:
+        **geocoordinates** (tuple) - geocoordinates for the adress in format (longitude, latitude)
+    """
+    if adress:
+        geolocator = ArcGIS(timeout=None)
+        location = geolocator.geocode(adress)
+        return (location.longitude, location.latitude)
