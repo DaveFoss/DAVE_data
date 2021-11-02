@@ -1,4 +1,5 @@
 import os
+
 # import shutil
 import timeit
 import warnings
@@ -356,7 +357,7 @@ def create_grid(
         net_power = None
     if convert and gas_levels:
         net_gas = create_gas_grid(grid_data)
-        net_gas = gas_processing(net_gas)
+        # net_gas = gas_processing(net_gas)
     else:
         net_gas = None
 
