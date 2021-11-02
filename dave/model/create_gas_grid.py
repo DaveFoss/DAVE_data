@@ -49,7 +49,7 @@ def create_gas_grid(grid_data):
         # check necessary parameters and add pandapipes standart if needed
         net.junction["type"] = (
             "junction"
-            if all(net.bus.type.isna())
+            if all(net.junction.type.isna())
             else net.junction.type.apply(lambda x: "junction" if pd.isna(x) else x)
         )
         net.junction["in_service"] = (
@@ -141,13 +141,13 @@ def create_gas_grid(grid_data):
     )
     net.pipe["loss_coefficient"] = (
         float(0)
-        if all(net.loss_coefficient.k_mm.isna())
-        else net.loss_coefficient.k_mm.apply(lambda x: float(0) if pd.isna(x) else x)
+        if all(net.pipe.loss_coefficient.isna())
+        else net.pipe.loss_coefficient.apply(lambda x: float(0) if pd.isna(x) else x)
     )
     net.pipe["alpha_w_per_m2k"] = (
         float(0)
-        if all(net.alpha_w_per_m2k.k_mm.isna())
-        else net.alpha_w_per_m2k.k_mm.apply(lambda x: float(0) if pd.isna(x) else x)
+        if all(net.pipe.alpha_w_per_m2k.isna())
+        else net.pipe.alpha_w_per_m2k.apply(lambda x: float(0) if pd.isna(x) else x)
     )
     net.pipe["qext_w"] = (
         float(0)
@@ -156,3 +156,6 @@ def create_gas_grid(grid_data):
     )
     # update progress
     pbar.update(20)
+    # close progress bar
+    pbar.close()
+    return net
