@@ -38,7 +38,8 @@ def create_gas_grid(grid_data):
             grid_data.lp_data.lp_junctions,
         ]
     )
-
+    # update progress
+    pbar.update(25)
     if not all_junctions.empty:
         all_junctions.rename(columns={"dave_name": "name"}, inplace=True)
         all_junctions.reset_index(drop=True, inplace=True)
@@ -63,7 +64,7 @@ def create_gas_grid(grid_data):
             else net.junction.tfluid_k.apply(lambda x: float(320) if pd.isna(x) else x)
         )
     # update progress
-    pbar.update(15)
+    pbar.update(25)
 
     # --- create pipes
     # create pipes hp
@@ -95,7 +96,8 @@ def create_gas_grid(grid_data):
         )
     else:
         coords_hp = pd.DataFrame([])
-
+    # update progress
+    pbar.update(30)
     # TODO: mp and lp, maybe other handling due to better data quality...
     pipes_mp = pd.DataFrame([])
     pipes_lp = pd.DataFrame([])
