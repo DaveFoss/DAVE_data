@@ -75,9 +75,7 @@ def create_hp_topology(grid_data):
         hp_pipes["source"] = "scigridgas"
         hp_pipes["pressure_level"] = 1
         # extract relevant scigrid parameters
-        hp_pipes["diameter_m"] = hp_pipes.param.apply(
-            lambda x: float(eval(x)["diameter_mm"]) / 1000.0
-        )
+        hp_pipes["diameter_mm"] = hp_pipes.param.apply(lambda x: eval(x)["diameter_mm"])
         hp_pipes["is_H_gas"] = hp_pipes.param.apply(
             lambda x: True if eval(x)["is_H_gas"] == 1 else False
         )
