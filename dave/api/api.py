@@ -11,7 +11,7 @@ from dave.datapool import read_postal
 from dave.io import from_mongo, info_mongo, to_json, to_mongo
 
 # initialize app object
-app = FastAPI(root_path="/dave")
+app = FastAPI()
 
 
 class DaveRequest:
