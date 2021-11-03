@@ -1,24 +1,10 @@
 import pandapower as pp
 import pandas as pd
 from shapely.geometry import MultiLineString
-from shapely.ops import linemerge
 from tqdm import tqdm
 
 from dave.settings import dave_settings
-
-
-def multiline_coords(line_geometry):
-    """
-    This function extracts the coordinates from a MultiLineString
-    """
-    merged_line = linemerge(line_geometry)
-    # sometimes line merge can not merge the lines correctly
-    line_coords = (
-        [line.coords[:] for line in merged_line]
-        if isinstance(merged_line, MultiLineString)
-        else merged_line.coords[:]
-    )
-    return line_coords
+from dave.toolbox import multiline_coords
 
 
 def create_power_grid(grid_data):
@@ -147,7 +133,7 @@ def create_power_grid(grid_data):
     net.line_geodata = net.line_geodata.append(
         pd.concat([coords_ehvhv, coords_mvlv]), ignore_index=True
     )
-    # check necessary parameters and add pandapower standart if needed
+    # check necessary parameters and add pandapower standard if needed
     net.line["in_service"] = (
         bool(True)
         if all(net.line.in_service.isna())

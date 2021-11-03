@@ -36,12 +36,15 @@ def create_hp_topology(grid_data):
     # prepare data
     hp_junctions.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
     hp_junctions["source"] = "scigridgas"
-    hp_junctions["pressure_level"] = 1
     # intersection with target area
     hp_junctions = gpd.overlay(hp_junctions, grid_data.area, how="intersection")
     keys = grid_data.area.keys().tolist()
     keys.remove("geometry")
     hp_junctions = hp_junctions.drop(columns=(keys))
+    # extract relevant scigrid parameters
+    hp_junctions["entsog_key"] = hp_junctions.param.apply(lambda x: eval(x)["entsog_key"])
+    # set grid level number
+    hp_junctions["pressure_level"] = 1
     # update progress
     pbar.update(20)
     # consider data only if there are more than one junction in the target area
@@ -71,6 +74,22 @@ def create_hp_topology(grid_data):
         hp_pipes.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
         hp_pipes["source"] = "scigridgas"
         hp_pipes["pressure_level"] = 1
+        # extract relevant scigrid parameters
+        hp_pipes["diameter_m"] = hp_pipes.param.apply(
+            lambda x: float(eval(x)["diameter_mm"]) / 1000.0
+        )
+        hp_pipes["is_H_gas"] = hp_pipes.param.apply(
+            lambda x: True if eval(x)["is_H_gas"] == 1 else False
+        )
+        hp_pipes["is_bothDirection"] = hp_pipes.param.apply(
+            lambda x: True if eval(x)["is_bothDirection"] == 1 else False
+        )
+        hp_pipes["length_km"] = hp_pipes.param.apply(lambda x: eval(x)["length_km"])
+        hp_pipes["max_cap_M_m3_per_d"] = hp_pipes.param.apply(
+            lambda x: eval(x)["max_cap_M_m3_per_d"]
+        )
+        hp_pipes["max_pressure_bar"] = hp_pipes.param.apply(lambda x: eval(x)["max_pressure_bar"])
+        hp_pipes["operator_name"] = hp_pipes.param.apply(lambda x: eval(x)["operator_name"])
         # update progress
         pbar.update(20)
         # change pipeline junction names from scigrid id to dave name
@@ -87,7 +106,7 @@ def create_hp_topology(grid_data):
         )
         # set crs
         hp_pipes.set_crs(dave_settings()["crs_main"], inplace=True)
-        # add hp lines to grid data
+        # add pipes to grid data
         grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
         # update progress
         pbar.update(20)

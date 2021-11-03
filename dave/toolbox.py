@@ -4,8 +4,8 @@ import geopandas as gpd
 import numpy as np
 from geopy.geocoders import ArcGIS
 from scipy.spatial import Voronoi
-from shapely.geometry import LineString, MultiPoint
-from shapely.ops import cascaded_union, polygonize
+from shapely.geometry import LineString, MultiLineString, MultiPoint
+from shapely.ops import cascaded_union, linemerge, polygonize
 
 from dave.settings import dave_settings
 
@@ -113,3 +113,17 @@ def adress_to_coords(adress):
         geolocator = ArcGIS(timeout=None)
         location = geolocator.geocode(adress)
         return (location.longitude, location.latitude)
+
+
+def multiline_coords(line_geometry):
+    """
+    This function extracts the coordinates from a MultiLineString
+    """
+    merged_line = linemerge(line_geometry)
+    # sometimes line merge can not merge the lines correctly
+    line_coords = (
+        [line.coords[:] for line in merged_line]
+        if isinstance(merged_line, MultiLineString)
+        else merged_line.coords[:]
+    )
+    return line_coords

@@ -3,6 +3,7 @@ import os
 from functools import partial
 
 import geopandas as gpd
+import pandapipes as ppi
 import pandapower as pp
 import pandas as pd
 from pandapower.io_utils import (
@@ -231,4 +232,37 @@ def json_to_pp(file_path):
         net.gen["geometry"] = net.gen.geometry.apply(lambda x: loads(x, hex=True))
     if not net.sgen.empty and all(list(map(lambda x: isinstance(x, str), net.sgen.geometry))):
         net.sgen["geometry"] = net.sgen.geometry.apply(lambda x: loads(x, hex=True))
+    return net
+
+
+def ppi_to_json(net, file_path):
+    """
+    This functions converts a pandapipes model into a json file
+    """
+    # convert geometry
+    if not net.junction.empty and all(
+        list(map(lambda x: isinstance(x, Point), net.junction.geometry))
+    ):
+        net.junction["geometry"] = net.junction.geometry.apply(lambda x: dumps(x, hex=True))
+    if not net.pipe.empty and all(
+        list(map(lambda x: isinstance(x, (LineString, MultiLineString)), net.pipe.geometry))
+    ):
+        net.pipe["geometry"] = net.pipe.geometry.apply(lambda x: dumps(x, hex=True))
+    # convert ppi model to json and save the file
+    ppi.to_json(net, filename=file_path)
+
+
+def json_to_ppi(file_path):
+    """
+    This functions converts a json file into a pandapipes model
+    """
+    # read json file and convert to pp model
+    net = ppi.from_json(file_path)
+    # convert geometry
+    if not net.junction.empty and all(
+        list(map(lambda x: isinstance(x, str), net.junction.geometry))
+    ):
+        net.junction["geometry"] = net.junction.geometry.apply(lambda x: loads(x, hex=True))
+    if not net.pipe.empty and all(list(map(lambda x: isinstance(x, str), net.pipe.geometry))):
+        net.pipe["geometry"] = net.pipe.geometry.apply(lambda x: loads(x, hex=True))
     return net
