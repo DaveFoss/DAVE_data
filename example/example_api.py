@@ -5,13 +5,54 @@ import pandas as pd
 import requests
 from shapely.geometry import Point
 
+from dave.io import from_json_string
+
 # local url of the dave api
 # url = "http://141.5.108.4:8000"  # production server
 url = "http://127.0.0.1:80/api"  # develop local
 
+
+# --- get dave dataset
+"""
+With this script you can request a dataset from dave with your special definitions
+Example: Area Informations for the postalcode 34225 without any grid data (because of runtime)
+"""
+request_dataset = requests.get(
+    url + "/request_dataset",
+    data=json.dumps(
+        {
+            "postalcode": ["34225"],
+            "power_levels": [],
+            "plot": False,
+            "convert": False,
+            "opt_model": False,
+            "transformers": False,
+            "renewable_powerplants": False,
+            "conventional_powerplants": False,
+            "loads": False,
+            "compressors": False,
+            "sources": False,
+            "storages_gas": False,
+        }
+    ),
+)
+grid_data = from_json_string(request_dataset.json())
+
+# --- get data from the dave internal datapool
+"""
+With this script you can request data from the dave internal datapool
+Example: town names
+"""
+data_name = "town_name"
+request_datapool = requests.get(
+    url + "/request_datapool", data=json.dumps({"data_name": data_name})
+)
+grid_data = from_json_string(request_datapool.json())
+data_datapool = pd.DataFrame([json.loads(request_datapool.json())]).T
+
 # --- get DaVe database informations
 """
-With this script you can get the main informations from the dave database 
+With this script you can get the main informations from the dave database
 This includes all mongo db databases and their collections
 """
 request_info = requests.get(url + "/db_info")
