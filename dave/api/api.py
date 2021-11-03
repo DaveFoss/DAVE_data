@@ -85,9 +85,9 @@ class DbPost:
 
 
 # main page with root path information
-@app.get("/app")
+@app.get("/")
 def read_main(request: Request):
-    return {"message": "Welcome to the DaVe API", "root_path": request.scope.get("root_path")}
+    return {"message": "Welcome to the DaVe API"}
 
 
 # get method for dave dataset request
