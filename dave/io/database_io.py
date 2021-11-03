@@ -78,3 +78,4 @@ def info_mongo():
             collections.append(collection["name"])
         db["collections"] = collections
         info_mongo[db["name"]] = db
+    return info_mongo
