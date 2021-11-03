@@ -65,6 +65,8 @@ def create_gas_grid(grid_data):
                 lambda x: dave_settings()["hp_pipes_tfluid_k"] if pd.isna(x) else x
             )
         )
+        # !!! set nominal pressure to the lowest maximal pressure of the pipelines
+        net.junction.pn_bar = grid_data.hp_data.hp_pipes.max_pressure_bar.min()
     # update progress
     pbar.update(25)
 
