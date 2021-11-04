@@ -8,7 +8,7 @@ from shapely.geometry import Point
 from dave.io import from_json_string
 
 # local url of the dave api
-# url = "http://141.5.108.4:8000"  # production server
+# url = "http://141.5.108.4:80/api"  # production server
 url = "http://127.0.0.1:80/api"  # develop local
 
 
@@ -57,7 +57,7 @@ This includes all mongo db databases and their collections
 """
 request_info = requests.get(url + "/db_info")
 db_info = request_info.json()
-data_a = gpd.GeoDataFrame.from_features(json.loads(request_info.json()))
+
 
 # --- get data from DaVe database
 # get full data of a collection (e.g. postalcodes)
