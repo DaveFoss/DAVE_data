@@ -3,8 +3,8 @@ stages:
     - test
     - docker
     #- build
-    #- deploy
-    #- lint  # create stage to check codestyle with pylint?
+    - deploy
+    #- lint  # create stage to check codestyle with pylint? also run black and isort overall
     
 # define task which should execute before each jobs
 before_script:
@@ -64,3 +64,28 @@ build_develop_container:
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
   only:
     - develop
+
+# deploy new docker image realese to server and reastart system
+# Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
+deploy_relese container:
+  stage: deploy
+  when: manual
+  tags:
+  - asprunner
+  script:
+    # install ansible
+    - apt update
+    - apt -y install ansible
+    # setup ssh
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh/
+    - chmod 700 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - cat $SSH_CLOUD_KEY_FILE | tr -d '\r' >~/.ssh/sensordata-key
+    - chmod 400 ~/.ssh/sensordata-key
+    # run ansible playbook
+    - ansible-galaxy install -r requirements_deployment.yml
+    #- ansible-playbook sensordata.yml --private-key ~/.ssh/sensordata-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
+  only:
+    - master
