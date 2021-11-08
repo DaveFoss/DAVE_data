@@ -1,4 +1,0 @@
----
-roles:
-  # ansible role that inatalls docker on linux
-  - name: geerlingguy.docker
