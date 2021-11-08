@@ -85,7 +85,7 @@ deploy_relese container:
     - cat $SSH_CLOUD_KEY_FILE | tr -d '\r' >~/.ssh/sensordata-key
     - chmod 400 ~/.ssh/sensordata-key
     # run ansible playbook
-    - ansible-galaxy install -r requirements_deployment.yml
+    - ansible-galaxy install -r ./deployment/requirements.yml
     #- ansible-playbook sensordata.yml --private-key ~/.ssh/sensordata-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   only:
     - master
