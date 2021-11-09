@@ -84,8 +84,8 @@ deploy_relese container:
     - chmod 700 ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
-    - cat $SSH_CLOUD_KEY_FILE | tr -d '\r' >~/.ssh/sensordata-key
-    - chmod 400 ~/.ssh/sensordata-key
+    - cat $SSH_CLOUD_KEY_FILE | tr -d '\r' >~/.ssh/deploy-key
+    - chmod 400 ~/.ssh/deploy-key
     # run ansible playbook
     - ansible-galaxy install -r ./deployment/requirements.yml
     #- ansible-playbook deployment.yml --private-key ~/.ssh/sensordata-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
