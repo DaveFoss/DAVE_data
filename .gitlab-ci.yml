@@ -70,6 +70,8 @@ build_develop_container:
 deploy_relese container:
   stage: deploy
   when: manual
+  image:
+    name: ubuntu:latest
   tags:
   - asprunner
   script:
@@ -86,6 +88,6 @@ deploy_relese container:
     - chmod 400 ~/.ssh/sensordata-key
     # run ansible playbook
     - ansible-galaxy install -r ./deployment/requirements.yml
-    #- ansible-playbook sensordata.yml --private-key ~/.ssh/sensordata-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
+    #- ansible-playbook deployment.yml --private-key ~/.ssh/sensordata-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   only:
     - master
