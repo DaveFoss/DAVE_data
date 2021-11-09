@@ -88,6 +88,6 @@ deploy_relese container:
     - chmod 400 ~/.ssh/deploy-key
     # run ansible playbook
     - ansible-galaxy install -r ./deployment/requirements.yml
-    #- ansible-playbook deployment.yml --private-key ~/.ssh/sensordata-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
+    - ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   only:
     - master
