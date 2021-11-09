@@ -5,24 +5,23 @@
   vars:
     docker_users:
       - cloud
-      - openforecast-runner
 
   roles:
-    - name: sensor2graph
-      tags: sensor2graph
+    - name: dave
+      tags: dave
       become: yes
       become_user: root
 
-    - name: nginx-reverse-proxy
-      tags: nginx
-      become: yes
-      become_user: root
+    # - name: traefik
+    #   tags: traefik
+    #   become: yes
+    #   become_user: root
 
-    - name: nagios
-      tags: nagios
-      become: yes
-      become_user: root
+    # - name: nagios
+    #   tags: nagios
+    #   become: yes
+    #   become_user: root
 
 
   tasks:
-#    - import_tasks: tasks/system-upgrade.yml
+    - import_tasks: deployment/tasks/system-upgrade.yml
