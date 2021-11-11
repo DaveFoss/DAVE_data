@@ -107,8 +107,10 @@ def create_empty_dataset():
             "components_gas": davestructure(
                 {
                     "compressors": gpd.GeoDataFrame([]),
+                    "sinks": gpd.GeoDataFrame([]),
                     "sources": gpd.GeoDataFrame([]),
                     "storages_gas": gpd.GeoDataFrame([]),
+                    "valves": gpd.GeoDataFrame([]),
                 }
             ),
             # auxillary
