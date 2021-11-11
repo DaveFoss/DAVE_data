@@ -138,6 +138,7 @@ def create_grid(
     compressors=True,
     sources=True,
     storages_gas=True,
+    valve=True,
     output_folder=dave_settings()["dave_output_dir"],
     api_use=True,
 ):
@@ -185,6 +186,7 @@ def create_grid(
         **sources** (boolean, default True) - if true, gas sources are added to the grid model \n
         **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
             model \n
+        **valve** (boolean, default True) - if true, gas valves are added to the grid model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one
@@ -303,7 +305,7 @@ def create_grid(
                 grid_data.area = origin_area
         # create gas grid components
         if gas_levels:
-            gas_components(grid_data, compressors, sources, storages_gas)
+            gas_components(grid_data, compressors, sources, storages_gas, valve)
     else:
         # read dataset from archiv
         grid_data = from_archiv(f"{file_name}.h5")
