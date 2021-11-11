@@ -160,6 +160,11 @@ def create_gas_grid(grid_data):
         if all(net.pipe.qext_w.isna())
         else net.pipe.qext_w.apply(lambda x: float(0) if pd.isna(x) else x)
     )
+
+    # --- create sink
+    # --- create source
+    # --- create external grid
+
     # update progress
     pbar.update(20)
     # close progress bar
