@@ -84,12 +84,12 @@ def valves(grid_data):
     pass
 
 
-def gas_components(grid_data, compressor, sinks, sources, storages_gas, valves):
+def gas_components(grid_data, compressor, sink, source, storage_gas, valve):
     """
     This function calls all the functions for creating the gas components in the wright order
     """
     # read high pressure grid data from dave datapool (scigridgas igginl)
-    if any([compressor, sources, sinks, storages_gas]):
+    if any([compressor, source, sink, storage_gas]):
         scigrid_data, meta_data = read_scigridgas_iggielgn()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -98,14 +98,14 @@ def gas_components(grid_data, compressor, sinks, sources, storages_gas, valves):
     if compressor:
         compressors(grid_data, scigrid_compressors=scigrid_data["compressors"])
     # add sinks
-    if sinks:
+    if sink:
         sinks(grid_data, scigrid_consumers=scigrid_data["consumers"])
     # add sources
-    if sources:
+    if source:
         sources(grid_data, scigrid_prductions=scigrid_data["productions"])
     # add storages
-    if storages_gas:
+    if storage_gas:
         storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
     # add valves
-    if valves:
+    if valve:
         valves(grid_data)
