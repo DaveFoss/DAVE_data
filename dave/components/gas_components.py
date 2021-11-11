@@ -13,7 +13,7 @@ def sources(grid_data, scigrid_productions):
     # set progress bar
     pbar = tqdm(
         total=100,
-        desc="create compressors:                ",
+        desc="create sources:                    ",
         position=0,
         bar_format=dave_settings()["bar_format"],
     )
@@ -41,7 +41,7 @@ def sources(grid_data, scigrid_productions):
     # add dave name
     production.reset_index(drop=True, inplace=True)
     production.insert(
-        0, "dave_name", pd.Series(list(map(lambda x: f"source_1_{x}", compressors.index)))
+        0, "dave_name", pd.Series(list(map(lambda x: f"source_1_{x}", production.index)))
     )
     # set crs
     production.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -100,19 +100,58 @@ def compressors(grid_data, scigrid_compressors):
     pbar.close()
 
 
+def sinks(grid_data, scigrid_consumers):
+    """
+    This function adds the data for gas consumers
+    """
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="create sinks:                      ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
+    # get compressor data
+    sinks = scigrid_consumers.copy()
+    # prepare data
+    sinks.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
+    sinks["source"] = "scigridgas"
+    # intersection with target area
+    sinks = gpd.overlay(sinks, grid_data.area, how="intersection")
+    keys = grid_data.area.keys().tolist()
+    keys.remove("geometry")
+    sinks = sinks.drop(columns=(keys))
+    # update progress
+    pbar.update(40)
+
+    # search for junction dave name
+    junctions = grid_data.hp_data.hp_junctions.copy()
+    sinks["junction"] = sinks.node_id.apply(
+        lambda x: junctions[junctions.scigrid_id == eval(x)[0]].iloc[0].dave_name
+    )
+    # set grid level number
+    sinks["pressure_level"] = 1
+    # update progress
+    pbar.update(40)
+    # add dave name
+    sinks.reset_index(drop=True, inplace=True)
+    sinks.insert(0, "dave_name", pd.Series(list(map(lambda x: f"sink_1_{x}", sinks.index))))
+    # set crs
+    sinks.set_crs(dave_settings()["crs_main"], inplace=True)
+    # add hp junctions to grid data
+    grid_data.components_gas.sinks = grid_data.components_gas.sinks.append(sinks)
+    # update progress
+    pbar.update(20)
+    # close progress bar
+    pbar.close()
+
+
 def storages_gas(grid_data, scigrid_storages):
     pass
     # gas storages in germany
     # read_gas_storage_ugs()
     # read_scigridgas_iggielgn()
-
-
-def sinks(grid_data, scigrid_consumers):
-    """
-    This function adds the data for gas consumers
-    """
-    # read_scigridgas_iggielgn() consumers
-    pass
+    # check for duplicated strorages in both datasets
 
 
 def valves(grid_data):
