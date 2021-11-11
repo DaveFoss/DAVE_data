@@ -6,12 +6,51 @@ from dave.datapool import read_scigridgas_iggielgn
 from dave.settings import dave_settings
 
 
-def sources(grid_data, scigrid_prductions):
+def sources(grid_data, scigrid_productions):
     """
     This function adds the data for gas production
     """
-    # read_scigridgas_iggielgn()
-    pass
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="create compressors:                ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
+    # get compressor data
+    production = scigrid_productions.copy()
+    # prepare data
+    production.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
+    production["source"] = "scigridgas"
+    # intersection with target area
+    production = gpd.overlay(production, grid_data.area, how="intersection")
+    keys = grid_data.area.keys().tolist()
+    keys.remove("geometry")
+    production = production.drop(columns=(keys))
+    # update progress
+    pbar.update(40)
+    # search for junction dave name
+    junctions = grid_data.hp_data.hp_junctions.copy()
+    production["junction"] = production.node_id.apply(
+        lambda x: junctions[junctions.scigrid_id == eval(x)[0]].iloc[0].dave_name
+    )
+    # set grid level number
+    production["pressure_level"] = 1
+    # update progress
+    pbar.update(40)
+    # add dave name
+    production.reset_index(drop=True, inplace=True)
+    production.insert(
+        0, "dave_name", pd.Series(list(map(lambda x: f"source_1_{x}", compressors.index)))
+    )
+    # set crs
+    production.set_crs(dave_settings()["crs_main"], inplace=True)
+    # add hp junctions to grid data
+    grid_data.components_gas.sources = grid_data.components_gas.sources.append(production)
+    # update progress
+    pbar.update(20)
+    # close progress bar
+    pbar.close()
 
 
 def compressors(grid_data, scigrid_compressors):
@@ -102,7 +141,7 @@ def gas_components(grid_data, compressor, sink, source, storage_gas, valve):
         sinks(grid_data, scigrid_consumers=scigrid_data["consumers"])
     # add sources
     if source:
-        sources(grid_data, scigrid_prductions=scigrid_data["productions"])
+        sources(grid_data, scigrid_productions=scigrid_data["productions"])
     # add storages
     if storage_gas:
         storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
