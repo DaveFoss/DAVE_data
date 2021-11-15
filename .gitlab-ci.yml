@@ -67,9 +67,10 @@ build_develop_container:
     - develop
 
 # --- deployment
-variables:
-    # disable the password request at ssh connections in ansible
-    ANSIBLE_HOST_KEY_CHECKING: 'false'
+# variables:
+#     # disable the password request at ssh connections in ansible
+#     ANSIBLE_HOST_KEY_CHECKING: 'false'
+    
 # deploy new docker image realese to server and reastart system
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
 deploy_relese container:
@@ -86,17 +87,15 @@ deploy_relese container:
     # --- setup ssh
     # run ssh agent
     - eval $(ssh-agent -s)
-    #- echo "$SSH_DEPLOY_KEY" | tr -d '\r' | ssh-add -
     # create the ssh directory and give it the right permissions
     - mkdir -p ~/.ssh/
     - chmod 700 ~/.ssh
-    # create known host file and add gitlab ci deploy key
-    #- echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    # create ssh key file and add gitlab ci deploy key
     - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
     - chmod 400 ~/.ssh/deploy-key
-    - apt install less
-    - less ~/.ssh/deploy-key
-    
+    # disable host key checking
+    - export ANSIBLE_HOST_KEY_CHECKING=False
+
     - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i deployment/inventory
     
     # intsall ansible galaxy
