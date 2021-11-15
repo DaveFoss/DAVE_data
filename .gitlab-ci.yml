@@ -89,12 +89,11 @@ deploy_relese container:
     - chmod 400 ~/.ssh/deploy-key
     # disable host key checking
     - export ANSIBLE_HOST_KEY_CHECKING=False
-
-    # ansible.cfg can't be in world-writable directory
+    # changed folder permission because ansible.cfg can't be in world-writable directory
     - chmod 700 deployment
-    
+    # run ansible playbook
     - cd deployment
-    - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i deployment/inventory
+    - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory
     
     # intsall ansible galaxy
     #- ansible-galaxy install -r ./deployment/requirements.yml
