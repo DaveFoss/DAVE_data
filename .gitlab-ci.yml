@@ -78,16 +78,23 @@ deploy_relese container:
     # install ansible
     - apt update
     - apt -y install ansible
-    # setup ssh
+    # --- setup ssh
+    # run ssh agent
     - eval $(ssh-agent -s)
+    # create the ssh directory and give it the right permissions
     - mkdir -p ~/.ssh/
     - chmod 700 ~/.ssh
+    # create known host file and add gitlab ci deploy key
     - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
-    - cat $SSH_CLOUD_KEY_FILE | tr -d '\r' >~/.ssh/deploy-key
+    - cat $	SSH_DEPLOY_KEY | tr -d '\r' >~/.ssh/deploy-key
     - chmod 400 ~/.ssh/deploy-key
+    
+    - ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud -i inventory
+    
+    # intsall ansible galaxy
+    #- ansible-galaxy install -r ./deployment/requirements.yml
     # run ansible playbook
-    - ansible-galaxy install -r ./deployment/requirements.yml
-    - ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
+    #- ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   only:
     - master
