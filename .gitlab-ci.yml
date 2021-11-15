@@ -67,6 +67,9 @@ build_develop_container:
 
 # deploy new docker image realese to server and reastart system
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
+variables:
+    ANSIBLE_HOST_KEY_CHECKING: 'false'
+
 deploy_relese container:
   stage: deploy
   when: manual
@@ -87,12 +90,15 @@ deploy_relese container:
     - chmod 700 ~/.ssh
     # create known host file and add gitlab ci deploy key
     #- echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    # - echo "-----BEGIN RSA PRIVATE KEY-----" > ~/.ssh/deploy-key
+    # - echo $SSH_DEPLOY_KEY | tr ' ' '\n' | tail -n+5 | head -n-4 >> ~/.ssh/deploy-key
+    # - echo "-----END RSA PRIVATE KEY-----" >> ~/.ssh/deploy-key
     - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
     - chmod 400 ~/.ssh/deploy-key
     - apt install less
     - less ~/.ssh/deploy-key
     
-    - ansible-playbook deployment.yml  -u cloud --private-key=~/.ssh/deploy-key -i deployment/inventory
+    - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i deployment/inventory
     
     # intsall ansible galaxy
     #- ansible-galaxy install -r ./deployment/requirements.yml
