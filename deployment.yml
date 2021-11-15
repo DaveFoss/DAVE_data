@@ -1,27 +1,37 @@
 ---
-- hosts: all
-  become_user: cloud
-
-  vars:
-    docker_users:
-      - cloud
-
-  roles:
-    - name: dave
-      tags: dave
-      become: yes
-      become_user: root
-
-    # - name: traefik
-    #   tags: traefik
-    #   become: yes
-    #   become_user: root
-
-    # - name: nagios
-    #   tags: nagios
-    #   become: yes
-    #   become_user: root
+# first play
+- hosts: dave
+  become: yes
+  tasks:  # list of tasks
+    # first tastk
+    - name: Ensure NTP is installed.  # task name will showed in consol
+      yum: name=ntp state=present
 
 
-  tasks:
-    - import_tasks: deployment/tasks/system-upgrade.yml
+
+# - hosts: all
+#   become_user: cloud
+
+#   vars:
+#     docker_users:
+#       - cloud
+
+#   roles:
+#     - name: dave
+#       tags: dave
+#       become: yes
+#       become_user: root
+
+#     # - name: traefik
+#     #   tags: traefik
+#     #   become: yes
+#     #   become_user: root
+
+#     # - name: nagios
+#     #   tags: nagios
+#     #   become: yes
+#     #   become_user: root
+
+
+#   tasks:
+#     - import_tasks: deployment/tasks/system-upgrade.yml
