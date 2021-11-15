@@ -81,7 +81,7 @@ deploy_relese container:
     # --- setup ssh
     # run ssh agent
     - eval $(ssh-agent -s)
-    - echo "$SSH_DEPLOY_KEY" | tr -d '\r' | ssh-add -
+    #- echo "$SSH_DEPLOY_KEY" | tr -d '\r' | ssh-add -
     # create the ssh directory and give it the right permissions
     - mkdir -p ~/.ssh/
     - chmod 700 ~/.ssh
@@ -89,8 +89,9 @@ deploy_relese container:
     #- echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
     - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
     - chmod 400 ~/.ssh/deploy-key
+    - less ~/.ssh/deploy-key
     
-    - ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud -i deployment/inventory
+    - ansible-playbook deployment.yml  -u cloud --private-key=~/.ssh/deploy-key -i deployment/inventory
     
     # intsall ansible galaxy
     #- ansible-galaxy install -r ./deployment/requirements.yml
