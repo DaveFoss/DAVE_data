@@ -93,7 +93,7 @@ deploy_relese container:
     # create known host file and add gitlab ci deploy key
     #- echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
     - echo "-----BEGIN RSA PRIVATE KEY-----" > ~/.ssh/deploy-key
-    - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
+    - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >> ~/.ssh/deploy-key
     - echo "-----END RSA PRIVATE KEY-----" >> ~/.ssh/deploy-key
     #- echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
     - chmod 400 ~/.ssh/deploy-key
