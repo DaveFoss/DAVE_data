@@ -81,7 +81,7 @@ deploy_relese container:
     # --- setup ssh
     # run ssh agent
     - eval $(ssh-agent -s)
-    #- echo "$SSH_DEPLOY_KEY" | tr -d '\r' | ssh-add -
+    - echo "$SSH_DEPLOY_KEY" | tr -d '\r' | ssh-add -
     # create the ssh directory and give it the right permissions
     - mkdir -p ~/.ssh/
     - chmod 700 ~/.ssh
