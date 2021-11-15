@@ -87,8 +87,8 @@ deploy_relese container:
     - chmod 700 ~/.ssh
     # create known host file and add gitlab ci deploy key
     #- echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
-     - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
-     - chmod 400 ~/.ssh/deploy-key
+    - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
+    - chmod 400 ~/.ssh/deploy-key
     
     - ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud -i deployment/inventory
     
