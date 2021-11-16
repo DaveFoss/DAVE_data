@@ -92,9 +92,6 @@ deploy_relese container:
     - ansible-galaxy install -r ./requirements.yml
     # run ansible playbook
     - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "CI_REGISTRY=${CI_REGISTRY} CI_REGISTRY_USER=${CI_REGISTRY_USER} CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}"
-    
-    
-    # run ansible playbook
     #- ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   only:
     - master
