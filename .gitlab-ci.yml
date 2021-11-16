@@ -95,7 +95,7 @@ deploy_relese container:
     # intsall ansible galaxy
     - ansible-galaxy install -r ./requirements.yml
     # run ansible playbook
-    - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory--extra-vars '{"CI_REGISTRY":"$CI_REGISTRY", "CI_REGISTRY_USER":"$CI_REGISTRY_USER", "CI_REGISTRY_PASSWORD":"$CI_REGISTRY_PASSWORD"}'
+    - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "CI_REGISTRY=${CI_REGISTRY} CI_REGISTRY_USER=${CI_REGISTRY_USER} CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}"
     
     
     # run ansible playbook
