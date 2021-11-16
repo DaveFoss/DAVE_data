@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y git
 # install packages via conda forge
 RUN conda config --add channels conda-forge
 RUN conda config --set channel_priority strict
+RUN conda config --remove channels defaults
 RUN conda install --file requirements.txt
 
 # install some packages via pip because they not availible in conda
