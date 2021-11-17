@@ -2,9 +2,8 @@
 stages:
     - test
     - docker
-    #- build
-    - deploy
     #- lint  # create stage to check codestyle with pylint? also run black and isort overall
+    - deploy
     
 # define task which should execute before each jobs
 before_script:
