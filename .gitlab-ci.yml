@@ -30,7 +30,6 @@ test:
 # build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
   stage: docker
-  when: manual
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
