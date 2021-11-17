@@ -65,7 +65,6 @@ build_develop_container:
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
 deploy_relese container:
   stage: deploy
-  when: manual
   image:
     name: ubuntu:latest
   tags:
