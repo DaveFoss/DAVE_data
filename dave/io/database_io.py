@@ -63,6 +63,27 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
     return df
 
 
+def df_to_mongo(database, collection, data_df):
+    client = db_client()
+    # request existing databases
+    info = info_mongo()
+    # check if database exist. No creation of new databases allowed
+    if database in list(info.keys()):
+        db = client[database]
+        collection = db[collection]
+        # convert df to dict
+        data = data_df.to_dict(orient="records")
+        # insert data to database
+        if len(data) > 1:
+            collection.insert_many(data)
+        elif len(data) == 1:
+            collection.insert(data[0])
+    else:
+        print(
+            f"The choosen database is not existing. Please choose on of these: {list(info.keys())}"
+        )
+
+
 def to_mongo(database, collection, data_df=None, filepath=None):
     """
     This function uploads data into the mongo db
@@ -78,39 +99,20 @@ def to_mongo(database, collection, data_df=None, filepath=None):
         **data_df** (DataFrame) - the data which should uploaded as DataFrame or GeoDataFrame
         **filepath** (string) - absolute path to data if this is not in DataFrame format
     """
-    client = db_client()
-    # request existing databases
-    info = info_mongo()
-    if database in list(info.keys()):
-        db = client[database]
-        collection = db[collection]
-        # --- convert diffrent data formats
-        # convert GeoDataFrame into DataFrame
-        if data_df and isinstance(data_df, gpd.GeoDataFrame):
-            # define that collection includes geometrical data
-            collection.create_index([("geometry", GEOSPHERE)])
-            # convert geometry to geojson
-            data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
-        elif filepath.split(".")[1] == "csv":
-            pass
-        elif filepath.split(".")[1] == "xlsx":
-            pass
-        elif filepath.split(".")[1] == "h5":
-            pass
-            # evt wird hierfür eine eigene datei benötigt
-
-        # check if there more than one table to upload
-        if isinstance(data_df, dict):
-            pass
-
-        # convert df to dict
-        data = data_df.to_dict(orient="records")
-        # insert data to database
-        if len(data) > 1:
-            collection.insert_many(data)
-        elif len(data) == 1:
-            collection.insert(data[0])
-    else:
-        print(
-            f"The choosen database is not existing. Please choose on of these: {list(info.keys())}"
-        )
+    # --- convert diffrent data formats
+    # convert GeoDataFrame into DataFrame
+    if data_df and isinstance(data_df, gpd.GeoDataFrame):
+        # define that collection includes geometrical data
+        collection.create_index([("geometry", GEOSPHERE)])
+        # convert geometry to geojson
+        data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
+    elif filepath.split(".")[1] == "csv":
+        pass
+    elif filepath.split(".")[1] == "xlsx":
+        pass
+    elif filepath.split(".")[1] == "h5":
+        pass
+        # evt wird hierfür eine eigene datei benötigt
+    # check if there more than one table to upload
+    if isinstance(data_df, dict):
+        pass
