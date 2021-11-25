@@ -46,8 +46,7 @@ class DatapoolRequest:
         # read postalcode area data from datapool
         postal, meta_data = read_postal()
         # convert postalcodes to JSON string
-        postal_json = postal.postalcode.to_json()
-        return postal_json
+        return postal.postalcode.to_json()
 
     def get_town_names(self):
         # read postalcode area data from datapool
