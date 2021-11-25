@@ -119,12 +119,12 @@ def to_mongo(database, collection, data_df=None, filepath=None):
         for key in file.keys():
             # rename collection in the case of multiple tables
             if len(file.keys()) > 1:
-                collection = collection + f"_{key.replace('/','')}"
+                collection_new = collection + f"_{key.replace('/','')}"
             # read data from file and convert geometry
             data = file.get(key)
             if "geometry" in data.keys() and isinstance(data.iloc[0].geometry, bytes):
                 data = wkb_to_wkt(data, dave_settings()["crs_main"])
             # upload tables to mongo db
-            df_to_mongo(database, collection, data_df)
+            df_to_mongo(database, collection_new, data)
         # close file
         file.close()
