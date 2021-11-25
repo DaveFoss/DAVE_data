@@ -9,7 +9,7 @@ from dave.io import from_json_string
 
 # local url of the dave api
 # url = "http://141.5.108.4:80/api"  # production server
-url = "http://127.0.0.1:80/api"  # develop local
+url = "http://127.0.0.1/api"  # develop local
 
 
 # --- get dave dataset
