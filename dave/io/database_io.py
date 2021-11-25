@@ -4,6 +4,7 @@ from pymongo import GEOSPHERE, MongoClient
 from shapely.geometry import mapping, shape
 from shapely.wkt import loads
 
+from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings
 
 
@@ -71,6 +72,11 @@ def df_to_mongo(database, collection, data_df):
     if database in list(info.keys()):
         db = client[database]
         collection = db[collection]
+        if isinstance(data_df, gpd.GeoDataFrame):
+            # define that collection includes geometrical data
+            collection.create_index([("geometry", GEOSPHERE)])
+            # convert geometry to geojson
+            data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
         # convert df to dict
         data = data_df.to_dict(orient="records")
         # insert data to database
@@ -94,25 +100,31 @@ def to_mongo(database, collection, data_df=None, filepath=None):
                                 contact the db admin
         **collection** (string) - name of the collection where the data should added. If the given
                                   data has multiple tables (e.g.tabs in excel or hdf5 files) it
-                                  would createt collections with the name <collection>_<tab>
+                                  would createt collections with the name <collection>_<key>
     OPTIONAL:
-        **data_df** (DataFrame) - the data which should uploaded as DataFrame or GeoDataFrame
+        **data_df** ((Geo)DataFrame) - the data which should uploaded as DataFrame or GeoDataFrame
         **filepath** (string) - absolute path to data if this is not in DataFrame format
     """
     # --- convert diffrent data formats
     # convert GeoDataFrame into DataFrame
-    if data_df and isinstance(data_df, gpd.GeoDataFrame):
-        # define that collection includes geometrical data
-        collection.create_index([("geometry", GEOSPHERE)])
-        # convert geometry to geojson
-        data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
+    if data_df:
+        df_to_mongo(database, collection, data_df)
     elif filepath.split(".")[1] == "csv":
         pass
     elif filepath.split(".")[1] == "xlsx":
         pass
     elif filepath.split(".")[1] == "h5":
-        pass
-        # evt wird hierfür eine eigene datei benötigt
-    # check if there more than one table to upload
-    if isinstance(data_df, dict):
-        pass
+        # open hdf file
+        file = pd.HDFStore(filepath)
+        for key in file.keys():
+            # rename collection in the case of multiple tables
+            if len(file.keys()) > 1:
+                collection = collection + f"_{key.replace('/','')}"
+            # read data from file and convert geometry
+            data = file.get(key)
+            if "geometry" in data.keys() and isinstance(data.iloc[0].geometry, bytes):
+                data = wkb_to_wkt(data, dave_settings()["crs_main"])
+            # upload tables to mongo db
+            df_to_mongo(database, collection, data_df)
+        # close file
+        file.close()
