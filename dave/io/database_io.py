@@ -14,6 +14,20 @@ def db_client():
     )
 
 
+def info_mongo():
+    info_mongo = {}
+    client = db_client()
+    # wirte databases
+    for db in list(client.list_databases()):
+        db_name = client[db["name"]]
+        collections = []
+        for collection in list(db_name.list_collections()):
+            collections.append(collection["name"])
+        db["collections"] = collections
+        info_mongo[db["name"]] = db
+    return info_mongo
+
+
 def from_mongo(database, collection, filter_method=None, geometry=None):
     """
     This function requests data from the mongo db
@@ -49,33 +63,54 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
     return df
 
 
-def to_mongo(database, collection, data_df):
-    client = db_client()
-    db = client[database]
-    collection = db[collection]
-    if isinstance(data_df, gpd.GeoDataFrame):
-        # define that collection includes geometrical data
-        collection.create_index([("geometry", GEOSPHERE)])
-        # convert geometry to geojson
-        data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
-    # convert df to dict
-    data = data_df.to_dict(orient="records")
-    # insert data to database
-    if len(data) > 1:
-        collection.insert_many(data)
-    elif len(data) == 1:
-        collection.insert(data[0])
+def to_mongo(database, collection, data_df=None, filepath=None):
+    """
+    This function uploads data into the mongo db
 
-
-def info_mongo():
-    info_mongo = {}
+    INPUT:
+        **database** (string) - name of the database where the data should added. Note: It is not
+                                allowed to create a new database. Please use existing names or
+                                contact the db admin
+        **collection** (string) - name of the collection where the data should added. If the given
+                                  data has multiple tables (e.g.tabs in excel or hdf5 files) it
+                                  would createt collections with the name <collection>_<tab>
+    OPTIONAL:
+        **data_df** (DataFrame) - the data which should uploaded as DataFrame or GeoDataFrame
+        **filepath** (string) - absolute path to data if this is not in DataFrame format
+    """
     client = db_client()
-    # wirte databases
-    for db in list(client.list_databases()):
-        db_name = client[db["name"]]
-        collections = []
-        for collection in list(db_name.list_collections()):
-            collections.append(collection["name"])
-        db["collections"] = collections
-        info_mongo[db["name"]] = db
-    return info_mongo
+    # request existing databases
+    info = info_mongo()
+    if database in list(info.keys()):
+        db = client[database]
+        collection = db[collection]
+        # --- convert diffrent data formats
+        # convert GeoDataFrame into DataFrame
+        if data_df and isinstance(data_df, gpd.GeoDataFrame):
+            # define that collection includes geometrical data
+            collection.create_index([("geometry", GEOSPHERE)])
+            # convert geometry to geojson
+            data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
+        elif filepath.split(".")[1] == "csv":
+            pass
+        elif filepath.split(".")[1] == "xlsx":
+            pass
+        elif filepath.split(".")[1] == "h5":
+            pass
+            # evt wird hierfür eine eigene datei benötigt
+
+        # check if there more than one table to upload
+        if isinstance(data_df, dict):
+            pass
+
+        # convert df to dict
+        data = data_df.to_dict(orient="records")
+        # insert data to database
+        if len(data) > 1:
+            collection.insert_many(data)
+        elif len(data) == 1:
+            collection.insert(data[0])
+    else:
+        print(
+            f"The choosen database is not existing. Please choose on of these: {list(info.keys())}"
+        )
