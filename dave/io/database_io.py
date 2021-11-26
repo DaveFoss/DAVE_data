@@ -54,9 +54,9 @@ def from_mongo(database, collection, filter_method=None, geometry=None):
     for row in data_list:  #!!! add option for data with no geometry (convert to normal dataframe)
         row["geometry"] = shape(row["geometry"])
     if len(data_list) > 1:
-        df = gpd.GeoDataFrame(data_list)
+        df = gpd.GeoDataFrame(data_list, crs=dave_settings()["crs_main"])
     elif len(data_list) == 1:
-        df = gpd.GeoDataFrame([data_list[0]])
+        df = gpd.GeoDataFrame([data_list[0]], crs=dave_settings()["crs_main"])
     else:
         df = pd.DataFrame([])
     # remove mongo db id object
