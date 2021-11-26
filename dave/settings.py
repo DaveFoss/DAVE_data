@@ -12,8 +12,8 @@ def dave_settings():
         # database definitions (mongo db)
         "db_user": "root",
         "db_pw": "example",
-        # "db_ip": "127.0.0.1:27017",  # in develop version
-        "db_ip": "172.20.0.10:27017",  # in production version
+        "db_ip": "127.0.0.1:27017",  # in develop version
+        # "db_ip": "172.20.0.10:27017",  # in production version
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
