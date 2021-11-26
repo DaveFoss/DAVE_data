@@ -23,12 +23,8 @@ def read_postal():
     """
     # requestn data from database
     postalger = from_mongo("geo", "postalcodes")
-    postalger = pd.read_hdf(get_data_path("postalger.h5", "data"))
-    # convert geometry
-    postalger["geometry"] = postalger.geometry.apply(loads)
-    postalger = gpd.GeoDataFrame(postalger, crs=dave_settings()["crs_main"])
     # read meta data
-    meta_data = pd.read_excel(get_data_path("postalger_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\postalger_meta.xlsx", sheet_name=None)
     return postalger, meta_data
 
 
@@ -49,7 +45,7 @@ def read_federal_states():
     federalstatesger["geometry"] = federalstatesger.geometry.apply(loads)
     federalstatesger = gpd.GeoDataFrame(federalstatesger, crs=dave_settings()["crs_main"])
     # read meta data
-    meta_data = pd.read_excel(get_data_path("federalstatesger_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\federalstatesger_meta.xlsx", sheet_name=None)
     return federalstatesger, meta_data
 
 
@@ -85,7 +81,7 @@ def read_ehv_data():
         "ehv_trafos": ehv_trafos,
     }
     # read meta data
-    meta_data = pd.read_excel(get_data_path("ehv_data_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\ehv_data_meta.xlsx", sheet_name=None)
     return ehv_data, meta_data
 
 
@@ -149,7 +145,7 @@ def read_hp_data():
         "hp_gas_demand_total": hp_gas_demand_total,
     }
     # read meta data
-    meta_data = pd.read_excel(get_data_path("ehv_data_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\ehv_data_meta.xlsx", sheet_name=None)
     return hp_data, meta_data
 
 
@@ -197,7 +193,7 @@ def read_gas_storage_ugs():
     # create dictonary
     storage_data = {"cavern_fluid": cavern_fluid, "cavern_gas": cavern_gas, "pore_gas": pore_gas}
     # read meta data
-    meta_data = pd.read_excel(get_data_path("ehv_data_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\ehv_data_meta.xlsx", sheet_name=None)
     return storage_data, meta_data
 
 
@@ -227,7 +223,7 @@ def read_household_consumption():
         "household_sizes": household_sizes,
     }
     # read meta data
-    meta_data = pd.read_excel(get_data_path("ehv_data_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\ehv_data_meta.xlsx", sheet_name=None)
     return consumption_data, meta_data
 
 
@@ -321,7 +317,7 @@ def read_scigridgas_igginl():
         "storages": storages,
     }
     # read meta data
-    meta_data = pd.read_excel(get_data_path("scigridgas_igginl_meta.xlsx", "data"), sheet_name=None)
+    meta_data = pd.read_excel(r"data\scigridgas_igginl_meta.xlsx", sheet_name=None)
     return storage_data, meta_data
 
 
@@ -431,7 +427,5 @@ def read_scigridgas_iggielgn():
         "storages": storages,
     }
     # read meta data
-    meta_data = pd.read_excel(
-        get_data_path("scigridgas_iggielgn_meta.xlsx", "data"), sheet_name=None
-    )
+    meta_data = pd.read_excel(r"data\scigridgas_iggielgn_meta.xlsx", sheet_name=None)
     return storage_data, meta_data
