@@ -1,3 +1,4 @@
+import os
 import warnings
 
 import geopandas as gpd
@@ -127,3 +128,15 @@ def multiline_coords(line_geometry):
         else merged_line.coords[:]
     )
     return line_coords
+
+
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    path = (
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+    )
+    return path

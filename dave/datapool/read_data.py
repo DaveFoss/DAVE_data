@@ -1,23 +1,11 @@
-import os
-
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 from shapely.wkb import loads
 
+from dave.io import from_mongo
 from dave.settings import dave_settings
-
-
-def get_data_path(filename=None, dirname=None):
-    """
-    This function returns the full os path for a given directory (and filename)
-    """
-    path = (
-        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
-        if filename
-        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
-    )
-    return path
+from dave.toolbox import get_data_path
 
 
 def read_postal():
@@ -33,6 +21,8 @@ def read_postal():
 
          postal = data.read_postal()
     """
+    # requestn data from database
+    postalger = from_mongo("geo", "postalcodes")
     postalger = pd.read_hdf(get_data_path("postalger.h5", "data"))
     # convert geometry
     postalger["geometry"] = postalger.geometry.apply(loads)

@@ -17,11 +17,11 @@ from shapely.geometry import LineString, MultiLineString, Point
 from shapely.wkb import dumps, loads
 
 import dave.create
-from dave.datapool import get_data_path
 from dave.dave_structure import davestructure
 from dave.io.convert_format import change_empty_gpd, wkb_to_wkt, wkt_to_wkb
 from dave.io.io_utils import FromSerializableRegistryDaVe, archiv_inventory, isinstance_partial
 from dave.settings import dave_settings
+from dave.toolbox import get_data_path
 
 
 def from_json(file_path, encryption_key=None):

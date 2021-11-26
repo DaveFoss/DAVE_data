@@ -6,8 +6,8 @@ import pandas as pd
 from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
 
 import dave
-from dave.datapool import get_data_path
 from dave.dave_structure import davestructure
+from dave.toolbox import get_data_path
 
 
 def archiv_inventory(grid_data, read_only=False):
