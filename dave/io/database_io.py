@@ -119,7 +119,13 @@ def to_mongo(database, collection, data_df=None, filepath=None):
         for key in file.keys():
             # rename collection in the case of multiple tables
             if len(file.keys()) > 1:
-                collection_new = collection + f"_{key.replace('/','')}"
+                key_replaced = key.replace("/", "")
+                # check if collection name is the same as the key start to avoid duplicates
+                collection_new = (
+                    key_replaced
+                    if collection == key_replaced[: len(collection)]
+                    else collection + f"_{key_replaced}"
+                )
             # read data from file and convert geometry
             data = file.get(key)
             if "geometry" in data.keys() and isinstance(data.iloc[0].geometry, bytes):
