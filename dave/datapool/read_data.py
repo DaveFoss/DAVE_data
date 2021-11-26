@@ -62,23 +62,12 @@ def read_ehv_data():
 
          ehv_data = data.read_ehv_data()
     """
-    # read data
-    ehv_data = pd.HDFStore(get_data_path("ehv_data.h5", "data"))
-    # get the individual Data Frames
-    ehv_nodes = ehv_data.get("/ehv_nodes")
-    ehv_nodes["geometry"] = ehv_nodes.geometry.apply(loads)
-    ehv_nodes = gpd.GeoDataFrame(ehv_nodes, crs=dave_settings()["crs_main"])
-    ehv_node_changes = ehv_data.get("/ehv_node_changes")
-    ehv_lines = ehv_data.get("/ehv_lines")
-    ehv_trafos = ehv_data.get("/ehv_trafos")
-    # close file
-    ehv_data.close()
-    # create dictonary
+    # get the data from the database and pack them into a dict
     ehv_data = {
-        "ehv_nodes": ehv_nodes,
-        "ehv_node_changes": ehv_node_changes,
-        "ehv_lines": ehv_lines,
-        "ehv_trafos": ehv_trafos,
+        "ehv_nodes": from_mongo("power", "ehv_nodes"),
+        "ehv_node_changes": from_mongo("power", "ehv_node_changes"),
+        "ehv_lines": from_mongo("power", "ehv_lines"),
+        "ehv_trafos": from_mongo("power", "ehv_trafos"),
     }
     # read meta data
     meta_data = pd.read_excel(r"data\ehv_data_meta.xlsx", sheet_name=None)
@@ -164,32 +153,27 @@ def read_gas_storage_ugs():
 
          storage_data = data.read_gas_storage_ugs()
     """
-    # --- read data
-    storage_data = pd.HDFStore(get_data_path("gas_storage_ugs.h5", "data"))
     # cavern storage for crude oil, petroleum products and liquid gas
-    cavern_fluid = storage_data.get("/fluid cavern storage")
+    cavern_fluid = from_mongo("gas", "fluid_cavern_storage")
     cavern_fluid = gpd.GeoDataFrame(
         cavern_fluid,
         geometry=gpd.points_from_xy(cavern_fluid.Lon, cavern_fluid.Lat),
         crs=dave_settings()["crs_main"],
     )
     # cavern storages for natural gas
-    cavern_gas = storage_data.get("/natural gas cavern storage")
+    cavern_gas = from_mongo("gas", "natural_gas_cavern_storage")
     cavern_gas = gpd.GeoDataFrame(
         cavern_gas,
         geometry=gpd.points_from_xy(cavern_gas.Lon, cavern_gas.Lat),
         crs=dave_settings()["crs_main"],
     )
     # pore storages for natural gas
-    pore_gas = storage_data.get("/natural gas pore storage")
+    pore_gas = from_mongo("gas", "natural_gas_pore_storage")
     pore_gas = gpd.GeoDataFrame(
         pore_gas,
         geometry=gpd.points_from_xy(pore_gas.Lon, pore_gas.Lat),
         crs=dave_settings()["crs_main"],
     )
-
-    # close file
-    storage_data.close()
     # create dictonary
     storage_data = {"cavern_fluid": cavern_fluid, "cavern_gas": cavern_gas, "pore_gas": pore_gas}
     # read meta data
@@ -210,17 +194,12 @@ def read_household_consumption():
 
          household_consumption = data.read_household_consumption()
     """
-    # --- read data
-    consumption_data = pd.HDFStore(get_data_path("household_power_consumption.h5", "data"))
-    # consumption avarage
-    household_consumptions = consumption_data.get("/household_consumptions")
-    household_sizes = consumption_data.get("/household_sizes")
-    # close file
-    consumption_data.close()
     # create dictonary
     consumption_data = {
-        "household_consumptions": household_consumptions,
-        "household_sizes": household_sizes,
+        "household_consumptions": from_mongo("power", "household_consumptions"),
+        "household_sizes": from_mongo(
+            "power", "household_sizes"
+        ),  # !!!collection should changed to geo
     }
     # read meta data
     meta_data = pd.read_excel(r"data\ehv_data_meta.xlsx", sheet_name=None)
@@ -240,48 +219,46 @@ def read_scigridgas_igginl():
 
          scigridgas_igginl = data.read_scigridgas_igginl()
     """
-    # --- read data
-    igginl_data = pd.HDFStore(get_data_path("scigridgas_igginl.h5", "data"))
     # border_points
-    border_points = igginl_data.get("/border_points")
+    border_points = from_mongo("gas", "scigridgas_igginl_border_points")
     border_points = gpd.GeoDataFrame(
         border_points,
         geometry=gpd.points_from_xy(border_points.long, border_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # compressors
-    compressors = igginl_data.get("/compressors")
+    compressors = from_mongo("gas", "scigridgas_igginl_compressors")
     compressors = gpd.GeoDataFrame(
         compressors,
         geometry=gpd.points_from_xy(compressors.long, compressors.lat),
         crs=dave_settings()["crs_main"],
     )
     # entry_points
-    entry_points = igginl_data.get("/entry_points")
+    entry_points = from_mongo("gas", "scigridgas_igginl_entry_points")
     entry_points = gpd.GeoDataFrame(
         entry_points,
         geometry=gpd.points_from_xy(entry_points.long, entry_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # inter_connection_points
-    connection_points = igginl_data.get("/inter_connection_points")
+    connection_points = from_mongo("gas", "scigridgas_igginl_inter_connection_points")
     inter_connection_points = gpd.GeoDataFrame(
         connection_points,
         geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # lngss
-    lngs = igginl_data.get("/lngs")
+    lngs = from_mongo("gas", "scigridgas_igginl_lngs")
     lngs = gpd.GeoDataFrame(
         lngs, geometry=gpd.points_from_xy(lngs.long, lngs.lat), crs=dave_settings()["crs_main"]
     )
     # nodes
-    nodes = igginl_data.get("/nodes")
+    nodes = from_mongo("gas", "scigridgas_igginl_nodes")
     nodes = gpd.GeoDataFrame(
         nodes, geometry=gpd.points_from_xy(nodes.long, nodes.lat), crs=dave_settings()["crs_main"]
     )
     # pipe_segments
-    pipe_segments = igginl_data.get("/pipe_segments")
+    pipe_segments = nodes = from_mongo("gas", "scigridgas_igginl_pipe_segments")
     pipe_segments.lat = pipe_segments.lat.apply(eval)
     pipe_segments.long = pipe_segments.long.apply(eval)
     geometry = [LineString(list(zip(pipe.long, pipe.lat))) for i, pipe in pipe_segments.iterrows()]
@@ -289,21 +266,19 @@ def read_scigridgas_igginl():
         pipe_segments, geometry=pd.Series(geometry), crs=dave_settings()["crs_main"]
     )
     # productions
-    productions = igginl_data.get("/productions")
+    productions = from_mongo("gas", "scigridgas_igginl_productions")
     productions = gpd.GeoDataFrame(
         productions,
         geometry=gpd.points_from_xy(productions.long, productions.lat),
         crs=dave_settings()["crs_main"],
     )
     # storages
-    storages = igginl_data.get("/storages")
+    storages = from_mongo("gas", "scigridgas_igginl_storages")
     storages = gpd.GeoDataFrame(
         storages,
         geometry=gpd.points_from_xy(storages.long, storages.lat),
         crs=dave_settings()["crs_main"],
     )
-    # close file
-    igginl_data.close()
     # create dictonary
     storage_data = {
         "border_points": border_points,
@@ -334,62 +309,60 @@ def read_scigridgas_iggielgn():
 
          scigridgas_iggielgn = data.read_scigridgas_iggielgn()
     """
-    # --- read data
-    iggielgn_data = pd.HDFStore(get_data_path("scigridgas_iggielgn.h5", "data"))
     # border_points
-    border_points = iggielgn_data.get("/border_points")
+    border_points = from_mongo("gas", "scigridgas_iggielgn_border_points")
     border_points = gpd.GeoDataFrame(
         border_points,
         geometry=gpd.points_from_xy(border_points.long, border_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # compressors
-    compressors = iggielgn_data.get("/compressors")
+    compressors = from_mongo("gas", "scigridgas_iggielgn_compressors")
     compressors = gpd.GeoDataFrame(
         compressors,
         geometry=gpd.points_from_xy(compressors.long, compressors.lat),
         crs=dave_settings()["crs_main"],
     )
     # connection points
-    connection_points = iggielgn_data.get("/connection_points")
+    connection_points = from_mongo("gas", "scigridgas_iggielgn_connection_points")
     connection_points = gpd.GeoDataFrame(
         connection_points,
         geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # comsumer
-    consumers = iggielgn_data.get("/consumers")
+    consumers = from_mongo("gas", "scigridgas_iggielgn_consumers")
     consumers = gpd.GeoDataFrame(
         consumers,
         geometry=gpd.points_from_xy(consumers.long, consumers.lat),
         crs=dave_settings()["crs_main"],
     )
     # entry_points
-    entry_points = iggielgn_data.get("/entry_points")
+    entry_points = from_mongo("gas", "scigridgas_iggielgn_entry_points")
     entry_points = gpd.GeoDataFrame(
         entry_points,
         geometry=gpd.points_from_xy(entry_points.long, entry_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # inter_connection_points
-    connection_points = iggielgn_data.get("/inter_connection_points")
+    connection_points = from_mongo("gas", "scigridgas_iggielgn_inter_connection_points")
     inter_connection_points = gpd.GeoDataFrame(
         connection_points,
         geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # lngss
-    lngs = iggielgn_data.get("/lngs")
+    lngs = from_mongo("gas", "scigridgas_iggielgn_lngs")
     lngs = gpd.GeoDataFrame(
         lngs, geometry=gpd.points_from_xy(lngs.long, lngs.lat), crs=dave_settings()["crs_main"]
     )
     # nodes
-    nodes = iggielgn_data.get("/nodes")
+    nodes = from_mongo("gas", "scigridgas_iggielgn_nodes")
     nodes = gpd.GeoDataFrame(
         nodes, geometry=gpd.points_from_xy(nodes.long, nodes.lat), crs=dave_settings()["crs_main"]
     )
     # pipe_segments
-    pipe_segments = iggielgn_data.get("/pipe_segments")
+    pipe_segments = from_mongo("gas", "scigridgas_iggielgn_pipe_segments")
     pipe_segments.lat = pipe_segments.lat.apply(eval)
     pipe_segments.long = pipe_segments.long.apply(eval)
     geometry = [LineString(list(zip(pipe.long, pipe.lat))) for i, pipe in pipe_segments.iterrows()]
@@ -397,21 +370,19 @@ def read_scigridgas_iggielgn():
         pipe_segments, geometry=pd.Series(geometry), crs=dave_settings()["crs_main"]
     )
     # productions
-    productions = iggielgn_data.get("/productions")
+    productions = from_mongo("gas", "scigridgas_iggielgn_productions")
     productions = gpd.GeoDataFrame(
         productions,
         geometry=gpd.points_from_xy(productions.long, productions.lat),
         crs=dave_settings()["crs_main"],
     )
     # storages
-    storages = iggielgn_data.get("/storages")
+    storages = from_mongo("gas", "scigridgas_igginl_storages")
     storages = gpd.GeoDataFrame(
         storages,
         geometry=gpd.points_from_xy(storages.long, storages.lat),
         crs=dave_settings()["crs_main"],
     )
-    # close file
-    iggielgn_data.close()
     # create dictonary
     storage_data = {
         "border_points": border_points,
