@@ -133,6 +133,6 @@ dump_database:
     # intsall ansible galaxy
     - ansible-galaxy install -r ./requirements.yml
     # run ansible playbook
-    - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "CI_REGISTRY=${CI_REGISTRY} CI_REGISTRY_USER=${CI_REGISTRY_USER} CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}"
+    - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "DB_USER=root DB_PW=example"
   only:
     - master
