@@ -26,7 +26,7 @@ from dave.settings import dave_settings
 
 def from_json(file_path, encryption_key=None):
     """
-    Load a dave dataset from a JSON file or string.
+    Load a dave dataset from a JSON file.
     """
     if hasattr(file_path, "read"):
         json_string = file_path.read()
