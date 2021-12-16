@@ -14,6 +14,12 @@ def dave_settings():
         "db_pw": "example",
         # "db_ip": "127.0.0.1:27017",  # in develop version
         "db_ip": "172.20.0.10:27017",  # in production version
+        # authentication definitions (keycloak)
+        "keycloak_ip": "http://127.0.0.1/auth/",  # in develop version
+        # "keycloak_ip": "http://keycloak:8080/auth",  # in production version
+        "client_id": "dave_login",
+        "realm_name": "dave",
+        "client_secret_key": "faffc4d9-a85b-4cea-8226-44b938a98781",
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
