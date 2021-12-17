@@ -25,7 +25,8 @@ test:
   #  expire_in: 30 days
   rules:
     # no schedule piplines
-    - if: '$CI_PIPLINE_SOURCE == "push"'
+    - if: '$CI_PIPLINE_SOURCE == "schedule"'
+      when: never
     # master branch
     - if: '$CI_COMMIT_BRANCH == "master"'
     # develop branch
