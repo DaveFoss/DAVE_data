@@ -25,7 +25,7 @@ test:
   #  expire_in: 30 days
   rules:
     # no schedule piplines
-    - if: $CI_PIPLINE_SOURCE != "schedule"
+    - if: '$CI_PIPLINE_SOURCE != schedule'
 
 
     
