@@ -147,6 +147,6 @@ dump_database:
     - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "DB_USER=root DB_PW=example"
   rules:
     # scheduled pipline database dump. starts every week on sunday  6 o'clock on the master branch
-    - if: $CI_PIPLINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == "master" # $CI_PIPLINE_SOURCE != "push"
-    - if: $SCHEDULE_TYPE == "db_dump"
+    - if: '$CI_PIPLINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == "master"'
+    #- if: $SCHEDULE_TYPE == "db_dump"
     # master branch 
