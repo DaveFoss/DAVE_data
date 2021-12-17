@@ -24,6 +24,10 @@ test:
   #     - coverage
   #  expire_in: 30 days
   rules:
+    # master branch
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    # develop branch
+    - if: '$CI_COMMIT_BRANCH == "develop"'
     # no schedule piplines
     - if: '$CI_PIPLINE_SOURCE == "schedule"'
       when: never
