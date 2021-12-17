@@ -17,6 +17,8 @@ test:
     entrypoint: [""]
   tags:
     - asprunner
+  rules:
+    - if $CI_PIPLINE_SOURCE == "push"
   script:
     - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
   # artifacts:
@@ -36,6 +38,8 @@ build_release_container:
     entrypoint: [""]
   tags:
   - asprunner
+  rules:
+    - if $CI_PIPLINE_SOURCE == "push"
   script:
     # create docker image for DaVe
     - mkdir -p /kaniko/.docker
@@ -69,6 +73,8 @@ deploy_relese container:
     name: ubuntu:latest
   tags:
   - asprunner
+  rules:
+    - if $CI_PIPLINE_SOURCE == "push"
   script:
     # install ansible
     - apt update
@@ -103,6 +109,9 @@ dump_database:
     name: ubuntu:latest
   tags:
   - asprunner
+  rules:
+    # scheduled pipline (starts every week on sunday  6 o'clock)
+    - if $CI_PIPLINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "db_dump"
   script:
     # install ansible
     - apt update
@@ -126,9 +135,4 @@ dump_database:
     # run ansible playbook
     - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "DB_USER=root DB_PW=example"
   only:
-    refs:
-      - master
-      - schedules
-    variables:
-      # scheduled pipline (starts every week on sunday  6 o'clock)
-      - $SCHEDULE_TYPE == "db_dump"
+    - master
