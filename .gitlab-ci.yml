@@ -48,7 +48,8 @@ build_release_container:
     # master branch
     - if: '$CI_COMMIT_BRANCH == "master"'
     # no schedule piplines
-    - if: '$CI_PIPLINE_SOURCE != "schedule"'
+    - if: '$CI_PIPLINE_SOURCE == "schedule"'
+      when: never
 
     
 
@@ -104,7 +105,8 @@ deploy_relese container:
     # master branch 
     - if: '$CI_COMMIT_BRANCH == "master"' 
     # no schedule piplines
-    - if: '$CI_PIPLINE_SOURCE != "schedule"'
+    - if: '$CI_PIPLINE_SOURCE == "schedule"'
+      when: never
     
     
 # create a dump of all DaVe dabases within the mongo db
