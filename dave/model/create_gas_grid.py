@@ -161,6 +161,7 @@ def create_gas_grid(grid_data):
         else net.pipe.qext_w.apply(lambda x: float(0) if pd.isna(x) else x)
     )
 
+    # TODO: added components (how to implement this data in pandapipes?)
     # --- create sink
     # --- create source
     # --- create external grid
