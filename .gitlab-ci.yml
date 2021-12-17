@@ -24,17 +24,8 @@ test:
   #     - coverage
   #  expire_in: 30 days
   rules:
-    # no schedule piplines
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    # master branch
-    - if: $CI_COMMIT_BRANCH == "master"
-    # develop branch
-    - if: $CI_COMMIT_BRANCH == "develop"
-    
-
-
-    
+    # master or develop branch and no schedule piplines
+    - if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE != "schedule"
 
 # build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
@@ -50,14 +41,8 @@ build_release_container:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
   rules:
-    # no schedule piplines
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    # master branch
-    - if: $CI_COMMIT_BRANCH == "master"
-    
-
-    
+    # master branch and no schedule piplines
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
 
 # build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
@@ -78,7 +63,7 @@ build_develop_container:
 
 # deploy new docker image release to server and reastart system
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
-deploy_relese container:
+deploy_release container:
   stage: deploy
   image:
     name: ubuntu:latest
