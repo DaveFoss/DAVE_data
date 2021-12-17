@@ -25,7 +25,7 @@ test:
   #  expire_in: 30 days
   rules:
     # no schedule piplines
-    - $CI_PIPLINE_SOURCE != "schedule"
+    - if: $CI_PIPLINE_SOURCE != "schedule"
 
 
     
@@ -44,15 +44,16 @@ build_release_container:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
   rules:
-    # master branch and no schedule piplines
-    - if $CI_COMMIT_BRANCH == "master" && $CI_PIPLINE_SOURCE != "schedule"
+    # master branch
+    - if: $CI_COMMIT_BRANCH == "master"
+    # no schedule piplines
+    - if: $CI_PIPLINE_SOURCE != "schedule"
 
     
 
 # build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
   stage: docker
-  when: manual
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -64,8 +65,8 @@ build_develop_container:
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
   rules:
     # develop branch 
-    - if $CI_COMMIT_BRANCH == "master"
-
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: manual
 
 # deploy new docker image release to server and reastart system
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
@@ -99,8 +100,10 @@ deploy_relese container:
     - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "CI_REGISTRY=${CI_REGISTRY} CI_REGISTRY_USER=${CI_REGISTRY_USER} CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}"
     #- ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   rules:
-    # master branch and no schedule piplines
-    - if $CI_COMMIT_BRANCH == "master" && $CI_PIPLINE_SOURCE != "schedule"
+    # master branch 
+    - if: $CI_COMMIT_BRANCH == "master" 
+    # no schedule piplines
+    - if: $CI_PIPLINE_SOURCE != "schedule"
     
     
 # create a dump of all DaVe dabases within the mongo db
@@ -134,4 +137,5 @@ dump_database:
     - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "DB_USER=root DB_PW=example"
   rules:
     # scheduled pipline database dump. starts every week on sunday  6 o'clock on the master branch
-    - if $CI_PIPLINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "db_dump"
+    - if: $CI_PIPLINE_SOURCE == "schedule"
+    - if: $SCHEDULE_TYPE == "db_dump"
