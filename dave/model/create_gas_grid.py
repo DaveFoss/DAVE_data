@@ -59,10 +59,14 @@ def create_gas_grid(grid_data):
             else net.junction.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
         )
         net.junction["tfluid_k"] = (
-            float(320)
+            dave_settings()["hp_pipes_tfluid_k"]
             if all(net.junction.tfluid_k.isna())
-            else net.junction.tfluid_k.apply(lambda x: float(320) if pd.isna(x) else x)
+            else net.junction.tfluid_k.apply(
+                lambda x: dave_settings()["hp_pipes_tfluid_k"] if pd.isna(x) else x
+            )
         )
+        # !!! set nominal pressure to the lowest maximal pressure of the pipelines
+        net.junction.pn_bar = grid_data.hp_data.hp_pipes.max_pressure_bar.min()
     # update progress
     pbar.update(25)
 
@@ -137,9 +141,9 @@ def create_gas_grid(grid_data):
         else net.pipe.std_type.apply(lambda x: None if pd.isna(x) else x)
     )
     net.pipe["k_mm"] = (
-        float(0.1)
+        dave_settings()["hp_pipes_k_mm"]
         if all(net.pipe.k_mm.isna())
-        else net.pipe.k_mm.apply(lambda x: float(0.1) if pd.isna(x) else x)
+        else net.pipe.k_mm.apply(lambda x: dave_settings()["hp_pipes_k_mm"] if pd.isna(x) else x)
     )
     net.pipe["loss_coefficient"] = (
         float(0)
@@ -156,6 +160,12 @@ def create_gas_grid(grid_data):
         if all(net.pipe.qext_w.isna())
         else net.pipe.qext_w.apply(lambda x: float(0) if pd.isna(x) else x)
     )
+
+    # TODO: added components (how to implement this data in pandapipes?)
+    # --- create sink
+    # --- create source
+    # --- create external grid
+
     # update progress
     pbar.update(20)
     # close progress bar

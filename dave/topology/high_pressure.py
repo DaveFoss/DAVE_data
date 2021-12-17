@@ -42,7 +42,8 @@ def create_hp_topology(grid_data):
     keys.remove("geometry")
     hp_junctions = hp_junctions.drop(columns=(keys))
     # extract relevant scigrid parameters
-    hp_junctions["entsog_key"] = hp_junctions.param.apply(lambda x: eval(x)["entsog_key"])
+    # hp_junctions["entsog_key"] = hp_junctions.param.apply(lambda x: eval(x)["entsog_key"])
+    hp_junctions.param.apply(lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"])
     # set grid level number
     hp_junctions["pressure_level"] = 1
     # update progress
@@ -75,9 +76,7 @@ def create_hp_topology(grid_data):
         hp_pipes["source"] = "scigridgas"
         hp_pipes["pressure_level"] = 1
         # extract relevant scigrid parameters
-        hp_pipes["diameter_m"] = hp_pipes.param.apply(
-            lambda x: float(eval(x)["diameter_mm"]) / 1000.0
-        )
+        hp_pipes["diameter_mm"] = hp_pipes.param.apply(lambda x: eval(x)["diameter_mm"])
         hp_pipes["is_H_gas"] = hp_pipes.param.apply(
             lambda x: True if eval(x)["is_H_gas"] == 1 else False
         )
@@ -89,7 +88,7 @@ def create_hp_topology(grid_data):
             lambda x: eval(x)["max_cap_M_m3_per_d"]
         )
         hp_pipes["max_pressure_bar"] = hp_pipes.param.apply(lambda x: eval(x)["max_pressure_bar"])
-        hp_pipes["operator_name"] = hp_pipes.param.apply(lambda x: eval(x)["operator_name"])
+        hp_pipes["operator_name"] = hp_pipes.param.apply(lambda x: "" if "operator_name" not in eval(x) else eval(x)["operator_name"])
         # update progress
         pbar.update(20)
         # change pipeline junction names from scigrid id to dave name

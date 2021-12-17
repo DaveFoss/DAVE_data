@@ -107,8 +107,10 @@ def create_empty_dataset():
             "components_gas": davestructure(
                 {
                     "compressors": gpd.GeoDataFrame([]),
+                    "sinks": gpd.GeoDataFrame([]),
                     "sources": gpd.GeoDataFrame([]),
                     "storages_gas": gpd.GeoDataFrame([]),
+                    "valves": gpd.GeoDataFrame([]),
                 }
             ),
             # auxillary
@@ -136,8 +138,10 @@ def create_grid(
     conventional_powerplants=True,
     loads=True,
     compressors=True,
+    sinks=True,
     sources=True,
     storages_gas=True,
+    valves=True,
     output_folder=dave_settings()["dave_output_dir"],
     api_use=True,
 ):
@@ -182,9 +186,11 @@ def create_grid(
         **loads** (boolean, default True) - if true, loads are added to the grid model \n
         **compressors** (boolean, default True) - if true, compressors are added to the grid \
             model \n
+        **sinks** (boolean, default True) - if true, gas sinks are added to the grid model \n
         **sources** (boolean, default True) - if true, gas sources are added to the grid model \n
         **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
             model \n
+        **valves** (boolean, default True) - if true, gas valves are added to the grid model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one
@@ -303,7 +309,7 @@ def create_grid(
                 grid_data.area = origin_area
         # create gas grid components
         if gas_levels:
-            gas_components(grid_data, compressors, sources, storages_gas)
+            gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
     else:
         # read dataset from archiv
         grid_data = from_archiv(f"{file_name}.h5")

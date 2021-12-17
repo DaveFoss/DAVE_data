@@ -61,7 +61,7 @@ def dave_settings():
             "supermarket",
             "warehouse",
         ],
-        # --- assumptions at grid generating:
+        # --- assumptions at power grid generating:
         # mv level
         "mv_voltage": 20,
         # hours per year
@@ -87,5 +87,9 @@ def dave_settings():
         # trafo standard types
         "hvmv_trafo_std_type": "63 MVA 110/20 kV",  # dummy value, must be changed
         "mvlv_trafo_std_type": "0.63 MVA 20/0.4 kV",  # dummy value, must be changed
+        # --- assumptions at gas grid generating:
+        # hp level
+        "hp_pipes_k_mm": float(0.1),  # value based on shutterwald data, must be changed
+        "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
     }
     return settings
