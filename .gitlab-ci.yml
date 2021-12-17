@@ -148,4 +148,4 @@ dump_database:
   rules:
     # scheduled pipline database dump. starts every week on sunday  6 o'clock on the master branch
     - if: $CI_PIPLINE_SOURCE == "schedule"
-    - if: $SCHEDULE_TYPE == "db_dump"
+    #- if: $SCHEDULE_TYPE == "db_dump"
