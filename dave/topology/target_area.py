@@ -7,7 +7,7 @@ from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool import oep_request, query_osm, read_federal_states, read_postal
-from dave.io import archiv_inventory
+from dave.io import archiv_inventory, from_json_string
 from dave.settings import dave_settings
 
 
@@ -37,7 +37,7 @@ class target_area:
                                               it could also be choose ['ALL'] for all nuts regions
                                               in europe
         **own_area** (string) - full path to a shape file which includes own target area
-                                (e.g. "C:/Users/name/test/test.shp")
+                                (e.g. "C:/Users/name/test/test.shp") or Geodataframe as string
 
     OPTIONAL:
         **buffer** (float, default 0) - buffer for the target area
@@ -521,7 +521,10 @@ class target_area:
             )
             self.grid_data.target_input = target_input
         elif self.own_area:
-            self.target = gpd.read_file(self.own_area)
+            if self.own_area[-3:] == "shp":
+                self.target = gpd.read_file(self.own_area)
+            else:
+                self.target = from_json_string(self.own_area)
             # check crs and project to the right one if needed
             if (self.target.crs) and (self.target.crs != dave_settings()["crs_main"]):
                 self.target = self.target.to_crs(dave_settings()["crs_main"])

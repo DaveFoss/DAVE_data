@@ -11,31 +11,35 @@ before_script:
 
 # testing changes 
 test:
-    stage: test
-    image: 
-      name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
-      entrypoint: [""]
-    tags:
-      - asprunner
-    script:
-      - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
-    # artifacts:
-    #   paths:
-    #     - coverage
-    #  expire_in: 30 days
-    only:
-      - master
-      - develop
+  stage: test
+  image: 
+    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
+    entrypoint: [""]
+  tags:
+    - asprunner
+  rules:
+    - if $CI_PIPLINE_SOURCE == "push"
+  script:
+    - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
+  # artifacts:
+  #   paths:
+  #     - coverage
+  #  expire_in: 30 days
+  only:
+    - master
+    - develop
+    
 
 # build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
   stage: docker
-  when: manual
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   tags:
   - asprunner
+  rules:
+    - if $CI_PIPLINE_SOURCE == "push"
   script:
     # create docker image for DaVe
     - mkdir -p /kaniko/.docker
@@ -43,6 +47,7 @@ build_release_container:
     - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
   only:
     - master
+    
 
 # build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
@@ -68,6 +73,8 @@ deploy_relese container:
     name: ubuntu:latest
   tags:
   - asprunner
+  rules:
+    - if $CI_PIPLINE_SOURCE == "push"
   script:
     # install ansible
     - apt update
@@ -91,5 +98,41 @@ deploy_relese container:
     # run ansible playbook
     - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "CI_REGISTRY=${CI_REGISTRY} CI_REGISTRY_USER=${CI_REGISTRY_USER} CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}"
     #- ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
+  only:
+    - master
+    
+    
+# create a dump of all DaVe dabases within the mongo db
+dump_database:
+  stage: deploy
+  image:
+    name: ubuntu:latest
+  tags:
+  - asprunner
+  rules:
+    # scheduled pipline (starts every week on sunday  6 o'clock)
+    - if $CI_PIPLINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "db_dump"
+  script:
+    # install ansible
+    - apt update
+    - apt -y install ansible
+    # --- setup ssh
+    # run ssh agent
+    - eval $(ssh-agent -s)
+    # create the ssh directory and give it the right permissions
+    - mkdir -p ~/.ssh/
+    - chmod 700 ~/.ssh
+    # create ssh key file and add gitlab ci deploy key
+    - echo "$SSH_DEPLOY_KEY" | tr -d '\r' >~/.ssh/deploy-key
+    - chmod 400 ~/.ssh/deploy-key
+    # disable host key checking
+    - export ANSIBLE_HOST_KEY_CHECKING=False
+    # changed folder permission because ansible.cfg can't be in world-writable directory
+    - chmod 700 deployment
+    - cd deployment
+    # intsall ansible galaxy
+    - ansible-galaxy install -r ./requirements.yml
+    # run ansible playbook
+    - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "DB_USER=root DB_PW=example"
   only:
     - master
