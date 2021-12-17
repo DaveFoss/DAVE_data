@@ -12,8 +12,6 @@ before_script:
 # testing changes 
 test:
   stage: test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
   image: 
     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
     entrypoint: [""]
@@ -33,8 +31,6 @@ test:
 # build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
   stage: docker
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -69,8 +65,6 @@ build_develop_container:
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
 deploy_relese container:
   stage: deploy
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
   image:
     name: ubuntu:latest
   tags:
@@ -103,11 +97,8 @@ deploy_relese container:
     
     
 # create a dump of all DaVe dabases within the mongo db
-# Hint: This will work with a scheduled pipline (starts every week on sunday  6 o'clock)
 dump_database:
   stage: deploy
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
   image:
     name: ubuntu:latest
   tags:
@@ -135,4 +126,9 @@ dump_database:
     # run ansible playbook
     - ansible-playbook database_dump.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "DB_USER=root DB_PW=example"
   only:
-    - master
+    refs:
+      - master
+      - schedules
+    variables:
+      # scheduled pipline (starts every week on sunday  6 o'clock)
+      - $SCHEDULE_TYPE == "db_dump"
