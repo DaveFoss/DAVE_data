@@ -108,13 +108,8 @@ deploy_relese container:
     - ansible-playbook deployment.yml -u cloud --private-key=~/.ssh/deploy-key -i inventory -e "CI_REGISTRY=${CI_REGISTRY} CI_REGISTRY_USER=${CI_REGISTRY_USER} CI_REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}"
     #- ansible-playbook deployment.yml --private-key ~/.ssh/deploy-key -u cloud --vault-password-file $ANSIBLE_VAULT_PFILE -i inventory
   rules:
-    # no schedule piplines
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    # master branch 
-    - if: $CI_COMMIT_BRANCH == "master" 
-    
-    
+    # master branch and no schedule piplines
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
     
 # create a dump of all DaVe dabases within the mongo db
 dump_database:
