@@ -2,6 +2,7 @@ import os
 
 import geopandas as gpd
 import pandas as pd
+import xmlschema
 from shapely.geometry import LineString
 from shapely.wkb import loads
 
@@ -445,3 +446,17 @@ def read_scigridgas_iggielgn():
         get_data_path("scigridgas_iggielgn_meta.xlsx", "data"), sheet_name=None
     )
     return storage_data, meta_data
+
+
+def read_gaslib():
+    # read data from datapool
+    schema = xmlschema.XMLSchema(get_data_path("gaslib/Gas.xsd", "data"))
+    gaslib_dict = schema.to_dict(get_data_path("gaslib/GasLib-582-v2.net", "data"))
+    # create data dictionary
+    gaslib_data = {
+        "nodes": gaslib_dict["framework:nodes"],
+        "connections": gaslib_dict["framework:connections"],
+    }
+    # read meta data
+    meta_data = gaslib_dict["framework:information"]
+    return gaslib_data, meta_data
