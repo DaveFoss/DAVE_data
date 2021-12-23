@@ -19,5 +19,6 @@ pytest-cov
 pytest-xdist
 pytables
 pymongo
+xmlschema
 # via pip
 #pandapipes
