@@ -2,8 +2,48 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
-from dave.datapool import read_hp_data, read_scigridgas_iggielgn
+from dave.datapool import read_gaslib, read_hp_data, read_scigridgas_iggielgn
 from dave.settings import dave_settings
+
+
+def gaslib_pipe_clustering():
+    """
+    This function is clustering the gaslib pipe data and calculate the avarage for the parameters.
+    The pipesUsedForData parameter describt the number of pipes within the cluster
+    """
+    gaslibpipedata = dict()
+    # import gaslib data
+    gaslib_data, meta_data_gaslib = read_gaslib()  # !!! implement meta data
+
+    for pipe in gaslib_data["connections"]["pipe"]:
+        lengthrounded = round(pipe["length"]["@value"], 1)
+        diameter = pipe["diameter"]["@value"]
+        roughness = pipe["roughness"]["@value"]
+        pressuremax = pipe["pressureMax"]["@value"]
+
+        if lengthrounded in gaslibpipedata:
+            gaslibpipedata[lengthrounded]["pipesUsedForData"] += 1.0
+            gaslibpipedata[lengthrounded]["diameter"] += diameter
+            gaslibpipedata[lengthrounded]["diameter"] /= gaslibpipedata[lengthrounded][
+                "pipesUsedForData"
+            ]
+            gaslibpipedata[lengthrounded]["roughness"] += roughness
+            gaslibpipedata[lengthrounded]["roughness"] /= gaslibpipedata[lengthrounded][
+                "pipesUsedForData"
+            ]
+            gaslibpipedata[lengthrounded]["pressureMax"] += pressuremax
+            gaslibpipedata[lengthrounded]["pressureMax"] /= gaslibpipedata[lengthrounded][
+                "pipesUsedForData"
+            ]
+
+        else:
+            gaslibpipedata[lengthrounded] = {
+                "diameter": diameter,
+                "roughness": roughness,
+                "pressureMax": pressuremax,
+                "pipesUsedForData": 1.0,
+            }
+    return gaslibpipedata
 
 
 def create_hp_topology(grid_data):
@@ -24,6 +64,10 @@ def create_hp_topology(grid_data):
         position=0,
         bar_format=dave_settings()["bar_format"],
     )
+    # get gaslib data clustered
+    gaslibpipedata = gaslib_pipe_clustering()
+    gaslibpipedatasortedlist = sorted(gaslibpipedata, key=float)
+
     # read high pressure grid data from dave datapool (scigridgas igginl)
     scigrid_data, meta_data = read_scigridgas_iggielgn()
     # add meta data
@@ -43,7 +87,9 @@ def create_hp_topology(grid_data):
     hp_junctions = hp_junctions.drop(columns=(keys))
     # extract relevant scigrid parameters
     # hp_junctions["entsog_key"] = hp_junctions.param.apply(lambda x: eval(x)["entsog_key"])
-    hp_junctions.param.apply(lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"])
+    hp_junctions.param.apply(
+        lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"]
+    )
     # set grid level number
     hp_junctions["pressure_level"] = 1
     # update progress
@@ -88,7 +134,9 @@ def create_hp_topology(grid_data):
             lambda x: eval(x)["max_cap_M_m3_per_d"]
         )
         hp_pipes["max_pressure_bar"] = hp_pipes.param.apply(lambda x: eval(x)["max_pressure_bar"])
-        hp_pipes["operator_name"] = hp_pipes.param.apply(lambda x: "" if "operator_name" not in eval(x) else eval(x)["operator_name"])
+        hp_pipes["operator_name"] = hp_pipes.param.apply(
+            lambda x: "" if "operator_name" not in eval(x) else eval(x)["operator_name"]
+        )
         # update progress
         pbar.update(20)
         # change pipeline junction names from scigrid id to dave name
@@ -98,6 +146,14 @@ def create_hp_topology(grid_data):
         hp_pipes["to_junction"] = hp_pipes.to_junction.apply(
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name
         )
+        # add roughness from gaslib data to nearest scigrid pipe by length
+        nearestpipelengthgaslib = hp_pipes.length_km.apply(
+            lambda y: min(gaslibpipedatasortedlist, key=lambda x: abs(x - y))
+        )
+        hp_pipes["roughness"] = nearestpipelengthgaslib.apply(
+            lambda x: gaslibpipedata[x]["roughness"]
+        )
+
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
         hp_pipes.insert(
