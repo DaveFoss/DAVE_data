@@ -11,7 +11,7 @@ def gaslib_pipe_clustering():
     This function is clustering the gaslib pipe data and calculate the avarage for the parameters.
     The pipesUsedForData parameter describt the number of pipes within the cluster
     """
-    gaslibpipedata = dict()
+    pipe_data = dict()
     # import gaslib data
     gaslib_data, meta_data_gaslib = read_gaslib()  # !!! implement meta data
 
@@ -19,31 +19,24 @@ def gaslib_pipe_clustering():
         lengthrounded = round(pipe["length"]["@value"], 1)
         diameter = pipe["diameter"]["@value"]
         roughness = pipe["roughness"]["@value"]
-        pressuremax = pipe["pressureMax"]["@value"]
+        pressure_max = pipe["pressureMax"]["@value"]
 
-        if lengthrounded in gaslibpipedata:
-            gaslibpipedata[lengthrounded]["pipesUsedForData"] += 1.0
-            gaslibpipedata[lengthrounded]["diameter"] += diameter
-            gaslibpipedata[lengthrounded]["diameter"] /= gaslibpipedata[lengthrounded][
-                "pipesUsedForData"
-            ]
-            gaslibpipedata[lengthrounded]["roughness"] += roughness
-            gaslibpipedata[lengthrounded]["roughness"] /= gaslibpipedata[lengthrounded][
-                "pipesUsedForData"
-            ]
-            gaslibpipedata[lengthrounded]["pressureMax"] += pressuremax
-            gaslibpipedata[lengthrounded]["pressureMax"] /= gaslibpipedata[lengthrounded][
-                "pipesUsedForData"
-            ]
-
+        if lengthrounded in pipe_data:
+            pipe_data[lengthrounded]["pipesUsedForData"] += 1.0
+            pipe_data[lengthrounded]["diameter"] += diameter
+            pipe_data[lengthrounded]["diameter"] /= pipe_data[lengthrounded]["pipesUsedForData"]
+            pipe_data[lengthrounded]["roughness"] += roughness
+            pipe_data[lengthrounded]["roughness"] /= pipe_data[lengthrounded]["pipesUsedForData"]
+            pipe_data[lengthrounded]["pressureMax"] += pressure_max
+            pipe_data[lengthrounded]["pressureMax"] /= pipe_data[lengthrounded]["pipesUsedForData"]
         else:
-            gaslibpipedata[lengthrounded] = {
+            pipe_data[lengthrounded] = {
                 "diameter": diameter,
                 "roughness": roughness,
-                "pressureMax": pressuremax,
+                "pressureMax": pressure_max,
                 "pipesUsedForData": 1.0,
             }
-    return gaslibpipedata
+    return pipe_data
 
 
 def create_hp_topology(grid_data):
@@ -64,10 +57,6 @@ def create_hp_topology(grid_data):
         position=0,
         bar_format=dave_settings()["bar_format"],
     )
-    # get gaslib data clustered
-    gaslibpipedata = gaslib_pipe_clustering()
-    gaslibpipedatasortedlist = sorted(gaslibpipedata, key=float)
-
     # read high pressure grid data from dave datapool (scigridgas igginl)
     scigrid_data, meta_data = read_scigridgas_iggielgn()
     # add meta data
@@ -146,12 +135,15 @@ def create_hp_topology(grid_data):
         hp_pipes["to_junction"] = hp_pipes.to_junction.apply(
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name
         )
+        # get gaslib data clustered
+        gaslib_pipe_data = gaslib_pipe_clustering()
+        gaslib_pipe_data_sorted = sorted(gaslib_pipe_data, key=float)
         # add roughness from gaslib data to nearest scigrid pipe by length
         nearestpipelengthgaslib = hp_pipes.length_km.apply(
-            lambda y: min(gaslibpipedatasortedlist, key=lambda x: abs(x - y))
+            lambda y: min(gaslib_pipe_data_sorted, key=lambda x: abs(x - y))
         )
         hp_pipes["roughness"] = nearestpipelengthgaslib.apply(
-            lambda x: gaslibpipedata[x]["roughness"]
+            lambda x: gaslib_pipe_data[x]["roughness"]
         )
 
         # add dave name
