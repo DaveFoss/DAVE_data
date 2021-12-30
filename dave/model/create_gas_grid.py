@@ -164,6 +164,7 @@ def create_gas_grid(grid_data):
     # TODO: added components (how to implement this data in pandapipes?)
     # --- create sink
     # --- create source
+    # --- compressors (ersatzknoten)
     # --- create external grid
 
     # update progress
