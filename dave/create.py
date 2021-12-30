@@ -187,7 +187,8 @@ def create_grid(
     power_levels=[],
     gas_levels=[],
     plot=True,
-    convert=True,
+    convert_power=[],
+    convert_gas=[],
     opt_model=True,
     combine_areas=[],
     transformers=True,
@@ -229,8 +230,10 @@ def create_grid(
             or 'ALL' \n
         **plot** (boolean, default True) - if this value is true dave creates plottings \
             automaticly \n
-        **convert** (boolean, default True) - if this value is true dave will be convert the grid \
-            automaticly to pandapower and pandapipes \n
+        **convert_power** (list, default []) - this parameter defines in witch formats the power \
+            grid data should be converted. Available formats are currently: pandapower \n
+        **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
+            grid data should be converted. Available formats are currently: pandapipes \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations \n
         **combine_areas** (list, default []) - this parameter defines on which power levels not \
@@ -253,7 +256,7 @@ def create_grid(
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one \n
         **output_format** (string, default 'json') - this parameter defines the output format. \
-            Availible formats are currently json and hdf \n
+            Available formats are currently: json and hdf \n
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
@@ -386,7 +389,7 @@ def create_grid(
         # plot_landuse(grid_data, api_use, output_folder)
 
     # convert into pandapower and pandapipes
-    if convert and power_levels:
+    if convert_power and power_levels:
         net_power = create_power_grid(grid_data)
         net_power = power_processing(net_power, opt_model=opt_model)
         # save grid model in the dave output folder
@@ -395,7 +398,7 @@ def create_grid(
             pp_to_json(net_power, file_path)
     else:
         net_power = None
-    if convert and gas_levels:
+    if convert_gas and gas_levels:
         net_gas = create_gas_grid(grid_data)
         net_gas = gas_processing(net_gas)
         # save grid model in the dave output folder
