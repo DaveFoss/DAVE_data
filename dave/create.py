@@ -121,6 +121,63 @@ def create_empty_dataset():
     return grid_data
 
 
+def format_input_levels(power_levels, gas_levels):
+    """
+    This function formats the power and gas levels to get the right format for the dave processing
+    """
+    # set level inputs to upper strings
+    power_levels = list(map(str.upper, power_levels))
+    gas_levels = list(map(str.upper, gas_levels))
+    # convert input value 'ALL'
+    if power_levels == ["ALL"]:
+        power_levels = ["EHV", "HV", "MV", "LV"]
+    if gas_levels == ["ALL"]:
+        gas_levels = ["HP", "MP", "LP"]
+    # sort level inputs
+    order_power = ["EHV", "HV", "MV", "LV"]
+    power_sort = sorted(list(map(order_power.index, power_levels)))
+    power_levels = list(map(lambda x: order_power[x], power_sort))
+    order_gas = ["HP", "MP", "LP"]
+    gas_sort = sorted(list(map(order_gas.index, gas_levels)))
+    gas_levels = list(map(lambda x: order_gas[x], gas_sort))
+    return power_levels, gas_levels
+
+
+def geo_info_needs(power_levels, gas_levels, loads):
+    """
+    This function decides which geographical informations are necessary for the different grid
+    levels
+    """
+    # check power and gas level and set decision for geographical parameters
+    if ("LV" in power_levels) or ("LP" in gas_levels):
+        roads, roads_plot, buildings, landuse = True, True, True, True
+    elif ("MV" in power_levels) or ("MP" in gas_levels):
+        roads, roads_plot, buildings = True, True, False
+        landuse = bool(loads)  # landuse is needed for load calculation
+    else:  # for EHV, HV and HP
+        roads, roads_plot, buildings = False, False, False
+        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
+    return roads, roads_plot, buildings, landuse
+
+
+def save_dataset_to_archiv(grid_data):
+    """
+    This function saves the dave dataset in the own archiv.
+    Hint: datasets based on own area definitions will not be saved
+    """
+    print("Save DaVe dataset to archiv")
+    print("----------------------------------")
+    # check if archiv folder exists otherwise create one
+    archiv_dir = dave_settings()["dave_dir"] + "\\datapool\\dave_archiv\\"
+    if not os.path.exists(archiv_dir):
+        os.makedirs(archiv_dir)
+    with warnings.catch_warnings():
+        # filter warnings because of the PerformanceWarning from pytables at the geometry type
+        warnings.simplefilter("ignore")
+        # save dataset to archiv
+        file_name = to_archiv(grid_data)
+
+
 def create_grid(
     postalcode=None,
     town_name=None,
@@ -211,35 +268,16 @@ def create_grid(
     """
     # start runtime
     _start_time = timeit.default_timer()
+
     # create empty datastructure
     grid_data = create_empty_dataset()
-    #
-    # --- adapt level inputs
-    # set level inputs to upper strings
-    power_levels = list(map(str.upper, power_levels))
-    gas_levels = list(map(str.upper, gas_levels))
+
+    # format level inputs
+    power, gas = format_input_levels(power_levels, gas_levels)
     combine_areas = list(map(str.upper, combine_areas))
-    # convert input value 'ALL'
-    if power_levels == ["ALL"]:
-        power_levels = ["EHV", "HV", "MV", "LV"]
-    if gas_levels == ["ALL"]:
-        gas_levels = ["HP", "MP", "LP"]
-    # sort level inputs
-    order_power = ["EHV", "HV", "MV", "LV"]
-    power_sort = sorted(list(map(order_power.index, power_levels)))
-    power_levels = list(map(lambda x: order_power[x], power_sort))
-    order_gas = ["HP", "MP", "LP"]
-    gas_sort = sorted(list(map(order_gas.index, gas_levels)))
-    gas_levels = list(map(lambda x: order_gas[x], gas_sort))
-    # --- create target area informations
-    if ("LV" in power_levels) or ("LP" in gas_levels):
-        roads, roads_plot, buildings, landuse = True, True, True, True
-    elif ("MV" in power_levels) or ("MP" in gas_levels):
-        roads, roads_plot, buildings = True, True, False
-        landuse = bool(loads)  # landuse is needed for load calculation
-    else:  # for EHV, HV and HP
-        roads, roads_plot, buildings = False, False, False
-        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
+
+    # create target area informations
+    roads, roads_plot, buildings, landuse = geo_info_needs(power_levels, gas_levels, loads)
     file_exists, file_name = target_area(
         grid_data,
         power_levels=power_levels,
@@ -255,6 +293,8 @@ def create_grid(
         buildings=buildings,
         landuse=landuse,
     ).target()
+
+    # --- collect data for the requested dataset
     if not file_exists:
         # create extended grid area to combine not connected areas
         if combine_areas:
@@ -314,29 +354,20 @@ def create_grid(
         # read dataset from archiv
         grid_data = from_archiv(f"{file_name}.h5")
 
-    # create dave output folder on desktop for DaVe dataset, plotting and converted model
+    # save DaVe dataset to archiv
+    if not grid_data.target_input.iloc[0].typ == "own area":
+        # this function is temporary taken out for development
+        # save_dataset_to_archiv(grid_data)
+        pass
+
+    # save informations in user folder
     if not api_use:
+        # create dave output folder on desktop for DaVe dataset, plotting and converted model
         print(f"\nSave DaVe output data at the following path: {output_folder}")
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-
-    # save DaVe dataset to archiv and also in the output folder
-    if not grid_data.target_input.iloc[0].typ == "own area":
-        """this function is temporary taken out for development
-        print('Save DaVe dataset to archiv')
-        print('----------------------------------')
-        # check if archiv folder exists otherwise create one
-        archiv_dir = dave_settings()["dave_dir"] + '\\datapool\\dave_archiv\\'
-        if not os.path.exists(archiv_dir):
-            os.makedirs(archiv_dir)
-        with warnings.catch_warnings():
-            # filter warnings because of the PerformanceWarning from pytables at the geometry type
-            warnings.simplefilter('ignore')
-            # save dataset to archiv
-            file_name = to_archiv(grid_data)
-        """
-    # save DaVe dataset to the output folder
-    if not api_use:
+        # save DaVe dataset to the output folder but not in api modus
+        # !!! have to add option for output format
         with warnings.catch_warnings():
             # filter warnings because of the PerformanceWarning from pytables at the geometry type
             warnings.simplefilter("ignore")
