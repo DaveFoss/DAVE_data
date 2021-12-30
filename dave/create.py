@@ -10,7 +10,7 @@ from dave.components import gas_components, power_components
 
 # imports from dave
 from dave.dave_structure import davestructure
-from dave.io import from_archiv, pp_to_json, ppi_to_json, to_archiv, to_hdf
+from dave.io import from_archiv, pp_to_json, ppi_to_json, to_archiv, to_hdf, to_json
 from dave.model import create_gas_grid, create_power_grid, gas_processing, power_processing
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
 from dave.settings import dave_settings
@@ -200,6 +200,7 @@ def create_grid(
     storages_gas=True,
     valves=True,
     output_folder=dave_settings()["dave_output_dir"],
+    output_format="json",
     api_use=True,
 ):
     """
@@ -250,7 +251,9 @@ def create_grid(
         **valves** (boolean, default True) - if true, gas valves are added to the grid model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
             generated data should be saved. if for this path no folder exists, dave will be \
-                create one
+                create one \n
+        **output_format** (string, default 'json') - this parameter defines the output format. \
+            Availible formats are currently json and hdf \n
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
@@ -367,11 +370,13 @@ def create_grid(
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         # save DaVe dataset to the output folder but not in api modus
-        # !!! have to add option for output format
         with warnings.catch_warnings():
             # filter warnings because of the PerformanceWarning from pytables at the geometry type
             warnings.simplefilter("ignore")
-            to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
+            if output_format == "json":
+                to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
+            elif output_format == "hdf":
+                to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
 
     # plot informations
     if plot:
