@@ -3,11 +3,12 @@ import pandas as pd
 from shapely.geometry import MultiLineString
 from tqdm import tqdm
 
+from dave.io import ppi_to_json
 from dave.settings import dave_settings
 from dave.toolbox import multiline_coords
 
 
-def create_gas_grid(grid_data):
+def create_pandapipes(grid_data, api_use, output_folder):
     """
     This function creates a pandapipes network based an the DaVe dataset
 
@@ -171,4 +172,26 @@ def create_gas_grid(grid_data):
     pbar.update(20)
     # close progress bar
     pbar.close()
+    # run pandapower model processing
+    net = gas_processing(net)
+    # save grid model in the dave output folder
+    if not api_use:
+        file_path = output_folder + "\\dave_pandapipes.json"
+        ppi_to_json(net, file_path)
     return net
+
+
+def gas_processing(net_gas):
+    """
+    This function run a diagnosis of the pandapipes network and clean up occurring failures.
+    Furthermore the grid will be adapt so all boundarys be respected.
+
+    INPUT:
+        **net** (attrdict) - pandapipes attrdict
+
+    OUTPUT:
+        **net** (attrdict) - A cleaned up and if necessary optimized pandapipes attrdict
+    """
+    return net_gas
+    # hier wird das Gasnetzmodell nach dem es in pandapipes erstellt wurde, aufbereitet damit ein
+    # lastfluss konvergiert und sonstige Fehler bereinigen

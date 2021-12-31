@@ -10,8 +10,8 @@ from dave.components import gas_components, power_components
 
 # imports from dave
 from dave.dave_structure import davestructure
-from dave.io import from_archiv, pp_to_json, ppi_to_json, to_archiv, to_hdf
-from dave.model import create_gas_grid, create_power_grid, gas_processing, power_processing
+from dave.io import from_archiv, to_archiv, to_hdf, to_json
+from dave.model import create_pandapipes, create_pandapower
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -121,6 +121,63 @@ def create_empty_dataset():
     return grid_data
 
 
+def format_input_levels(power_levels, gas_levels):
+    """
+    This function formats the power and gas levels to get the right format for the dave processing
+    """
+    # set level inputs to upper strings
+    power_levels = list(map(str.upper, power_levels))
+    gas_levels = list(map(str.upper, gas_levels))
+    # convert input value 'ALL'
+    if power_levels == ["ALL"]:
+        power_levels = ["EHV", "HV", "MV", "LV"]
+    if gas_levels == ["ALL"]:
+        gas_levels = ["HP", "MP", "LP"]
+    # sort level inputs
+    order_power = ["EHV", "HV", "MV", "LV"]
+    power_sort = sorted(list(map(order_power.index, power_levels)))
+    power_levels = list(map(lambda x: order_power[x], power_sort))
+    order_gas = ["HP", "MP", "LP"]
+    gas_sort = sorted(list(map(order_gas.index, gas_levels)))
+    gas_levels = list(map(lambda x: order_gas[x], gas_sort))
+    return power_levels, gas_levels
+
+
+def geo_info_needs(power_levels, gas_levels, loads):
+    """
+    This function decides which geographical informations are necessary for the different grid
+    levels
+    """
+    # check power and gas level and set decision for geographical parameters
+    if ("LV" in power_levels) or ("LP" in gas_levels):
+        roads, roads_plot, buildings, landuse = True, True, True, True
+    elif ("MV" in power_levels) or ("MP" in gas_levels):
+        roads, roads_plot, buildings = True, True, False
+        landuse = bool(loads)  # landuse is needed for load calculation
+    else:  # for EHV, HV and HP
+        roads, roads_plot, buildings = False, False, False
+        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
+    return roads, roads_plot, buildings, landuse
+
+
+def save_dataset_to_archiv(grid_data):
+    """
+    This function saves the dave dataset in the own archiv.
+    Hint: datasets based on own area definitions will not be saved
+    """
+    print("Save DaVe dataset to archiv")
+    print("----------------------------------")
+    # check if archiv folder exists otherwise create one
+    archiv_dir = dave_settings()["dave_dir"] + "\\datapool\\dave_archiv\\"
+    if not os.path.exists(archiv_dir):
+        os.makedirs(archiv_dir)
+    with warnings.catch_warnings():
+        # filter warnings because of the PerformanceWarning from pytables at the geometry type
+        warnings.simplefilter("ignore")
+        # save dataset to archiv
+        file_name = to_archiv(grid_data)
+
+
 def create_grid(
     postalcode=None,
     town_name=None,
@@ -130,7 +187,8 @@ def create_grid(
     power_levels=[],
     gas_levels=[],
     plot=True,
-    convert=True,
+    convert_power=[],
+    convert_gas=[],
     opt_model=True,
     combine_areas=[],
     transformers=True,
@@ -143,6 +201,7 @@ def create_grid(
     storages_gas=True,
     valves=True,
     output_folder=dave_settings()["dave_output_dir"],
+    output_format="json",
     api_use=True,
 ):
     """
@@ -171,10 +230,13 @@ def create_grid(
             or 'ALL' \n
         **plot** (boolean, default True) - if this value is true dave creates plottings \
             automaticly \n
-        **convert** (boolean, default True) - if this value is true dave will be convert the grid \
-            automaticly to pandapower and pandapipes \n
+        **convert_power** (list, default []) - this parameter defines in witch formats the power \
+            grid data should be converted. Available formats are currently: 'pandapower' \n
+        **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
+            grid data should be converted. Available formats are currently: 'pandapipes' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
-            power flow calculation to get no boundary violations \n
+            power flow calculation to get no boundary violations. Currently a experimental feature \
+                and only available for pandapower \n
         **combine_areas** (list, default []) - this parameter defines on which power levels not \
             connected areas should combined. options: 'EHV','HV','MV','LV', [] \n
         **transformers** (boolean, default True) - if true, transformers are added to the grid \
@@ -193,7 +255,9 @@ def create_grid(
         **valves** (boolean, default True) - if true, gas valves are added to the grid model \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
             generated data should be saved. if for this path no folder exists, dave will be \
-                create one
+                create one \n
+        **output_format** (string, default 'json') - this parameter defines the output format. \
+            Available formats are currently: 'json' and 'hdf' \n
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
@@ -211,35 +275,16 @@ def create_grid(
     """
     # start runtime
     _start_time = timeit.default_timer()
+
     # create empty datastructure
     grid_data = create_empty_dataset()
-    #
-    # --- adapt level inputs
-    # set level inputs to upper strings
-    power_levels = list(map(str.upper, power_levels))
-    gas_levels = list(map(str.upper, gas_levels))
+
+    # format level inputs
+    power, gas = format_input_levels(power_levels, gas_levels)
     combine_areas = list(map(str.upper, combine_areas))
-    # convert input value 'ALL'
-    if power_levels == ["ALL"]:
-        power_levels = ["EHV", "HV", "MV", "LV"]
-    if gas_levels == ["ALL"]:
-        gas_levels = ["HP", "MP", "LP"]
-    # sort level inputs
-    order_power = ["EHV", "HV", "MV", "LV"]
-    power_sort = sorted(list(map(order_power.index, power_levels)))
-    power_levels = list(map(lambda x: order_power[x], power_sort))
-    order_gas = ["HP", "MP", "LP"]
-    gas_sort = sorted(list(map(order_gas.index, gas_levels)))
-    gas_levels = list(map(lambda x: order_gas[x], gas_sort))
-    # --- create target area informations
-    if ("LV" in power_levels) or ("LP" in gas_levels):
-        roads, roads_plot, buildings, landuse = True, True, True, True
-    elif ("MV" in power_levels) or ("MP" in gas_levels):
-        roads, roads_plot, buildings = True, True, False
-        landuse = bool(loads)  # landuse is needed for load calculation
-    else:  # for EHV, HV and HP
-        roads, roads_plot, buildings = False, False, False
-        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
+
+    # create target area informations
+    roads, roads_plot, buildings, landuse = geo_info_needs(power_levels, gas_levels, loads)
     file_exists, file_name = target_area(
         grid_data,
         power_levels=power_levels,
@@ -255,6 +300,8 @@ def create_grid(
         buildings=buildings,
         landuse=landuse,
     ).target()
+
+    # --- collect data for the requested dataset
     if not file_exists:
         # create extended grid area to combine not connected areas
         if combine_areas:
@@ -314,33 +361,26 @@ def create_grid(
         # read dataset from archiv
         grid_data = from_archiv(f"{file_name}.h5")
 
-    # create dave output folder on desktop for DaVe dataset, plotting and converted model
+    # save DaVe dataset to archiv
+    if not grid_data.target_input.iloc[0].typ == "own area":
+        # this function is temporary taken out for development
+        # save_dataset_to_archiv(grid_data)
+        pass
+
+    # save informations in user folder
     if not api_use:
+        # create dave output folder on desktop for DaVe dataset, plotting and converted model
         print(f"\nSave DaVe output data at the following path: {output_folder}")
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-
-    # save DaVe dataset to archiv and also in the output folder
-    if not grid_data.target_input.iloc[0].typ == "own area":
-        """this function is temporary taken out for development
-        print('Save DaVe dataset to archiv')
-        print('----------------------------------')
-        # check if archiv folder exists otherwise create one
-        archiv_dir = dave_settings()["dave_dir"] + '\\datapool\\dave_archiv\\'
-        if not os.path.exists(archiv_dir):
-            os.makedirs(archiv_dir)
-        with warnings.catch_warnings():
-            # filter warnings because of the PerformanceWarning from pytables at the geometry type
-            warnings.simplefilter('ignore')
-            # save dataset to archiv
-            file_name = to_archiv(grid_data)
-        """
-    # save DaVe dataset to the output folder
-    if not api_use:
+        # save DaVe dataset to the output folder but not in api modus
         with warnings.catch_warnings():
             # filter warnings because of the PerformanceWarning from pytables at the geometry type
             warnings.simplefilter("ignore")
-            to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
+            if output_format == "json":
+                to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
+            elif output_format == "hdf":
+                to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
 
     # plot informations
     if plot:
@@ -349,23 +389,18 @@ def create_grid(
         plot_grid_data(grid_data, api_use, output_folder)
         # plot_landuse(grid_data, api_use, output_folder)
 
-    # convert into pandapower and pandapipes
-    if convert and power_levels:
-        net_power = create_power_grid(grid_data)
-        net_power = power_processing(net_power, opt_model=opt_model)
-        # save grid model in the dave output folder
-        if not api_use:
-            file_path = output_folder + "\\dave_power_grid.json"
-            pp_to_json(net_power, file_path)
+    # convert power model
+    if convert_power and power_levels:
+        if "pandapower" in convert_power:
+            net_power = create_pandapower(
+                grid_data, opt_model=opt_model, api_use=api_use, output_folder=output_folder
+            )
     else:
         net_power = None
-    if convert and gas_levels:
-        net_gas = create_gas_grid(grid_data)
-        net_gas = gas_processing(net_gas)
-        # save grid model in the dave output folder
-        if not api_use:
-            file_path = output_folder + "\\dave_gas_grid.json"
-            ppi_to_json(net_gas, file_path)
+    # convert gas model
+    if convert_gas and gas_levels:
+        if "pandapipes" in convert_gas:
+            net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
     else:
         net_gas = None
 
