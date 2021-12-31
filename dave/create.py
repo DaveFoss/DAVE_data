@@ -233,7 +233,7 @@ def create_grid(
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
-            grid data should be converted. Available formats are currently: 'pandapipes' \n
+            grid data should be converted. Available formats are currently: 'pandapipes', 'romo' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations. Currently a experimental feature \
                 and only available for pandapower \n
@@ -401,6 +401,10 @@ def create_grid(
     if convert_gas and gas_levels:
         if "pandapipes" in convert_gas:
             net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
+        if "romo" in convert_gas:
+            net_gas = create_pandapipes(
+                grid_data, api_use=api_use, output_folder=output_folder
+            )  # !!! how to handle net_gas at multiple conversions
     else:
         net_gas = None
 
