@@ -10,8 +10,8 @@ from dave.components import gas_components, power_components
 
 # imports from dave
 from dave.dave_structure import davestructure
-from dave.io import from_archiv, pp_to_json, ppi_to_json, to_archiv, to_hdf, to_json
-from dave.model import create_gas_grid, create_power_grid, gas_processing, power_processing
+from dave.io import from_archiv, to_archiv, to_hdf, to_json
+from dave.model import create_pandapipes, create_pandapower
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -231,11 +231,12 @@ def create_grid(
         **plot** (boolean, default True) - if this value is true dave creates plottings \
             automaticly \n
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
-            grid data should be converted. Available formats are currently: pandapower \n
+            grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
-            grid data should be converted. Available formats are currently: pandapipes \n
+            grid data should be converted. Available formats are currently: 'pandapipes' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
-            power flow calculation to get no boundary violations \n
+            power flow calculation to get no boundary violations. Currently a experimental feature \
+                and only available for pandapower \n
         **combine_areas** (list, default []) - this parameter defines on which power levels not \
             connected areas should combined. options: 'EHV','HV','MV','LV', [] \n
         **transformers** (boolean, default True) - if true, transformers are added to the grid \
@@ -256,7 +257,7 @@ def create_grid(
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one \n
         **output_format** (string, default 'json') - this parameter defines the output format. \
-            Available formats are currently: json and hdf \n
+            Available formats are currently: 'json' and 'hdf' \n
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
@@ -388,23 +389,18 @@ def create_grid(
         plot_grid_data(grid_data, api_use, output_folder)
         # plot_landuse(grid_data, api_use, output_folder)
 
-    # convert into pandapower and pandapipes
+    # convert power model
     if convert_power and power_levels:
-        net_power = create_power_grid(grid_data)
-        net_power = power_processing(net_power, opt_model=opt_model)
-        # save grid model in the dave output folder
-        if not api_use:
-            file_path = output_folder + "\\dave_power_grid.json"
-            pp_to_json(net_power, file_path)
+        if "pandapower" in convert_power:
+            net_power = create_pandapower(
+                grid_data, opt_model=opt_model, api_use=api_use, output_folder=output_folder
+            )
     else:
         net_power = None
+    # convert gas model
     if convert_gas and gas_levels:
-        net_gas = create_gas_grid(grid_data)
-        net_gas = gas_processing(net_gas)
-        # save grid model in the dave output folder
-        if not api_use:
-            file_path = output_folder + "\\dave_gas_grid.json"
-            ppi_to_json(net_gas, file_path)
+        if "pandapipes" in convert_gas:
+            net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
     else:
         net_gas = None
 
