@@ -175,7 +175,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
     net = gas_processing(net)
     # save grid model in the dave output folder
     if not api_use:
-        file_path = output_folder + "\\dave_gas_grid.json"
+        file_path = output_folder + "\\dave_pandapipes.json"
         ppi_to_json(net, file_path)
     return net
 
