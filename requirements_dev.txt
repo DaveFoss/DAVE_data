@@ -19,6 +19,7 @@ pytest-cov
 pytest-xdist
 pytables
 pre-commit
+black
 isort
 pymongo
 # via pip
