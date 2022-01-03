@@ -60,6 +60,8 @@ def to_json(grid_data, file_path=None, encryption_key=None):
         **grid_data** (dict) - all Informations about the grid area
         **file_path** (str , default None) - absoulut path where the JSON file will be stored. If
                                              None is given the function returns only a JSON string
+        **encrytion_key** (string, None) - If given, the DaVe dataset is stored as an encrypted \
+            json string
     OUTPUT:
         **file** (json) - the dave dataset in JSON format
 
