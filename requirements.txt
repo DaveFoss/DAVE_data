@@ -20,5 +20,6 @@ pytest-xdist
 pytables
 pymongo
 xmlschema
+lxml
 # via pip
 #pandapipes
