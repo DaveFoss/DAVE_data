@@ -3,8 +3,8 @@ import pandas as pd
 from lxml import etree
 from tqdm import tqdm
 
+from dave import __version__
 from dave.settings import dave_settings
-from dave.toolbox import multiline_coords
 
 
 def create_romo(grid_data, api_use, output_folder):
@@ -36,33 +36,37 @@ def create_romo(grid_data, api_use, output_folder):
         "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation"
     ] = "http://gaslib.zib.de/Gas Gas.xsd"
     information = etree.Element("{http://gaslib.zib.de/Framework}information")
-    romo_nodes = etree.Element("{http://gaslib.zib.de/Framework}nodes")
+    nodes = etree.Element("{http://gaslib.zib.de/Framework}nodes")
     connections = etree.Element("{http://gaslib.zib.de/Framework}connections")
 
     # create informations
-    # Titel, region, DaVe Version ....
+    # !!! Todo: Noch eintragen Titel, region, DaVe Version ....
+    information.attrib["title"] = ""
+    information.attrib["area"] = ""
+    information.attrib["grid_levels"] = str(grid_data.target_input.gas_levels.iloc[0])
+    information.attrib["dave_version"] = __version__
 
     # --- create nodes
-    nodes = grid_data.hp_data.hp_junctions
+    nodes_dave = grid_data.hp_data.hp_junctions
     # !!! umändern zu den SCiGridGas Daten
-    nodes.insert(
+    nodes_dave.insert(
         0,
         "is_export",
-        pd.Series(list(map(lambda x: np.random.randint(2), nodes.index))),
+        pd.Series(list(map(lambda x: np.random.randint(2), nodes_dave.index))),
     )
-    nodes.insert(
+    nodes_dave.insert(
         0,
         "is_import",
-        pd.Series(list(map(lambda x: np.random.randint(2), nodes.index))),
+        pd.Series(list(map(lambda x: np.random.randint(2), nodes_dave.index))),
     )
-    nodes["elevation_m"] = 1
+    nodes_dave["elevation_m"] = 1
 
     # Fall export, import
     # Fall 0,0 => innerer Knoten (Verbindung)
     # Fall 0,1 => Quelle
     # Fall 1,0 => Senke
     # Fall 1,1 => Quelle und Senke
-    for _, node in nodes.iterrows():
+    for _, node in nodes_dave.iterrows():
         #
 
         if (node.is_export == 0 and node.is_import == 0) or (
@@ -83,7 +87,7 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(
                 innode, "presssureMax", {"unit": "bar", "value": "100.0"}
             )  # !!! Todos rauslesen aus pipes min max
-            romo_nodes.append(innode)
+            nodes.append(innode)
 
         if (node.is_export == 0 and node.is_import == 1) or (
             node.is_export == 1 and node.is_import == 1
@@ -139,7 +143,7 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(
                 source, "pseudocticticalTemperature", {"unit": "K", "value": "202.4395142"}
             )  # !!! annahme
-            romo_nodes.append(source)
+            nodes.append(source)
 
         if (node.is_export == 1 and node.is_import == 0) or (
             node.is_export == 1 and node.is_import == 1
@@ -165,7 +169,7 @@ def create_romo(grid_data, api_use, output_folder):
             height.attrib["unit"] = "m"
             height.attrib["value"] = str(node.elevation_m)
             sink.append(height)
-            romo_nodes.append(sink)
+            nodes.append(sink)
 
         if node.is_export == 1 and node.is_import == 1:
 
