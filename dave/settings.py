@@ -1,7 +1,7 @@
 import os
 
 # switch develop and production parameters
-develop = False  # set True for develop modus
+develop = True  # set True for develop modus
 if develop:
     db_ip = "127.0.0.1:27017"  # database url in develop version
     keycloak_ip = "http://127.0.0.1/auth/"  # Keycloak url in develop version
@@ -26,7 +26,7 @@ def dave_settings():
         "keycloak_ip": keycloak_ip,
         "client_id": "dave_login",
         "realm_name": "dave",
-        "client_secret_key": "faffc4d9-a85b-4cea-8226-44b938a98781",
+        "client_secret_key": "088d3f9e-58ea-405c-acf9-bf96b97ed922",
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
