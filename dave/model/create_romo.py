@@ -75,12 +75,9 @@ def create_romo(grid_data, api_use, output_folder):
             innode = etree.Element("innode", {"alias": "", "y": "", "x": ""})
             innode.attrib["geoWGS84Long"] = str(node.long)
             innode.attrib["geoWGS84Lat"] = str(node.lat)
-            innode.attrib["id"] = f"innode_{node.dave_name}"
             innode_id = f"innode_{node.dave_name}"
-            height = etree.Element("height")
-            height.attrib["unit"] = "m"
-            height.attrib["value"] = str(node.elevation_m)
-            innode.append(height)
+            innode.attrib["id"] = innode_id
+            etree.SubElement(innode, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 innode, "presssureMin", {"unit": "bar", "value": "1.0"}
             )  # !!! Todos rauslesen aus pipes min max
@@ -96,14 +93,10 @@ def create_romo(grid_data, api_use, output_folder):
             source = etree.Element("source", {"alias": "", "y": "", "x": ""})
             source.attrib["geoWGS84Long"] = str(node.long)
             source.attrib["geoWGS84Lat"] = str(node.lat)
-            source.attrib["id"] = f"source_{node.dave_name}"
             source_id = f"source_{node.dave_name}"
+            source.attrib["id"] = source_id
 
-            height = etree.Element("height")
-            height.attrib["unit"] = "m"
-            height.attrib["value"] = str(node.elevation_m)
-            source.append(height)
-
+            etree.SubElement(source, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 source, "presssureMin", {"unit": "bar", "value": "1.0"}
             )  # !!! Todos rauslesen aus pipes min max
@@ -151,8 +144,9 @@ def create_romo(grid_data, api_use, output_folder):
             sink = etree.Element("sink", {"alias": "", "y": "", "x": ""})
             sink.attrib["geoWGS84Long"] = str(node.long)
             sink.attrib["geoWGS84Lat"] = str(node.lat)
-            sink.attrib["id"] = f"sink_{node.dave_name}"
             sink_id = f"sink_{node.dave_name}"
+            sink.attrib["id"] = sink_id
+            etree.SubElement(sink, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 sink, "presssureMin", {"unit": "bar", "value": "1.0"}
             )  # !!! Todos rauslesen aus pipes min max
@@ -173,7 +167,7 @@ def create_romo(grid_data, api_use, output_folder):
 
         if node.is_export == 1 and node.is_import == 1:
 
-            # da quelle und senke macht man zwei short pipes um diese voneinander zu unterscheiden
+            # da quelle und senke macht man zwei short pipes um diese voneinander zu unterscheiden und zusätzlicher innode
             short_pipe_sink = etree.Element("shortPipe")
             short_pipe_sink.attrib["alias"] = ""
             short_pipe_sink.attrib["id"] = f"short_pipe_{sink_id}_{innode_id}"
