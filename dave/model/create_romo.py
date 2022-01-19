@@ -89,13 +89,11 @@ def create_romo(grid_data, api_use, output_folder):
         if (node.is_export == 0 and node.is_import == 1) or (
             node.is_export == 1 and node.is_import == 1
         ):
-
             source = etree.Element("source", {"alias": "", "y": "", "x": ""})
             source.attrib["geoWGS84Long"] = str(node.long)
             source.attrib["geoWGS84Lat"] = str(node.lat)
             source_id = f"source_{node.dave_name}"
             source.attrib["id"] = source_id
-
             etree.SubElement(source, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 source, "presssureMin", {"unit": "bar", "value": "1.0"}
@@ -196,8 +194,11 @@ def create_romo(grid_data, api_use, output_folder):
 
     # create connections
 
-    # save pandapower model in the dave output folder
-    # if not api_use:
-    #     file_path = output_folder + "\\dave_romo.json"
-    #     pp_to_json(net, file_path)
+    # save RoMo model in the dave output folder
+    if not api_use:
+        file_path = output_folder + "\\dave_romo.xml"
+        etree.ElementTree(information).write(file_path)  # !!! Wie wird das Network ausgegeben?
+
+    # update progress
+    pbar.update(100)  # !!! Muss noch verteilt werden
     # return net
