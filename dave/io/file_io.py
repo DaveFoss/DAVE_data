@@ -116,6 +116,9 @@ def from_hdf(dataset_path):
                     else:
                         grid_data[key_parts[0]] = grid_data[key_parts[0]].append(data)
                 elif len(key_parts) == 2:
+                    # data road junctions has to convert into series object
+                    if key_parts[1] == "road_junctions":
+                        data = data.geometry
                     grid_data[key_parts[0]][key_parts[1]] = grid_data[key_parts[0]][
                         key_parts[1]
                     ].append(data)
