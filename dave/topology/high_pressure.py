@@ -58,7 +58,8 @@ def create_hp_topology(grid_data):
         # set crs
         hp_junctions.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hp junctions to grid data
-        grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
+        grid_data.hp_data.hp_junctions = pd.concat(
+            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True)
         # update progress
         pbar.update(20)
         # --- create hp pipes
@@ -106,7 +107,7 @@ def create_hp_topology(grid_data):
         # set crs
         hp_pipes.set_crs(dave_settings()["crs_main"], inplace=True)
         # add pipes to grid data
-        grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
+        grid_data.hp_data.hp_pipes = pd.concat([grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True)
         # update progress
         pbar.update(20)
     # close progress bar

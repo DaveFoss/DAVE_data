@@ -543,7 +543,7 @@ class target_area:
         else:
             raise SyntaxError("target area wasn`t defined")
         # write area informations into grid_data
-        self.grid_data.area = self.grid_data.area.append(self.target)
+        self.grid_data.area = pd.concat([self.grid_data.area, self.target], ignore_index=True)
         if self.grid_data.area.crs is None:
             self.grid_data.area.set_crs(dave_settings()["crs_main"], inplace=True)
         elif self.grid_data.area.crs != dave_settings()["crs_main"]:
