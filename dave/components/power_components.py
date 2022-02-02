@@ -1370,7 +1370,7 @@ def transformers(grid_data):
         hv_trafos = hv_trafos[hv_trafos.ego_scn_name == "Status Quo"]
         # change geometry to point because in original data the geometry was lines with length 0
         hv_trafos["geometry"] = hv_trafos.geometry.apply(
-            lambda x: Point(x[0].coords[:][0][0], x[0].coords[:][0][1])
+            lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
         )
         # check for transformer in the target area
         hv_trafos = gpd.overlay(hv_trafos, grid_data.area, how="intersection")
