@@ -46,7 +46,8 @@ def sources(grid_data, scigrid_productions):
     # set crs
     production.set_crs(dave_settings()["crs_main"], inplace=True)
     # add hp junctions to grid data
-    grid_data.components_gas.sources = grid_data.components_gas.sources.append(production)
+    grid_data.components_gas.sources = pd.concat(
+        [grid_data.components_gas.sources, production], ignore_index=True)
     # update progress
     pbar.update(20)
     # close progress bar
@@ -93,7 +94,8 @@ def compressors(grid_data, scigrid_compressors):
     # set crs
     compressors.set_crs(dave_settings()["crs_main"], inplace=True)
     # add hp junctions to grid data
-    grid_data.components_gas.compressors = grid_data.components_gas.compressors.append(compressors)
+    grid_data.components_gas.compressors = pd.concat(
+        [grid_data.components_gas.compressors, compressors], ignore_index=True)
     # update progress
     pbar.update(20)
     # close progress bar
@@ -139,7 +141,7 @@ def sinks(grid_data, scigrid_consumers):
     # set crs
     sinks.set_crs(dave_settings()["crs_main"], inplace=True)
     # add hp junctions to grid data
-    grid_data.components_gas.sinks = grid_data.components_gas.sinks.append(sinks)
+    grid_data.components_gas.sinks = pd.concat([grid_data.components_gas.sinks, sinks], ignore_index=True)
     # update progress
     pbar.update(20)
     # close progress bar

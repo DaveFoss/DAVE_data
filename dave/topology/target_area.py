@@ -122,7 +122,7 @@ class target_area:
                 roads = roads[roads.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
+                self.grid_data.roads.roads = pd.concat([self.grid_data.roads.roads, roads], ignore_index=True)
             # add time delay
             time.sleep(time_delay)
             # update progress
@@ -152,7 +152,8 @@ class target_area:
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
+                self.grid_data.roads.roads_plot = pd.concat(
+                    [self.grid_data.roads.roads_plot, roads_plot], ignore_index=True)
             # add time delay
             time.sleep(time_delay)
             # update progress
@@ -210,7 +211,8 @@ class target_area:
                 landuse_3035 = landuse.to_crs(dave_settings()["crs_meter"])
                 landuse["area_km2"] = landuse_3035.area / 1e06
                 # write landuse into grid_data
-                self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+                self.grid_data.landuse = pd.concat(
+                    [self.grid_data.landuse, landuse], ignore_index=True)
                 self.grid_data.landuse.set_crs(dave_settings()["crs_main"], inplace=True)
             # add time delay
             time.sleep(time_delay)
@@ -270,15 +272,16 @@ class target_area:
                                 buildings.at[i, "building"] = "commercial"
                 # write buildings into grid_data
                 buildings.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(
-                    buildings[buildings.building.isin(for_living)]
-                )
-                self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(
-                    buildings[buildings.building.isin(commercial)]
-                )
-                self.grid_data.buildings.other = self.grid_data.buildings.other.append(
-                    buildings[~buildings.building.isin(for_living + commercial)]
-                )
+                self.grid_data.buildings.for_living = pd.concat(
+                    [self.grid_data.buildings.for_living,
+                     buildings[buildings.building.isin(for_living)]], ignore_index=True)
+                self.grid_data.buildings.commercial = pd.concat(
+                    [self.grid_data.buildings.commercial,
+                     buildings[buildings.building.isin(commercial)]], ignore_index=True)
+                self.grid_data.buildings.other = pd.concat(
+                    [self.grid_data.buildings.other,
+                     buildings[~buildings.building.isin(for_living + commercial)]],
+                    ignore_index=True)
             # add time delay
             time.sleep(time_delay)
             # update progress

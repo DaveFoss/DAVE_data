@@ -187,7 +187,8 @@ def create_lkd_eu(grid_data):
             0, "dave_name", pd.Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
         )
         # add hp junctions to grid data
-        grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
+        grid_data.hp_data.hp_junctions = pd.concat(
+            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True)
         # --- create hp pipes
         hp_pipes = hp_data["hp_pipelines"]
         # filter relevant and real pipelines by checking if both endpoints are in the target area
@@ -240,4 +241,5 @@ def create_lkd_eu(grid_data):
             0, "dave_name", pd.Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index)))
         )
         # add hd lines to grid data
-        grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
+        grid_data.hp_data.hp_pipes = pd.concat(
+            [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True)
