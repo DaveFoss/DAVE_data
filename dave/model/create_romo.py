@@ -48,6 +48,7 @@ def create_romo(grid_data, api_use, output_folder):
 
     # --- create nodes
     nodes_dave = grid_data.hp_data.hp_junctions
+    
     # !!! umändern zu den SCiGridGas Daten
     nodes_dave.insert(
         0,
@@ -61,14 +62,15 @@ def create_romo(grid_data, api_use, output_folder):
     )
     nodes_dave["elevation_m"] = 1
 
-    # Fall export, import
-    # Fall 0,0 => innerer Knoten (Verbindung)
-    # Fall 0,1 => Quelle
-    # Fall 1,0 => Senke
-    # Fall 1,1 => Quelle und Senke
+    # Case export, import
+    # Case 0,0 => in node (connection)
+    # Case 0,1 => source
+    # Case 1,0 => sink
+    # Case 1,1 => source and sink
+    
+    # set dict for mapping ids
+    mapping = {}
     for _, node in nodes_dave.iterrows():
-        #
-
         if (node.is_export == 0 and node.is_import == 0) or (
             node.is_export == 1 and node.is_import == 1
         ):
@@ -77,6 +79,7 @@ def create_romo(grid_data, api_use, output_folder):
             innode.attrib["geoWGS84Lat"] = str(node.lat)
             innode_id = f"innode_{node.dave_name}"
             innode.attrib["id"] = innode_id
+            mapping[node.dave_name] = innode_id
             etree.SubElement(innode, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 innode, "presssureMin", {"unit": "bar", "value": "1.0"}
@@ -94,6 +97,7 @@ def create_romo(grid_data, api_use, output_folder):
             source.attrib["geoWGS84Lat"] = str(node.lat)
             source_id = f"source_{node.dave_name}"
             source.attrib["id"] = source_id
+            mapping[node.dave_name] = source_id
             etree.SubElement(source, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 source, "presssureMin", {"unit": "bar", "value": "1.0"}
@@ -144,6 +148,7 @@ def create_romo(grid_data, api_use, output_folder):
             sink.attrib["geoWGS84Lat"] = str(node.lat)
             sink_id = f"sink_{node.dave_name}"
             sink.attrib["id"] = sink_id
+            mapping[node.dave_name] = sink_id
             etree.SubElement(sink, "height", {"unit": "m", "value": str(node.elevation_m)})
             etree.SubElement(
                 sink, "presssureMin", {"unit": "bar", "value": "1.0"}
@@ -192,12 +197,40 @@ def create_romo(grid_data, api_use, output_folder):
             )  # !!! annahme
             connections.append(short_pipe_source)
 
-    # create connections
+    # --- create connections
+    # create pipes
+    pipes_dave = grid_data.hp_data.hp_pipes
+    
+    for _, pipe_dave in pipes_dave.iterrows():
+        pipe = etree.Element('pipe')
+        pipe.attrib["from"] = mapping[pipe_dave.from_junction] 
+        pipe.attrib["to"] = mapping[pipe_dave.to_junction] 
+        etree.SubElement(pipe, 'length', {'unit':'km','value': str(pipe_dave.length_km)})
+        etree.SubElement(pipe, 'diameter', {'unit':'mm','value': str(pipe_dave.diameter_mm)})
+
+        etree.SubElement(
+            pipe, 'pressureMax', {'unit':'bar','value': str(pipe_dave.max_pressure_bar)})
+        
+        etree.SubElement(
+            pipe, 'flowMin', {'unit':'1000m_cube_per_hour','value': '-10000'})  # !!! annahme
+        etree.SubElement(
+            pipe, 'flowMax', {'unit':'1000m_cube_per_hour','value': '10000'})  # !!! annahme
+        etree.SubElement(pipe, 'roughness', {'unit':'mm','value': str(pipe_dave.roughness)})
+        etree.SubElement(
+            pipe, 'heatTransferCoefficient', {'unit': 'W_per_m_square_per_K','value': '2'})  # !!! annahme
+        connections.append(pipe)
+        
+    # create compressors
 
     # save RoMo model in the dave output folder
     if not api_use:
-        file_path = output_folder + "\\dave_romo.xml"
-        etree.ElementTree(information).write(file_path)  # !!! Wie wird das Network ausgegeben?
+        file_path = output_folder + "\\dave_romo.net"
+        network.append(information)
+        network.append(nodes)
+        network.append(connections)
+        tree = etree.ElementTree()
+        tree._setroot(network)
+        tree.write(file_path,pretty_print=True,encoding='UTF-8',xml_declaration=True)
 
     # update progress
     pbar.update(100)  # !!! Muss noch verteilt werden
