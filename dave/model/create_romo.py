@@ -57,28 +57,13 @@ def create_romo(grid_data, api_use, output_folder):
 
     # --- create nodes
     nodes_dave = grid_data.hp_data.hp_junctions
-    
-    # !!! umändern zu den SCiGridGas Daten
-    nodes_dave.insert(
-        0,
-        "is_export",
-        pd.Series(list(map(lambda x: np.random.randint(2), nodes_dave.index))),
-    )
-    nodes_dave.insert(
-        0,
-        "is_import",
-        pd.Series(list(map(lambda x: np.random.randint(2), nodes_dave.index))),
-    )
-    nodes_dave["elevation_m"] = 1
-
-    # Case export, import
+    # set dict for mapping ids
+    mapping = {}
+    # Cases of export, import
     # Case 0,0 => in node (connection)
     # Case 0,1 => source
     # Case 1,0 => sink
     # Case 1,1 => source and sink
-    
-    # set dict for mapping ids
-    mapping = {}
     for _, node in nodes_dave.iterrows():
         if (node.is_export == 0 and node.is_import == 0) or (
             node.is_export == 1 and node.is_import == 1
@@ -89,7 +74,7 @@ def create_romo(grid_data, api_use, output_folder):
             innode_id = f"innode_{node.dave_name}"
             innode.attrib["id"] = innode_id
             mapping[node.dave_name] = innode_id
-            etree.SubElement(innode, "height", {"unit": "m", "value": str(node.elevation_m)})
+            etree.SubElement(innode, "height", {"unit": "m", "value": str(node.height_m)})
             etree.SubElement(
                 innode, "presssureMin", {"unit": "bar", "value": "1.0"}
             )  # !!! Todos rauslesen aus pipes min max
@@ -107,7 +92,7 @@ def create_romo(grid_data, api_use, output_folder):
             source_id = f"source_{node.dave_name}"
             source.attrib["id"] = source_id
             mapping[node.dave_name] = source_id
-            etree.SubElement(source, "height", {"unit": "m", "value": str(node.elevation_m)})
+            etree.SubElement(source, "height", {"unit": "m", "value": str(node.height_m)})
             etree.SubElement(
                 source, "presssureMin", {"unit": "bar", "value": "1.0"}
             )  # !!! Todos rauslesen aus pipes min max
@@ -158,7 +143,7 @@ def create_romo(grid_data, api_use, output_folder):
             sink_id = f"sink_{node.dave_name}"
             sink.attrib["id"] = sink_id
             mapping[node.dave_name] = sink_id
-            etree.SubElement(sink, "height", {"unit": "m", "value": str(node.elevation_m)})
+            etree.SubElement(sink, "height", {"unit": "m", "value": str(node.height_m)})
             etree.SubElement(
                 sink, "presssureMin", {"unit": "bar", "value": "1.0"}
             )  # !!! Todos rauslesen aus pipes min max
