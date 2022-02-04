@@ -111,7 +111,8 @@ def line_connections(grid_data):
         },
         crs=dave_settings()["crs_main"],
     )
-    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(lines_gdf)
+    grid_data.lv_data.lv_lines = pd.concat(
+        [grid_data.lv_data.lv_lines, lines_gdf], ignore_index=True)
 
 
 def create_lv_topology(grid_data):
@@ -165,16 +166,16 @@ def create_lv_topology(grid_data):
                 pd.Series(list(map(lambda x: f"substation_6_{x}", mvlv_substations.index))),
             )
             # add ehv substations to grid data
-            grid_data.components_power.substations.mv_lv = (
-                grid_data.components_power.substations.mv_lv.append(mvlv_substations)
-            )
+            grid_data.components_power.substations.mv_lv = pd.concat(
+                [grid_data.components_power.substations.mv_lv, mvlv_substations], ignore_index=True)
     else:
         mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
     # update progress
     pbar.update(5)
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
-    buildings_rel = grid_data.buildings.for_living.append(grid_data.buildings.commercial)
+    buildings_rel = pd.concat(
+        [grid_data.buildings.for_living, grid_data.buildings.commercial], ignore_index=True)
     buildings_rel_3035 = buildings_rel.to_crs(dave_settings()["crs_meter"])
     centroids = buildings_rel_3035.reset_index(drop=True).centroid
     centroids = centroids.to_crs(dave_settings()["crs_main"])
@@ -219,7 +220,8 @@ def create_lv_topology(grid_data):
         0, "dave_name", pd.Series(list(map(lambda x: f"node_7_{x}", building_nodes_df.index)))
     )
     # add lv nodes to grid data
-    grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(building_nodes_df)
+    grid_data.lv_data.lv_nodes = pd.concat(
+        [grid_data.lv_data.lv_nodes, building_nodes_df], ignore_index=True)
     grid_data.lv_data.lv_nodes.crs = dave_settings()["crs_main"]
     # update progress
     pbar.update(5)
@@ -248,7 +250,8 @@ def create_lv_topology(grid_data):
         }
     )
     # write line informations into grid data
-    grid_data.lv_data.lv_lines = grid_data.lv_data.lv_lines.append(line_gdf)
+    grid_data.lv_data.lv_lines = pd.concat(
+        [grid_data.lv_data.lv_lines, line_gdf], ignore_index=True)
     # set crs
     grid_data.lv_data.lv_lines.crs = dave_settings()["crs_main"]
     # create line connections to connect lines for buildings and road junctions with each other
@@ -317,9 +320,8 @@ def create_lv_topology(grid_data):
                             "source": "dave internal",
                         }
                     )
-                    grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
-                        junction_point_gdf
-                    )
+                    grid_data.lv_data.lv_nodes = pd.concat(
+                        [grid_data.lv_data.lv_nodes, junction_point_gdf], ignore_index=True)
             grid_data.lv_data.lv_lines.at[line.name, "from_bus"] = dave_name
         grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
         road_junctions_grid = grid_data.lv_data.lv_nodes[
@@ -363,9 +365,8 @@ def create_lv_topology(grid_data):
                             "source": "dave internal",
                         }
                     )
-                    grid_data.lv_data.lv_nodes = grid_data.lv_data.lv_nodes.append(
-                        junction_point_gdf
-                    )
+                    grid_data.lv_data.lv_nodes = pd.concat(
+                        [grid_data.lv_data.lv_nodes, junction_point_gdf], ignore_index=True)
             grid_data.lv_data.lv_lines.at[line.name, "to_bus"] = dave_name
         grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
         # set crs

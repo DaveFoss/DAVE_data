@@ -174,6 +174,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             ]
         )
     )
+    net.substations.reset_index(drop=True, inplace=True)
     # update progress
     pbar.update(5)
 

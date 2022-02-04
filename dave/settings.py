@@ -89,6 +89,7 @@ def dave_settings():
         "mvlv_trafo_std_type": "0.63 MVA 20/0.4 kV",  # dummy value, must be changed
         # --- assumptions at gas grid generating:
         # hp level
+        "hp_nodes_height_m": 1,  # dummy value, must be changed
         "hp_pipes_k_mm": float(0.1),  # value based on shutterwald data, must be changed
         "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
     }

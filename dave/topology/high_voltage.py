@@ -64,9 +64,9 @@ def create_hv_topology(grid_data):
             # set crs
             ehvhv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
             # add ehv substations to grid data
-            grid_data.components_power.substations.ehv_hv = (
-                grid_data.components_power.substations.ehv_hv.append(ehvhv_substations)
-            )
+            grid_data.components_power.substations.ehv_hv = pd.concat(
+                [grid_data.components_power.substations.ehv_hv, ehvhv_substations],
+                ignore_index=True)
     else:
         ehvhv_substations = grid_data.components_power.substations.ehv_hv.copy()
     # create hv/mv substations
@@ -113,9 +113,8 @@ def create_hv_topology(grid_data):
             # set crs
             hvmv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
             # add ehv substations to grid data
-            grid_data.components_power.substations.hv_mv = (
-                grid_data.components_power.substations.hv_mv.append(hvmv_substations)
-            )
+            grid_data.components_power.substations.hv_mv = pd.concat(
+                [grid_data.components_power.substations.hv_mv, hvmv_substations], ignore_index=True)
     else:
         hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
     # update progress
@@ -193,7 +192,8 @@ def create_hv_topology(grid_data):
         # set crs
         hv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hv nodes to grid data
-        grid_data.hv_data.hv_nodes = grid_data.hv_data.hv_nodes.append(hv_buses)
+        grid_data.hv_data.hv_nodes = pd.concat(
+            [grid_data.hv_data.hv_nodes, hv_buses], ignore_index=True)
         # --- create hv lines
         hv_lines, meta_data = oep_request(
             schema="grid",
@@ -270,7 +270,8 @@ def create_hv_topology(grid_data):
         # set crs
         hv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hv lines to grid data
-        grid_data.hv_data.hv_lines = grid_data.hv_data.hv_lines.append(hv_lines)
+        grid_data.hv_data.hv_lines = pd.concat(
+            [grid_data.hv_data.hv_lines, hv_lines], ignore_index=True)
         # update progress
         pbar.update(9.999)
     else:

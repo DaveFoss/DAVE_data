@@ -92,14 +92,16 @@ def read_main(request: Request):
 
 # get method for dave dataset request
 @app.get("/request_dataset")
-def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
+def request_dataset(
+    parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)
+):
     grid_data = dave.create_dataset(parameters)
     return grid_data
 
 
 # get method for datapool request
 @app.get("/request_datapool")
-def index_datapool(
+def request_datapool(
     parameters: request_bodys.Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)
 ):
     if parameters.data_name == "postalcode":
@@ -112,20 +114,20 @@ def index_datapool(
 
 # get method for database request
 @app.get("/request_db")
-def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
+def request_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
     data = db.db_request(parameters)
     return data
 
 
 # post method to upload data to database
 @app.post("/post_db")
-def upload_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
+def post_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
     db.db_post(parameters)
 
 
 # get method for database informations
 @app.get("/db_info")
-def info_db():
+def db_info():
     return info_mongo()
 
 
