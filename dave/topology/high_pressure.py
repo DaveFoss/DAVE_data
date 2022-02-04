@@ -46,6 +46,11 @@ def create_hp_topology(grid_data):
     hp_junctions.param.apply(lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"])
     # set grid level number
     hp_junctions["pressure_level"] = 1
+    # set import and export to default. This parameters are useful to define the kind of nodes.
+    hp_junctions["is_export"] = 0
+    hp_junctions["is_import"] = 0    
+    # set height
+    hp_junctions["height_m"] = dave_settings()["hp_nodes_height_m"]
     # update progress
     pbar.update(20)
     # consider data only if there are more than one junction in the target area
