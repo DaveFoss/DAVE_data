@@ -18,40 +18,40 @@ def sources(grid_data, scigrid_productions):
         bar_format=dave_settings()["bar_format"],
     )
     # get compressor data
-    production = scigrid_productions.copy()
+    sources = scigrid_productions.copy()
     # prepare data
-    production.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
-    production["source"] = "scigridgas"
+    sources.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
+    sources["source"] = "scigridgas"
     # intersection with target area
-    production = gpd.overlay(production, grid_data.area, how="intersection")
+    sources = gpd.overlay(sources, grid_data.area, how="intersection")
     keys = grid_data.area.keys().tolist()
     keys.remove("geometry")
-    production = production.drop(columns=(keys))
+    sources = sources.drop(columns=(keys))
     # update progress
     pbar.update(40)
     # search for junction dave name
     junctions = grid_data.hp_data.hp_junctions.copy()
-    production["junction"] = production.node_id.apply(
+    sources["junction"] = sources.node_id.apply(
         lambda x: junctions[junctions.scigrid_id == eval(x)[0]].iloc[0].dave_name
     )
     # set junction is_export to true if a sink is connected to
-    production_junctions = production.junction.to_list()
+    sources_junctions = sources.junction.to_list()
     grid_data.hp_data.hp_junctions["is_import"] = grid_data.hp_data.hp_junctions.dave_name.apply(
-        lambda x: 1 if x in production_junctions else 0)
+        lambda x: 1 if x in sources_junctions else 0)
     # set grid level number
-    production["pressure_level"] = 1
+    sources["pressure_level"] = 1
     # update progress
     pbar.update(40)
     # add dave name
-    production.reset_index(drop=True, inplace=True)
-    production.insert(
-        0, "dave_name", pd.Series(list(map(lambda x: f"source_1_{x}", production.index)))
+    sources.reset_index(drop=True, inplace=True)
+    sources.insert(
+        0, "dave_name", pd.Series(list(map(lambda x: f"source_1_{x}", sources.index)))
     )
     # set crs
-    production.set_crs(dave_settings()["crs_main"], inplace=True)
+    sources.set_crs(dave_settings()["crs_main"], inplace=True)
     # add hp junctions to grid data
     grid_data.components_gas.sources = pd.concat(
-        [grid_data.components_gas.sources, production], ignore_index=True)
+        [grid_data.components_gas.sources, sources], ignore_index=True)
     # update progress
     pbar.update(20)
     # close progress bar
