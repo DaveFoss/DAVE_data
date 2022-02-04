@@ -158,7 +158,7 @@ def create_romo(grid_data, api_use, output_folder):
             )  # !!! annahme
             height = etree.Element("height")
             height.attrib["unit"] = "m"
-            height.attrib["value"] = str(node.elevation_m)
+            height.attrib["value"] = str(node.height_m)
             sink.append(height)
             nodes.append(sink)
 
