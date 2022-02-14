@@ -324,7 +324,7 @@ def plot_grid_data_osm(grid_data, api_use, output_folder=None):
             # save plot in the dave output folder
             if not api_use:
                 file_path = output_folder + "\\grid_data.svg"
-                plt.savefig(file_path, format="svg", dpi=300)
+                plt.savefig(file_path, dpi=300)
 
 
 def plot_landuse(grid_data, api_use, output_folder):

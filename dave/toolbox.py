@@ -1,6 +1,7 @@
 import warnings
 
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 from geopy.geocoders import ArcGIS
 from scipy.spatial import Voronoi
@@ -45,10 +46,9 @@ def create_interim_area(areas):
                 difference = convex_hull.difference(geom1)
                 difference = difference.difference(geom2)
                 # add difference area to areas
-                areas = areas.append(
-                    gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})
-                )
-                areas.reset_index(drop=True, inplace=True)
+                areas = pd.concat(
+                    [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
+                    ignore_index=True)
 
     return areas
 

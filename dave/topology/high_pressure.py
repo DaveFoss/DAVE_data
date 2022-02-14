@@ -46,6 +46,11 @@ def create_hp_topology(grid_data):
     hp_junctions.param.apply(lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"])
     # set grid level number
     hp_junctions["pressure_level"] = 1
+    # set import and export to default. This parameters are useful to define the kind of nodes.
+    hp_junctions["is_export"] = 0
+    hp_junctions["is_import"] = 0    
+    # set height
+    hp_junctions["height_m"] = dave_settings()["hp_nodes_height_m"]
     # update progress
     pbar.update(20)
     # consider data only if there are more than one junction in the target area
@@ -58,7 +63,8 @@ def create_hp_topology(grid_data):
         # set crs
         hp_junctions.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hp junctions to grid data
-        grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
+        grid_data.hp_data.hp_junctions = pd.concat(
+            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True)
         # update progress
         pbar.update(20)
         # --- create hp pipes
@@ -106,7 +112,7 @@ def create_hp_topology(grid_data):
         # set crs
         hp_pipes.set_crs(dave_settings()["crs_main"], inplace=True)
         # add pipes to grid data
-        grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
+        grid_data.hp_data.hp_pipes = pd.concat([grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True)
         # update progress
         pbar.update(20)
     # close progress bar
@@ -186,7 +192,8 @@ def create_lkd_eu(grid_data):
             0, "dave_name", pd.Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
         )
         # add hp junctions to grid data
-        grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.append(hp_junctions)
+        grid_data.hp_data.hp_junctions = pd.concat(
+            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True)
         # --- create hp pipes
         hp_pipes = hp_data["hp_pipelines"]
         # filter relevant and real pipelines by checking if both endpoints are in the target area
@@ -239,4 +246,5 @@ def create_lkd_eu(grid_data):
             0, "dave_name", pd.Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index)))
         )
         # add hd lines to grid data
-        grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.append(hp_pipes)
+        grid_data.hp_data.hp_pipes = pd.concat(
+            [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True)
