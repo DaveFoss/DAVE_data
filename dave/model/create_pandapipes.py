@@ -39,8 +39,6 @@ def create_pandapipes(grid_data, api_use, output_folder):
             grid_data.lp_data.lp_junctions,
         ]
     )
-    # update progress
-    pbar.update(25)
     if not all_junctions.empty:
         all_junctions.rename(columns={"dave_name": "name"}, inplace=True)
         all_junctions.reset_index(drop=True, inplace=True)
@@ -101,8 +99,6 @@ def create_pandapipes(grid_data, api_use, output_folder):
         )
     else:
         coords_hp = pd.DataFrame([])
-    # update progress
-    pbar.update(30)
     # TODO: mp and lp, maybe other handling due to better data quality...
     pipes_mp = pd.DataFrame([])
     pipes_lp = pd.DataFrame([])
@@ -161,14 +157,38 @@ def create_pandapipes(grid_data, api_use, output_folder):
         if all(net.pipe.qext_w.isna())
         else net.pipe.qext_w.apply(lambda x: float(0) if pd.isna(x) else x)
     )
-
+    # update progress
+    pbar.update(25)
     # TODO: added components (how to implement this data in pandapipes?)
     # --- create sink
-    # --- create source
-    # --- create external grid
-
     # update progress
-    pbar.update(20)
+    pbar.update(10)
+    
+    # --- create source
+    # update progress
+    pbar.update(10)
+    
+    # --- create external grid
+    # update progress
+    pbar.update(10)
+    
+    # --- create compressors
+    # update progress
+    pbar.update(10)
+    
+    # --- create valves
+    valves = grid_data.components_gas.valves
+    # write valves data into pandapipes structure
+    if not valves.empty:
+        valves.rename(columns={"dave_name": "name"}, inplace=True)
+        valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x/1000)
+        valves.drop(columns=['diameter_mm'], inplace=True)
+        net.valve = valves
+        # check necessary parameters and add pandapipes standard if needed
+        net.valve["loss_coefficient"] = float(0)
+        net.valve["type"] = 'valve'
+    # update progress
+    pbar.update(10)
     # close progress bar
     pbar.close()
     # run pandapower model processing
