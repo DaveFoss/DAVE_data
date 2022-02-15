@@ -159,28 +159,65 @@ def create_pandapipes(grid_data, api_use, output_folder):
     )
     # update progress
     pbar.update(25)
-    # TODO: added components (how to implement this data in pandapipes?)
+
     # --- create sink
+    sinks = grid_data.components_gas.sinks
+    # write sink data into pandapipes structure
+    if not sinks.empty:
+        sinks.rename(columns={"dave_name": "name"}, inplace=True)
+        # change junction names to ids
+        sinks["junction"] = sinks.junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        net.sink = sinks
+        # check necessary parameters and add pandapipes standard if needed
+        net.sink["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
+        net.sink["scaling"] = float(1)
+        net.sink["in_service"] = True
+        net.sink["type"] = 'sink'
     # update progress
     pbar.update(10)
     
     # --- create source
+    sources = grid_data.components_gas.sources
+    # write sink data into pandapipes structure
+    if not sources.empty:
+        sources.rename(columns={"dave_name": "name"}, inplace=True)
+        # change junction names to ids
+        sources["junction"] = sources.junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        net.source = sources
+        # check necessary parameters and add pandapipes standard if needed
+        net.source["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
+        net.source["scaling"] = float(1)
+        net.source["in_service"] = True
+        net.source["type"] = 'source'
     # update progress
     pbar.update(10)
     
     # --- create external grid
+    # !!! ToDo
     # update progress
     pbar.update(10)
     
     # --- create compressors
+    # !!! ToDo
     # update progress
     pbar.update(10)
     
     # --- create valves
     valves = grid_data.components_gas.valves
-    # write valves data into pandapipes structure
+    # write valve data into pandapipes structure
     if not valves.empty:
         valves.rename(columns={"dave_name": "name"}, inplace=True)
+        # change from/to junction names to ids
+        valves["from_junction"] = valves.from_junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        valves["to_junction"] = valves.to_junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
         valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x/1000)
         valves.drop(columns=['diameter_mm'], inplace=True)
         net.valve = valves
@@ -194,9 +231,9 @@ def create_pandapipes(grid_data, api_use, output_folder):
     # run pandapower model processing
     net = gas_processing(net)
     # save grid model in the dave output folder
-    if not api_use:
-        file_path = output_folder + "\\dave_pandapipes.json"
-        ppi_to_json(net, file_path)
+    # if not api_use:
+    #     file_path = output_folder + "\\dave_pandapipes.json"
+    #     ppi_to_json(net, file_path)
     return net
 
 
