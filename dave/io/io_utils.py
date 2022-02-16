@@ -1,6 +1,9 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 import os
 from copy import deepcopy
-
 import geopandas as gpd
 import pandas as pd
 from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
