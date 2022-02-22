@@ -174,10 +174,10 @@ def create_pandapipes(grid_data, api_use, output_folder):
         net.sink["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
         net.sink["scaling"] = float(1)
         net.sink["in_service"] = True
-        net.sink["type"] = 'sink'
+        net.sink["type"] = "sink"
     # update progress
     pbar.update(10)
-    
+
     # --- create source
     sources = grid_data.components_gas.sources
     # write sink data into pandapipes structure
@@ -192,20 +192,20 @@ def create_pandapipes(grid_data, api_use, output_folder):
         net.source["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
         net.source["scaling"] = float(1)
         net.source["in_service"] = True
-        net.source["type"] = 'source'
+        net.source["type"] = "source"
     # update progress
     pbar.update(10)
-    
+
     # --- create external grid
     # !!! ToDo
     # update progress
     pbar.update(10)
-    
+
     # --- create compressors
     # !!! ToDo
     # update progress
     pbar.update(10)
-    
+
     # --- create valves
     valves = grid_data.components_gas.valves
     # write valve data into pandapipes structure
@@ -218,12 +218,12 @@ def create_pandapipes(grid_data, api_use, output_folder):
         valves["to_junction"] = valves.to_junction.apply(
             lambda x: net.junction[net.junction["name"] == x].index[0]
         )
-        valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x/1000)
-        valves.drop(columns=['diameter_mm'], inplace=True)
+        valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x / 1000)
+        valves.drop(columns=["diameter_mm"], inplace=True)
         net.valve = valves
         # check necessary parameters and add pandapipes standard if needed
         net.valve["loss_coefficient"] = float(0)
-        net.valve["type"] = 'valve'
+        net.valve["type"] = "valve"
     # update progress
     pbar.update(10)
     # close progress bar

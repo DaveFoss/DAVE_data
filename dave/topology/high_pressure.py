@@ -43,12 +43,14 @@ def create_hp_topology(grid_data):
     hp_junctions = hp_junctions.drop(columns=(keys))
     # extract relevant scigrid parameters
     # hp_junctions["entsog_key"] = hp_junctions.param.apply(lambda x: eval(x)["entsog_key"])
-    hp_junctions.param.apply(lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"])
+    hp_junctions.param.apply(
+        lambda x: None if "entsog_key" not in eval(x) else eval(x)["entsog_key"]
+    )
     # set grid level number
     hp_junctions["pressure_level"] = 1
     # set import and export to default. This parameters are useful to define the kind of nodes.
     hp_junctions["is_export"] = 0
-    hp_junctions["is_import"] = 0    
+    hp_junctions["is_import"] = 0
     # set height
     hp_junctions["height_m"] = dave_settings()["hp_nodes_height_m"]
     # update progress
@@ -64,7 +66,8 @@ def create_hp_topology(grid_data):
         hp_junctions.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = pd.concat(
-            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True)
+            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True
+        )
         # update progress
         pbar.update(20)
         # --- create hp pipes
@@ -94,7 +97,9 @@ def create_hp_topology(grid_data):
             lambda x: eval(x)["max_cap_M_m3_per_d"]
         )
         hp_pipes["max_pressure_bar"] = hp_pipes.param.apply(lambda x: eval(x)["max_pressure_bar"])
-        hp_pipes["operator_name"] = hp_pipes.param.apply(lambda x: "" if "operator_name" not in eval(x) else eval(x)["operator_name"])
+        hp_pipes["operator_name"] = hp_pipes.param.apply(
+            lambda x: "" if "operator_name" not in eval(x) else eval(x)["operator_name"]
+        )
         # update progress
         pbar.update(20)
         # change pipeline junction names from scigrid id to dave name
@@ -112,7 +117,9 @@ def create_hp_topology(grid_data):
         # set crs
         hp_pipes.set_crs(dave_settings()["crs_main"], inplace=True)
         # add pipes to grid data
-        grid_data.hp_data.hp_pipes = pd.concat([grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True)
+        grid_data.hp_data.hp_pipes = pd.concat(
+            [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True
+        )
         # update progress
         pbar.update(20)
     # close progress bar
@@ -193,7 +200,8 @@ def create_lkd_eu(grid_data):
         )
         # add hp junctions to grid data
         grid_data.hp_data.hp_junctions = pd.concat(
-            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True)
+            [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True
+        )
         # --- create hp pipes
         hp_pipes = hp_data["hp_pipelines"]
         # filter relevant and real pipelines by checking if both endpoints are in the target area
@@ -247,4 +255,5 @@ def create_lkd_eu(grid_data):
         )
         # add hd lines to grid data
         grid_data.hp_data.hp_pipes = pd.concat(
-            [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True)
+            [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True
+        )

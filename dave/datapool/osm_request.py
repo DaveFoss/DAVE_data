@@ -320,7 +320,7 @@ def render_to_gdf(osmdata, drop_untagged=True):
     if ways is not None:
         nodes = pd.concat([nodes, ways], ignore_index=True)
         nodes = nodes.set_geometry("geometry", crs=_crs)
-        
+
     return nodes
 
 

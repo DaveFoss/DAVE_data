@@ -66,7 +66,8 @@ def create_hv_topology(grid_data):
             # add ehv substations to grid data
             grid_data.components_power.substations.ehv_hv = pd.concat(
                 [grid_data.components_power.substations.ehv_hv, ehvhv_substations],
-                ignore_index=True)
+                ignore_index=True,
+            )
     else:
         ehvhv_substations = grid_data.components_power.substations.ehv_hv.copy()
     # create hv/mv substations
@@ -114,7 +115,8 @@ def create_hv_topology(grid_data):
             hvmv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.hv_mv = pd.concat(
-                [grid_data.components_power.substations.hv_mv, hvmv_substations], ignore_index=True)
+                [grid_data.components_power.substations.hv_mv, hvmv_substations], ignore_index=True
+            )
     else:
         hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
     # update progress
@@ -193,7 +195,8 @@ def create_hv_topology(grid_data):
         hv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = pd.concat(
-            [grid_data.hv_data.hv_nodes, hv_buses], ignore_index=True)
+            [grid_data.hv_data.hv_nodes, hv_buses], ignore_index=True
+        )
         # --- create hv lines
         hv_lines, meta_data = oep_request(
             schema="grid",
@@ -271,7 +274,8 @@ def create_hv_topology(grid_data):
         hv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hv lines to grid data
         grid_data.hv_data.hv_lines = pd.concat(
-            [grid_data.hv_data.hv_lines, hv_lines], ignore_index=True)
+            [grid_data.hv_data.hv_lines, hv_lines], ignore_index=True
+        )
         # update progress
         pbar.update(9.999)
     else:

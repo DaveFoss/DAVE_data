@@ -61,7 +61,8 @@ def create_ehv_topology(grid_data):
         ehv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
         # add ehv substations to grid data
         grid_data.components_power.substations.ehv_hv = pd.concat(
-            [grid_data.components_power.substations.ehv_hv, ehv_substations], ignore_index=True)
+            [grid_data.components_power.substations.ehv_hv, ehv_substations], ignore_index=True
+        )
     # update progress
     pbar.update(10)
     # --- create ehv nodes
@@ -168,7 +169,8 @@ def create_ehv_topology(grid_data):
         ehv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
         # add ehv nodes to grid data
         grid_data.ehv_data.ehv_nodes = pd.concat(
-            [grid_data.ehv_data.ehv_nodes, ehv_buses], ignore_index=True)
+            [grid_data.ehv_data.ehv_nodes, ehv_buses], ignore_index=True
+        )
         # --- create ehv lines
         ehv_lines, meta_data = oep_request(
             schema="grid",
@@ -285,7 +287,8 @@ def create_ehv_topology(grid_data):
         ehv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         # add ehv lines to grid data
         grid_data.ehv_data.ehv_lines = pd.concat(
-            [grid_data.ehv_data.ehv_lines, ehv_lines], ignore_index=True)
+            [grid_data.ehv_data.ehv_lines, ehv_lines], ignore_index=True
+        )
         # update progress
         pbar.update(9.999)
     # close progress bar

@@ -1,8 +1,8 @@
 import warnings
 
 import geopandas as gpd
-import pandas as pd
 import numpy as np
+import pandas as pd
 from geopy.geocoders import ArcGIS
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiLineString, MultiPoint
@@ -48,7 +48,8 @@ def create_interim_area(areas):
                 # add difference area to areas
                 areas = pd.concat(
                     [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
-                    ignore_index=True)
+                    ignore_index=True,
+                )
 
     return areas
 
