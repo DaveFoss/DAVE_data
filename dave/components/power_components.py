@@ -429,7 +429,7 @@ def renewable_powerplants(grid_data):
             if plz == grid_data.target_input.data.iloc[0][0]:
                 renewables = data
             else:
-                renewables = renewables.append(data)
+                renewables = pd.concat([renewables, data], ignore_index=True)
     elif typ == "town name":
         for name in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(
@@ -516,9 +516,7 @@ def renewable_powerplants(grid_data):
             if "LV" in power_levels:
                 # In this case the Level 7 plants are assigned to the nearest lv node
                 voronoi_polygons = voronoi(grid_data.lv_data.lv_nodes[["dave_name", "geometry"]])
-                intersection = gpd.sjoin(
-                    renewables_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(columns={"dave_name": "bus"}, inplace=True)
                 grid_data.components_power.renewable_powerplants = pd.concat(
@@ -544,9 +542,7 @@ def renewable_powerplants(grid_data):
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                     )
                     voltage_level = 2
-                intersection = gpd.sjoin(
-                    renewables_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -580,9 +576,7 @@ def renewable_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    renewables_mv_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_mv_lv, voronoi_polygons, how="inner")
                 intersection.rename(columns={"dave_name": "trafo_name"}, inplace=True)
                 # search transformer bus lv name
                 trafos = grid_data.components_power.transformers.mv_lv
@@ -607,9 +601,7 @@ def renewable_powerplants(grid_data):
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                     )
                     voltage_level = 2
-                intersection = gpd.sjoin(
-                    renewables_mv_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_mv_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -663,9 +655,7 @@ def renewable_powerplants(grid_data):
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                     )
                     voltage_level = 2
-                intersection = gpd.sjoin(
-                    renewables_mv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_mv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -718,9 +708,7 @@ def renewable_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    renewables_hv_mv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_hv_mv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -766,9 +754,7 @@ def renewable_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    renewables_hv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_hv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -823,28 +809,28 @@ def renewable_powerplants(grid_data):
             if "EHV" in power_levels:
                 # In this case the Level 1 plants are assigned to the nearest ehv node
                 voronoi_polygons = voronoi(grid_data.ehv_data.ehv_nodes[["dave_name", "geometry"]])
-                intersection = gpd.sjoin(
-                    renewables_ehv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(renewables_ehv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(columns={"dave_name": "bus"}, inplace=True)
                 grid_data.components_power.renewable_powerplants = pd.concat(
                     [grid_data.components_power.renewable_powerplants, intersection],
                     ignore_index=True)
-        # add dave name
-        name = pd.Series(
-            list(
-                map(
-                    lambda x: f"ren_powerplant_{plant.voltage_level}_{x}",
-                    grid_data.components_power.renewable_powerplants.index,
+        # --- add general informations
+        if not grid_data.components_power.renewable_powerplants.empty:
+            # add dave name
+            name = pd.Series(
+                list(
+                    map(
+                        lambda x: f"ren_powerplant_{plant.voltage_level}_{x}",
+                        grid_data.components_power.renewable_powerplants.index,
+                    )
                 )
             )
-        )
-        grid_data.components_power.renewable_powerplants.insert(0, "dave_name", name)
-        # set crs
-        grid_data.components_power.renewable_powerplants.set_crs(
-            dave_settings()["crs_main"], inplace=True
-        )
+            grid_data.components_power.renewable_powerplants.insert(0, "dave_name", name)
+            # set crs
+            grid_data.components_power.renewable_powerplants.set_crs(
+                dave_settings()["crs_main"], inplace=True
+            )
         # update progress
         pbar.update(9.98)
     else:
@@ -881,7 +867,7 @@ def conventional_powerplants(grid_data):
             if plz == grid_data.target_input.data.iloc[0][0]:
                 conventionals = data
             else:
-                conventionals = conventionals.append(data)
+                conventionals = pd.concat([conventionals, data], ignore_index=True)
     elif typ == "town name":
         for name in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(
@@ -973,9 +959,7 @@ def conventional_powerplants(grid_data):
             if "LV" in power_levels:
                 # In this case the Level 7 plants are assigned to the nearest lv node
                 voronoi_polygons = voronoi(grid_data.lv_data.lv_nodes[["dave_name", "geometry"]])
-                intersection = gpd.sjoin(
-                    conventionals_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(
                     columns={"dave_name": "bus", "capacity_mw": "electrical_capacity_mw"},
@@ -1004,9 +988,7 @@ def conventional_powerplants(grid_data):
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                     )
                     voltage_level = 2
-                intersection = gpd.sjoin(
-                    conventionals_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -1039,9 +1021,7 @@ def conventional_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    conventionals_mv_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_mv_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(
                     columns={"dave_name": "trafo_name", "capacity_mw": "electrical_capacity_mw"},
@@ -1070,9 +1050,7 @@ def conventional_powerplants(grid_data):
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                     )
                     voltage_level = 2
-                intersection = gpd.sjoin(
-                    conventionals_mv_lv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_mv_lv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -1103,9 +1081,7 @@ def conventional_powerplants(grid_data):
             if "MV" in power_levels:
                 # In this case the Level 5 plants are assigned to the nearest mv node
                 voronoi_polygons = voronoi(grid_data.mv_data.mv_nodes[["dave_name", "geometry"]])
-                intersection = gpd.sjoin(
-                    conventionals_mv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_mv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(
                     columns={"dave_name": "bus", "capacity_mw": "electrical_capacity_mw"},
@@ -1128,9 +1104,7 @@ def conventional_powerplants(grid_data):
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                     )
                     voltage_level = 2
-                intersection = gpd.sjoin(
-                    conventionals_mv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_mv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -1163,9 +1137,7 @@ def conventional_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    conventionals_hv_mv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_hv_mv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(
                     columns={"dave_name": "trafo_name", "capacity_mw": "electrical_capacity_mw"},
@@ -1187,9 +1159,7 @@ def conventional_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    conventionals_hv_mv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_hv_mv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -1237,9 +1207,7 @@ def conventional_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    conventionals_hv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_hv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right"], inplace=True)
                 intersection.rename(
                     columns={
@@ -1272,9 +1240,7 @@ def conventional_powerplants(grid_data):
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
                 )
-                intersection = gpd.sjoin(
-                    conventionals_ehv_hv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_ehv_hv, voronoi_polygons, how="inner")
                 intersection.rename(
                     columns={"dave_name": "trafo_name", "capacity_mw": "electrical_capacity_mw"},
                     inplace=True,
@@ -1296,9 +1262,7 @@ def conventional_powerplants(grid_data):
             if "EHV" in power_levels:
                 # In this case the Level 1 plants are assigned to the nearest ehv node
                 voronoi_polygons = voronoi(grid_data.ehv_data.ehv_nodes[["dave_name", "geometry"]])
-                intersection = gpd.sjoin(
-                    conventionals_ehv, voronoi_polygons, how="inner", op="intersects"
-                )
+                intersection = gpd.sjoin(conventionals_ehv, voronoi_polygons, how="inner")
                 intersection.drop(columns=["index_right", "centroid"], inplace=True)
                 intersection.rename(
                     columns={"dave_name": "bus", "capacity_mw": "electrical_capacity_mw"},
@@ -1307,20 +1271,22 @@ def conventional_powerplants(grid_data):
                 grid_data.components_power.conventional_powerplants = pd.concat(
                     [grid_data.components_power.conventional_powerplants, intersection],
                     ignore_index=True)
-        # add dave name
-        name = pd.Series(
-            list(
-                map(
-                    lambda x: f"con_powerplant_{voltage_level}_{x}",
-                    grid_data.components_power.conventional_powerplants.index,
+        # --- add general informations
+        if not grid_data.components_power.conventional_powerplants.empty:
+            # add dave name
+            name = pd.Series(
+                list(
+                    map(
+                        lambda x: f"con_powerplant_{voltage_level}_{x}",
+                        grid_data.components_power.conventional_powerplants.index,
+                    )
                 )
             )
-        )
-        grid_data.components_power.conventional_powerplants.insert(0, "dave_name", name)
-        # set crs
-        grid_data.components_power.conventional_powerplants.set_crs(
-            dave_settings()["crs_main"], inplace=True
-        )
+            grid_data.components_power.conventional_powerplants.insert(0, "dave_name", name)
+            # set crs
+            grid_data.components_power.conventional_powerplants.set_crs(
+                dave_settings()["crs_main"], inplace=True
+            )
         # update progress
         pbar.update(10)
     else:

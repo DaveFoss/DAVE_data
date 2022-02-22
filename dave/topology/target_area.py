@@ -172,8 +172,7 @@ class target_area:
             )
             landuse_rel.reset_index(drop=True, inplace=True)
             # add landuses from relations to landuses from ways
-            landuse = landuse.append(landuse_rel)
-            landuse.reset_index(drop=True, inplace=True)
+            landuse = pd.concat([landuse, landuse_rel], ignore_index=True)
             # check if there are data for landuse
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
@@ -305,7 +304,7 @@ class target_area:
                 if junctions.geom_type == "Point":
                     junction_points.append(junctions)
                 elif junctions.geom_type == "MultiPoint":
-                    for point in junctions:
+                    for point in junctions.geoms:
                         junction_points.append(point)
                 # set new roads quantity for the next iterationstep
                 roads.drop([0], inplace=True)

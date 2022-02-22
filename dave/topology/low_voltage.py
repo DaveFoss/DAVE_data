@@ -193,17 +193,15 @@ def create_lv_topology(grid_data):
             "source": "dave internal",
         }
     )
-    building_nodes_df = building_nodes_df.append(
-        gpd.GeoDataFrame(
-            {
-                "geometry": building_nearest,
-                "node_type": "nearest_point",
-                "voltage_level": 7,
-                "voltage_kv": 0.4,
-                "source": "dave internal",
-            }
-        )
-    )
+    building_nodes_df = pd.concat([building_nodes_df, gpd.GeoDataFrame(
+        {
+            "geometry": building_nearest,
+            "node_type": "nearest_point",
+            "voltage_level": 7,
+            "voltage_kv": 0.4,
+            "source": "dave internal",
+        }
+    )], ignore_index=True)
     # search for the substations where the lv nodes are within
     for _, bus in building_nodes_df.iterrows():
         for _, sub in mvlv_substations.iterrows():
