@@ -3,6 +3,7 @@ import math
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
+from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool import oep_request, read_ehv_data
@@ -65,36 +66,70 @@ def create_ehv_topology(grid_data):
         )
     # update progress
     pbar.update(10)
-    # --- create ehv nodes
-    # read ehv/hv node data from OpenEnergyPlatform and adapt names
-    ehvhv_buses, meta_data = oep_request(
-        schema="grid", table="ego_pf_hv_bus", where=dave_settings()["hv_buses_ver"], geometry="geom"
+    # --- import ehv lines and reduce them to the target area
+    ehvhv_lines, meta_data = oep_request(
+        schema="grid",
+        table="ego_pf_hv_line",
+        where=dave_settings()["hv_line_ver"],
+        geometry="geom",
+    )
+    ehvhv_lines.rename(
+        columns={
+            "version": "ego_version",
+            "subst_id": "ego_subst_id",
+            "scn_name": "ego_scn_name",
+            "line_id": "ego_line_id",
+            "length": "length_km",
+            "s_nom": "s_nom_mva",
+            "r": "r_ohm",
+            "x": "x_ohm",
+            "g": "g_s",
+            "b": "b_s",
+        },
+        inplace=True,
     )
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    ehvhv_buses.rename(
-        columns={
-            "version": "ego_version",
-            "scn_name": "ego_scn_name",
-            "bus_id": "ego_bus_id",
-            "v_nom": "voltage_kv",
-            "length": "length_km",
-        },
-        inplace=True,
-    )
+    # filter lines which are currently availible
+    ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
+    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(unary_union(grid_data.area.geometry))]
+    # consider data only if there are minimum one line in the target area
+    if not ehvhv_lines.empty:
+        # --- create ehv nodes
+        # read ehv/hv node data from OpenEnergyPlatform and adapt names
+        ehvhv_buses, meta_data = oep_request(
+            schema="grid",
+            table="ego_pf_hv_bus",
+            where=dave_settings()["hv_buses_ver"],
+            geometry="geom",
+        )
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        ehvhv_buses.rename(
+            columns={
+                "version": "ego_version",
+                "scn_name": "ego_scn_name",
+                "bus_id": "ego_bus_id",
+                "v_nom": "voltage_kv",
+                "length": "length_km",
+            },
+            inplace=True,
+        )
+        # filter nodes which are on the ehv-level and current exsist
+        ehv_buses = ehvhv_buses[
+            (ehvhv_buses.voltage_kv.isin([380, 220])) & (ehvhv_buses.ego_scn_name == "Status Quo")
+        ]
+        # filter nodes within the target area by checking their connection to a line
+        line_buses_ids = pd.concat([ehvhv_lines.bus0, ehvhv_lines.bus1], ignore_index=True).unique()
+        ehv_buses = ehv_buses[ehv_buses.ego_bus_id.isin(line_buses_ids)]
+    else:
+        # create empty DataFrame for the next check
+        ehv_buses = gpd.GeoDataFrame()
     # update progress
     pbar.update(10)
-    # filter nodes which are on the ehv-level, current exsist and within the target area
-    ehv_buses = ehvhv_buses[
-        (ehvhv_buses.voltage_kv.isin([380, 220])) & (ehvhv_buses.ego_scn_name == "Status Quo")
-    ]
-    ehv_buses = gpd.overlay(ehv_buses, grid_data.area, how="intersection")
-    if not ehv_buses.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        ehv_buses.drop(columns=remove_columns, inplace=True)
-    # consider data only if there are more than one node in the target area
+    # consider data only if there are more than one ehv node in the target area
     if len(ehv_buses) > 1:
         # search for the substations where the ehv nodes are within
         for _, bus in ehv_buses.iterrows():
@@ -171,37 +206,12 @@ def create_ehv_topology(grid_data):
         grid_data.ehv_data.ehv_nodes = pd.concat(
             [grid_data.ehv_data.ehv_nodes, ehv_buses], ignore_index=True
         )
+
         # --- create ehv lines
-        ehv_lines, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_line",
-            where=dave_settings()["hv_line_ver"],
-            geometry="geom",
-        )
-        # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        ehv_lines.rename(
-            columns={
-                "version": "ego_version",
-                "subst_id": "ego_subst_id",
-                "scn_name": "ego_scn_name",
-                "line_id": "ego_line_id",
-                "length": "length_km",
-                "s_nom": "s_nom_mva",
-                "r": "r_ohm",
-                "x": "x_ohm",
-                "g": "g_s",
-                "b": "b_s",
-            },
-            inplace=True,
-        )
         # filter lines which are on the ehv level by check if both endpoints are on the ehv level
         ehv_bus_ids = ehv_buses.ego_bus_id.tolist()
-        ehv_lines = ehv_lines[
-            (ehv_lines.bus0.isin(ehv_bus_ids))
-            & (ehv_lines.bus1.isin(ehv_bus_ids))
-            & (ehv_lines.ego_scn_name == "Status Quo")
+        ehv_lines = ehvhv_lines[
+            (ehvhv_lines.bus0.isin(ehv_bus_ids)) & (ehvhv_lines.bus1.isin(ehv_bus_ids))
         ]
         # --- add additional line parameter and change bus names
         ehv_lines.insert(ehv_lines.columns.get_loc("r_ohm") + 1, "r_ohm_per_km", None)
@@ -291,5 +301,8 @@ def create_ehv_topology(grid_data):
         )
         # update progress
         pbar.update(9.999)
+    else:
+        # update progress
+        pbar.update(80)
     # close progress bar
     pbar.close()
