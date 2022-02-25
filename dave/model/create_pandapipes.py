@@ -43,7 +43,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
         all_junctions.rename(columns={"dave_name": "name"}, inplace=True)
         all_junctions.reset_index(drop=True, inplace=True)
         # write junctions into pandapipes structure
-        net.junction = net.junction.append(all_junctions)
+        net.junction = pd.concat([net.junction, all_junctions], ignore_index=True)
         net.junction_geodata["x"] = all_junctions.geometry.apply(lambda x: x.coords[:][0][0])
         net.junction_geodata["y"] = all_junctions.geometry.apply(lambda x: x.coords[:][0][1])
         # check necessary parameters and add pandapipes standart if needed
@@ -107,9 +107,9 @@ def create_pandapipes(grid_data, api_use, output_folder):
     coords_lp = pd.DataFrame([])
 
     # write pipeline data into pandapipes structure
-    net.pipe = net.pipe.append(pd.concat([pipes_hp, pipes_mp, pipes_lp]), ignore_index=True)
-    net.pipe_geodata = net.pipe_geodata.append(
-        pd.concat([coords_hp, coords_mp, coords_lp]), ignore_index=True
+    net.pipe = pd.concat([net.pipe, pipes_hp, pipes_mp, pipes_lp], ignore_index=True)
+    net.pipe_geodata = pd.concat(
+        [net.pipe_geodata, coords_hp, coords_mp, coords_lp], ignore_index=True
     )
     # check necessary parameters and add pandapipes standard if needed
     net.pipe["type"] = (
