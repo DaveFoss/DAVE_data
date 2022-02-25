@@ -420,7 +420,9 @@ class target_area:
                 if i == 0:
                     target = states[states["name"] == state_name]
                 else:
-                    target = target.append(states[states["name"] == state_name])
+                    target = pd.concat(
+                        [target, states[states["name"] == state_name]], ignore_index=True
+                    )
                 if target.empty:
                     raise ValueError("federal state name wasn`t found. Please check your input")
             # sort federal state names
