@@ -219,6 +219,8 @@ def create_hv_topology(grid_data):
                 "x": "x_ohm",
                 "g": "g_s",
                 "b": "b_s",
+                "bus0": "from_bus",
+                "bus1": "to_bus",
             },
             inplace=True,
         )
@@ -227,8 +229,8 @@ def create_hv_topology(grid_data):
         # filter lines which are on the hv level by check if both endpoints are on the hv level
         hv_bus_ids = hv_buses.ego_bus_id.tolist()
         hv_lines = hv_lines[
-            (hv_lines.bus0.isin(hv_bus_ids))
-            & (hv_lines.bus1.isin(hv_bus_ids))
+            (hv_lines.from_bus.isin(hv_bus_ids))
+            & (hv_lines.to_bus.isin(hv_bus_ids))
             & (hv_lines.ego_scn_name == "Status Quo")
         ]
         # --- add additional line parameter and change bus names
@@ -238,8 +240,8 @@ def create_hv_topology(grid_data):
         hv_lines.insert(hv_lines.columns.get_loc("b_s") + 1, "c_nf", None)
         # add voltage
         hv_lines["voltage_kv"] = 110
-        bus0_new = []
-        bus1_new = []
+        from_bus_new = []
+        to_bus_new = []
         for _, line in hv_lines.iterrows():
             # calculate and add r,x,c per km
             hv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
@@ -254,14 +256,14 @@ def create_hv_topology(grid_data):
             # calculate parallel lines
             hv_lines.at[line.name, "parallel"] = line.cables / 3
             # change line bus names from ego id to dave name
-            bus0_dave = hv_buses[hv_buses.ego_bus_id == line.bus0].iloc[0].dave_name
-            bus1_dave = hv_buses[hv_buses.ego_bus_id == line.bus1].iloc[0].dave_name
-            bus0_new.append(bus0_dave)
-            bus1_new.append(bus1_dave)
+            from_bus_dave = hv_buses[hv_buses.ego_bus_id == line.from_bus].iloc[0].dave_name
+            to_bus_dave = hv_buses[hv_buses.ego_bus_id == line.to_bus].iloc[0].dave_name
+            from_bus_new.append(from_bus_dave)
+            to_bus_new.append(to_bus_dave)
             # update progress
             pbar.update(50 / len(hv_lines))
-        hv_lines["bus0"] = bus0_new
-        hv_lines["bus1"] = bus1_new
+        hv_lines["from_bus"] = from_bus_new
+        hv_lines["to_bus"] = to_bus_new
         # add oep as source
         hv_lines["source"] = "OEP"
         # add voltage level

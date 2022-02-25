@@ -85,6 +85,8 @@ def create_ehv_topology(grid_data):
             "x": "x_ohm",
             "g": "g_s",
             "b": "b_s",
+            "bus0": "from_bus",
+            "bus1": "to_bus",
         },
         inplace=True,
     )
@@ -122,7 +124,9 @@ def create_ehv_topology(grid_data):
             (ehvhv_buses.voltage_kv.isin([380, 220])) & (ehvhv_buses.ego_scn_name == "Status Quo")
         ]
         # filter nodes within the target area by checking their connection to a line
-        line_buses_ids = pd.concat([ehvhv_lines.bus0, ehvhv_lines.bus1], ignore_index=True).unique()
+        line_buses_ids = pd.concat(
+            [ehvhv_lines.from_bus, ehvhv_lines.to_bus], ignore_index=True
+        ).unique()
         ehv_buses = ehv_buses[ehv_buses.ego_bus_id.isin(line_buses_ids)]
     else:
         # create empty DataFrame for the next check
@@ -211,7 +215,7 @@ def create_ehv_topology(grid_data):
         # filter lines which are on the ehv level by check if both endpoints are on the ehv level
         ehv_bus_ids = ehv_buses.ego_bus_id.tolist()
         ehv_lines = ehvhv_lines[
-            (ehvhv_lines.bus0.isin(ehv_bus_ids)) & (ehvhv_lines.bus1.isin(ehv_bus_ids))
+            (ehvhv_lines.from_bus.isin(ehv_bus_ids)) & (ehvhv_lines.to_bus.isin(ehv_bus_ids))
         ]
         # --- add additional line parameter and change bus names
         ehv_lines.insert(ehv_lines.columns.get_loc("r_ohm") + 1, "r_ohm_per_km", None)
@@ -220,17 +224,17 @@ def create_ehv_topology(grid_data):
         ehv_lines.insert(ehv_lines.columns.get_loc("b_s") + 1, "c_nf", None)
         # update progress
         pbar.update(10)
-        bus0_new = []
-        bus1_new = []
+        from_bus_new = []
+        to_bus_new = []
         for _, line in ehv_lines.iterrows():
             # add voltage
             line_voltage = ehv_buses.loc[
-                ehv_buses[ehv_buses.ego_bus_id == line.bus0].index[0]
+                ehv_buses[ehv_buses.ego_bus_id == line.from_bus].index[0]
             ].voltage_kv
             ehv_lines.at[line.name, "voltage_kv"] = line_voltage
             # change line bus names from ego id to dave name
-            bus0_new.append(ehv_buses[ehv_buses.ego_bus_id == line.bus0].iloc[0].dave_name)
-            bus1_new.append(ehv_buses[ehv_buses.ego_bus_id == line.bus1].iloc[0].dave_name)
+            from_bus_new.append(ehv_buses[ehv_buses.ego_bus_id == line.from_bus].iloc[0].dave_name)
+            to_bus_new.append(ehv_buses[ehv_buses.ego_bus_id == line.to_bus].iloc[0].dave_name)
             # calculate and add r,x,c per km
             ehv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
             ehv_lines.at[line.name, "x_ohm_per_km"] = float(line.x_ohm) / line.length_km
@@ -245,8 +249,8 @@ def create_ehv_topology(grid_data):
             ehv_lines.at[line.name, "parallel"] = line.cables / 3
             # update progress
             pbar.update(20 / len(ehv_lines))
-        ehv_lines["bus0"] = bus0_new
-        ehv_lines["bus1"] = bus1_new
+        ehv_lines["from_bus"] = from_bus_new
+        ehv_lines["to_bus"] = to_bus_new
         # add oep as source
         ehv_lines["source"] = "OEP"
         """ the license of the open tso data is not clarified
@@ -268,8 +272,8 @@ def create_ehv_topology(grid_data):
                 to_bus = to_bus[to_bus.voltage_kv == line.vn_kv]
                 if (not from_bus.empty) and (not to_bus.empty):
                     ehv_lines = ehv_lines.append(gpd.GeoDataFrame(
-                        {'bus0': from_bus.iloc[0].dave_name,
-                         'bus1': to_bus.iloc[0].dave_name,
+                        {'from_bus': from_bus.iloc[0].dave_name,
+                         'to_bus': to_bus.iloc[0].dave_name,
                          'x_ohm': line.x_ohm,
                          'x_ohm_per_km': line.x_ohm_per_km,
                          'r_ohm': line.r_ohm,
