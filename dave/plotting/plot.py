@@ -26,7 +26,7 @@ def plot_land(area, only_area=False):
         ax.axis("off")
         ax = area.plot(color="k", alpha=0.1, ax=ax)
         ax.margins(0)
-        return ax
+    return ax
 
 
 def plot_target_area(grid_data, api_use, output_folder=None):

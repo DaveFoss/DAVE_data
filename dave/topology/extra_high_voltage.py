@@ -73,6 +73,9 @@ def create_ehv_topology(grid_data):
         where=dave_settings()["hv_line_ver"],
         geometry="geom",
     )
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehvhv_lines.rename(
         columns={
             "version": "ego_version",
@@ -90,9 +93,6 @@ def create_ehv_topology(grid_data):
         },
         inplace=True,
     )
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     # filter lines which are currently availible
     ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
     ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(unary_union(grid_data.area.geometry))]
