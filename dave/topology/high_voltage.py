@@ -3,6 +3,7 @@ import math
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point
+from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool import oep_request
@@ -121,38 +122,76 @@ def create_hv_topology(grid_data):
         hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
     # update progress
     pbar.update(10)
-
-    # --- create hv nodes
-    ehvhv_buses, meta_data = oep_request(
-        schema="grid", table="ego_pf_hv_bus", where=dave_settings()["hv_buses_ver"], geometry="geom"
+    # --- import hv lines and reduce them to the target area
+    ehvhv_lines, meta_data = oep_request(
+        schema="grid",
+        table="ego_pf_hv_line",
+        where=dave_settings()["hv_line_ver"],
+        geometry="geom",
     )
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    ehvhv_buses.rename(
+    ehvhv_lines.rename(
         columns={
             "version": "ego_version",
+            "subst_id": "ego_subst_id",
             "scn_name": "ego_scn_name",
-            "bus_id": "ego_bus_id",
-            "v_nom": "voltage_kv",
+            "line_id": "ego_line_id",
+            "length": "length_km",
+            "s_nom": "s_nom_mva",
+            "r": "r_ohm",
+            "x": "x_ohm",
+            "g": "g_s",
+            "b": "b_s",
+            "bus0": "from_bus",
+            "bus1": "to_bus",
         },
         inplace=True,
     )
+    # filter lines which are currently availible
+    ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
+    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(unary_union(grid_data.area.geometry))]
+    # consider data only if there are minimum one line in the target area
+    if not ehvhv_lines.empty:
+        # --- create hv nodes
+        ehvhv_buses, meta_data = oep_request(
+            schema="grid",
+            table="ego_pf_hv_bus",
+            where=dave_settings()["hv_buses_ver"],
+            geometry="geom",
+        )
+        # add meta data
+        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        ehvhv_buses.rename(
+            columns={
+                "version": "ego_version",
+                "scn_name": "ego_scn_name",
+                "bus_id": "ego_bus_id",
+                "v_nom": "voltage_kv",
+            },
+            inplace=True,
+        )
+        # filter nodes which are on the hv level and current exsist
+        hv_buses = ehvhv_buses[
+            (ehvhv_buses.voltage_kv == 110) & (ehvhv_buses.ego_scn_name == "Status Quo")
+        ]
+        # filter nodes within the target area by checking their connection to a line
+        line_buses_ids = pd.concat(
+            [ehvhv_lines.from_bus, ehvhv_lines.to_bus], ignore_index=True
+        ).unique()
+        hv_buses = hv_buses[hv_buses.ego_bus_id.isin(line_buses_ids)]
+    else:
+        # create empty DataFrame for the next check
+        hv_buses = gpd.GeoDataFrame()
+
     # update progress
     pbar.update(10)
-    # filter nodes which are on the hv level, current exsist and within the target area
-    hv_buses = ehvhv_buses[
-        (ehvhv_buses.voltage_kv == 110) & (ehvhv_buses.ego_scn_name == "Status Quo")
-    ]
-    hv_buses = gpd.overlay(hv_buses, grid_data.area, how="intersection")
-    if not hv_buses.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        hv_buses = hv_buses.drop(columns=remove_columns)
-    hv_buses["voltage_level"] = 3
-    hv_buses = hv_buses.drop(columns=(["current_type", "v_mag_pu_min", "v_mag_pu_max", "geom"]))
     # consider data only if there are more than one node in the target area
     if len(hv_buses) > 1:
+        hv_buses["voltage_level"] = 3
+        hv_buses = hv_buses.drop(columns=(["current_type", "v_mag_pu_min", "v_mag_pu_max", "geom"]))
         # search for the substations where the hv nodes are within
         hv_buses.insert(0, "ego_subst_id", None)
         hv_buses.insert(1, "subst_dave_name", None)
@@ -197,41 +236,14 @@ def create_hv_topology(grid_data):
         grid_data.hv_data.hv_nodes = pd.concat(
             [grid_data.hv_data.hv_nodes, hv_buses], ignore_index=True
         )
-        # --- create hv lines
-        hv_lines, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_line",
-            where=dave_settings()["hv_line_ver"],
-            geometry="geom",
-        )
-        # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        hv_lines.rename(
-            columns={
-                "version": "ego_version",
-                "subst_id": "ego_subst_id",
-                "scn_name": "ego_scn_name",
-                "line_id": "ego_line_id",
-                "length": "length_km",
-                "s_nom": "s_nom_mva",
-                "r": "r_ohm",
-                "x": "x_ohm",
-                "g": "g_s",
-                "b": "b_s",
-                "bus0": "from_bus",
-                "bus1": "to_bus",
-            },
-            inplace=True,
-        )
         # update progress
         pbar.update(10)
+
+        # --- create hv lines
         # filter lines which are on the hv level by check if both endpoints are on the hv level
         hv_bus_ids = hv_buses.ego_bus_id.tolist()
-        hv_lines = hv_lines[
-            (hv_lines.from_bus.isin(hv_bus_ids))
-            & (hv_lines.to_bus.isin(hv_bus_ids))
-            & (hv_lines.ego_scn_name == "Status Quo")
+        hv_lines = ehvhv_lines[
+            (ehvhv_lines.from_bus.isin(hv_bus_ids)) & (ehvhv_lines.to_bus.isin(hv_bus_ids))
         ]
         # --- add additional line parameter and change bus names
         hv_lines.insert(hv_lines.columns.get_loc("r_ohm") + 1, "r_ohm_per_km", None)
