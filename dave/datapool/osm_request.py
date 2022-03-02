@@ -318,8 +318,8 @@ def render_to_gdf(osmdata, drop_untagged=True):
                 ways.at[i, "landuse"] = rel_landuse
 
     if ways is not None:
-        # We should get append working
-        nodes = nodes.append(ways).set_geometry("geometry", crs=_crs)
+        nodes = pd.concat([nodes, ways], ignore_index=True)
+        nodes = nodes.set_geometry("geometry", crs=_crs)
 
     return nodes
 

@@ -10,6 +10,7 @@ from dave.components import gas_components, power_components
 
 # imports from dave
 from dave.dave_structure import davestructure
+from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
 from dave.model import create_pandapipes, create_pandapower
 from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
@@ -23,7 +24,6 @@ from dave.topology import (
     create_lv_topology,
     create_mp_topology,
     create_mv_topology,
-    target_area,
 )
 
 
