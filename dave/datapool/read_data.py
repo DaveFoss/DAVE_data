@@ -365,32 +365,11 @@ def read_scigridgas_iggielgn():
         geometry=gpd.points_from_xy(compressors.long, compressors.lat),
         crs=dave_settings()["crs_main"],
     )
-    # connection points
-    connection_points = iggielgn_data.get("/connection_points")
-    connection_points = gpd.GeoDataFrame(
-        connection_points,
-        geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
-        crs=dave_settings()["crs_main"],
-    )
     # comsumer
     consumers = iggielgn_data.get("/consumers")
     consumers = gpd.GeoDataFrame(
         consumers,
         geometry=gpd.points_from_xy(consumers.long, consumers.lat),
-        crs=dave_settings()["crs_main"],
-    )
-    # entry_points
-    entry_points = iggielgn_data.get("/entry_points")
-    entry_points = gpd.GeoDataFrame(
-        entry_points,
-        geometry=gpd.points_from_xy(entry_points.long, entry_points.lat),
-        crs=dave_settings()["crs_main"],
-    )
-    # inter_connection_points
-    connection_points = iggielgn_data.get("/inter_connection_points")
-    inter_connection_points = gpd.GeoDataFrame(
-        connection_points,
-        geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # lngss
@@ -431,10 +410,7 @@ def read_scigridgas_iggielgn():
     storage_data = {
         "border_points": border_points,
         "compressors": compressors,
-        "connection_points": connection_points,
         "consumers": consumers,
-        "entry_points": entry_points,
-        "inter_connection_points": inter_connection_points,
         "lngs": lngs,
         "nodes": nodes,
         "pipe_segments": pipe_segments,
