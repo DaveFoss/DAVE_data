@@ -55,8 +55,13 @@ def create_romo(grid_data, api_use, output_folder):
     information.attrib["grid_levels"] = str(grid_data.target_input.gas_levels.iloc[0])
     information.attrib["dave_version"] = __version__
 
-    # --- create nodes
+    # read data from dave dictionary
     nodes_dave = grid_data.hp_data.hp_junctions
+    pipes_dave = grid_data.hp_data.hp_pipes
+    compressors_dave = grid_data.components_gas.compressors
+    sources_dave = grid_data.components_gas.sources
+    sinks_dave = grid_data.components_gas.sinks
+    # --- create nodes
     # set dict for mapping ids
     mapping = {}
     # Cases of export, import
@@ -66,7 +71,10 @@ def create_romo(grid_data, api_use, output_folder):
     # Case 1,1 => source and sink
     for _, node in nodes_dave.iterrows():
         # derivate max pressure from connected lines
-
+        node_max_pressure = pipes_dave[
+            (pipes_dave.from_junction == node.dave_name)
+            | (pipes_dave.to_junction == node.dave_name)
+        ].max_pressure_bar.min()
         if (node.is_export == 0 and node.is_import == 0) or (
             node.is_export == 1 and node.is_import == 1
         ):
@@ -79,11 +87,10 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(innode, "height", {"unit": "m", "value": str(node.height_m)})
             etree.SubElement(
                 innode, "presssureMin", {"unit": "bar", "value": "1.0"}
-            )  # !!! Todos rauslesen aus pipes min max
-
+            )  # !!! Todos Robert schaut nach in Gaslib
             etree.SubElement(
-                innode, "presssureMax", {"unit": "bar", "value": "100.0"}
-            )  # !!! Todos rauslesen aus pipes min max
+                innode, "presssureMax", {"unit": "bar", "value": str(node_max_pressure)}
+            )
             nodes.append(innode)
 
         if (node.is_export == 0 and node.is_import == 1) or (
@@ -98,16 +105,16 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(source, "height", {"unit": "m", "value": str(node.height_m)})
             etree.SubElement(
                 source, "presssureMin", {"unit": "bar", "value": "1.0"}
-            )  # !!! Todos rauslesen aus pipes min max
+            )  # !!! Todos Robert schaut nach in Gaslib
             etree.SubElement(
-                source, "presssureMax", {"unit": "bar", "value": "100.0"}
-            )  # !!! Todos rauslesen aus pipes min max
+                source, "presssureMax", {"unit": "bar", "value": str(node_max_pressure)}
+            )
             etree.SubElement(
                 source, "flowMin", {"unit": "1000m_cube_per_hour", "value": "0"}
             )  # !!! annahme
             etree.SubElement(
                 source, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
-            )  # !!! annahme
+            )  # assumption but will overwritten at the source
             etree.SubElement(
                 source, "gasTemperature", {"unit": "Celsius", "value": "15"}
             )  # !!! annahme
@@ -149,16 +156,14 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(sink, "height", {"unit": "m", "value": str(node.height_m)})
             etree.SubElement(
                 sink, "presssureMin", {"unit": "bar", "value": "1.0"}
-            )  # !!! Todos rauslesen aus pipes min max
-            etree.SubElement(
-                sink, "presssureMax", {"unit": "bar", "value": "100.0"}
-            )  # !!! Todos rauslesen aus pipes min max
+            )  # !!! Todos Robert schaut in Gaslib nach
+            etree.SubElement(sink, "presssureMax", {"unit": "bar", "value": str(node_max_pressure)})
             etree.SubElement(
                 sink, "flowMin", {"unit": "1000m_cube_per_hour", "value": "0"}
             )  # !!! annahme
             etree.SubElement(
                 sink, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
-            )  # !!! annahme
+            )  # assumption but will overwritten at the sinks
             height = etree.Element("height")
             height.attrib["unit"] = "m"
             height.attrib["value"] = str(node.height_m)
@@ -174,7 +179,7 @@ def create_romo(grid_data, api_use, output_folder):
             short_pipe_sink.attrib["to"] = innode_id
             etree.SubElement(
                 short_pipe_sink, "flowMin", {"unit": "1000m_cube_per_hour", "value": "-10000"}
-            )  # !!! annahme
+            )  # !!! Todo: Flow von der angrenzenden pipe nehmen?
             etree.SubElement(
                 short_pipe_sink, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
             )  # !!! annahme
@@ -195,7 +200,6 @@ def create_romo(grid_data, api_use, output_folder):
 
     # --- create connections
     # create pipes
-    pipes_dave = grid_data.hp_data.hp_pipes
     for _, pipe_dave in pipes_dave.iterrows():
         pipe = etree.Element("pipe")
         pipe.attrib["from"] = mapping[pipe_dave.from_junction]
@@ -227,11 +231,20 @@ def create_romo(grid_data, api_use, output_folder):
         )  # !!! annahme
         connections.append(pipe)
     # source
-    # !!! Werte auf den sources lesen max
+    for _, source in sources_dave.iterrows():
+        node_id = mapping[source.junction]
+        for node in nodes:
+            if node.get("id") == node_id:
+                break
+        node.attrib["flowMax"] = str(source.max_supply_M_m3_per_d * 1000 / 24)
     # sinks
-    # !!! Werte auf den sinks lesen max aller
+    for _, sink in sinks_dave.iterrows():
+        node_id = mapping[sink.junction]
+        for node in nodes:
+            if node.get("id") == node_id:
+                break
+        node.attrib["flowMax"] = str(sink.max_demand_M_m3_per_d * 1000 / 24)
     # create compressors
-    compressors_dave = grid_data.components_gas.compressors
     for _, compressor in compressors_dave.iterrows():
         nodeid = mapping[compressor.junction]
         for node in nodes:
@@ -275,6 +288,7 @@ def create_romo(grid_data, api_use, output_folder):
         connections.append(comp)
 
     # !!! Todo: compressor Station
+    # !!! Richtiger Wert Anzahl der Turbinen "num_turb"
 
     # save RoMo model in the dave output folder
     if not api_use:
