@@ -236,14 +236,16 @@ def create_romo(grid_data, api_use, output_folder):
         for node in nodes:
             if node.get("id") == node_id:
                 break
-        node.attrib["flowMax"] = str(source.max_supply_M_m3_per_d * 1000 / 24)
+        # overwrite flowMax assumption
+        node.find("flowMax").attrib["value"] = str(source["max_supply_M_m3_per_d"] * 1000 / 24)
     # sinks
     for _, sink in sinks_dave.iterrows():
         node_id = mapping[sink.junction]
         for node in nodes:
             if node.get("id") == node_id:
                 break
-        node.attrib["flowMax"] = str(sink.max_demand_M_m3_per_d * 1000 / 24)
+        # overwrite flowMax assumption
+        node.find("flowMax").attrib["value"] = str(sink.max_demand_M_m3_per_d * 1000 / 24)
     # create compressors
     for _, compressor in compressors_dave.iterrows():
         nodeid = mapping[compressor.junction]
