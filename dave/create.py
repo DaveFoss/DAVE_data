@@ -184,6 +184,10 @@ def create_grid(
     federal_state=None,
     nuts_region=None,
     own_area=None,
+    roads=False,
+    roads_plot=False,
+    buildings=False,
+    landuse=False,
     power_levels=[],
     gas_levels=[],
     plot=True,
@@ -222,6 +226,14 @@ def create_grid(
             (e.g. "C:/Users/name/test/test.shp") \n
 
     OPTIONAL:
+        **roads** (bool, default False) - if true, road information are added to the grid \
+            model which are grid relevant \n
+        **roads_plot** (bool, default False) - if true, road information are added to the grid \
+            model which are only for a better orientation in the plotting \n
+        **buildings** (bool, default False) - if true, building information are added to the grid \
+            model \n
+        **landuse** (bool, default False) - if true, landuse information are added to the grid \
+            model \n
         **power_levels** (list, default []) - this parameter defines which power levels should be \
             considered. options: 'EHV','HV','MV','LV', []. there could be choose: one/multiple \
                 level(s) or 'ALL' \n
@@ -284,7 +296,7 @@ def create_grid(
     combine_areas = list(map(str.upper, combine_areas))
 
     # create target area informations
-    roads, roads_plot, buildings, landuse = geo_info_needs(power_levels, gas_levels, loads)
+    roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(power_levels, gas_levels, loads)
     file_exists, file_name = target_area(
         grid_data,
         power_levels=power_levels,
@@ -295,10 +307,10 @@ def create_grid(
         nuts_region=nuts_region,
         own_area=own_area,
         buffer=0,
-        roads=roads,
-        roads_plot=roads_plot,
-        buildings=buildings,
-        landuse=landuse,
+        roads=bool(roads or roads_l),
+        roads_plot=bool(roads_plot or roads_plot_l),
+        buildings=bool(buildings or buildings_l),
+        landuse=bool(landuse or landuse_l),
     ).target()
 
     # --- collect data for the requested dataset
