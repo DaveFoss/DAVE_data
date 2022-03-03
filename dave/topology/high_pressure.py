@@ -75,7 +75,8 @@ def create_hp_topology(grid_data):
     )
     # set grid level number
     scigrid_nodes["pressure_level"] = 1
-    # set import and export to default. This parameters are useful to define the kind of nodes.
+    # set import and export to default. This parameters are useful to define the kind of nodes and
+    # they will be overwritten in the sink and source scripts
     scigrid_nodes["is_export"] = 0
     scigrid_nodes["is_import"] = 0
     # set height
@@ -99,16 +100,20 @@ def create_hp_topology(grid_data):
             (hp_pipes.from_junction.isin(hp_junctions_ids))
             | (hp_pipes.to_junction.isin(hp_junctions_ids))
         ]
-        # check for junction from/to nodes which are outside of the grid area
+        # check for junction from/to nodes which are outside of the grid area and define these as
+        # im- and export nodes
         junctions_extern = pd.concat(
             [
                 hp_pipes[~hp_pipes.from_junction.isin(hp_junctions_ids)].from_junction,
                 hp_pipes[~hp_pipes.to_junction.isin(hp_junctions_ids)].to_junction,
             ]
         )
+        hp_junctions_ext = scigrid_nodes[scigrid_nodes.scigrid_id.isin(junctions_extern.unique())]
+        hp_junctions_ext["is_export"] = 1
+        hp_junctions_ext["is_import"] = 1
         # add external junctions to hp_junctions
         hp_junctions = pd.concat(
-            [hp_junctions, scigrid_nodes[scigrid_nodes.scigrid_id.isin(junctions_extern.unique())]],
+            [hp_junctions, hp_junctions_ext],
             ignore_index=True,
         )
         # update progress
