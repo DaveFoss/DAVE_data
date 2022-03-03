@@ -5,10 +5,16 @@ import warnings
 import geopandas as gpd
 import pandas as pd
 
-from dave import __version__
-from dave.components import gas_components, power_components
-
 # imports from dave
+from dave import __version__
+from dave.components import (
+    create_conventional_powerplants,
+    create_loads,
+    create_power_plant_lines,
+    create_renewable_powerplants,
+    create_transformers,
+    gas_components,
+)
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
@@ -342,11 +348,23 @@ def create_grid(
             # replace grid area with the origin one for further steps
             if level in combine_areas:
                 grid_data.area = origin_area
-        # create power grid components
+        # --- create power grid components
         if power_levels:
-            power_components(
-                grid_data, transformers, renewable_powerplants, conventional_powerplants, loads
-            )
+            # add transformers
+            if transformers:
+                create_transformers(grid_data)
+            # add renewable powerplants
+            if renewable_powerplants:
+                create_renewable_powerplants(grid_data)
+            # add conventional powerplants
+            if conventional_powerplants:
+                create_conventional_powerplants(grid_data)
+            # create lines for power plants with a grid node far away
+            if renewable_powerplants or conventional_powerplants:
+                create_power_plant_lines(grid_data)
+            # add loads
+            if loads:
+                create_loads(grid_data)
         # --- create desired gas grid levels
         for level in gas_levels:
             # temporary extend grid area to combine not connected areas
