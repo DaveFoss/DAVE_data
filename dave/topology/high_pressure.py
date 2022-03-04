@@ -111,6 +111,7 @@ def create_hp_topology(grid_data):
         hp_junctions_ext = scigrid_nodes[scigrid_nodes.scigrid_id.isin(junctions_extern.unique())]
         hp_junctions_ext["is_export"] = 1
         hp_junctions_ext["is_import"] = 1
+        hp_junctions_ext["external"] = True
         # add external junctions to hp_junctions
         hp_junctions = pd.concat(
             [hp_junctions, hp_junctions_ext],

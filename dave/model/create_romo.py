@@ -57,6 +57,7 @@ def create_romo(grid_data, api_use, output_folder):
 
     # read data from dave dictionary
     nodes_dave = grid_data.hp_data.hp_junctions
+    nodes_dave_ext = nodes_dave[nodes_dave.external == True].dave_name.to_list()
     pipes_dave = grid_data.hp_data.hp_pipes
     compressors_dave = grid_data.components_gas.compressors
     sources_dave = grid_data.components_gas.sources
@@ -112,9 +113,19 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(
                 source, "flowMin", {"unit": "1000m_cube_per_hour", "value": "0"}
             )  # !!! annahme
+            # get flow max value from soure data or calculate from pipes for external nodes
+            if node.is_export == 0 and node.is_import == 1:
+                source_dave = sources_dave[sources_dave.junction == node.dave_name].iloc[0]
+                flow_max_source = str(source_dave["max_supply_M_m3_per_d"] * 1000 / 24)
+            elif node.is_export == 1 and node.is_import == 1:
+                source_pipes = pipes_dave[
+                    (pipes_dave.from_junction == node.dave_name)
+                    | (pipes_dave.to_junction == node.dave_name)
+                ]
+                flow_max_source = str(source_pipes["max_cap_M_m3_per_d"].sum() * 1000 / 24)
             etree.SubElement(
-                source, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
-            )  # assumption but will overwritten at the source
+                source, "flowMax", {"unit": "1000m_cube_per_hour", "value": flow_max_source}
+            )
             etree.SubElement(
                 source, "gasTemperature", {"unit": "Celsius", "value": "15"}
             )  # !!! annahme
@@ -161,8 +172,19 @@ def create_romo(grid_data, api_use, output_folder):
             etree.SubElement(
                 sink, "flowMin", {"unit": "1000m_cube_per_hour", "value": "0"}
             )  # !!! annahme
+            # get flow max value from sink data or calculate from pipes for external nodes
+            if node.is_export == 1 and node.is_import == 0:
+                sink_dave = sinks_dave[sinks_dave.junction == node.dave_name].iloc[0]
+                # overwrite flowMax assumption
+                flow_max_sink = str(sink_dave.max_demand_M_m3_per_d * 1000 / 24)
+            elif node.is_export == 1 and node.is_import == 1:
+                sinks_pipes = pipes_dave[
+                    (pipes_dave.from_junction == node.dave_name)
+                    | (pipes_dave.to_junction == node.dave_name)
+                ]
+                flow_max_sink = str(sinks_pipes["max_cap_M_m3_per_d"].sum() * 1000 / 24)
             etree.SubElement(
-                sink, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
+                sink, "flowMax", {"unit": "1000m_cube_per_hour", "value": flow_max_sink}
             )  # assumption but will overwritten at the sinks
             height = etree.Element("height")
             height.attrib["unit"] = "m"
@@ -171,6 +193,8 @@ def create_romo(grid_data, api_use, output_folder):
             nodes.append(sink)
 
         if node.is_export == 1 and node.is_import == 1:
+            # overwrite mapping entry
+            mapping[node.dave_name] = [innode_id, source_id, sink_id]
             # da quelle und senke macht man zwei short pipes um diese voneinander zu unterscheiden und zusätzlicher innode
             short_pipe_sink = etree.Element("shortPipe")
             short_pipe_sink.attrib["alias"] = ""
@@ -230,22 +254,6 @@ def create_romo(grid_data, api_use, output_folder):
             pipe, "heatTransferCoefficient", {"unit": "W_per_m_square_per_K", "value": "2"}
         )  # !!! annahme
         connections.append(pipe)
-    # source
-    for _, source in sources_dave.iterrows():
-        node_id = mapping[source.junction]
-        for node in nodes:
-            if node.get("id") == node_id:
-                break
-        # overwrite flowMax assumption
-        node.find("flowMax").attrib["value"] = str(source["max_supply_M_m3_per_d"] * 1000 / 24)
-    # sinks
-    for _, sink in sinks_dave.iterrows():
-        node_id = mapping[sink.junction]
-        for node in nodes:
-            if node.get("id") == node_id:
-                break
-        # overwrite flowMax assumption
-        node.find("flowMax").attrib["value"] = str(sink.max_demand_M_m3_per_d * 1000 / 24)
     # create compressors
     for _, compressor in compressors_dave.iterrows():
         nodeid = mapping[compressor.junction]
