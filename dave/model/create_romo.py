@@ -226,8 +226,16 @@ def create_romo(grid_data, api_use, output_folder):
     # create pipes
     for _, pipe_dave in pipes_dave.iterrows():
         pipe = etree.Element("pipe")
-        pipe.attrib["from"] = mapping[pipe_dave.from_junction]
-        pipe.attrib["to"] = mapping[pipe_dave.to_junction]
+        pipe.attrib["from"] = (
+            mapping[pipe_dave.from_junction]
+            if isinstance(mapping[pipe_dave.from_junction], str)
+            else mapping[pipe_dave.from_junction][0]
+        )
+        pipe.attrib["to"] = (
+            mapping[pipe_dave.to_junction]
+            if isinstance(mapping[pipe_dave.to_junction], str)
+            else mapping[pipe_dave.to_junction][0]
+        )
         pipe.attrib[
             "id"
         ] = f"pipe_{mapping[pipe_dave.from_junction]}_{mapping[pipe_dave.to_junction]}"
@@ -256,7 +264,11 @@ def create_romo(grid_data, api_use, output_folder):
         connections.append(pipe)
     # create compressors
     for _, compressor in compressors_dave.iterrows():
-        nodeid = mapping[compressor.junction]
+        nodeid = (
+            mapping[compressor.junction]
+            if isinstance(mapping[compressor.junction], str)
+            else mapping[compressor.junction][0]
+        )
         for node in nodes:
             if node.get("id") == nodeid:
                 break
