@@ -173,7 +173,6 @@ class target_area:
             landuse_rel, meta_data = query_osm(
                 "relation", target, recurse="down", tags=[dave_settings()["landuse_tags"]]
             )
-            landuse_rel.reset_index(drop=True, inplace=True)
             # add landuses from relations to landuses from ways
             landuse = pd.concat([landuse, landuse_rel], ignore_index=True)
             # check if there are data for landuse
