@@ -167,7 +167,7 @@ def create_power_plant_lines(grid_data):
         # considered voltage level
         considered_levels = list(
             map(
-                lambda x: {"EHV": 1, "HV": 3, "MV": 5, "LV": 7}[x],
+                lambda x: {"ehv": 1, "hv": 3, "mv": 5, "lv": 7}[x],
                 grid_data.target_input.power_levels[0],
             )
         )
@@ -511,7 +511,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 7 plants (LV)
         if not renewables_lv.empty:
-            if "LV" in power_levels:
+            if "lv" in power_levels:
                 # In this case the Level 7 plants are assigned to the nearest lv node
                 voronoi_polygons = voronoi(grid_data.lv_data.lv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(renewables_lv, voronoi_polygons, how="inner")
@@ -522,20 +522,20 @@ def create_renewable_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the lv-plants
-            elif any(map(lambda x: x in power_levels, ["EHV", "HV", "MV"])):
-                if "MV" in power_levels:
+            elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])):
+                if "mv" in power_levels:
                     # In this case the Level 7 plants are assigned to the nearest mv/lv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
                     )
                     voltage_level = 6
-                elif "HV" in power_levels:
+                elif "hv" in power_levels:
                     # In this case the Level 7 plants are assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                     )
                     voltage_level = 4
-                elif "EHV" in power_levels:
+                elif "ehv" in power_levels:
                     # In this case the Level 7 plants are assigned to the nearest ehv/hv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -570,7 +570,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 6 plants (MV/LV)
         if not renewables_mv_lv.empty:
-            if any(map(lambda x: x in power_levels, ["MV", "LV"])):
+            if any(map(lambda x: x in power_levels, ["mv", "lv"])):
                 # In this case the Level 6 plants are assigned to the nearest mv/lv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
@@ -588,14 +588,14 @@ def create_renewable_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the mvlv-plants
-            elif any(map(lambda x: x in power_levels, ["EHV", "HV"])):
-                if "HV" in power_levels:
+            elif any(map(lambda x: x in power_levels, ["ehv", "hv"])):
+                if "hv" in power_levels:
                     # In this case the Level 6 plants are assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                     )
                     voltage_level = 4
-                elif "EHV" in power_levels:
+                elif "ehv" in power_levels:
                     # In this case the Level 6 plants are assigned to the nearest ehv/hv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -630,7 +630,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 5 plants (MV)
         if not renewables_mv.empty:
-            if "MV" in power_levels:
+            if "mv" in power_levels:
                 # In this case the Level 5 plants are assigned to the nearest mv node
                 voronoi_polygons = voronoi(grid_data.mv_data.mv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(
@@ -643,14 +643,14 @@ def create_renewable_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the mv-plants
-            elif any(map(lambda x: x in power_levels, ["EHV", "HV"])):
-                if "HV" in power_levels:
+            elif any(map(lambda x: x in power_levels, ["ehv", "hv"])):
+                if "hv" in power_levels:
                     # In this case the Level 5 plants area assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                     )
                     voltage_level = 4
-                elif "EHV" in power_levels:
+                elif "ehv" in power_levels:
                     # In this case the Level 5 plants are assigned to the nearest ehv/hv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -685,7 +685,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 4 plants (HV/MV)
         if not renewables_hv_mv.empty:
-            if any(map(lambda x: x in power_levels, ["HV", "MV"])):
+            if any(map(lambda x: x in power_levels, ["hv", "mv"])):
                 # In this case the Level 4 plants are assigned to the nearest hv/mv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
@@ -705,7 +705,7 @@ def create_renewable_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the hvmv-plants
-            elif "EHV" in power_levels:
+            elif "ehv" in power_levels:
                 # In this case the Level 4 plants assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -739,7 +739,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 3 plants (HV)
         if not renewables_hv.empty:
-            if "HV" in power_levels:
+            if "hv" in power_levels:
                 # In this case the Level 3 plants are assigned to the nearest hv node
                 voronoi_polygons = voronoi(grid_data.hv_data.hv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(
@@ -752,7 +752,7 @@ def create_renewable_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the hv-plants
-            elif "EHV" in power_levels:
+            elif "ehv" in power_levels:
                 # In this case the Level 3 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -786,7 +786,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 2 plants (EHV/HV)
         if not renewables_ehv_hv.empty:
-            if any(map(lambda x: x in power_levels, ["EHV", "HV"])):
+            if any(map(lambda x: x in power_levels, ["ehv", "hv"])):
                 # In this case the Level 2 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -810,7 +810,7 @@ def create_renewable_powerplants(grid_data):
 
         # --- nodes for level 1 plants (EHV)
         if not renewables_ehv.empty:
-            if "EHV" in power_levels:
+            if "ehv" in power_levels:
                 # In this case the Level 1 plants are assigned to the nearest ehv node
                 voronoi_polygons = voronoi(grid_data.ehv_data.ehv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(renewables_ehv, voronoi_polygons, how="inner")
@@ -932,11 +932,11 @@ def create_conventional_powerplants(grid_data):
             elif int(plant.voltage) < 1:
                 conventionals.at[i, "voltage_level"] = 7
         # restrict plants to considered power levels
-        if "HV" in power_levels:
+        if "hv" in power_levels:
             conventionals = conventionals[conventionals.voltage_level >= 3]
-        elif "MV" in power_levels:
+        elif "mv" in power_levels:
             conventionals = conventionals[conventionals.voltage_level >= 5]
-        elif "LV" in power_levels:
+        elif "lv" in power_levels:
             conventionals = conventionals[conventionals.voltage_level == 7]
         # convert DataFrame into a GeoDataFrame
         conventionals_geo = gpd.GeoDataFrame(
@@ -975,20 +975,20 @@ def create_conventional_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the lv-plants
-            elif any(map(lambda x: x in power_levels, ["EHV", "HV", "MV"])):
-                if "MV" in power_levels:
+            elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])):
+                if "mv" in power_levels:
                     # In this case the Level 7 plants are assigned to the nearest mv/lv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
                     )
                     voltage_level = 6
-                elif "HV" in power_levels:
+                elif "hv" in power_levels:
                     # In this case the Level 7 plants are assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                     )
                     voltage_level = 4
-                elif "EHV" in power_levels:
+                elif "ehv" in power_levels:
                     # In this case the Level 7 plants are assigned to the nearest ehv/hv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -1022,7 +1022,7 @@ def create_conventional_powerplants(grid_data):
 
         # --- nodes for level 6 plants (MV/LV)
         if not conventionals_mv_lv.empty:
-            if any(map(lambda x: x in power_levels, ["MV", "LV"])):
+            if any(map(lambda x: x in power_levels, ["mv", "lv"])):
                 # In this case the Level 6 plants are assigned to the nearest mv/lv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
@@ -1044,14 +1044,14 @@ def create_conventional_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the mvlv-plants
-            elif any(map(lambda x: x in power_levels, ["EHV", "HV"])):
-                if "HV" in power_levels:
+            elif any(map(lambda x: x in power_levels, ["ehv", "hv"])):
+                if "hv" in power_levels:
                     # In this case the Level 6 plants are assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                     )
                     voltage_level = 4
-                elif "EHV" in power_levels:
+                elif "ehv" in power_levels:
                     # In this case the Level 6 plants are assigned to the nearest ehv/hv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -1085,7 +1085,7 @@ def create_conventional_powerplants(grid_data):
 
         # --- nodes for level 5 plants (MV)
         if not conventionals_mv.empty:
-            if "MV" in power_levels:
+            if "mv" in power_levels:
                 # In this case the Level 5 plants are assigned to the nearest mv node
                 voronoi_polygons = voronoi(grid_data.mv_data.mv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(conventionals_mv, voronoi_polygons, how="inner")
@@ -1099,14 +1099,14 @@ def create_conventional_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the mv-plants
-            elif any(map(lambda x: x in power_levels, ["EHV", "HV"])):
-                if "HV" in power_levels:
+            elif any(map(lambda x: x in power_levels, ["ehv", "hv"])):
+                if "hv" in power_levels:
                     # In this case the Level 5 plants are assigned to the nearest hv/mv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
                     )
                     voltage_level = 4
-                elif "EHV" in power_levels:
+                elif "ehv" in power_levels:
                     # In this case the Level 5 plants are assigned to the nearest ehv/hv-transformer
                     voronoi_polygons = voronoi(
                         grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -1140,7 +1140,7 @@ def create_conventional_powerplants(grid_data):
 
         # --- nodes for level 4 plants (HV/MV)
         if not conventionals_hv_mv.empty:
-            if any(map(lambda x: x in power_levels, ["HV", "MV"])):
+            if any(map(lambda x: x in power_levels, ["hv", "mv"])):
                 # In this case the Level 4 plants are assigned to the nearest hv/mv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
@@ -1163,7 +1163,7 @@ def create_conventional_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the hvmv-plants
-            elif "EHV" in power_levels:
+            elif "ehv" in power_levels:
                 # In this case the Level 4 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -1196,7 +1196,7 @@ def create_conventional_powerplants(grid_data):
 
         # --- nodes for level 3 plants (HV)
         if not conventionals_hv.empty:
-            if "HV" in power_levels:
+            if "hv" in power_levels:
                 # In this case the Level 3 plants are assigned to the nearest hv node
                 voronoi_polygons = voronoi(grid_data.hv_data.hv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(
@@ -1212,7 +1212,7 @@ def create_conventional_powerplants(grid_data):
                     ignore_index=True,
                 )
             # find next higher and considered voltage level to assigne the hv-plants
-            elif "EHV" in power_levels:
+            elif "ehv" in power_levels:
                 # In this case the Level 3 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -1245,7 +1245,7 @@ def create_conventional_powerplants(grid_data):
 
         # --- nodes for level 2 plants (EHV/HV)
         if not conventionals_ehv_hv.empty:
-            if any(map(lambda x: x in power_levels, ["EHV", "HV"])):
+            if any(map(lambda x: x in power_levels, ["ehv", "hv"])):
                 # In this case the Level 2 plants are assigned to the nearest ehv/hv-transformer
                 voronoi_polygons = voronoi(
                     grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]
@@ -1270,7 +1270,7 @@ def create_conventional_powerplants(grid_data):
 
         # --- nodes for level 1 plants (EHV)
         if not conventionals_ehv.empty:
-            if "EHV" in power_levels:
+            if "ehv" in power_levels:
                 # In this case the Level 1 plants are assigned to the nearest ehv node
                 voronoi_polygons = voronoi(grid_data.ehv_data.ehv_nodes[["dave_name", "geometry"]])
                 intersection = gpd.sjoin(conventionals_ehv, voronoi_polygons, how="inner")

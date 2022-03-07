@@ -26,7 +26,7 @@ def create_transformers(grid_data):
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # --- create ehv/ehv and ehv/hv trafos
-    if any(map(lambda x: x in power_levels, ["EHV", "HV"])):
+    if any(map(lambda x: x in power_levels, ["ehv", "hv"])):
         # read transformator data from OEP, filter current exsist ones and rename paramter names
         hv_trafos, meta_data = oep_request(
             schema="grid",
@@ -60,8 +60,8 @@ def create_transformers(grid_data):
         # update progress
         pbar.update(5)
         # in case of missing ehv/hv-level, nodes for the transformator must be procured from OEP
-        if ("EHV" in power_levels and grid_data.hv_data.hv_nodes.empty) or (
-            "HV" in power_levels and grid_data.ehv_data.ehv_nodes.empty
+        if ("ehv" in power_levels and grid_data.hv_data.hv_nodes.empty) or (
+            "hv" in power_levels and grid_data.ehv_data.ehv_nodes.empty
         ):
             # read ehv/hv node data from OpenEnergyPlatform and adapt names
             ehvhv_buses, meta_data = oep_request(
@@ -92,7 +92,7 @@ def create_transformers(grid_data):
         pbar.update(5)
         # search for trafo voltage and create missing nodes
         for i, trafo in hv_trafos.iterrows():
-            if "EHV" in power_levels:
+            if "ehv" in power_levels:
                 ehv_bus0 = grid_data.ehv_data.ehv_nodes[
                     grid_data.ehv_data.ehv_nodes.ego_bus_id == trafo.bus0
                 ]
@@ -107,7 +107,7 @@ def create_transformers(grid_data):
                     hv_trafos.at[trafo.name, "voltage_kv_hv"] = grid_data.ehv_data.ehv_nodes.loc[
                         ehv_bus1.index[0]
                     ].voltage_kv
-                if ("HV" not in power_levels) and (ehv_bus0.empty):
+                if ("hv" not in power_levels) and (ehv_bus0.empty):
                     hv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([110])]
                     hv_bus0 = hv_buses[hv_buses.ego_bus_id == trafo.bus0]
                     if not hv_bus0.empty:
@@ -129,7 +129,7 @@ def create_transformers(grid_data):
                             grid_data.hv_data.hv_nodes = pd.concat(
                                 [grid_data.hv_data.hv_nodes, hv_bus0], ignore_index=True
                             )
-            if "HV" in power_levels:
+            if "hv" in power_levels:
                 hv_bus0 = grid_data.hv_data.hv_nodes[
                     grid_data.hv_data.hv_nodes.ego_bus_id == trafo.bus0
                 ]
@@ -137,7 +137,7 @@ def create_transformers(grid_data):
                     hv_trafos.at[trafo.name, "voltage_kv_lv"] = grid_data.hv_data.hv_nodes.loc[
                         hv_bus0.index[0]
                     ].voltage_kv
-                if ("EHV" not in power_levels) and (not hv_bus0.empty):
+                if ("ehv" not in power_levels) and (not hv_bus0.empty):
                     ehv_buses = ehvhv_buses[ehvhv_buses.voltage_kv.isin([380, 220])]
                     ehv_bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1]
                     if not ehv_bus1.empty:
@@ -176,7 +176,7 @@ def create_transformers(grid_data):
         if not hv_trafos.empty:
             ehv_buses = grid_data.ehv_data.ehv_nodes
             hv_buses = grid_data.hv_data.hv_nodes
-            if "EHV" in power_levels:
+            if "ehv" in power_levels:
                 ehv_ehv_trafos = hv_trafos[hv_trafos.voltage_kv_lv.isin([380, 220])]
                 ehv_ehv_trafos["voltage_level"] = 1
                 # add dave name for trafo and connection buses
@@ -237,7 +237,7 @@ def create_transformers(grid_data):
         pbar.update(30)
 
     # --- create hv/mv trafos
-    if any(map(lambda x: x in power_levels, ["HV", "MV"])):
+    if any(map(lambda x: x in power_levels, ["hv", "mv"])):
         if grid_data.components_power.substations.hv_mv.empty:
             # read transformator data from OEP, filter relevant parameters and rename paramter names
             substations, meta_data = oep_request(
@@ -437,7 +437,7 @@ def create_transformers(grid_data):
         pbar.update(30)
 
     # --- create mv/lv trafos
-    if any(map(lambda x: x in power_levels, ["MV", "LV"])):
+    if any(map(lambda x: x in power_levels, ["mv", "lv"])):
         if grid_data.components_power.substations.mv_lv.empty:
             # get transformator data from OEP
             substations, meta_data = oep_request(
@@ -562,7 +562,7 @@ def create_transformers(grid_data):
             )
         # add a synthetic tranformer on the first grid node if necessary
         if grid_data.components_power.transformers.mv_lv.empty:
-            if "MV" not in power_levels:
+            if "mv" not in power_levels:
                 buses_lv = grid_data.lv_data.lv_nodes
                 first_bus = buses_lv[buses_lv.node_type == "road_junction"].iloc[0]
                 if grid_data.mv_data.mv_nodes.empty:
@@ -598,7 +598,7 @@ def create_transformers(grid_data):
                 grid_data.components_power.transformers.mv_lv = pd.concat(
                     [grid_data.components_power.transformers.mv_lv, trafo_df], ignore_index=True
                 )
-            elif "LV" not in power_levels:
+            elif "lv" not in power_levels:
                 pass
                 # noch definieren
 

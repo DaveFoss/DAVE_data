@@ -132,18 +132,18 @@ def format_input_levels(power_levels, gas_levels):
     This function formats the power and gas levels to get the right format for the dave processing
     """
     # set level inputs to upper strings
-    power_levels = list(map(str.upper, power_levels))
-    gas_levels = list(map(str.upper, gas_levels))
+    power_levels = list(map(str.lower, power_levels))
+    gas_levels = list(map(str.lower, gas_levels))
     # convert input value 'ALL'
-    if power_levels == ["ALL"]:
-        power_levels = ["EHV", "HV", "MV", "LV"]
-    if gas_levels == ["ALL"]:
-        gas_levels = ["HP", "MP", "LP"]
+    if power_levels == ["all"]:
+        power_levels = ["ehv", "hv", "mv", "lv"]
+    if gas_levels == ["all"]:
+        gas_levels = ["hp", "mp", "lp"]
     # sort level inputs
-    order_power = ["EHV", "HV", "MV", "LV"]
+    order_power = ["ehv", "hv", "mv", "lv"]
     power_sort = sorted(list(map(order_power.index, power_levels)))
     power_levels = list(map(lambda x: order_power[x], power_sort))
-    order_gas = ["HP", "MP", "LP"]
+    order_gas = ["hp", "mp", "lp"]
     gas_sort = sorted(list(map(order_gas.index, gas_levels)))
     gas_levels = list(map(lambda x: order_gas[x], gas_sort))
     return power_levels, gas_levels
@@ -155,9 +155,9 @@ def geo_info_needs(power_levels, gas_levels, loads):
     levels
     """
     # check power and gas level and set decision for geographical parameters
-    if ("LV" in power_levels) or ("LP" in gas_levels):
+    if ("lv" in power_levels) or ("lp" in gas_levels):
         roads, roads_plot, buildings, landuse = True, True, True, True
-    elif ("MV" in power_levels) or ("MP" in gas_levels):
+    elif ("mv" in power_levels) or ("mp" in gas_levels):
         roads, roads_plot, buildings = True, True, False
         landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for EHV, HV and HP
@@ -298,8 +298,8 @@ def create_grid(
     grid_data = create_empty_dataset()
 
     # format level inputs
-    power, gas = format_input_levels(power_levels, gas_levels)
-    combine_areas = list(map(str.upper, combine_areas))
+    power_levels, gas_levels = format_input_levels(power_levels, gas_levels)
+    combine_areas = list(map(str.lower, combine_areas))
 
     # create target area informations
     roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(power_levels, gas_levels, loads)
@@ -333,13 +333,13 @@ def create_grid(
             if level in combine_areas:
                 # temporary use of extended grid area
                 grid_data.area = combined_area
-            if level == "EHV":
+            if level == "ehv":
                 create_ehv_topology(grid_data)
-            elif level == "HV":
+            elif level == "hv":
                 create_hv_topology(grid_data)
-            elif level == "MV":
+            elif level == "mv":
                 create_mv_topology(grid_data)
-            elif level == "LV":
+            elif level == "lv":
                 create_lv_topology(grid_data)
             else:
                 print("no voltage level was choosen or their is a failure in the input value.")
@@ -371,11 +371,11 @@ def create_grid(
             if level in combine_areas:
                 # temporary use of extended grid area
                 grid_data.area = combined_area
-            if level == "HP":
+            if level == "hp":
                 create_hp_topology(grid_data)
-            elif level == "MP":
+            elif level == "mp":
                 create_mp_topology(grid_data)
-            elif level == "LP":
+            elif level == "lp":
                 create_lp_topology(grid_data)
             else:
                 print("no gas level was choosen or their is a failure in the input value.")
@@ -414,7 +414,7 @@ def create_grid(
 
     # plot informations
     if plot:
-        if "LV" in power_levels:
+        if "lv" in power_levels:
             plot_target_area(grid_data, api_use, output_folder)
         plot_grid_data(grid_data, api_use, output_folder)
         # plot_landuse(grid_data, api_use, output_folder)

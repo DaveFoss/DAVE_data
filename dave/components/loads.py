@@ -279,7 +279,7 @@ def create_loads(grid_data):
             # update progress
             pbar.update(19.8 / len(commercial_buildings))
     # create loads for non grid level 7
-    elif any(map(lambda x: x in power_levels, ["EHV", "HV", "MV"])):
+    elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])):
         # create loads on grid level 6 (MV/LV)
         if "MV" in power_levels:
             # In this case the loads are assigned to the nearest mv/lv-transformer
