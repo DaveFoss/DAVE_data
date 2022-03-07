@@ -169,12 +169,15 @@ def create_pandapipes(grid_data, api_use, output_folder):
         sinks["junction"] = sinks.junction.apply(
             lambda x: net.junction[net.junction["name"] == x].index[0]
         )
-        net.sink = sinks
-        # check necessary parameters and add pandapipes standard if needed
-        net.sink["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
-        net.sink["scaling"] = float(1)
-        net.sink["in_service"] = True
-        net.sink["type"] = "sink"
+        _ = ppi.create_sinks(net,
+                             sinks.pop("junction"),
+                             mdot_kg_per_s=0.1,  # !!! dummy value has to change
+                             scaling=1.0,
+                             name=sinks.pop("name"),
+                             in_service=True,
+                             type="sink",
+                             **sinks
+                             )
     # update progress
     pbar.update(10)
 
@@ -187,12 +190,15 @@ def create_pandapipes(grid_data, api_use, output_folder):
         sources["junction"] = sources.junction.apply(
             lambda x: net.junction[net.junction["name"] == x].index[0]
         )
-        net.source = sources
-        # check necessary parameters and add pandapipes standard if needed
-        net.source["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
-        net.source["scaling"] = float(1)
-        net.source["in_service"] = True
-        net.source["type"] = "source"
+        _ = ppi.create_sources(net,
+                               sources.pop("junction"),
+                               mdot_kg_per_s=0.1,  # !!! dummy value has to change
+                               scaling=1.0,
+                               name=sources.pop("name"),
+                               in_service=True,
+                               type="sink",
+                               **sources
+                               )
     # update progress
     pbar.update(10)
 
