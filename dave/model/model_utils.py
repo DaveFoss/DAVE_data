@@ -64,3 +64,9 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
         grid_data[f"{level}_data"][f"{level}_pipes"].drop(
             pipelines_dis.index.to_list(), inplace=True
         )
+
+
+# !!! Todo's clean up:
+# Leitungen mit Länge 0
+# Leitungen mit selben Anfangs und Endpunkt
+# power und gas components die mit disconnected nodes verbunden sind

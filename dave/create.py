@@ -160,7 +160,7 @@ def geo_info_needs(power_levels, gas_levels, loads):
     elif ("mv" in power_levels) or ("mp" in gas_levels):
         roads, roads_plot, buildings = True, True, False
         landuse = bool(loads)  # landuse is needed for load calculation
-    else:  # for EHV, HV and HP
+    else:  # for ehv, hv and hp
         roads, roads_plot, buildings = False, False, False
         landuse = bool(loads and power_levels)  # landuse is needed for load calculation
     return roads, roads_plot, buildings, landuse
@@ -287,7 +287,7 @@ def create_grid(
     EXAMPLE:
         from dave.create import create_grid
 
-        grid_data  = create_grid(town_name=['Kassel', 'Baunatal'], power_levels=['HV', 'MV'],
+        grid_data  = create_grid(town_name=['Kassel', 'Baunatal'], power_levels=['hv', 'mv'],
                                  gas_levels=['HP'], plot=False, convert = False)
 
     """

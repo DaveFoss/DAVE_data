@@ -18,10 +18,10 @@ class target_area:
     INPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
         **power_levels** (list)  - this parameter defines which power levels should be considered
-                                   options: 'EHV','HV','MV','LV', [].
+                                   options: 'ehv','hv','mv','lv', [].
                                    there could be choose: one level, multiple levels or 'ALL'
         **gas_levels** (list)    - this parameter defines which gas levels should be considered
-                                   options: 'HP','MP','LP', [].
+                                   options: 'hp','mp','lp', [].
                                    there could be choose: one level, multiple levels or 'ALL'
 
         One of these parameters must be set:
