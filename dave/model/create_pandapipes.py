@@ -74,6 +74,18 @@ def create_pandapipes(grid_data, api_use, output_folder):
     pipes_hp = grid_data.hp_data.hp_pipes
     if not pipes_hp.empty:
         pipes_hp.rename(columns={"dave_name": "name"}, inplace=True)
+        # circle pipes:
+        cp = pipes_hp.loc[pipes_hp["from_junction"] == pipes_hp["to_junction"]]
+        if not cp.empty:
+            print(f"\nWarning: pipes {cp.name.values} have the same from and to junctions and "
+                    f"are being dropped automatically.\n")
+            pipes_hp.drop(index=cp.index, inplace=True)
+        # drop zero length pipes:
+        zl = pipes_hp.loc[pipes_hp["length_km"] == 0]
+        if not zl.empty:
+            print(f"\nWarning: pipes {zl.name.values} have a length of 0.0 km and are being "
+                  f"dropped automatically.\n")
+            pipes_hp.drop(index=zl.index, inplace=True)
         # conver diameter from mm to m
         pipes_hp["diameter_m"] = pipes_hp.diameter_mm.apply(lambda x: x / 1000)
         pipes_hp.drop(columns=["diameter_mm"])
