@@ -92,5 +92,7 @@ def dave_settings():
         "hp_nodes_height_m": 1,  # dummy value, must be changed
         "hp_pipes_k_mm": float(0.1),  # value based on shutterwald data, must be changed
         "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
+        # --- assumptions at model utils:
+        "min_number_nodes": 4,
     }
     return settings
