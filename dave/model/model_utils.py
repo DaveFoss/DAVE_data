@@ -40,6 +40,25 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
     This function clean up needless nodes and lines for the diffrent grid levels
     """
     # --- clean up power grid data
+    # get disconnected nodes
+    for level in grid_data.target_input.power_levels.iloc[0]:
+        nodes = grid_data[f"{level}_data"][f"{level}_nodes"]
+        lines = grid_data[f"{level}_data"][f"{level}_lines"]
+        nodes_dis = list(
+            disconnected_nodes(nodes=nodes, edges=lines, min_number_nodes=min_number_nodes)
+        )
+        # filter disconnected lines based on disconnected nodes
+        lines_dis = lines[
+            (lines.from_junction.isin(nodes_dis)) | (lines.to_junction.isin(nodes_dis))
+        ]
+
+        # filter components which connected to disconnected nodes
+
+        # delet needless elements
+        grid_data[f"{level}_data"][f"{level}_nodes"].drop(
+            nodes[nodes.dave_name.isin(nodes_dis)].index.to_list(), inplace=True
+        )
+        grid_data[f"{level}_data"][f"{level}_lines"].drop(lines_dis.index.to_list(), inplace=True)
 
     # --- clean up gas grid data
     # get disconnected junctions
@@ -70,3 +89,4 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
 # Leitungen mit Länge 0
 # Leitungen mit selben Anfangs und Endpunkt
 # power und gas components die mit disconnected nodes verbunden sind
+# pandapower diagnostic nochmal genauer anschauen
