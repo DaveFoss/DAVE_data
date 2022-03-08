@@ -281,7 +281,7 @@ def create_loads(grid_data):
     # create loads for non grid level 7
     elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])):
         # create loads on grid level 6 (MV/LV)
-        if "MV" in power_levels:
+        if "mv" in power_levels:
             # In this case the loads are assigned to the nearest mv/lv-transformer
             voronoi_polygons = voronoi(
                 grid_data.components_power.transformers.mv_lv[["dave_name", "geometry"]]
@@ -289,7 +289,7 @@ def create_loads(grid_data):
             trafos = grid_data.components_power.transformers.mv_lv
             voltage_level = 6
         # create loads on grid level 4 (HV/MV)
-        elif "HV" in power_levels:
+        elif "hv" in power_levels:
             # In this case the loads are assigned to the nearest hv/mv-transformer
             voronoi_polygons = voronoi(
                 grid_data.components_power.transformers.hv_mv[["dave_name", "geometry"]]
@@ -297,7 +297,7 @@ def create_loads(grid_data):
             trafos = grid_data.components_power.transformers.hv_mv
             voltage_level = 4
         # create loads on grid level 2 (EHV/HV)
-        elif "EHV" in power_levels:
+        elif "ehv" in power_levels:
             # In this case the loads are assigned to the nearest ehv/hv-transformer
             voronoi_polygons = voronoi(
                 grid_data.components_power.transformers.ehv_hv[["dave_name", "geometry"]]

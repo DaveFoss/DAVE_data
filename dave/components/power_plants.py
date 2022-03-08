@@ -266,8 +266,8 @@ def create_power_plant_lines(grid_data):
                     number = int(last_line_name.replace("line_1_", "")) + 1
                     # check if there is a line neighbor
                     line_neighbor = ehv_lines[
-                        (ehv_lines.bus0 == bus_origin.dave_name)
-                        | (ehv_lines.bus1 == bus_origin.dave_name)
+                        (ehv_lines.from_bus == bus_origin.dave_name)
+                        | (ehv_lines.to_bus == bus_origin.dave_name)
                     ]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
@@ -302,8 +302,8 @@ def create_power_plant_lines(grid_data):
                     number = int(last_line_name.replace("line_3_", "")) + 1
                     # check if there is a line neighbor
                     line_neighbor = hv_lines[
-                        (hv_lines.bus0 == bus_origin.dave_name)
-                        | (hv_lines.bus1 == bus_origin.dave_name)
+                        (hv_lines.from_bus == bus_origin.dave_name)
+                        | (hv_lines.to_bus == bus_origin.dave_name)
                     ]
                     if not line_neighbor.empty:
                         line_neighbor = line_neighbor.iloc[0]
