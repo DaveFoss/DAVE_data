@@ -4,7 +4,7 @@ import pandas as pd
 from dave.settings import dave_settings
 
 
-def disconnected_nodes(nodes, edges, grid_type, min_number_nodes):
+def disconnected_nodes(nodes, edges, min_number_nodes):
     """
     converts nodes and lines to a networkX graph
 
@@ -20,12 +20,7 @@ def disconnected_nodes(nodes, edges, grid_type, min_number_nodes):
     # create nodes
     graph.add_nodes_from(nodes.dave_name.to_list())
     # create edges
-    if grid_type == "gas":
-        graph.add_edges_from(
-            edges.apply(lambda x: (x["from_junction"], x["to_junction"]), axis=1).to_list()
-        )
-    elif grid_type == "power":
-        graph.add_edges_from(edges.apply(lambda x: (x["from_bus"], x["to_bus"]), axis=1).to_list())
+    graph.add_edges_from(edges.apply(lambda x: (x["from_node"], x["to_node"]), axis=1).to_list())
     # check for disconnected nodes
     disconnected_nodes = set()
     connected_elements = list(nx.connected_components(graph))
@@ -59,9 +54,25 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
         ],
         ignore_index=True,
     )
+    lines_all.rename(columns={"from_bus": "from_node", "to_bus": "to_node"}, inplace=True)
+    trafos_all = pd.concat(
+        [
+            grid_data.components_power.transformers.ehv_ehv,
+            grid_data.components_power.transformers.ehv_hv,
+            grid_data.components_power.transformers.hv_mv,
+            grid_data.components_power.transformers.mv_lv,
+        ],
+        ignore_index=True,
+    )
+    trafos_all.rename(columns={"bus_hv": "from_node", "bus_lv": "to_node"}, inplace=True)
     nodes_dis = list(
         disconnected_nodes(
-            nodes=nodes_all, edges=lines_all, grid_type="power", min_number_nodes=min_number_nodes
+            nodes=nodes_all,
+            edges=pd.concat(
+                [lines_all, trafos_all],
+                ignore_index=True,
+            ),
+            min_number_nodes=min_number_nodes,
         )
     )
     # drop elements for each level which are disconnected
@@ -82,10 +93,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                 grid_data.components_power[f"{component_typ}"].drop(
                     components[components.bus.isin(nodes_dis)].index.to_list(), inplace=True
                 )
-            elif (
-                component_typ == "transformers"
-                and not grid_data.components_power[f"{component_typ}"].empty
-            ):
+            elif component_typ == "transformers":
                 # this components have a sub type
                 power_components_sub = list(grid_data.components_power[f"{component_typ}"].keys())
                 for component_subtyp in power_components_sub:
@@ -99,17 +107,29 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                         grid_data.components_power[f"{component_typ}"][f"{component_subtyp}"].drop(
                             components[
                                 components.bus_hv.isin(nodes_dis)
-                                | components.bus_lv.isin(nodes_dis)
+                                & components.bus_lv.isin(nodes_dis)
                             ].index.to_list(),
                             inplace=True,
                         )
-                # !!! Todo: Hier muss noch gecheckt werden ob beide Knoten nicht genutzt werden.
-            elif (
-                component_typ == "substation"
-                and not grid_data.components_power[f"{component_typ}"].empty
-            ):
-                pass
-                # !!! Substations müssen noch gemacht werden
+            elif component_typ == "substation":
+                # this components have a sub type
+                power_components_sub = list(grid_data.components_power[f"{component_typ}"].keys())
+                for component_subtyp in power_components_sub:
+                    if not grid_data.components_power[f"{component_typ}"][
+                        f"{component_subtyp}"
+                    ].empty:
+                        components = grid_data.components_power[f"{component_typ}"][
+                            f"{component_subtyp}"
+                        ]
+                        # delet needless power components
+                        substation_dis = nodes[nodes.dave_name.isin(nodes_dis)].subst_dave_name
+                        if ~pd.isnull(substation_dis).all():
+                            grid_data.components_power[f"{component_typ}"][
+                                f"{component_subtyp}"
+                            ].drop(
+                                components[components.dave_name.isin(nodes_dis)].index.to_list(),
+                                inplace=True,
+                            )
 
         # delet needless nodes and lines
         grid_data[f"{level}_data"][f"{level}_nodes"].drop(
@@ -134,6 +154,9 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
     pipelines_all = pd.concat(
         [grid_data.hp_data.hp_pipes, grid_data.mp_data.mp_pipes, grid_data.lp_data.lp_pipes],
         ignore_index=True,
+    )  # !!! Todo: Verbindung der Netzebenen mit einbeziehen
+    pipelines_all.rename(
+        columns={"from_junction": "from_node", "to_junction": "to_node"}, inplace=True
     )
     junctions_dis = list(
         disconnected_nodes(
