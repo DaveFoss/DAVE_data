@@ -1,4 +1,5 @@
 import networkx as nx
+import pandas as pd
 
 from dave.settings import dave_settings
 
@@ -40,18 +41,35 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
     This function clean up disconnected elements for the diffrent power grid levels
     """
     # get disconnected nodes
-    for level in grid_data.target_input.power_levels.iloc[
-        0
-    ]:  # !!! Eig müssten für den Graph auch alle NEtzebenen zusammen betrachtet werden, da es sein kann das zwei isolierte Gebiete über Über-/Unterlagerte Netzebenen verbunden sind
+    nodes_all = pd.concat(
+        [
+            grid_data.ehv_data.ehv_nodes,
+            grid_data.hv_data.hv_nodes,
+            grid_data.mv_data.mv_nodes,
+            grid_data.lv_data.lv_nodes,
+        ],
+        ignore_index=True,
+    )
+    lines_all = pd.concat(
+        [
+            grid_data.ehv_data.ehv_lines,
+            grid_data.hv_data.hv_lines,
+            grid_data.mv_data.mv_lines,
+            grid_data.lv_data.lv_lines,
+        ],
+        ignore_index=True,
+    )
+    nodes_dis = list(
+        disconnected_nodes(
+            nodes=nodes_all, edges=lines_all, grid_type="power", min_number_nodes=min_number_nodes
+        )
+    )
+    # drop elements for each level which are disconnected
+    for level in grid_data.target_input.power_levels.iloc[0]:
         nodes = grid_data[f"{level}_data"][f"{level}_nodes"]
         lines = grid_data[f"{level}_data"][f"{level}_lines"]
-        nodes_dis = list(
-            disconnected_nodes(
-                nodes=nodes, edges=lines, grid_type="power", min_number_nodes=min_number_nodes
-            )
-        )
         # filter disconnected lines based on disconnected nodes
-        lines_dis = lines[(lines.from_bus.isin(nodes_dis)) | (lines.to_bus.isin(nodes_dis))]
+        lines_dis = lines[lines.from_bus.isin(nodes_dis)]
         # filter power components which connected to disconnected junctions
         power_components = list(grid_data.components_power.keys())
         for component_typ in power_components:
@@ -60,7 +78,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                 and not grid_data.components_power[f"{component_typ}"].empty
             ):
                 components = grid_data.components_power[f"{component_typ}"]
-                # delet needless gas components
+                # delet needless power components
                 grid_data.components_power[f"{component_typ}"].drop(
                     components[components.bus.isin(nodes_dis)].index.to_list(), inplace=True
                 )
@@ -77,7 +95,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                         components = grid_data.components_power[f"{component_typ}"][
                             f"{component_subtyp}"
                         ]
-                        # delet needless gas components
+                        # delet needless power components
                         grid_data.components_power[f"{component_typ}"][f"{component_subtyp}"].drop(
                             components[
                                 components.bus_hv.isin(nodes_dis)
@@ -105,19 +123,32 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
     This function clean up disconnected elements for the diffrent gas grid levels
     """
     # get disconnected junctions
+    junctions_all = pd.concat(
+        [
+            grid_data.hp_data.hp_junctions,
+            grid_data.mp_data.mp_junctions,
+            grid_data.lp_data.lp_junctions,
+        ],
+        ignore_index=True,
+    )
+    pipelines_all = pd.concat(
+        [grid_data.hp_data.hp_pipes, grid_data.mp_data.mp_pipes, grid_data.lp_data.lp_pipes],
+        ignore_index=True,
+    )
+    junctions_dis = list(
+        disconnected_nodes(
+            nodes=junctions_all,
+            edges=pipelines_all,
+            grid_type="gas",
+            min_number_nodes=min_number_nodes,
+        )
+    )
+    # drop elements for each level which are disconnected
     for level in grid_data.target_input.gas_levels.iloc[0]:
         junctions = grid_data[f"{level}_data"][f"{level}_junctions"]
         pipelines = grid_data[f"{level}_data"][f"{level}_pipes"]
-        junctions_dis = list(
-            disconnected_nodes(
-                nodes=junctions, edges=pipelines, grid_type="gas", min_number_nodes=min_number_nodes
-            )
-        )
         # filter disconnected pipelines based on disconnected junctions
-        pipelines_dis = pipelines[
-            (pipelines.from_junction.isin(junctions_dis))
-            | (pipelines.to_junction.isin(junctions_dis))
-        ]
+        pipelines_dis = pipelines[pipelines.from_junction.isin(junctions_dis)]
         # filter gas components which connected to disconnected junctions
         gas_components = list(grid_data.components_gas.keys())
         for component_typ in gas_components:
