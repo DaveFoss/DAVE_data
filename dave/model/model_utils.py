@@ -162,7 +162,6 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
         disconnected_nodes(
             nodes=junctions_all,
             edges=pipelines_all,
-            grid_type="gas",
             min_number_nodes=min_number_nodes,
         )
     )
@@ -191,6 +190,32 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
         )
 
 
+def clean_wrong_piplines(grid_data):
+    """
+    This function drops gas pipelines which have wrong charakteristics
+    """
+    for level in grid_data.target_input.gas_levels.iloc[0]:
+        pipelines = grid_data[f"{level}_data"][f"{level}_pipes"]
+        # check if piplines have the same start and end point
+        pipelines_equal = pipelines[pipelines.from_junction == pipelines.to_junction]
+        # delet needless pipelines
+        grid_data[f"{level}_data"][f"{level}_pipes"].drop(
+            pipelines_equal.index.to_list(), inplace=True
+        )
+
+
+def clean_wrong_lines(grid_data):
+    """
+    This function drops power lines which have wrong charakteristics
+    """
+    for level in grid_data.target_input.power_levels.iloc[0]:
+        pipelines = grid_data[f"{level}_data"][f"{level}_lines"]
+        # check if piplines have the same start and end point
+        lines_equal = pipelines[pipelines.from_bus == pipelines.to_bus]
+        # delet needless pipelines
+        grid_data[f"{level}_data"][f"{level}_lines"].drop(lines_equal.index.to_list(), inplace=True)
+
+
 # Funktion um Leitungen zu finden die Anfangs und Endknoten gleich haben rausfiltern
 
 
@@ -198,16 +223,20 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
     """
     This function clean up the DaVe Dataset for diffrent kinds of failures
     """
-    # clean up disconnected elements
+    # --- clean up power grid data
     if grid_data.target_input.iloc[0].power_levels:
+        # clean up disconnected elements
         clean_disconnected_elements_power(grid_data, min_number_nodes)
+        # clean up lines with wrong characteristics
+        clean_wrong_lines(grid_data)
+    # --- clean up gas grid data
     if grid_data.target_input.iloc[0].gas_levels:
+        # clean up disconnected elements
         clean_disconnected_elements_gas(grid_data, min_number_nodes)
-    # clean up
+        # clean up pipelines with wrong characteristics
+        clean_wrong_piplines(grid_data)
 
 
 # !!! Todo's clean up:
 # Leitungen mit Länge 0
-# Leitungen mit selben Anfangs und Endpunkt
-# power und gas components die mit disconnected nodes verbunden sind
 # pandapower diagnostic nochmal genauer anschauen
