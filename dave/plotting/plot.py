@@ -29,7 +29,7 @@ def plot_land(area, only_area=False):
     return ax
 
 
-def plot_target_area(grid_data, api_use, output_folder=None):
+def plot_geographical_data(grid_data, api_use, output_folder=None):
     """
     This function plots the geographical informations in the target area
 

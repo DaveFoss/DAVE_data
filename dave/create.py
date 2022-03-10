@@ -19,7 +19,7 @@ from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
 from dave.model import create_pandapipes, create_pandapower
-from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
+from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
 from dave.topology import (
@@ -415,7 +415,7 @@ def create_grid(
     # plot informations
     if plot:
         if "lv" in power_levels:
-            plot_target_area(grid_data, api_use, output_folder)
+            plot_geographical_data(grid_data, api_use, output_folder)
         plot_grid_data(grid_data, api_use, output_folder)
         # plot_landuse(grid_data, api_use, output_folder)
 
