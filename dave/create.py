@@ -241,10 +241,10 @@ def create_grid(
         **landuse** (bool, default False) - if true, landuse information are added to the grid \
             model \n
         **power_levels** (list, default []) - this parameter defines which power levels should be \
-            considered. options: 'EHV','HV','MV','LV', []. there could be choose: one/multiple \
+            considered. options: 'ehv','hv','mv','lv', []. there could be choose: one/multiple \
                 level(s) or 'ALL' \n
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
-            considered. options: 'HP','MP','LP', []. there could be choose: one/multiple level(s) \
+            considered. options: 'hp','mp','lp', []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
         **plot** (boolean, default True) - if this value is true dave creates plottings \
             automaticly \n

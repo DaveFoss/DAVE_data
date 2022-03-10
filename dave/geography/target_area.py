@@ -339,7 +339,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.postalcode) == 1 and self.postalcode[0] == "ALL":
+        if len(self.postalcode) == 1 and self.postalcode[0].lower() == "all":
             # in this case all postalcode areas will be choosen
             target = postal
         else:
@@ -374,7 +374,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.town_name) == 1 and self.town_name[0] == "ALL":
+        if len(self.town_name) == 1 and self.town_name[0].lower() == "all":
             # in this case all city names will be choosen (same case as all postalcode areas)
             target = postal
         else:
@@ -403,7 +403,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.federal_state) == 1 and self.federal_state[0] == "ALL":
+        if len(self.federal_state) == 1 and self.federal_state[0].lower() == "all":
             # in this case all federal states will be choosen
             target = states
         else:
@@ -450,7 +450,7 @@ class target_area:
         # change crs
         nuts_3.set_crs(dave_settings()["crs_meter"], inplace=True, allow_override=True)
         nuts_3.to_crs(dave_settings()["crs_main"], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0].upper() == "ALL":
+        if len(self.nuts_region) == 1 and self.nuts_region[0].lower() == "all":
             # in this case all federal states will be choosen
             target = nuts_3
         else:
