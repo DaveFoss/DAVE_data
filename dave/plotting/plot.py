@@ -126,11 +126,12 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         plt.legend(handles=legend_elements)
         # titel
         plt.title("Geographical Data")
-        if output_folder:
-            # save plot in the dave output folder
-            if not api_use:
-                file_path = output_folder + "\\geographical_data.svg"
-                plt.savefig(file_path, dpi=300)
+        # !!! Todo: Speichern des Plots fürt zu einem Fehler
+        # if output_folder:
+        #     # save plot in the dave output folder
+        #     if not api_use:
+        #         file_path = output_folder + "\\geographical_data.svg"
+        #         plt.savefig(file_path, dpi=300)
 
 
 def plot_grid_data(grid_data, api_use, output_folder=None):
@@ -254,11 +255,12 @@ def plot_grid_data(grid_data, api_use, output_folder=None):
         ax.legend()
         # titel
         plt.title("Grid Data")
-        if output_folder:
-            # save plot in the dave output folder
-            if not api_use:
-                file_path = output_folder + "\\grid_data.svg"
-                plt.savefig(file_path, dpi=300)
+        # !!! Todo: Speichern des Plots fürt zu einem Fehler
+        # if output_folder:
+        #     # save plot in the dave output folder
+        #     if not api_use:
+        #         file_path = output_folder + "\\grid_data.svg"
+        #         plt.savefig(file_path, dpi=300)
     # hier dann noch alle weiteren komponenten die erstellt wurden mit rein und für die
     # verschiedenen Spannungs und Druck ebenen.
 
