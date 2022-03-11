@@ -34,6 +34,7 @@ def dave_settings():
         "road_plot_tags": 'highway~"motorway|trunk|primary"',
         "landuse_tags": 'landuse~"commercial|industrial|residential|retail"',
         "building_tags": "building",
+        "railway_tags": 'railway~"construction|disused|light_rail|monorail|narrow_gauge|rail|subway|tram"',
         # osm categories
         "buildings_for_living": [
             "apartments",

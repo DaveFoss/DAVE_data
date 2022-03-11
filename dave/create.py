@@ -65,6 +65,7 @@ def create_empty_dataset():
                 }
             ),
             "landuse": gpd.GeoDataFrame([]),
+            "railways": gpd.GeoDataFrame([]),
             # power grid data
             "ehv_data": davestructure(
                 {"ehv_nodes": gpd.GeoDataFrame([]), "ehv_lines": gpd.GeoDataFrame([])}
@@ -194,6 +195,7 @@ def create_grid(
     roads_plot=False,
     buildings=False,
     landuse=False,
+    railways=False,
     power_levels=[],
     gas_levels=[],
     plot=True,
@@ -239,6 +241,8 @@ def create_grid(
         **buildings** (bool, default False) - if true, building information are added to the grid \
             model \n
         **landuse** (bool, default False) - if true, landuse information are added to the grid \
+            model \n
+        **railways** (bool, default False) - if true, railway information are added to the grid \
             model \n
         **power_levels** (list, default []) - this parameter defines which power levels should be \
             considered. options: 'ehv','hv','mv','lv', []. there could be choose: one/multiple \
@@ -317,6 +321,7 @@ def create_grid(
         roads_plot=bool(roads_plot or roads_plot_l),
         buildings=bool(buildings or buildings_l),
         landuse=bool(landuse or landuse_l),
+        railways=railways,
     ).target()
 
     # --- collect data for the requested dataset

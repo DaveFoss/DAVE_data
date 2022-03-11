@@ -47,6 +47,7 @@ class target_area:
                                                   for the visualization
         **buildings** (boolean, default True) - obtain informations about buildings
         **landuse** (boolean, default True) - obtain informations about landuses
+        **railway** (boolean, default True) - obtain informations about railways
 
     OUTPUT:
 
@@ -70,6 +71,7 @@ class target_area:
         roads_plot=True,
         buildings=True,
         landuse=True,
+        railways=True,
     ):
         # Init input parameters
         self.grid_data = grid_data
@@ -82,6 +84,7 @@ class target_area:
         self.roads = roads
         self.roads_plot = roads_plot
         self.buildings = buildings
+        self.railways = railways
         self.landuse = landuse
         self.power_levels = power_levels
         self.gas_levels = gas_levels
@@ -94,7 +97,7 @@ class target_area:
         # add time delay because osm doesn't alowed more than 1 request per second.
         time_delay = dave_settings()["osm_time_delay"]
         # count object types to consider for progress bar
-        objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse]
+        objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse, self.railways]
         objects_con = len([x for x in objects_list if x is True])
         if objects_con == 0:
             # update progress
@@ -294,6 +297,38 @@ class target_area:
                         buildings[~buildings.building.isin(for_living + commercial)],
                     ],
                     ignore_index=True,
+                )
+            # add time delay
+            time.sleep(time_delay)
+            # update progress
+            self.pbar.update(progress_step / objects_con)
+        # search railway informations in the target area
+        if self.railways:
+            railways, meta_data = query_osm(
+                "way", target, recurse="down", tags=[dave_settings()["railway_tags"]]
+            )
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+            # check if there are data for roads
+            if not railways.empty:
+                # define road parameters which are relevant for the grid modeling
+                railways = railways.filter(
+                    ["name", "railway", "geometry", "tram", "train", "usage", "voltage"]
+                )
+                # consider only the linestring elements
+                railways = railways[railways.geometry.apply(lambda x: isinstance(x, LineString))]
+                # consider only roads which intersects the target area
+                if target_number or target_number == 0:
+                    target_geom = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_geom = unary_union(targets.geometry.tolist())
+                railways = railways[railways.geometry.intersects(target_geom)]
+                # write roads into grid_data
+                railways.set_crs(dave_settings()["crs_main"], inplace=True)
+                self.grid_data.railways = pd.concat(
+                    [self.grid_data.railways, railways], ignore_index=True
                 )
             # add time delay
             time.sleep(time_delay)

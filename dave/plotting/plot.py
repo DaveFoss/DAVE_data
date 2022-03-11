@@ -121,10 +121,8 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         # titel
         plt.title("Geographical Data")
         if output_folder:
-            print(output_folder)
             # save plot in the dave output folder
             if not api_use:
-                print("bla")
                 file_path = output_folder + "\\geographical_data.svg"
                 plt.savefig(file_path, dpi=300)
 
