@@ -414,9 +414,10 @@ def create_grid(
 
     # plot informations
     if plot:
-        if "lv" in power_levels:
+        if any([roads, roads_plot, buildings, landuse]):
             plot_geographical_data(grid_data, api_use, output_folder)
-        plot_grid_data(grid_data, api_use, output_folder)
+        if any(power_levels + gas_levels):
+            plot_grid_data(grid_data, api_use, output_folder)
         # plot_landuse(grid_data, api_use, output_folder)
 
     # convert power model

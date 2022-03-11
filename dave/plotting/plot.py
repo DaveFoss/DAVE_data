@@ -1,8 +1,9 @@
 import contextily as ctx
 import geopandas as gpd
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 
 def plot_land(area, only_area=False):
@@ -50,6 +51,7 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
     buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
+    landuse = grid_data.landuse
     if not buildings_all.empty:
         building_centroids = buildings_all.centroid
     else:
@@ -63,6 +65,7 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         buildings_commercial,
         buildings_other,
         building_centroids,
+        landuse,
     ]
     data_check = pd.concat(data)
     if data_check.empty:
@@ -71,32 +74,58 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
     else:
         # plot target area
         ax = plot_land(grid_data["area"])
+        # prepare legend
+        legend_elements = []
+        # plot landuse areas
+        if not landuse.empty:
+            landuse_residential = landuse[landuse.landuse == "residential"]
+            landuse_industrial = landuse[landuse.landuse == "industrial"]
+            landuse_commercial = landuse[landuse.landuse.isin(["commercial", "retail"])]
+            if not landuse_residential.empty:
+                landuse_residential.plot(ax=ax, color="b", alpha=0.1)
+                legend_elements.append(Patch(color="b", label="Residential"))
+            if not landuse_industrial.empty:
+                landuse_industrial.plot(ax=ax, color="r", alpha=0.1)
+                legend_elements.append(Patch(color="r", label="Industrial"))
+            if not landuse_commercial.empty:
+                landuse_commercial.plot(ax=ax, color="g", alpha=0.1)
+                legend_elements.append(Patch(color="g", label="Commercial"))
         # plot road informations
         if not roads_plot.empty:
             # these highways are only relevant for plotting
-            roads_plot.plot(ax=ax, color="k", label="Roads")
+            roads_plot.plot(ax=ax, color="k")
         if not roads.empty:
             roads.plot(ax=ax, color="k")
+            legend_elements.append(Line2D([0], [0], color="k", lw=2, label="Roads"))
         if not road_junctions.empty:
-            road_junctions.plot(ax=ax, color="r", label="Road junctions")
+            road_junctions.plot(ax=ax, color="r")
+            legend_elements.append(Line2D([0], [0], color="r", marker="o", label="Road junctions"))
         # plot buildings
         if not buildings_for_living.empty:
-            buildings_for_living.plot(ax=ax, color="g", label="Living Buildings")
+            buildings_for_living.plot(ax=ax, color="g")
+            legend_elements.append(Line2D([0], [0], color="k", lw=2, label="Residential Buildings"))
         if not buildings_commercial.empty:
-            buildings_commercial.plot(ax=ax, color="b", label="Commercial Buildings")
+            buildings_commercial.plot(ax=ax, color="b")
+            legend_elements.append(Line2D([0], [0], color="b", lw=2, label="Commercial Buildings"))
         if not buildings_other.empty:
-            buildings_other.plot(ax=ax, color="k", label="Other Buildings")
+            buildings_other.plot(ax=ax, color="gray")
+            legend_elements.append(Line2D([0], [0], color="gray", lw=2, label="Other Buildings"))
         # plot building centroids
         if not building_centroids.empty:
-            building_centroids.plot(ax=ax, color="m", markersize=1, label="Building Centroids")
+            building_centroids.plot(ax=ax, color="m", markersize=1)
+            legend_elements.append(
+                Line2D([0], [0], color="m", marker="o", label="Building Centroids")
+            )
         # legende
-        ax.legend()
+        plt.legend(handles=legend_elements)
         # titel
-        plt.title("Target Area")
+        plt.title("Geographical Data")
         if output_folder:
+            print(output_folder)
             # save plot in the dave output folder
             if not api_use:
-                file_path = output_folder + "\\target_area.svg"
+                print("bla")
+                file_path = output_folder + "\\geographical_data.svg"
                 plt.savefig(file_path, dpi=300)
 
 
@@ -352,15 +381,15 @@ def plot_landuse(grid_data, api_use, output_folder):
         plot_patch = []
         if not landuse_residential.empty:
             landuse_residential.plot(ax=ax, color="b")
-            blue_patch = mpatches.Patch(color="b", label="Residential")
+            blue_patch = Patch(color="b", label="Residential")
             plot_patch.append(blue_patch)
         if not landuse_industrial.empty:
             landuse_industrial.plot(ax=ax, color="r", label="Industrial")
-            red_patch = mpatches.Patch(color="r", label="Industrial")
+            red_patch = Patch(color="r", label="Industrial")
             plot_patch.append(red_patch)
         if not landuse_commercial.empty:
             landuse_commercial.plot(ax=ax, color="g", label="Commercial")
-            green_patch = mpatches.Patch(color="g", label="Commercial")
+            green_patch = Patch(color="g", label="Commercial")
             plot_patch.append(green_patch)
         # legende
         plt.legend(handles=plot_patch)
