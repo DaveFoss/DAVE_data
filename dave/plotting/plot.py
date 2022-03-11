@@ -52,6 +52,7 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
     buildings_other = grid_data.buildings.other
     buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
     landuse = grid_data.landuse
+    railways = grid_data.railways
     if not buildings_all.empty:
         building_centroids = buildings_all.centroid
     else:
@@ -66,6 +67,7 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         buildings_other,
         building_centroids,
         landuse,
+        railways,
     ]
     data_check = pd.concat(data)
     if data_check.empty:
@@ -116,6 +118,10 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
             legend_elements.append(
                 Line2D([0], [0], color="m", marker="o", label="Building Centroids")
             )
+        # plot railways
+        if not railways.empty:
+            railways.plot(ax=ax, color="k", linestyle="--")
+            legend_elements.append(Line2D([0], [0], color="k", linestyle="--", lw=2, label="Roads"))
         # legende
         plt.legend(handles=legend_elements)
         # titel
