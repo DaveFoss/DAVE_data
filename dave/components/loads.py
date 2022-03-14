@@ -4,7 +4,7 @@ import warnings
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
 
@@ -58,7 +58,7 @@ def create_loads(grid_data):
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
-    if "LV" in power_levels:
+    if "lv" in power_levels:
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
             grid_data.lv_data.lv_nodes.node_type == "building_centroid"
@@ -173,7 +173,15 @@ def create_loads(grid_data):
                     else:
                         building_idx = rng.choice(buildings_idx, 1)[0]
                     # search for suitable grid node
-                    building_geom = Polygon(buildings_area.loc[building_idx].geometry)
+                    building_boundary = buildings_area.loc[building_idx].geometry
+                    if isinstance(building_boundary, LineString):
+                        building_geom = Polygon(building_boundary)
+                    elif isinstance(building_boundary, MultiLineString):
+                        multiline_coords = []
+                        for line in building_boundary.geoms:
+                            multiline_coords.extend([coords for coords in list(line.coords)])
+                        building_geom = Polygon(multiline_coords)
+
                     building_node = building_nodes[building_nodes.geometry.within(building_geom)]
                     if not building_node.empty:
                         lv_node = building_node.iloc[0]
