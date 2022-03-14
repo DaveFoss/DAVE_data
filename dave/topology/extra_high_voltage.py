@@ -152,6 +152,7 @@ def create_ehv_topology(grid_data):
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        """ the license of the open tso data is not clarified
         # assign tso ehv node names to the ego ehv nodes
         for _, node in ehv_data["ehv_nodes"].iterrows():
             if node.osm_id:
@@ -177,6 +178,7 @@ def create_ehv_topology(grid_data):
                         break
             # update progress
             pbar.update(10 / len(ehv_data["ehv_nodes"]))
+        """
         # add oep as source
         ehv_buses["source"] = "OEP"
         """ the license of the open tso data is not clarified
