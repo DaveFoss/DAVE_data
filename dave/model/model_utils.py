@@ -1,5 +1,6 @@
 import networkx as nx
 import pandas as pd
+from tqdm import tqdm
 
 from dave.settings import dave_settings
 
@@ -223,18 +224,41 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
     """
     This function clean up the DaVe Dataset for diffrent kinds of failures
     """
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="clean up dave dataset:             ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
     # --- clean up power grid data
     if grid_data.target_input.iloc[0].power_levels:
         # clean up disconnected elements
         clean_disconnected_elements_power(grid_data, min_number_nodes)
+        # update progress
+        pbar.update(40)
         # clean up lines with wrong characteristics
         clean_wrong_lines(grid_data)
+        # update progress
+        pbar.update(10)
+    else:
+        # update progress
+        pbar.update(50)
     # --- clean up gas grid data
     if grid_data.target_input.iloc[0].gas_levels:
         # clean up disconnected elements
         clean_disconnected_elements_gas(grid_data, min_number_nodes)
+        # update progress
+        pbar.update(40)
         # clean up pipelines with wrong characteristics
         clean_wrong_piplines(grid_data)
+        # update progress
+        pbar.update(10)
+    else:
+        # update progress
+        pbar.update(50)
+    # close progress bar
+    pbar.close()
 
 
 # !!! Todo's clean up:
