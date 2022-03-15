@@ -18,7 +18,7 @@ from dave.components import (
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
-from dave.model import create_pandapipes, create_pandapower
+from dave.model import clean_up_data, create_pandapipes, create_pandapower
 from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -392,6 +392,8 @@ def create_grid(
         # create gas grid components
         if gas_levels:
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
+        # clean up power and gas grid data
+        clean_up_data(grid_data)
     else:
         # read dataset from archiv
         grid_data = from_archiv(f"{file_name}.h5")
