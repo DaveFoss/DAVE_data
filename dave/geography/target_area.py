@@ -18,10 +18,10 @@ class target_area:
     INPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
         **power_levels** (list)  - this parameter defines which power levels should be considered
-                                   options: 'EHV','HV','MV','LV', [].
+                                   options: 'ehv','hv','mv','lv', [].
                                    there could be choose: one level, multiple levels or 'ALL'
         **gas_levels** (list)    - this parameter defines which gas levels should be considered
-                                   options: 'HP','MP','LP', [].
+                                   options: 'hp','mp','lp', [].
                                    there could be choose: one level, multiple levels or 'ALL'
 
         One of these parameters must be set:
@@ -47,6 +47,7 @@ class target_area:
                                                   for the visualization
         **buildings** (boolean, default True) - obtain informations about buildings
         **landuse** (boolean, default True) - obtain informations about landuses
+        **railway** (boolean, default True) - obtain informations about railways
 
     OUTPUT:
 
@@ -70,6 +71,7 @@ class target_area:
         roads_plot=True,
         buildings=True,
         landuse=True,
+        railways=True,
     ):
         # Init input parameters
         self.grid_data = grid_data
@@ -82,6 +84,7 @@ class target_area:
         self.roads = roads
         self.roads_plot = roads_plot
         self.buildings = buildings
+        self.railways = railways
         self.landuse = landuse
         self.power_levels = power_levels
         self.gas_levels = gas_levels
@@ -94,7 +97,7 @@ class target_area:
         # add time delay because osm doesn't alowed more than 1 request per second.
         time_delay = dave_settings()["osm_time_delay"]
         # count object types to consider for progress bar
-        objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse]
+        objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse, self.railways]
         objects_con = len([x for x in objects_list if x is True])
         if objects_con == 0:
             # update progress
@@ -173,7 +176,6 @@ class target_area:
             landuse_rel, meta_data = query_osm(
                 "relation", target, recurse="down", tags=[dave_settings()["landuse_tags"]]
             )
-            landuse_rel.reset_index(drop=True, inplace=True)
             # add landuses from relations to landuses from ways
             landuse = pd.concat([landuse, landuse_rel], ignore_index=True)
             # check if there are data for landuse
@@ -300,6 +302,38 @@ class target_area:
             time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
+        # search railway informations in the target area
+        if self.railways:
+            railways, meta_data = query_osm(
+                "way", target, recurse="down", tags=[dave_settings()["railway_tags"]]
+            )
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+            # check if there are data for roads
+            if not railways.empty:
+                # define road parameters which are relevant for the grid modeling
+                railways = railways.filter(
+                    ["name", "railway", "geometry", "tram", "train", "usage", "voltage"]
+                )
+                # consider only the linestring elements
+                railways = railways[railways.geometry.apply(lambda x: isinstance(x, LineString))]
+                # consider only roads which intersects the target area
+                if target_number or target_number == 0:
+                    target_geom = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_geom = unary_union(targets.geometry.tolist())
+                railways = railways[railways.geometry.intersects(target_geom)]
+                # write roads into grid_data
+                railways.set_crs(dave_settings()["crs_main"], inplace=True)
+                self.grid_data.railways = pd.concat(
+                    [self.grid_data.railways, railways], ignore_index=True
+                )
+            # add time delay
+            time.sleep(time_delay)
+            # update progress
+            self.pbar.update(progress_step / objects_con)
 
     def road_junctions(self):
         """
@@ -340,7 +374,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.postalcode) == 1 and self.postalcode[0] == "ALL":
+        if len(self.postalcode) == 1 and self.postalcode[0].lower() == "all":
             # in this case all postalcode areas will be choosen
             target = postal
         else:
@@ -375,7 +409,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.town_name) == 1 and self.town_name[0] == "ALL":
+        if len(self.town_name) == 1 and self.town_name[0].lower() == "all":
             # in this case all city names will be choosen (same case as all postalcode areas)
             target = postal
         else:
@@ -404,7 +438,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.federal_state) == 1 and self.federal_state[0] == "ALL":
+        if len(self.federal_state) == 1 and self.federal_state[0].lower() == "all":
             # in this case all federal states will be choosen
             target = states
         else:
@@ -451,7 +485,7 @@ class target_area:
         # change crs
         nuts_3.set_crs(dave_settings()["crs_meter"], inplace=True, allow_override=True)
         nuts_3.to_crs(dave_settings()["crs_main"], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0].upper() == "ALL":
+        if len(self.nuts_region) == 1 and self.nuts_region[0].lower() == "all":
             # in this case all federal states will be choosen
             target = nuts_3
         else:

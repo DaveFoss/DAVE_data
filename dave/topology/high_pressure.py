@@ -291,19 +291,12 @@ def create_lkd_eu(grid_data):
         hp_pipes["source"] = source
         hp_pipes["pressure_level"] = 1
         # change pipeline junction names from id to dave name
-        from_junction_new = []
-        to_junction_new = []
-        for _, pipe in hp_pipes.iterrows():
-            from_junction_dave = (
-                hp_junctions[hp_junctions.original_id == pipe.from_junction].iloc[0].dave_name
-            )
-            to_junction_dave = (
-                hp_junctions[hp_junctions.original_id == pipe.to_junction].iloc[0].dave_name
-            )
-            from_junction_new.append(from_junction_dave)
-            to_junction_new.append(to_junction_dave)
-        hp_pipes["from_junction"] = from_junction_new
-        hp_pipes["to_junction"] = to_junction_new
+        hp_pipes["from_junction"] = hp_pipes.from_junction.apply(
+            lambda x: hp_junctions[hp_junctions.original_id == x].iloc[0].dave_name
+        )
+        hp_pipes["to_junction"] = hp_pipes.to_junction.apply(
+            lambda x: hp_junctions[hp_junctions.original_id == x].iloc[0].dave_name
+        )
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
         hp_pipes.insert(

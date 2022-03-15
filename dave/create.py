@@ -5,15 +5,21 @@ import warnings
 import geopandas as gpd
 import pandas as pd
 
-from dave import __version__
-from dave.components import gas_components, power_components
-
 # imports from dave
+from dave import __version__
+from dave.components import (
+    create_conventional_powerplants,
+    create_loads,
+    create_power_plant_lines,
+    create_renewable_powerplants,
+    create_transformers,
+    gas_components,
+)
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
-from dave.model import create_pandapipes, create_pandapower
-from dave.plotting import plot_grid_data, plot_landuse, plot_target_area
+from dave.model import clean_up_data, create_pandapipes, create_pandapower
+from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
 from dave.topology import (
@@ -59,6 +65,7 @@ def create_empty_dataset():
                 }
             ),
             "landuse": gpd.GeoDataFrame([]),
+            "railways": gpd.GeoDataFrame([]),
             # power grid data
             "ehv_data": davestructure(
                 {"ehv_nodes": gpd.GeoDataFrame([]), "ehv_lines": gpd.GeoDataFrame([])}
@@ -126,18 +133,18 @@ def format_input_levels(power_levels, gas_levels):
     This function formats the power and gas levels to get the right format for the dave processing
     """
     # set level inputs to upper strings
-    power_levels = list(map(str.upper, power_levels))
-    gas_levels = list(map(str.upper, gas_levels))
+    power_levels = list(map(str.lower, power_levels))
+    gas_levels = list(map(str.lower, gas_levels))
     # convert input value 'ALL'
-    if power_levels == ["ALL"]:
-        power_levels = ["EHV", "HV", "MV", "LV"]
-    if gas_levels == ["ALL"]:
-        gas_levels = ["HP", "MP", "LP"]
+    if power_levels == ["all"]:
+        power_levels = ["ehv", "hv", "mv", "lv"]
+    if gas_levels == ["all"]:
+        gas_levels = ["hp", "mp", "lp"]
     # sort level inputs
-    order_power = ["EHV", "HV", "MV", "LV"]
+    order_power = ["ehv", "hv", "mv", "lv"]
     power_sort = sorted(list(map(order_power.index, power_levels)))
     power_levels = list(map(lambda x: order_power[x], power_sort))
-    order_gas = ["HP", "MP", "LP"]
+    order_gas = ["hp", "mp", "lp"]
     gas_sort = sorted(list(map(order_gas.index, gas_levels)))
     gas_levels = list(map(lambda x: order_gas[x], gas_sort))
     return power_levels, gas_levels
@@ -149,12 +156,12 @@ def geo_info_needs(power_levels, gas_levels, loads):
     levels
     """
     # check power and gas level and set decision for geographical parameters
-    if ("LV" in power_levels) or ("LP" in gas_levels):
+    if ("lv" in power_levels) or ("lp" in gas_levels):
         roads, roads_plot, buildings, landuse = True, True, True, True
-    elif ("MV" in power_levels) or ("MP" in gas_levels):
+    elif ("mv" in power_levels) or ("mp" in gas_levels):
         roads, roads_plot, buildings = True, True, False
         landuse = bool(loads)  # landuse is needed for load calculation
-    else:  # for EHV, HV and HP
+    else:  # for ehv, hv and hp
         roads, roads_plot, buildings = False, False, False
         landuse = bool(loads and power_levels)  # landuse is needed for load calculation
     return roads, roads_plot, buildings, landuse
@@ -184,6 +191,11 @@ def create_grid(
     federal_state=None,
     nuts_region=None,
     own_area=None,
+    roads=False,
+    roads_plot=False,
+    buildings=False,
+    landuse=False,
+    railways=False,
     power_levels=[],
     gas_levels=[],
     plot=True,
@@ -222,11 +234,21 @@ def create_grid(
             (e.g. "C:/Users/name/test/test.shp") \n
 
     OPTIONAL:
+        **roads** (bool, default False) - if true, road information are added to the grid \
+            model which are grid relevant \n
+        **roads_plot** (bool, default False) - if true, road information are added to the grid \
+            model which are only for a better orientation in the plotting \n
+        **buildings** (bool, default False) - if true, building information are added to the grid \
+            model \n
+        **landuse** (bool, default False) - if true, landuse information are added to the grid \
+            model \n
+        **railways** (bool, default False) - if true, railway information are added to the grid \
+            model \n
         **power_levels** (list, default []) - this parameter defines which power levels should be \
-            considered. options: 'EHV','HV','MV','LV', []. there could be choose: one/multiple \
+            considered. options: 'ehv','hv','mv','lv', []. there could be choose: one/multiple \
                 level(s) or 'ALL' \n
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
-            considered. options: 'HP','MP','LP', []. there could be choose: one/multiple level(s) \
+            considered. options: 'hp','mp','lp', []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
         **plot** (boolean, default True) - if this value is true dave creates plottings \
             automaticly \n
@@ -269,7 +291,7 @@ def create_grid(
     EXAMPLE:
         from dave.create import create_grid
 
-        grid_data  = create_grid(town_name=['Kassel', 'Baunatal'], power_levels=['HV', 'MV'],
+        grid_data  = create_grid(town_name=['Kassel', 'Baunatal'], power_levels=['hv', 'mv'],
                                  gas_levels=['HP'], plot=False, convert = False)
 
     """
@@ -280,11 +302,11 @@ def create_grid(
     grid_data = create_empty_dataset()
 
     # format level inputs
-    power, gas = format_input_levels(power_levels, gas_levels)
-    combine_areas = list(map(str.upper, combine_areas))
+    power_levels, gas_levels = format_input_levels(power_levels, gas_levels)
+    combine_areas = list(map(str.lower, combine_areas))
 
     # create target area informations
-    roads, roads_plot, buildings, landuse = geo_info_needs(power_levels, gas_levels, loads)
+    roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(power_levels, gas_levels, loads)
     file_exists, file_name = target_area(
         grid_data,
         power_levels=power_levels,
@@ -295,10 +317,11 @@ def create_grid(
         nuts_region=nuts_region,
         own_area=own_area,
         buffer=0,
-        roads=roads,
-        roads_plot=roads_plot,
-        buildings=buildings,
-        landuse=landuse,
+        roads=bool(roads or roads_l),
+        roads_plot=bool(roads_plot or roads_plot_l),
+        buildings=bool(buildings or buildings_l),
+        landuse=bool(landuse or landuse_l),
+        railways=railways,
     ).target()
 
     # --- collect data for the requested dataset
@@ -315,13 +338,13 @@ def create_grid(
             if level in combine_areas:
                 # temporary use of extended grid area
                 grid_data.area = combined_area
-            if level == "EHV":
+            if level == "ehv":
                 create_ehv_topology(grid_data)
-            elif level == "HV":
+            elif level == "hv":
                 create_hv_topology(grid_data)
-            elif level == "MV":
+            elif level == "mv":
                 create_mv_topology(grid_data)
-            elif level == "LV":
+            elif level == "lv":
                 create_lv_topology(grid_data)
             else:
                 print("no voltage level was choosen or their is a failure in the input value.")
@@ -330,22 +353,34 @@ def create_grid(
             # replace grid area with the origin one for further steps
             if level in combine_areas:
                 grid_data.area = origin_area
-        # create power grid components
+        # --- create power grid components
         if power_levels:
-            power_components(
-                grid_data, transformers, renewable_powerplants, conventional_powerplants, loads
-            )
+            # add transformers
+            if transformers:
+                create_transformers(grid_data)
+            # add renewable powerplants
+            if renewable_powerplants:
+                create_renewable_powerplants(grid_data)
+            # add conventional powerplants
+            if conventional_powerplants:
+                create_conventional_powerplants(grid_data)
+            # create lines for power plants with a grid node far away
+            if renewable_powerplants or conventional_powerplants:
+                create_power_plant_lines(grid_data)
+            # add loads
+            if loads:
+                create_loads(grid_data)
         # --- create desired gas grid levels
         for level in gas_levels:
             # temporary extend grid area to combine not connected areas
             if level in combine_areas:
                 # temporary use of extended grid area
                 grid_data.area = combined_area
-            if level == "HP":
+            if level == "hp":
                 create_hp_topology(grid_data)
-            elif level == "MP":
+            elif level == "mp":
                 create_mp_topology(grid_data)
-            elif level == "LP":
+            elif level == "lp":
                 create_lp_topology(grid_data)
             else:
                 print("no gas level was choosen or their is a failure in the input value.")
@@ -357,6 +392,8 @@ def create_grid(
         # create gas grid components
         if gas_levels:
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
+        # clean up power and gas grid data
+        clean_up_data(grid_data)
     else:
         # read dataset from archiv
         grid_data = from_archiv(f"{file_name}.h5")
@@ -384,9 +421,10 @@ def create_grid(
 
     # plot informations
     if plot:
-        if "LV" in power_levels:
-            plot_target_area(grid_data, api_use, output_folder)
-        plot_grid_data(grid_data, api_use, output_folder)
+        if any([roads, roads_plot, buildings, landuse]):
+            plot_geographical_data(grid_data, api_use, output_folder)
+        if any(power_levels + gas_levels):
+            plot_grid_data(grid_data, api_use, output_folder)
         # plot_landuse(grid_data, api_use, output_folder)
 
     # convert power model
