@@ -38,6 +38,7 @@ def dave_settings():
         "road_plot_tags": 'highway~"motorway|trunk|primary"',
         "landuse_tags": 'landuse~"commercial|industrial|residential|retail"',
         "building_tags": "building",
+        "railway_tags": 'railway~"construction|disused|light_rail|monorail|narrow_gauge|rail|subway|tram"',
         # osm categories
         "buildings_for_living": [
             "apartments",
@@ -96,5 +97,7 @@ def dave_settings():
         "hp_nodes_height_m": 1,  # dummy value, must be changed
         "hp_pipes_k_mm": float(0.1),  # value based on shutterwald data, must be changed
         "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
+        # --- assumptions at model utils:
+        "min_number_nodes": 4,
     }
     return settings

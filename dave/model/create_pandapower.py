@@ -49,7 +49,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
         all_buses.rename(columns={"dave_name": "name", "voltage_kv": "vn_kv"}, inplace=True)
         all_buses.reset_index(drop=True, inplace=True)
         # write buses into pandapower structure
-        net.bus = net.bus.append(all_buses)
+        net.bus = pd.concat([net.bus, all_buses], ignore_index=True)
         net.bus_geodata["x"] = all_buses.geometry.apply(lambda x: x.coords[:][0][0])
         net.bus_geodata["y"] = all_buses.geometry.apply(lambda x: x.coords[:][0][1])
         # check necessary parameters and add pandapower standart if needed
@@ -135,10 +135,8 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
     else:
         coords_mvlv = pd.DataFrame([])
     # write line data into pandapower structure
-    net.line = net.line.append(pd.concat([lines_ehvhv, lines_mvlv]), ignore_index=True)
-    net.line_geodata = net.line_geodata.append(
-        pd.concat([coords_ehvhv, coords_mvlv]), ignore_index=True
-    )
+    net.line = pd.concat([net.line, lines_ehvhv, lines_mvlv], ignore_index=True)
+    net.line_geodata = pd.concat([net.line_geodata, coords_ehvhv, coords_mvlv], ignore_index=True)
     # check necessary parameters and add pandapower standard if needed
     net.line["in_service"] = (
         bool(True)
@@ -274,7 +272,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             lambda x: std_trafo.loc[x].tap_phase_shifter
         )
     # write trafo data into pandapower structure
-    net.trafo = net.trafo.append(pd.concat([trafos_ehvhv, trafos_mvlv]), ignore_index=True)
+    net.trafo = pd.concat([net.trafo, trafos_ehvhv, trafos_mvlv], ignore_index=True)
     # check necessary parameters and add pandapower standart if needed
     net.trafo["in_service"] = (
         bool(True)
@@ -316,7 +314,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             columns={"name": "plant_name", "dave_name": "name", "generation_type": "type"}
         )
         renewables.reset_index(drop=True, inplace=True)
-        net.sgen = net.sgen.append(renewables)
+        net.sgen = pd.concat([net.sgen, renewables], ignore_index=True)
         net.sgen["bus"] = net.sgen.bus.apply(lambda x: net.bus[net.bus["name"] == x].index[0])
         net.sgen["p_mw"] = net.sgen.electrical_capacity_kw.apply(lambda x: float(x) / 1000)
         net.sgen.drop(columns=["electrical_capacity_kw"], inplace=True)
@@ -360,7 +358,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             }
         )
         conventionals.reset_index(drop=True, inplace=True)
-        net.gen = net.gen.append(conventionals)
+        net.gen = pd.concat([net.gen, conventionals], ignore_index=True)
         net.gen["bus"] = net.gen.bus.apply(lambda x: net.bus[net.bus["name"] == x].index[0])
         # check necessary parameters and add pandapower standart if needed
         net.gen["in_service"] = (
@@ -392,7 +390,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             columns={"dave_name": "name", "landuse": "type", "electrical_capacity_mw": "p_mw"}
         )
         loads.reset_index(drop=True, inplace=True)
-        net.load = net.load.append(loads)
+        net.load = pd.concat([net.load, loads], ignore_index=True)
         net.load["bus"] = net.load.bus.apply(lambda x: net.bus[net.bus["name"] == x].index[0])
         # check necessary parameters and add pandapower standart if needed
         net.load["in_service"] = (
@@ -429,7 +427,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
     pbar.update(10)
 
     # --- create ext_grid
-    if "EHV" in grid_data.target_input.power_levels[0]:
+    if "ehv" in grid_data.target_input.power_levels[0]:
         # check if their are convolutional power plants in the grid area
         if not net.gen.empty:
             # set gens with max p_mw as slack bus
@@ -442,21 +440,21 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             )
             # additional Informations
             net.ext_grid.at[ext_id, "voltage_level"] = 1
-    elif "HV" in grid_data.target_input.power_levels[0]:
+    elif "hv" in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
             ext_id = pp.create_ext_grid(
                 net, bus=net.bus[net.bus["name"] == trafo.bus_hv].index[0], name=f"ext_grid_2_{i}"
             )
             # additional Informations
             net.ext_grid.at[ext_id, "voltage_level"] = 2
-    elif "MV" in grid_data.target_input.power_levels[0]:
+    elif "mv" in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.hv_mv.iterrows():
             ext_id = pp.create_ext_grid(
                 net, bus=net.bus[net.bus["name"] == trafo.bus_hv].index[0], name=f"ext_grid_4_{i}"
             )
             # additional Informations
             net.ext_grid.at[ext_id, "voltage_level"] = 4
-    elif "LV" in grid_data.target_input.power_levels[0]:
+    elif "lv" in grid_data.target_input.power_levels[0]:
         for i, trafo in grid_data.components_power.transformers.mv_lv.iterrows():
             ext_id = pp.create_ext_grid(
                 net, bus=net.bus[net.bus["name"] == trafo.bus_hv].index[0], name=f"ext_grid_6_{i}"

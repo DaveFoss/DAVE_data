@@ -22,5 +22,6 @@ pre-commit
 black
 isort
 pymongo
+networkx
 # via pip
 #pandapipes

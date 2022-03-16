@@ -5,6 +5,7 @@
 import os
 
 from dave.create import create_grid
+from dave.settings import dave_settings
 
 """
 This is a example file for testing dave
@@ -43,19 +44,41 @@ This is the main function for DaVe with all possible parameters.
 For testing you can use the pre defined variables on the top or own ones.
 """
 
+
 grid_data = create_grid(
+    # grid area parameters (select on of the following five options)
     postalcode=None,
     town_name=None,
-    federal_state=None,
+    federal_state=["Hessen"],
     nuts_region=None,
-    own_area=_own_area,
-    power_levels=["LV"],
+    own_area=None,  # _own_area,
+    # grid level parameters
+    power_levels=[""],
     gas_levels=[],
+    # --- optional parameters
     plot=True,
-    convert=False,  # if True a second return variable must be defined
     opt_model=False,
+    combine_areas=[],
+    # geographical parameters
+    roads=False,
+    roads_plot=False,
+    buildings=False,
+    landuse=False,
+    railway=False,
+    # converting parameters
+    convert_power=[],  # if True a second return variable must be defined
+    convert_gas=[],  # if True a second return variable must be defined
+    # power grid components
     transformers=False,
     renewable_powerplants=False,
     conventional_powerplants=False,
     loads=False,
+    # gas grid components
+    compressors=False,
+    sinks=False,
+    sources=False,
+    # output settings
+    output_folder=dave_settings()["dave_output_dir"],
+    output_format="json",
+    api_use=False,
 )
