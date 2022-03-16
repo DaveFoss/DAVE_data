@@ -18,7 +18,7 @@ from dave.components import (
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
-from dave.model import clean_up_data, create_pandapipes, create_pandapower
+from dave.model import clean_up_data, create_pandapipes, create_pandapower, create_romo
 from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -440,7 +440,7 @@ def create_grid(
         if "pandapipes" in convert_gas:
             net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
         if "romo" in convert_gas:
-            net_gas = create_pandapipes(
+            net_gas = create_romo(
                 grid_data, api_use=api_use, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
     else:

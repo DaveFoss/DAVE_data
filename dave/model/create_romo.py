@@ -195,18 +195,33 @@ def create_romo(grid_data, api_use, output_folder):
         if node.is_export == 1 and node.is_import == 1:
             # overwrite mapping entry
             mapping[node.dave_name] = [innode_id, source_id, sink_id]
-            # da quelle und senke macht man zwei short pipes um diese voneinander zu unterscheiden und zusätzlicher innode
+            # get neighboring pipline to use their charakteristics
+            pipe_neighbor = pipes_dave[
+                (pipes_dave.from_junction == node.dave_name)
+                | (pipes_dave.to_junction == node.dave_name)
+            ].iloc[0]
+            # create seperated lines for the sink and source
             short_pipe_sink = etree.Element("shortPipe")
             short_pipe_sink.attrib["alias"] = ""
             short_pipe_sink.attrib["id"] = f"short_pipe_{sink_id}_{innode_id}"
             short_pipe_sink.attrib["from"] = sink_id
             short_pipe_sink.attrib["to"] = innode_id
             etree.SubElement(
-                short_pipe_sink, "flowMin", {"unit": "1000m_cube_per_hour", "value": "-10000"}
-            )  # !!! Todo: Flow von der angrenzenden pipe nehmen?
+                short_pipe_sink,
+                "flowMin",
+                {
+                    "unit": "1000m_cube_per_hour",
+                    "value": str(-pipe_neighbor.max_cap_M_m3_per_d * 1000 / 24),
+                },
+            )
             etree.SubElement(
-                short_pipe_sink, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
-            )  # !!! annahme
+                short_pipe_sink,
+                "flowMax",
+                {
+                    "unit": "1000m_cube_per_hour",
+                    "value": str(pipe_neighbor.max_cap_M_m3_per_d * 1000 / 24),
+                },
+            )
             connections.append(short_pipe_sink)
 
             short_pipe_source = etree.Element("shortPipe")
@@ -215,11 +230,21 @@ def create_romo(grid_data, api_use, output_folder):
             short_pipe_source.attrib["from"] = source_id
             short_pipe_source.attrib["to"] = innode_id
             etree.SubElement(
-                short_pipe_source, "flowMin", {"unit": "1000m_cube_per_hour", "value": "-10000"}
-            )  # !!! annahme
+                short_pipe_source,
+                "flowMin",
+                {
+                    "unit": "1000m_cube_per_hour",
+                    "value": str(-pipe_neighbor.max_cap_M_m3_per_d * 1000 / 24),
+                },
+            )
             etree.SubElement(
-                short_pipe_source, "flowMax", {"unit": "1000m_cube_per_hour", "value": "10000"}
-            )  # !!! annahme
+                short_pipe_source,
+                "flowMax",
+                {
+                    "unit": "1000m_cube_per_hour",
+                    "value": str(pipe_neighbor.max_cap_M_m3_per_d * 1000 / 24),
+                },
+            )
             connections.append(short_pipe_source)
 
     # --- create connections
