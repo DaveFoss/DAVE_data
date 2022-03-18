@@ -14,21 +14,29 @@ def gaslib_pipe_clustering():
     pipe_data = dict()
     # import gaslib data
     gaslib_data, meta_data_gaslib = read_gaslib()  # !!! implement meta data
-
     for pipe in gaslib_data["connections"]["pipe"]:
         lengthrounded = round(pipe["length"]["@value"], 1)
         diameter = pipe["diameter"]["@value"]
         roughness = pipe["roughness"]["@value"]
         pressure_max = pipe["pressureMax"]["@value"]
-
         if lengthrounded in pipe_data:
+            # collect different values for multiple pipelines with the same length
             pipe_data[lengthrounded]["pipesUsedForData"] += 1.0
-            pipe_data[lengthrounded]["diameter"] += diameter
-            pipe_data[lengthrounded]["diameter"] /= pipe_data[lengthrounded]["pipesUsedForData"]
-            pipe_data[lengthrounded]["roughness"] += roughness
-            pipe_data[lengthrounded]["roughness"] /= pipe_data[lengthrounded]["pipesUsedForData"]
-            pipe_data[lengthrounded]["pressureMax"] += pressure_max
-            pipe_data[lengthrounded]["pressureMax"] /= pipe_data[lengthrounded]["pipesUsedForData"]
+            pipe_data[lengthrounded]["diameter"] = (
+                pipe_data[lengthrounded]["diameter"] + [diameter]
+                if isinstance(pipe_data[lengthrounded]["diameter"], list)
+                else [pipe_data[lengthrounded]["diameter"], diameter]
+            )
+            pipe_data[lengthrounded]["roughness"] = (
+                pipe_data[lengthrounded]["roughness"] + [roughness]
+                if isinstance(pipe_data[lengthrounded]["roughness"], list)
+                else [pipe_data[lengthrounded]["roughness"], roughness]
+            )
+            pipe_data[lengthrounded]["pressureMax"] = (
+                pipe_data[lengthrounded]["pressureMax"] + [pressure_max]
+                if isinstance(pipe_data[lengthrounded]["pressureMax"], list)
+                else [pipe_data[lengthrounded]["pressureMax"], pressure_max]
+            )
         else:
             pipe_data[lengthrounded] = {
                 "diameter": diameter,
@@ -36,6 +44,24 @@ def gaslib_pipe_clustering():
                 "pressureMax": pressure_max,
                 "pipesUsedForData": 1.0,
             }
+    # calculate the median values if there are more than one line with the same length
+    # Hint: A modified kind of median is used. It differs from the original median function in that
+    # if the number of data is even, the better of the two middle values is used instead of their
+    # avarage
+    for key in pipe_data:
+        if pipe_data[key]["pipesUsedForData"] > 1:
+            pipe_data[key]["diameter"].sort()
+            pipe_data[key]["diameter"] = pipe_data[key]["diameter"][
+                len(pipe_data[key]["diameter"]) // 2
+            ]
+            pipe_data[key]["roughness"].sort()
+            pipe_data[key]["roughness"] = pipe_data[key]["roughness"][
+                len(pipe_data[key]["roughness"]) // 2
+            ]
+            pipe_data[key]["pressureMax"].sort()
+            pipe_data[key]["pressureMax"] = pipe_data[key]["pressureMax"][
+                len(pipe_data[key]["pressureMax"]) // 2
+            ]
     return pipe_data
 
 
