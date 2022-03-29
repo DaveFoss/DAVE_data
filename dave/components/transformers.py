@@ -198,7 +198,8 @@ def create_transformers(grid_data):
                     ehv_ehv_trafos.at[trafo.name, "bus_lv"] = bus0.dave_name
                     ehv_ehv_trafos.at[trafo.name, "bus_hv"] = bus1.dave_name
                     ehv_ehv_trafos.at[trafo.name, "substation_name"] = bus0.subst_name
-                    ehv_ehv_trafos.at[trafo.name, "tso_name"] = bus0.tso_name
+                    if "tso_name" in bus0.keys():
+                        ehv_ehv_trafos.at[trafo.name, "tso_name"] = bus0.tso_name
                 # drop columns with ego_id
                 ehv_ehv_trafos.drop(columns=["bus0", "bus1"], inplace=True)
                 # set crs
@@ -225,7 +226,8 @@ def create_transformers(grid_data):
                 ehv_hv_trafos.at[trafo.name, "bus_lv"] = bus0.dave_name
                 ehv_hv_trafos.at[trafo.name, "bus_hv"] = bus1.dave_name
                 ehv_hv_trafos.at[trafo.name, "substation_name"] = bus1.subst_name
-                ehv_hv_trafos.at[trafo.name, "tso_name"] = bus1.tso_name
+                if "tso_name" in bus0.keys():
+                    ehv_hv_trafos.at[trafo.name, "tso_name"] = bus1.tso_name
             # change column name
             ehv_hv_trafos.drop(columns=["bus0", "bus1"], inplace=True)
             # set crs
