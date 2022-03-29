@@ -72,10 +72,10 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
     lines_ehvhv = pd.concat([grid_data.ehv_data.ehv_lines, grid_data.hv_data.hv_lines])
     if not lines_ehvhv.empty:
         lines_ehvhv.rename(columns={"dave_name": "name"}, inplace=True)
-        lines_ehvhv["from_bus"] = lines_ehvhv.bus0.apply(
+        lines_ehvhv["from_bus"] = lines_ehvhv.from_bus.apply(
             lambda x: net.bus[net.bus["name"] == x].index[0]
         )
-        lines_ehvhv["to_bus"] = lines_ehvhv.bus1.apply(
+        lines_ehvhv["to_bus"] = lines_ehvhv.to_bus.apply(
             lambda x: net.bus[net.bus["name"] == x].index[0]
         )
         lines_ehvhv["type"] = lines_ehvhv.type.apply(lambda x: "ol" if pd.isna(x) else x)
