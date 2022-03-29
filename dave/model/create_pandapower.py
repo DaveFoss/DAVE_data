@@ -427,7 +427,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
     pbar.update(10)
 
     # --- create ext_grid
-    if "ehv" in grid_data.target_input.power_levels[0]:
+    if "ehv" in grid_data.target_input.power_levels[0] and not grid_data.ehv_data.ehv_nodes.empty:
         # check if their are convolutional power plants in the grid area
         if not net.gen.empty:
             # set gens with max p_mw as slack bus
@@ -441,6 +441,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             # additional Informations
             net.ext_grid.at[ext_id, "voltage_level"] = 1
     elif "hv" in grid_data.target_input.power_levels[0]:
+        # !!! Todo: Solution for Case if there are no trafo in the data
         for i, trafo in grid_data.components_power.transformers.ehv_hv.iterrows():
             ext_id = pp.create_ext_grid(
                 net, bus=net.bus[net.bus["name"] == trafo.bus_hv].index[0], name=f"ext_grid_2_{i}"
