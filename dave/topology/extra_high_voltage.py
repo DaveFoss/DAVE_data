@@ -310,9 +310,9 @@ def create_ehv_topology(grid_data):
             [grid_data.ehv_data.ehv_lines, ehv_lines], ignore_index=True
         )
         # update progress
-        pbar.update(9.999)
+        pbar.update(19.999)
     else:
         # update progress
-        pbar.update(80)
+        pbar.update(70)
     # close progress bar
     pbar.close()
