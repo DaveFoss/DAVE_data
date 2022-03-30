@@ -358,7 +358,7 @@ def create_transformers(grid_data):
             # --- in this case the missing mv nodes for the transformers must be created
             mv_nodes = substations.copy()
             mv_nodes.rename(
-                columns={"dave_name": "subst_name"},
+                columns={"dave_name": "subst_dave_name"},
                 inplace=True,
             )
             # set points for geometry
@@ -482,7 +482,7 @@ def create_transformers(grid_data):
             # --- in this case the missing mv nodes for the transformator must be created
             mv_buses = substations.copy()
             mv_nodes.rename(
-                columns={"dave_name": "subst_name"},
+                columns={"dave_name": "subst_dave_name"},
                 inplace=True,
             )
             mv_buses["node_type"] = "mvlv_substation"
@@ -508,7 +508,7 @@ def create_transformers(grid_data):
             # --- in this case the missing lv nodes for the transformator must be created
             lv_buses = substations.copy()
             lv_buses.rename(
-                columns={"dave_name": "subst_name"},
+                columns={"dave_name": "subst_dave_name"},
                 inplace=True,
             )
             lv_buses["node_type"] = "mvlv_substation"
