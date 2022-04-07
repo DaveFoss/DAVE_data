@@ -332,7 +332,7 @@ def create_gaslib(grid_data, api_use, output_folder):
 
     # save RoMo model in the dave output folder
     if not api_use:
-        file_path = output_folder + "\\dave_romo.net"
+        file_path = output_folder + "\\dave_gaslib.net"
         network.append(information)
         network.append(nodes)
         network.append(connections)
