@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 from lxml import etree
 from tqdm import tqdm
 
@@ -7,7 +5,7 @@ from dave import __version__
 from dave.settings import dave_settings
 
 
-def create_romo(grid_data, api_use, output_folder):
+def create_gaslib(grid_data, api_use, output_folder):
     """
     This function creates a romo network based an the DaVe dataset
 
@@ -57,7 +55,7 @@ def create_romo(grid_data, api_use, output_folder):
 
     # read data from dave dictionary
     nodes_dave = grid_data.hp_data.hp_junctions
-    nodes_dave_ext = nodes_dave[nodes_dave.external == True].dave_name.to_list()
+    # nodes_dave_ext = nodes_dave[nodes_dave.external == True].dave_name.to_list()
     pipes_dave = grid_data.hp_data.hp_pipes
     compressors_dave = grid_data.components_gas.compressors
     sources_dave = grid_data.components_gas.sources
@@ -86,9 +84,7 @@ def create_romo(grid_data, api_use, output_folder):
             innode.attrib["id"] = innode_id
             mapping[node.dave_name] = innode_id
             etree.SubElement(innode, "height", {"unit": "m", "value": str(node.height_m)})
-            etree.SubElement(
-                innode, "presssureMin", {"unit": "bar", "value": "1.0"}
-            )  # !!! Todos Robert schaut nach in Gaslib
+            etree.SubElement(innode, "presssureMin", {"unit": "bar", "value": "1.0"})  # !!! Annahme
             etree.SubElement(
                 innode, "presssureMax", {"unit": "bar", "value": str(node_max_pressure)}
             )
@@ -104,9 +100,7 @@ def create_romo(grid_data, api_use, output_folder):
             source.attrib["id"] = source_id
             mapping[node.dave_name] = source_id
             etree.SubElement(source, "height", {"unit": "m", "value": str(node.height_m)})
-            etree.SubElement(
-                source, "presssureMin", {"unit": "bar", "value": "1.0"}
-            )  # !!! Todos Robert schaut nach in Gaslib
+            etree.SubElement(source, "presssureMin", {"unit": "bar", "value": "1.0"})  # !!! Annahme
             etree.SubElement(
                 source, "presssureMax", {"unit": "bar", "value": str(node_max_pressure)}
             )
@@ -223,7 +217,6 @@ def create_romo(grid_data, api_use, output_folder):
                 },
             )
             connections.append(short_pipe_sink)
-
             short_pipe_source = etree.Element("shortPipe")
             short_pipe_source.attrib["alias"] = ""
             short_pipe_source.attrib["id"] = f"short_pipe_{source_id}_{innode_id}"
