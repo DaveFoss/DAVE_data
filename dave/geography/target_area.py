@@ -386,7 +386,7 @@ class target_area:
                 target = (
                     postal[postal.postalcode == plz]
                     if i == 0
-                    else target.append(postal[postal.postalcode == plz])
+                    else pd.concat([target, postal[postal.postalcode == plz]], ignore_index=True)
                 )
             # sort federal state names
             self.postalcode.sort()

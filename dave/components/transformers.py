@@ -481,7 +481,7 @@ def create_transformers(grid_data):
         if grid_data.mv_data.mv_nodes.empty:
             # --- in this case the missing mv nodes for the transformator must be created
             mv_buses = substations.copy()
-            mv_nodes.rename(
+            mv_buses.rename(
                 columns={"dave_name": "subst_dave_name"},
                 inplace=True,
             )

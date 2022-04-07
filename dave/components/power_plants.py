@@ -477,7 +477,7 @@ def create_renewable_powerplants(grid_data):
             renewables = renewables[renewables.voltage_level == 7]
         # find exact location by adress for renewable power plants which are on mv-level or lower
         if any(map(lambda x: x in power_levels, ["MV", "LV"])):
-            geolocator = ArcGIS(timeout=10000)  # set on None when geopy 2.0 was released
+            geolocator = ArcGIS(timeout=None)
             plant_georefernce = renewables[renewables.voltage_level >= 5]
             for i, plant in plant_georefernce.iterrows():
                 if plant.address:
