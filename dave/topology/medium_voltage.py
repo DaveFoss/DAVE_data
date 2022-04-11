@@ -53,15 +53,28 @@ def create_mv_topology(grid_data):
             },
             inplace=True,
         )
-        # filter substations with point as geometry
-        drop_substations = [
+        # filter substations with point/linestring as geometry because overlay function can not
+        # handle mixed geometries
+        substation_point_idx = [
+            sub.name for i, sub in hvmv_substations.iterrows() if isinstance(sub.geometry, (Point))
+        ]
+        substation_lines_idx = [
             sub.name
             for i, sub in hvmv_substations.iterrows()
-            if isinstance(sub.geometry, (Point, LineString))
+            if isinstance(sub.geometry, (LineString))
         ]
-        hvmv_substations.drop(drop_substations, inplace=True)
         # check for substations in the target area
+        hvmv_substations_points = gpd.overlay(
+            hvmv_substations.loc[substation_point_idx], grid_data.area, how="intersection"
+        )
+        hvmv_substations_lines = gpd.overlay(
+            hvmv_substations.loc[substation_lines_idx], grid_data.area, how="intersection"
+        )
+        hvmv_substations.drop(substation_point_idx + substation_lines_idx, inplace=True)
         hvmv_substations = gpd.overlay(hvmv_substations, grid_data.area, how="intersection")
+        hvmv_substations = pd.concat(
+            [hvmv_substations, hvmv_substations_points, hvmv_substations_lines], ignore_index=True
+        )
         if not hvmv_substations.empty:
             remove_columns = grid_data.area.keys().tolist()
             remove_columns.remove("geometry")
