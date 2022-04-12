@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def create_hv_topology(grid_data):
@@ -53,11 +54,9 @@ def create_hv_topology(grid_data):
         ehvhv_substations = ehvhv_substations[
             pd.Series(list(map(lambda x: bool("110000" in x), ehvhv_substations.voltage_kv)))
         ]
-        ehvhv_substations = gpd.overlay(ehvhv_substations, grid_data.area, how="intersection")
+        # filter substations which are within the grid area
+        ehvhv_substations = intersection_with_area(ehvhv_substations, grid_data.area)
         if not ehvhv_substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            ehvhv_substations.drop(columns=remove_columns, inplace=True)
             ehvhv_substations["voltage_level"] = 2
             # add dave name
             ehvhv_substations.reset_index(drop=True, inplace=True)
@@ -102,12 +101,9 @@ def create_hv_topology(grid_data):
             if isinstance(sub.geometry, (Point, LineString))
         ]
         hvmv_substations.drop(drop_substations, inplace=True)
-        # check for substations in the target area
-        hvmv_substations = gpd.overlay(hvmv_substations, grid_data.area, how="intersection")
+        # filter substations which are within the grid area
+        hvmv_substations = intersection_with_area(hvmv_substations, grid_data.area)
         if not hvmv_substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            hvmv_substations.drop(columns=remove_columns, inplace=True)
             hvmv_substations["voltage_level"] = 4
             # add dave name
             hvmv_substations.reset_index(drop=True, inplace=True)

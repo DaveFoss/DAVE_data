@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request, read_ehv_data
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def create_ehv_topology(grid_data):
@@ -47,13 +48,11 @@ def create_ehv_topology(grid_data):
         columns={"version": "ego_version", "subst_id": "ego_subst_id", "voltage": "voltage_kv"},
         inplace=True,
     )
-    ehv_substations = gpd.overlay(ehv_substations, grid_data.area, how="intersection")
+    # filter substations which are within the grid area
+    ehv_substations = intersection_with_area(ehv_substations, grid_data.area)
     # update progress
     pbar.update(10)
     if not ehv_substations.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        ehv_substations.drop(columns=remove_columns, inplace=True)
         ehv_substations["voltage_level"] = 2
         # add dave name
         ehv_substations.reset_index(drop=True, inplace=True)
@@ -190,7 +189,8 @@ def create_ehv_topology(grid_data):
         ehv_buses_tso_names = ehv_buses.tso_name.to_list()
         area = grid_data.area.drop(columns=['name']) if 'name' in grid_data.area.keys() \
             else grid_data.area
-        ehv_buses_tso = gpd.overlay(ehv_data['ehv_nodes'], area, how='intersection')
+        # filter nodes which are within the grid area 
+        ehv_buses_tso = intersection_with_area(ehv_data['ehv_nodes'], area, remove_columns=False)
         for _, tso_bus in ehv_buses_tso.iterrows():
             tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
             if tso_name not in ehv_buses_tso_names:

@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def create_transformers(grid_data):
@@ -55,12 +56,8 @@ def create_transformers(grid_data):
         hv_trafos["geometry"] = hv_trafos.geometry.apply(
             lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
         )
-        # check for transformer in the target area
-        hv_trafos = gpd.overlay(hv_trafos, grid_data.area, how="intersection")
-        if not hv_trafos.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            hv_trafos.drop(columns=remove_columns, inplace=True)
+        # filter transformers which are within the grid area
+        hv_trafos = intersection_with_area(hv_trafos, grid_data.area)
         # update progress
         pbar.update(5)
         # in case of missing ehv/hv-level, nodes for the transformator must be procured from OEP
@@ -87,11 +84,8 @@ def create_transformers(grid_data):
                 inplace=True,
             )
             ehvhv_buses = ehvhv_buses[ehvhv_buses.ego_scn_name == "Status Quo"]
-            ehvhv_buses = gpd.overlay(ehvhv_buses, grid_data.area, how="intersection")
-            if not ehvhv_buses.empty:
-                remove_columns = grid_data.area.keys().tolist()
-                remove_columns.remove("geometry")
-                ehvhv_buses.drop(columns=remove_columns, inplace=True)
+            # filter buses which are within the grid area
+            ehvhv_buses = intersection_with_area(ehvhv_buses, grid_data.area)
         # update progress
         pbar.update(5)
         # search for trafo voltage and create missing nodes
@@ -271,12 +265,8 @@ def create_transformers(grid_data):
                 if isinstance(sub.geometry, (Point, LineString))
             ]
             substations.drop(drop_substations, inplace=True)
-            # check for substations in the target area
-            substations = gpd.overlay(substations, grid_data.area, how="intersection")
-            if not substations.empty:
-                remove_columns = grid_data.area.keys().tolist()
-                remove_columns.remove("geometry")
-                substations.drop(columns=remove_columns, inplace=True)
+            # filter substations which are within the grid area
+            substations = intersection_with_area(substations, grid_data.area)
         else:
             substations = grid_data.components_power.substations.hv_mv.copy()
         substations.drop(
@@ -321,11 +311,8 @@ def create_transformers(grid_data):
             hv_nodes = hv_nodes[
                 (hv_nodes.voltage_kv == 110) & (hv_nodes.ego_scn_name == "Status Quo")
             ]
-            hv_nodes = gpd.overlay(hv_nodes, grid_data.area, how="intersection")
-            if not hv_nodes.empty:
-                remove_columns = grid_data.area.keys().tolist()
-                remove_columns.remove("geometry")
-                hv_nodes = hv_nodes.drop(columns=remove_columns)
+            # filter nodes which are within the grid area
+            hv_nodes = intersection_with_area(hv_nodes, grid_data.area)
             hv_nodes["voltage_level"] = 3
             hv_nodes["source"] = "OEP"
             hv_nodes.drop(
@@ -336,7 +323,8 @@ def create_transformers(grid_data):
             substations_keys.remove("ego_subst_id")
             substations_keys.remove("geometry")
             substations_reduced = substations.drop(columns=(substations_keys))
-            hv_nodes = gpd.overlay(hv_nodes, substations_reduced, how="intersection")
+            # filter nodes which are within a substation
+            hv_nodes = intersection_with_area(hv_nodes, substations_reduced, remove_columns=False)
             # add dave name
             hv_nodes.reset_index(drop=True, inplace=True)
             name = pd.Series(list(map(lambda x: f"node_3_{x}", hv_nodes.index)))
@@ -463,12 +451,8 @@ def create_transformers(grid_data):
             # change wrong crs from oep
             substations.crs = dave_settings()["crs_meter"]
             substations = substations.to_crs(dave_settings()["crs_main"])
-            # filter trafos for target area
-            substations = gpd.overlay(substations, grid_data.area, how="intersection")
-            if not substations.empty:
-                remove_columns = grid_data.area.keys().tolist()
-                remove_columns.remove("geometry")
-                substations.drop(columns=remove_columns, inplace=True)
+            # filter substations which are within the grid area
+            substations = intersection_with_area(substations, grid_data.area)
         else:
             substations = grid_data.components_power.substations.mv_lv.copy()
         substations.drop(

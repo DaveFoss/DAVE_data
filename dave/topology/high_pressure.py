@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from dave.datapool import read_hp_data, read_scigridgas_iggielgn
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def create_hp_topology(grid_data):
@@ -51,11 +52,8 @@ def create_hp_topology(grid_data):
     scigrid_nodes["is_import"] = 0
     # set height
     scigrid_nodes["height_m"] = dave_settings()["hp_nodes_height_m"]
-    # intersection with target area
-    hp_junctions = gpd.overlay(scigrid_nodes, grid_data.area, how="intersection")
-    keys = grid_data.area.keys().tolist()
-    keys.remove("geometry")
-    hp_junctions = hp_junctions.drop(columns=(keys))
+    # filter junctions which are within the grid area
+    hp_junctions = intersection_with_area(scigrid_nodes, grid_data.area)
     # update progress
     pbar.update(20)
     # consider data only if there are more than one junction in the target area
@@ -198,11 +196,8 @@ def create_lkd_eu(grid_data):
     hp_junctions["source"] = source
     hp_junctions["pressure_level"] = 1
     hp_junctions["original_id"] = hp_junctions.original_id.astype("int32")
-    # intersection with target area
-    hp_junctions = gpd.overlay(hp_junctions, grid_data.area, how="intersection")
-    keys = grid_data.area.keys().tolist()
-    keys.remove("geometry")
-    hp_junctions.drop(columns=(keys), inplace=True)
+    # filter junctions which are within the grid area
+    hp_junctions = intersection_with_area(hp_junctions, grid_data.area)
     # consider data only if there are more than one junction in the target area
     if len(hp_junctions) > 1:
         # add dave name

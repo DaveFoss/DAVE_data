@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from dave.datapool import query_osm, read_federal_states, read_household_consumption, read_postal
 from dave.settings import dave_settings
-from dave.toolbox import voronoi
+from dave.toolbox import intersection_with_area, voronoi
 
 
 def get_household_power(consumption_data, household_size):
@@ -76,7 +76,9 @@ def create_loads(grid_data):
         federal_states = federal_states.rename(columns={"name": "federal state"})
         drop_columns = federal_states.keys().drop("federal state").drop("geometry")
         # intersect buildings with federal state areas to get the suitable federal state
-        buildings_feds = gpd.overlay(buildings_residential, federal_states, how="intersection")
+        buildings_feds = intersection_with_area(
+            buildings_residential, federal_states, remove_columns=False
+        )
         buildings_feds.drop(columns=drop_columns, inplace=True)
         # read consumption data
         consumption_data, meta_data = read_household_consumption()
@@ -95,12 +97,16 @@ def create_loads(grid_data):
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-            postal_own_intersection = gpd.overlay(postals, grid_data.area, how="intersection")
+            # filter postal code areas which are within the grid area
+            postal_own_intersection = intersection_with_area(
+                postals, grid_data.area, remove_columns=False
+            )
             postal_own_intersection.rename(
                 columns={"population": "population_origin"}, inplace=True
             )
-            postal_own_landuse = gpd.overlay(
-                grid_data.landuse, postal_own_intersection, how="intersection"
+            # filter landuses which are within postal code areas
+            postal_own_landuse = intersection_with_area(
+                grid_data.landuse, postal_own_intersection, remove_columns=False
             )
             for i, postal in postal_own_intersection.iterrows():
                 # --- calculate full plz residential area
@@ -319,7 +325,10 @@ def create_loads(grid_data):
         # update progress
         pbar.update(10)
         # --- create loads for the lowest considered voltage level
-        intersection = gpd.overlay(grid_data.landuse, voronoi_polygons, how="intersection")
+        # filter landuses which are within the voronoi regions
+        intersection = intersection_with_area(
+            grid_data.landuse, voronoi_polygons, remove_columns=False
+        )
         intersection.drop(columns=["area_km2"], inplace=True)
         # calculate area from intersected polygons
         intersection_3035 = intersection.to_crs(dave_settings()["crs_meter"])

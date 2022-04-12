@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
-from dave.toolbox import voronoi
+from dave.toolbox import intersection_with_area, voronoi
 
 
 def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
@@ -502,7 +502,9 @@ def create_renewable_powerplants(grid_data):
         )
         # intersection of power plants with target_area when target is an own area
         if typ == "own area":
-            renewables_geo = gpd.overlay(renewables_geo, grid_data.area, how="intersection")
+            renewables_geo = intersection_with_area(
+                renewables_geo, grid_data.area, remove_columns=False
+            )
         # --- node assignment with case distinction depending on considered power levels
         # divide the plants in the target area according to their voltage level
         renewables_lv = renewables_geo[renewables_geo.voltage_level == 7]
@@ -950,7 +952,9 @@ def create_conventional_powerplants(grid_data):
         )
         # intersection of power plants with target_area when target is an own area
         if (typ == "own area") and (not conventionals_geo.empty):
-            conventionals_geo = gpd.overlay(conventionals_geo, grid_data.area, how="intersection")
+            conventionals_geo = intersection_with_area(
+                conventionals_geo, grid_data.area, remove_columns=False
+            )
         # --- node assignment with case distinction depending on considered power levels
         # divide the plants in the target area according to their voltage level
         conventionals_lv = conventionals_geo[conventionals_geo.voltage_level == 7]

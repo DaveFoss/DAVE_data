@@ -132,3 +132,43 @@ def multiline_coords(line_geometry):
         else merged_line.coords[:]
     )
     return line_coords
+
+
+def intersection_with_area(gdf, area, remove_columns=True):
+    """
+    This function intersects a given geodataframe with an area in consideration of mixed geometry
+    types at both input variables
+    """
+    # check if geodataframe has mixed geometries
+    geom_types_gdf = set(map(type, gdf.geometry))
+    geom_types_area = set(map(type, area.geometry))
+    if len(geom_types_gdf) > 1:
+        # in this case the geodataframe has mixed geometrie information. A seperated consideration
+        # of overlay is necessary because the function can not handle mixed geometries
+        gdf_over = gpd.GeoDataFrame([])
+        for geom_type in geom_types_gdf:
+            gdf_geom_idx = [
+                row.name for i, row in gdf.iterrows() if isinstance(row.geometry, (geom_type))
+            ]
+            # check for values in the target area
+            gdf_over_geom = gpd.overlay(gdf.loc[gdf_geom_idx], area, how="intersection")
+            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+    elif len(geom_types_area) > 1:
+        # in this case the geodataframe has mixed geometrie information. A seperated consideration
+        # of overlay is necessary because the function can not handle mixed geometries
+        gdf_over = gpd.GeoDataFrame([])
+        for geom_type in geom_types_area:
+            area_geom_idx = [
+                row.name for i, row in area.iterrows() if isinstance(row.geometry, (geom_type))
+            ]
+            # check for values in the target area
+            gdf_over_geom = gpd.overlay(gdf, area.loc[area_geom_idx], how="intersection")
+            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+    else:
+        gdf_over = gpd.overlay(gdf, area, how="intersection")
+    # remove parameters from area
+    if (not gdf_over.empty) and (remove_columns):
+        remove_columns = area.keys().tolist()
+        remove_columns.remove("geometry")
+        gdf_over.drop(columns=remove_columns, inplace=True)
+    return gdf_over

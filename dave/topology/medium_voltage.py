@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def create_mv_topology(grid_data):
@@ -53,32 +54,9 @@ def create_mv_topology(grid_data):
             },
             inplace=True,
         )
-        # filter substations with point/linestring as geometry because overlay function can not
-        # handle mixed geometries
-        substation_point_idx = [
-            sub.name for i, sub in hvmv_substations.iterrows() if isinstance(sub.geometry, (Point))
-        ]
-        substation_lines_idx = [
-            sub.name
-            for i, sub in hvmv_substations.iterrows()
-            if isinstance(sub.geometry, (LineString))
-        ]
-        # check for substations in the target area
-        hvmv_substations_points = gpd.overlay(
-            hvmv_substations.loc[substation_point_idx], grid_data.area, how="intersection"
-        )
-        hvmv_substations_lines = gpd.overlay(
-            hvmv_substations.loc[substation_lines_idx], grid_data.area, how="intersection"
-        )
-        hvmv_substations.drop(substation_point_idx + substation_lines_idx, inplace=True)
-        hvmv_substations = gpd.overlay(hvmv_substations, grid_data.area, how="intersection")
-        hvmv_substations = pd.concat(
-            [hvmv_substations, hvmv_substations_points, hvmv_substations_lines], ignore_index=True
-        )
+        # filter substations which are within the grid area
+        hvmv_substations = intersection_with_area(hvmv_substations, grid_data.area)
         if not hvmv_substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            hvmv_substations.drop(columns=remove_columns, inplace=True)
             hvmv_substations["voltage_level"] = 4
             # add dave name
             hvmv_substations.reset_index(drop=True, inplace=True)
@@ -90,8 +68,8 @@ def create_mv_topology(grid_data):
             # set crs
             hvmv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
             # add ehv substations to grid data
-            grid_data.components_power.substations.hv_mv = (
-                grid_data.components_power.substations.hv_mv.append(hvmv_substations)
+            grid_data.components_power.substations.hv_mv = pd.concat(
+                [grid_data.components_power.substations.hv_mv, hvmv_substations]
             )
     else:
         hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
@@ -114,12 +92,9 @@ def create_mv_topology(grid_data):
     mvlv_substations.rename(
         columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
     )
-    # filter trafos for target area
-    mvlv_substations = gpd.overlay(mvlv_substations, grid_data.area, how="intersection")
-    if not mvlv_substations.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        mvlv_substations.drop(columns=remove_columns, inplace=True)
+
+    # filter trafos which are within the grid area
+    mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
     # copy data for mv node creation
     mvlv_buses = mvlv_substations.copy()
     if grid_data.components_power.substations.mv_lv.empty and not mvlv_substations.empty:
@@ -156,12 +131,8 @@ def create_mv_topology(grid_data):
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     hvmv_buses = hvmv_buses.rename(columns={"version": "ego_version", "subst_id": "ego_subst_id"})
-    # filter trafos for target area
-    hvmv_buses = gpd.overlay(hvmv_buses, grid_data.area, how="intersection")
-    if not hvmv_buses.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        hvmv_buses = hvmv_buses.drop(columns=remove_columns)
+    # filter trafos which are within the grid area
+    hvmv_buses = intersection_with_area(hvmv_buses, grid_data.area)
     hvmv_buses.drop(
         columns=(
             [
@@ -205,7 +176,9 @@ def create_mv_topology(grid_data):
         # set crs
         mv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
         # add mv nodes to grid data
-        grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
+        grid_data.mv_data.mv_nodes = pd.concat(
+            [grid_data.mv_data.mv_nodes, mv_buses], ignore_index=True
+        )
         # --- create mv lines
         # lines to connect node with the nearest node
         mv_lines = gpd.GeoSeries([])
@@ -336,7 +309,9 @@ def create_mv_topology(grid_data):
         # set crs
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         # add mv lines to grid data
-        grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)
+        grid_data.mv_data.mv_lines = pd.concat(
+            [grid_data.mv_data.mv_lines, mv_lines], ignore_index=True
+        )
     else:
         # update progress
         pbar.update(80)

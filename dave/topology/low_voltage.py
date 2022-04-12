@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def nearest_road(building_centroids, roads):
@@ -156,12 +157,9 @@ def create_lv_topology(grid_data):
         # change wrong crs from oep
         mvlv_substations.crs = dave_settings()["crs_meter"]
         mvlv_substations = mvlv_substations.to_crs(dave_settings()["crs_main"])
-        # filter trafos for target area
-        mvlv_substations = gpd.overlay(mvlv_substations, grid_data.area, how="intersection")
+        # filter trafos which are within the grid area
+        mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
         if not mvlv_substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            mvlv_substations.drop(columns=remove_columns, inplace=True)
             mvlv_substations["voltage_level"] = 6
             # add dave name
             mvlv_substations.reset_index(drop=True, inplace=True)

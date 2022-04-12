@@ -13,6 +13,7 @@ from tqdm import tqdm
 from dave.datapool import oep_request, query_osm, read_federal_states, read_postal
 from dave.io import archiv_inventory, from_json_string
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 class target_area:
@@ -210,11 +211,8 @@ class target_area:
                 # intersect landuses with the target area
                 landuse = landuse.set_crs(dave_settings()["crs_main"])
                 area = self.grid_data.area.rename(columns={"name": "bundesland"})
-                landuse = gpd.overlay(landuse, area, how="intersection")
-                if not landuse.empty:
-                    remove_columns = area.keys().tolist()
-                    remove_columns.remove("geometry")
-                    landuse.drop(columns=remove_columns, inplace=True)
+                # filter landuses which are within the grid area
+                landuse = intersection_with_area(landuse, area)
                 # calculate polygon area in km²
                 landuse_3035 = landuse.to_crs(dave_settings()["crs_meter"])
                 landuse["area_km2"] = landuse_3035.area / 1e06
@@ -400,7 +398,8 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        postal_intersection = gpd.overlay(postal, self.target, how="intersection")
+        # filter postal code areas which are within the target area
+        postal_intersection = intersection_with_area(postal, self.target, remove_columns=False)
         # filter duplicated postal codes
         self.own_postal = postal_intersection["postalcode"].unique().tolist()
 
@@ -472,8 +471,9 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        postal_intersection = gpd.overlay(postal, self.target, how="intersection")
-        # filter duplikated postal codes
+        # filter postal code areas which are within the target area
+        postal_intersection = intersection_with_area(postal, self.target, remove_columns=False)
+        # filter duplicated postal codes
         self.federal_state_postal = postal_intersection["postalcode"].unique().tolist()
 
     def _target_by_nuts_region(self):
@@ -514,8 +514,9 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        postal_intersection = gpd.overlay(postal, self.target, how="intersection")
-        # filter duplikated postal codes
+        # filter postal code areas which are within the target area
+        postal_intersection = intersection_with_area(postal, self.target, remove_columns=False)
+        # filter duplicated postal codes
         self.nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
 
     def target(self):
