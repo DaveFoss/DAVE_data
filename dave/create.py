@@ -163,7 +163,7 @@ def geo_info_needs(power_levels, gas_levels, loads):
     if ("lv" in power_levels) or ("lp" in gas_levels):
         roads, roads_plot, buildings, landuse = True, True, True, True
     elif ("mv" in power_levels) or ("mp" in gas_levels):
-        roads, roads_plot, buildings = True, True, False
+        roads, roads_plot, buildings = False, False, False
         landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for ehv, hv and hp
         roads, roads_plot, buildings = False, False, False

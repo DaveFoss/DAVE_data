@@ -645,7 +645,8 @@ class target_area:
             self.grid_data.buildings.for_living.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.commercial.reset_index(drop=True, inplace=True)
             # find road junctions
-            target_area.road_junctions(self)
+            if "lv" in self.grid_data.target_input.power_levels[0]:
+                target_area.road_junctions(self)
             # close progress bar
             self.pbar.update(float(10))
             self.pbar.close()
