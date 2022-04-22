@@ -258,7 +258,7 @@ class target_area:
                     target_geom = unary_union(targets.geometry.tolist())
                 buildings = buildings[buildings.geometry.intersects(target_geom)]
                 # create building categories
-                for_living = dave_settings()["buildings_for_living"]
+                residential = dave_settings()["buildings_residential"]
                 commercial = dave_settings()["buildings_commercial"]
                 # improve building tag with landuse parameter
                 if self.landuse and not landuse.empty:
@@ -279,10 +279,10 @@ class target_area:
                                 buildings.at[i, "building"] = "commercial"
                 # write buildings into grid_data
                 buildings.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.buildings.for_living = pd.concat(
+                self.grid_data.buildings.residential = pd.concat(
                     [
-                        self.grid_data.buildings.for_living,
-                        buildings[buildings.building.isin(for_living)],
+                        self.grid_data.buildings.residential,
+                        buildings[buildings.building.isin(residential)],
                     ],
                     ignore_index=True,
                 )
@@ -296,7 +296,7 @@ class target_area:
                 self.grid_data.buildings.other = pd.concat(
                     [
                         self.grid_data.buildings.other,
-                        buildings[~buildings.building.isin(for_living + commercial)],
+                        buildings[~buildings.building.isin(residential + commercial)],
                     ],
                     ignore_index=True,
                 )
@@ -446,15 +446,15 @@ class target_area:
             target = states
         else:
             names_right = []
-            for i in range(len(self.federal_state)):
+            for state in self.federal_state:
                 # bring name in right format
-                state_name = self.federal_state[i].split("-")
+                state_name = state.split("-")
                 if len(state_name) == 1:
                     state_name = state_name[0].capitalize()
                 else:
                     state_name = state_name[0].capitalize() + "-" + state_name[1].capitalize()
                 names_right.append(state_name)
-                if i == 0:
+                if self.federal_state[0] == state:
                     target = states[states["name"] == state_name]
                 else:
                     target = pd.concat(
@@ -643,7 +643,7 @@ class target_area:
             self.grid_data.roads.roads.reset_index(drop=True, inplace=True)
             self.grid_data.roads.roads_plot.reset_index(drop=True, inplace=True)
             self.grid_data.landuse.reset_index(drop=True, inplace=True)
-            self.grid_data.buildings.for_living.reset_index(drop=True, inplace=True)
+            self.grid_data.buildings.residential.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.commercial.reset_index(drop=True, inplace=True)
             # find road junctions
             if "lv" in self.grid_data.target_input.power_levels[0]:

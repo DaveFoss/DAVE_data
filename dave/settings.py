@@ -40,7 +40,7 @@ def dave_settings():
         "building_tags": "building",
         "railway_tags": 'railway~"construction|disused|light_rail|monorail|narrow_gauge|rail|subway|tram"',
         # osm categories
-        "buildings_for_living": [
+        "buildings_residential": [
             "apartments",
             "detached",
             "dormitory",

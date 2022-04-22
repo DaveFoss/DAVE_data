@@ -57,7 +57,7 @@ def create_empty_dataset():
             "buildings": davestructure(
                 {
                     "commercial": gpd.GeoDataFrame([]),
-                    "for_living": gpd.GeoDataFrame([]),
+                    "residential": gpd.GeoDataFrame([]),
                     "other": gpd.GeoDataFrame([]),
                 }
             ),

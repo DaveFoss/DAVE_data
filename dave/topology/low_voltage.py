@@ -179,7 +179,7 @@ def create_lv_topology(grid_data):
     # --- create lv nodes
     # shortest way between building centroid and road for relevant buildings (building connections)
     buildings_rel = pd.concat(
-        [grid_data.buildings.for_living, grid_data.buildings.commercial], ignore_index=True
+        [grid_data.buildings.residential, grid_data.buildings.commercial], ignore_index=True
     )
     buildings_rel_3035 = buildings_rel.to_crs(dave_settings()["crs_meter"])
     centroids = buildings_rel_3035.reset_index(drop=True).centroid

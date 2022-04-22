@@ -10,7 +10,7 @@ from dave.api import routes
 # initialize app object
 app = FastAPI()
 
-# include router
+# include routes
 app.include_router(routes.router)
 
 

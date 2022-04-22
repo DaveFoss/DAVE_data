@@ -51,10 +51,10 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
     roads_plot = grid_data.roads.roads_plot
     roads = grid_data.roads.roads
     road_junctions = grid_data.roads.road_junctions
-    buildings_for_living = grid_data.buildings.for_living
+    buildings_residential = grid_data.buildings.residential
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
-    buildings_all = pd.concat([buildings_for_living, buildings_commercial, buildings_other])
+    buildings_all = pd.concat([buildings_residential, buildings_commercial, buildings_other])
     landuse = grid_data.landuse
     railways = grid_data.railways
     if not buildings_all.empty:
@@ -66,7 +66,7 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         roads_plot,
         roads,
         road_junctions,
-        buildings_for_living,
+        buildings_residential,
         buildings_commercial,
         buildings_other,
         building_centroids,
@@ -107,8 +107,8 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
             road_junctions.plot(ax=ax, color="r")
             legend_elements.append(Line2D([0], [0], color="r", marker="o", label="Road junctions"))
         # plot buildings
-        if not buildings_for_living.empty:
-            buildings_for_living.plot(ax=ax, color="g")
+        if not buildings_residential.empty:
+            buildings_residential.plot(ax=ax, color="g")
             legend_elements.append(Line2D([0], [0], color="k", lw=2, label="Residential Buildings"))
         if not buildings_commercial.empty:
             buildings_commercial.plot(ax=ax, color="b")
@@ -167,7 +167,7 @@ def plot_grid_data(grid_data, api_use, output_folder=None):
     hp_pipes = grid_data.hp_data.hp_pipes
     renewable_plants = grid_data.components_power.renewable_powerplants
     conventional_plants = grid_data.components_power.conventional_powerplants
-    buildings_for_living = grid_data.buildings.for_living
+    buildings_residential = grid_data.buildings.residential
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
     substations = pd.concat(
@@ -181,7 +181,7 @@ def plot_grid_data(grid_data, api_use, output_folder=None):
         roads_plot,
         roads,
         road_junctions,
-        buildings_for_living,
+        buildings_residential,
         buildings_commercial,
         buildings_other,
         substations,
@@ -211,8 +211,8 @@ def plot_grid_data(grid_data, api_use, output_folder=None):
         if not roads.empty:
             roads.plot(ax=ax, color="k", alpha=0.2)
         # plot buildings
-        if not buildings_for_living.empty:
-            buildings_for_living.plot(ax=ax, color="k", alpha=0.2)
+        if not buildings_residential.empty:
+            buildings_residential.plot(ax=ax, color="k", alpha=0.2)
         if not buildings_commercial.empty:
             buildings_commercial.plot(ax=ax, color="k", alpha=0.2)
         if not buildings_other.empty:
