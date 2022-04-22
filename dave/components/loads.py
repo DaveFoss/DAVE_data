@@ -203,11 +203,7 @@ def create_loads(grid_data):
                             warnings.filterwarnings("ignore", category=UserWarning)
                             centroid_distance = building_nodes.distance(building_centroid)
                         if centroid_distance.min() < 1e-04:
-                            lv_node = building_nodes.loc[
-                                centroid_distance[
-                                    centroid_distance == centroid_distance.min()
-                                ].index[0]
-                            ]
+                            lv_node = building_nodes.loc[centroid_distance.idxmin()]
                     # create residential load
                     load_df = gpd.GeoDataFrame(
                         {

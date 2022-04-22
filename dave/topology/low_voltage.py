@@ -303,9 +303,7 @@ def create_lv_topology(grid_data):
                 distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
             if distance.min() < 1e-04:
                 # road junction node was found
-                dave_name = road_junctions_grid.loc[
-                    distance[distance == distance.min()].index[0]
-                ].dave_name
+                dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
                 # no road junction was found, create it from road junction data
                 with warnings.catch_warnings():
@@ -313,9 +311,7 @@ def create_lv_topology(grid_data):
                     warnings.filterwarnings("ignore", category=UserWarning)
                     distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
                 if distance.min() < 1e-04:
-                    road_junction_geom = road_junctions_origin.loc[
-                        distance[distance == distance.min()].index[0]
-                    ]
+                    road_junction_geom = road_junctions_origin.loc[distance.idxmin()]
                     # create lv_point for relevant road junction
                     dave_number = int(
                         grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[0].replace("node_7_", "")
@@ -349,9 +345,7 @@ def create_lv_topology(grid_data):
                 distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
             if distance.min() < 1e-04:
                 # road junction node was found
-                dave_name = road_junctions_grid.loc[
-                    distance[distance == distance.min()].index[0]
-                ].dave_name
+                dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
                 # no road junction was found, create it from road junction data
                 with warnings.catch_warnings():
@@ -359,9 +353,7 @@ def create_lv_topology(grid_data):
                     warnings.filterwarnings("ignore", category=UserWarning)
                     distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
                 if distance.min() < 1e-04:
-                    road_junction_geom = road_junctions_origin.loc[
-                        distance[distance == distance.min()].index[0]
-                    ]
+                    road_junction_geom = road_junctions_origin.loc[distance.idxmin()]
                     # create lv_point for relevant road junction
                     dave_number = int(
                         grid_data.lv_data.lv_nodes.dave_name.tail(1).iloc[0].replace("node_7_", "")

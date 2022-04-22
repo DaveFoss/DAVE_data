@@ -37,7 +37,7 @@ def create_interim_area(areas):
                 warnings.filterwarnings("ignore", category=UserWarning)
                 distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
-                areas_iso.append((i, distance[distance == distance.min()].index[0]))
+                areas_iso.append((i, distance.idxmin()))
         # if their are isolated areas, check for a connection on the highest grid level
         if len(areas_iso) > 0:
             for area_iso in areas_iso:

@@ -188,7 +188,7 @@ def create_mv_topology(grid_data):
                 # filter crs warning because it is not relevant
                 warnings.filterwarnings("ignore", category=UserWarning)
                 distance = mv_buses_rel.geometry.distance(bus.geometry)
-            nearest_bus_idx = distance[distance == distance.min()].index[0]
+            nearest_bus_idx = distance.idxmin()
             mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
@@ -230,7 +230,7 @@ def create_mv_topology(grid_data):
                 # find nearest line to considered one
                 mv_lines_con = mv_lines_rel.drop([i])
                 distance = mv_lines_con.geometry.distance(line)
-                nearest_line_idx = distance[distance == distance.min()].index[0]
+                nearest_line_idx = distance.idxmin()
                 # get line coordinates
                 if isinstance(line, MultiLineString):
                     line_points = gpd.GeoSeries(
@@ -265,7 +265,7 @@ def create_mv_topology(grid_data):
                         distance = nearest_line_points.geometry.distance(point)
                     if distance_min > distance.min():
                         distance_min = distance.min()
-                        nearest_point_idx = distance[distance == distance.min()].index[0]
+                        nearest_point_idx = distance.idxmin()
                         nearest_point = nearest_line_points[nearest_point_idx]
                         line_point = point
                 # add created connection line into mv lines
@@ -287,14 +287,14 @@ def create_mv_topology(grid_data):
                 # filter crs warning because it is not relevant
                 warnings.filterwarnings("ignore", category=UserWarning)
                 from_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][0]))
-            from_bus_idx = from_bus_distance[from_bus_distance == from_bus_distance.min()].index[0]
+            from_bus_idx = from_bus_distance.idxmin()
             mv_lines.at[line.name, "from_bus"] = mv_buses.loc[from_bus_idx].dave_name
             # get to bus name
             with warnings.catch_warnings():
                 # filter crs warning because it is not relevant
                 warnings.filterwarnings("ignore", category=UserWarning)
                 to_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][1]))
-            to_bus_idx = to_bus_distance[to_bus_distance == to_bus_distance.min()].index[0]
+            to_bus_idx = to_bus_distance.idxmin()
             mv_lines.at[line.name, "to_bus"] = mv_buses.loc[to_bus_idx].dave_name
             # calculate length in km
             mv_lines.at[line.name, "length_km"] = mv_lines_3035.loc[i].geometry.length / 1000
