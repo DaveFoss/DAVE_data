@@ -49,11 +49,11 @@ grid_data = create_grid(
     # grid area parameters (select on of the following five options)
     postalcode=None,
     town_name=None,
-    federal_state=["Hessen"],
+    federal_state=None,
     nuts_region=None,
-    own_area=None,  # _own_area,
+    own_area=_own_area,
     # grid level parameters
-    power_levels=[""],
+    power_levels=["lv"],
     gas_levels=[],
     # --- optional parameters
     plot=True,
@@ -64,7 +64,7 @@ grid_data = create_grid(
     roads_plot=False,
     buildings=False,
     landuse=False,
-    railway=False,
+    railways=False,
     # converting parameters
     convert_power=[],  # if True a second return variable must be defined
     convert_gas=[],  # if True a second return variable must be defined

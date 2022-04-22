@@ -221,9 +221,6 @@ def clean_wrong_lines(grid_data):
         grid_data[f"{level}_data"][f"{level}_lines"].drop(lines_equal.index.to_list(), inplace=True)
 
 
-# Funktion um Leitungen zu finden die Anfangs und Endknoten gleich haben rausfiltern
-
-
 def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"]):
     """
     This function clean up the DaVe Dataset for diffrent kinds of failures
