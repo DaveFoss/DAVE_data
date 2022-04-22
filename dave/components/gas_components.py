@@ -41,13 +41,15 @@ def sources(grid_data, scigrid_productions):
         )
         # set junction is_export to true if a sink is connected to
         sources_junctions = sources.junction.to_list()
-        grid_data.hp_data.hp_junctions[
-            "is_import"
-        ] = grid_data.hp_data.hp_junctions.dave_name.apply(
-            lambda x: 1 if x in sources_junctions else 0
-        )
+        for _, junction in grid_data.hp_data.hp_junctions.iterrows():
+            if junction.dave_name in sources_junctions:
+                grid_data.hp_data.hp_junctions.at[junction.name, "is_import"] = 1
         # set grid level number
         sources["pressure_level"] = 1
+        # get some relevant parameters out from scigrid param and write in single parameter
+        sources["max_supply_M_m3_per_d"] = sources.param.apply(
+            lambda x: eval(x)["max_supply_M_m3_per_d"]
+        )
         # update progress
         pbar.update(40)
         # add dave name
@@ -101,6 +103,12 @@ def compressors(grid_data, scigrid_compressors):
         )
         # set grid level number
         compressors["pressure_level"] = 1
+        compressors["max_cap_M_m3_per_d"] = compressors.param.apply(
+            lambda x: eval(x)["max_cap_M_m3_per_d"]
+        )
+        compressors["max_pressure_bar"] = compressors.param.apply(
+            lambda x: eval(x)["max_pressure_bar"]
+        )
         # update progress
         pbar.update(40)
         # add dave name
@@ -154,13 +162,15 @@ def sinks(grid_data, scigrid_consumers):
         )
         # set junction is_export to true if a sink is connected to
         sink_junctions = sinks.junction.to_list()
-        grid_data.hp_data.hp_junctions[
-            "is_export"
-        ] = grid_data.hp_data.hp_junctions.dave_name.apply(
-            lambda x: 1 if x in sink_junctions else 0
-        )
+        for _, junction in grid_data.hp_data.hp_junctions.iterrows():
+            if junction.dave_name in sink_junctions:
+                grid_data.hp_data.hp_junctions.at[junction.name, "is_export"] = 1
         # set grid level number
         sinks["pressure_level"] = 1
+        # get some relevant parameters out from scigrid param and write in single parameter
+        sinks["max_demand_M_m3_per_d"] = sinks.param.apply(
+            lambda x: eval(x)["max_demand_M_m3_per_d"]
+        )
         # update progress
         pbar.update(40)
         # add dave name

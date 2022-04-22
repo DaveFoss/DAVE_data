@@ -200,6 +200,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
     # update progress
     pbar.update(10)
 
+    # --- compressors (ersatzknoten)
     # --- create external grid
     # !!! ToDo
     # update progress

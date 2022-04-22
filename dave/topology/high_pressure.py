@@ -6,9 +6,68 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
-from dave.datapool import read_hp_data, read_scigridgas_iggielgn
+from dave.datapool import read_gaslib, read_hp_data, read_scigridgas_iggielgn
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
+
+
+def gaslib_pipe_clustering():
+    """
+    This function is clustering the gaslib pipe data and calculate the avarage for the parameters.
+    The pipesUsedForData parameter describt the number of pipes within the cluster
+    """
+    pipe_data = dict()
+    # import gaslib data
+    gaslib_data, meta_data_gaslib = read_gaslib()  # !!! implement meta data
+    for pipe in gaslib_data["connections"]["pipe"]:
+        lengthrounded = round(pipe["length"]["@value"], 1)
+        diameter = pipe["diameter"]["@value"]
+        roughness = pipe["roughness"]["@value"]
+        pressure_max = pipe["pressureMax"]["@value"]
+        if lengthrounded in pipe_data:
+            # collect different values for multiple pipelines with the same length
+            pipe_data[lengthrounded]["pipesUsedForData"] += 1.0
+            pipe_data[lengthrounded]["diameter"] = (
+                pipe_data[lengthrounded]["diameter"] + [diameter]
+                if isinstance(pipe_data[lengthrounded]["diameter"], list)
+                else [pipe_data[lengthrounded]["diameter"], diameter]
+            )
+            pipe_data[lengthrounded]["roughness"] = (
+                pipe_data[lengthrounded]["roughness"] + [roughness]
+                if isinstance(pipe_data[lengthrounded]["roughness"], list)
+                else [pipe_data[lengthrounded]["roughness"], roughness]
+            )
+            pipe_data[lengthrounded]["pressureMax"] = (
+                pipe_data[lengthrounded]["pressureMax"] + [pressure_max]
+                if isinstance(pipe_data[lengthrounded]["pressureMax"], list)
+                else [pipe_data[lengthrounded]["pressureMax"], pressure_max]
+            )
+        else:
+            pipe_data[lengthrounded] = {
+                "diameter": diameter,
+                "roughness": roughness,
+                "pressureMax": pressure_max,
+                "pipesUsedForData": 1.0,
+            }
+    # calculate the median values if there are more than one line with the same length
+    # Hint: A modified kind of median is used. It differs from the original median function in that
+    # if the number of data is even, the better of the two middle values is used instead of their
+    # avarage
+    for key in pipe_data:
+        if pipe_data[key]["pipesUsedForData"] > 1:
+            pipe_data[key]["diameter"].sort()
+            pipe_data[key]["diameter"] = pipe_data[key]["diameter"][
+                len(pipe_data[key]["diameter"]) // 2
+            ]
+            pipe_data[key]["roughness"].sort()
+            pipe_data[key]["roughness"] = pipe_data[key]["roughness"][
+                len(pipe_data[key]["roughness"]) // 2
+            ]
+            pipe_data[key]["pressureMax"].sort()
+            pipe_data[key]["pressureMax"] = pipe_data[key]["pressureMax"][
+                len(pipe_data[key]["pressureMax"]) // 2
+            ]
+    return pipe_data
 
 
 def create_hp_topology(grid_data):
@@ -47,7 +106,8 @@ def create_hp_topology(grid_data):
     )
     # set grid level number
     scigrid_nodes["pressure_level"] = 1
-    # set import and export to default. This parameters are useful to define the kind of nodes.
+    # set import and export to default. This parameters are useful to define the kind of nodes and
+    # they will be overwritten in the sink and source scripts
     scigrid_nodes["is_export"] = 0
     scigrid_nodes["is_import"] = 0
     # set height
@@ -68,16 +128,21 @@ def create_hp_topology(grid_data):
             (hp_pipes.from_junction.isin(hp_junctions_ids))
             | (hp_pipes.to_junction.isin(hp_junctions_ids))
         ]
-        # check for junction from/to nodes which are outside of the grid area
+        # check for junction from/to nodes which are outside of the grid area and define these as
+        # im- and export nodes
         junctions_extern = pd.concat(
             [
                 hp_pipes[~hp_pipes.from_junction.isin(hp_junctions_ids)].from_junction,
                 hp_pipes[~hp_pipes.to_junction.isin(hp_junctions_ids)].to_junction,
             ]
         )
+        hp_junctions_ext = scigrid_nodes[scigrid_nodes.scigrid_id.isin(junctions_extern.unique())]
+        hp_junctions_ext["is_export"] = 1
+        hp_junctions_ext["is_import"] = 1
+        hp_junctions_ext["external"] = True
         # add external junctions to hp_junctions
         hp_junctions = pd.concat(
-            [hp_junctions, scigrid_nodes[scigrid_nodes.scigrid_id.isin(junctions_extern.unique())]],
+            [hp_junctions, hp_junctions_ext],
             ignore_index=True,
         )
         # update progress
@@ -120,7 +185,16 @@ def create_hp_topology(grid_data):
         hp_pipes["to_junction"] = hp_pipes.to_junction.apply(
             lambda x: hp_junctions[hp_junctions.scigrid_id == x].iloc[0].dave_name
         )
-
+        # get gaslib data clustered
+        gaslib_pipe_data = gaslib_pipe_clustering()
+        gaslib_pipe_data_sorted = sorted(gaslib_pipe_data, key=float)
+        # add roughness from gaslib data to nearest scigrid pipe by length
+        nearestpipelengthgaslib = hp_pipes.length_km.apply(
+            lambda y: min(gaslib_pipe_data_sorted, key=lambda x: abs(x - y))
+        )
+        hp_pipes["roughness"] = nearestpipelengthgaslib.apply(
+            lambda x: gaslib_pipe_data[x]["roughness"]
+        )
         # add pipes to grid data
         hp_pipes.reset_index(drop=True, inplace=True)
         hp_pipes.insert(

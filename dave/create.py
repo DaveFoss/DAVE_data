@@ -22,7 +22,7 @@ from dave.components import (
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
-from dave.model import clean_up_data, create_pandapipes, create_pandapower
+from dave.model import clean_up_data, create_gaslib, create_pandapipes, create_pandapower
 from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -259,7 +259,7 @@ def create_grid(
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
-            grid data should be converted. Available formats are currently: 'pandapipes' \n
+            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations. Currently a experimental feature \
                 and only available for pandapower \n
@@ -443,6 +443,10 @@ def create_grid(
     if convert_gas and gas_levels:
         if "pandapipes" in convert_gas:
             net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
+        if "gaslib" in convert_gas:
+            net_gas = create_gaslib(
+                grid_data, api_use=api_use, output_folder=output_folder
+            )  # !!! how to handle net_gas at multiple conversions
     else:
         net_gas = None
 
