@@ -68,7 +68,7 @@ def create_loads(grid_data):
             grid_data.lv_data.lv_nodes.node_type == "building_centroid"
         ]
         # --- create lv loads for residential
-        buildings_residential = grid_data.buildings.for_living
+        buildings_residential = grid_data.buildings.residential
         federal_states, meta_data = read_federal_states()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
