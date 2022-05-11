@@ -259,7 +259,8 @@ def create_grid(
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
-            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib' \n
+            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib', \
+            'mynts' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations. Currently a experimental feature \
                 and only available for pandapower \n
@@ -447,6 +448,9 @@ def create_grid(
             net_gas = create_gaslib(
                 grid_data, api_use=api_use, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
+        if "mynts" in convert_gas:
+            print("place for mynts converter")
+            # !!! add entry to mynts converter
     else:
         net_gas = None
 
