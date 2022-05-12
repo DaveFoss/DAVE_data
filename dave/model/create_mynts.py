@@ -40,8 +40,8 @@ class MyntsWriter:
         self.elements = elements
         element = elements.nextEle()
         while element is not None:
-            type = element.type
-            # if type=="p":
+            element_type = element.type
+            # if element_type=="p":
             #     self.writePipe(element)
             self.writeElement(element)
             # else

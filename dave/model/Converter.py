@@ -1,12 +1,7 @@
-__version__ = "0.1"
-
-# import fileinput
-
-import sys
 from abc import ABC, abstractmethod
 
-import dave.io as dio
-from dave.model.Elements import Elements
+from dave.io import from_json
+from dave.model.create_mynts import MyntsWriter  # Output file strategy class for Mynts
 
 
 # Strategy interface; used to define different output strategies dave2mynts, dave2...
@@ -44,16 +39,15 @@ class Converter:
 
     def __init__(self, grid_data, infilename: str = "", basefilepath: str = ""):
         if infilename:  # is not empty
-            self.infilename = infilename.strip()
-        else:  # for testing  # !!! delet?
-            self.infilename = "/home/cass/TransHyDE/DaVe/dave_dataset_valves.json"
-        if basefilepath:
-            self.basefilepath = basefilepath.strip()
+            self.infilename = (
+                infilename.strip()
+            )  # !!! Case for read in dave_dataset.json file without generating
+            print("Read from file ", self.infilename)
+            self.grid_data = from_json(self.infilename)
         else:
-            self.basefilepath = "/tmp/dave2Mynts.geom"  # for testing  # !!! delet?
-        print("Read from file ", self.infilename)
-
-        self.grid_data = grid_data
+            self.grid_data = grid_data
+        if basefilepath:
+            self.basefilepath = basefilepath.strip() + "\\dave_mynts"
 
     def getBasicPath(self) -> str:
         return self.basefilepath
@@ -63,23 +57,15 @@ class Converter:
 
     # get data from Dave as nodes, pipes and valves 	# !!! todo: other components like compressors etc
     def getData(self):
-        # grid_data = dio.from_json(self.infilename)
-        gas_data = self.grid_data.components_gas
-        hp_data = self.grid_data.hp_data
-        # print (hp_data)  for testing
         self.nodedata = self.grid_data.hp_data.hp_junctions  #
-        # print (self.nodedata)
         self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
         self.valvedata = self.grid_data.components_gas.valves
-        self.compressors = gas_data.compressors  #
+        self.compressors = self.grid_data.components_gas.compressors  #
         self.nvalves = len(self.valvedata.index)
         self.npipes = len(self.pipedata.index)
         self.nnodes = len(self.nodedata.index)
         # print ("Read ", nnodes, " nodes", npipes, " pipes", nvalves, "valves", " from file ", self.filename)
         # self.nodeElements = iter(self.nodedata)
-
-
-from dave.model.MyntsWriter import MyntsWriter  # Output file strategy class for Mynts
 
 
 class DaVe2Mynts(Strategy):
