@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from dave.io import from_json
-from dave.model.create_mynts import MyntsWriter  # Output file strategy class for Mynts
 
 
 # Strategy interface; used to define different output strategies dave2mynts, dave2...
@@ -66,46 +65,6 @@ class Converter:
         self.nnodes = len(self.nodedata.index)
         # print ("Read ", nnodes, " nodes", npipes, " pipes", nvalves, "valves", " from file ", self.filename)
         # self.nodeElements = iter(self.nodedata)
-
-
-class DaVe2Mynts(Strategy):
-    """
-    class to convert dave data to Mynts output files, one for each format
-    """
-
-    files = {}
-    fileformat = ["jsn"]  # ,'netlist', ...
-    format = ""  # format of the output file data
-    writer = {}  # writers for each form
-
-    def __init__(self, basefilepath):
-        self.basefilepath = basefilepath
-        self.openFiles(self.basefilepath)
-
-    def __del__(self):
-        for form in self.fileformat:
-            self.writer[form].writeFooter()
-            self.files[form].close()
-
-    # opens a file for each output format
-    def openFiles(self, outfile):
-        for form in self.fileformat:
-            if form == "netlist":
-                filename = outfile
-            else:
-                filename = outfile + "." + form
-            file = open(filename, "w")
-            self.files[form] = file
-            print("opened file ", file.name)
-            self.writer[form] = MyntsWriter(form=form, file=file)
-
-    def execute(self, elements) -> str:
-        for form in self.fileformat:
-            self.writer[form].writeGeom(elements)
-        return "DaVe2Mynts"
-
-    def setForm(self, format):
-        self.format = format
 
 
 class Default(Strategy):

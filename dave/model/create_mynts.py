@@ -1,4 +1,4 @@
-from dave.model.converter import Converter, DaVe2Mynts
+from dave.model.converter import Converter, Strategy
 from dave.model.elements import Elements
 
 # dictionaries for Mynts text properties and numeric properties;  # !!! todo complete list
@@ -14,7 +14,7 @@ MyntsTextProps = {
 MyntsNumProps = {"diameter_mm": "D"}
 
 
-class MyntsWriter:
+class MyntsWriter:  # Output file strategy class for Mynts
 
     elements = Elements()
     MyntsProps = {}
@@ -85,6 +85,46 @@ class MyntsWriter:
             fvalue = fvalue * 1.0e3
         # elif prop.endswith("bar"): ok
         return str(fvalue)
+
+
+class DaVe2Mynts(Strategy):
+    """
+    class to convert dave data to Mynts output files, one for each format
+    """
+
+    files = {}
+    fileformat = ["jsn"]  # ,'netlist', ...
+    format = ""  # format of the output file data
+    writer = {}  # writers for each form
+
+    def __init__(self, basefilepath):
+        self.basefilepath = basefilepath
+        self.openFiles(self.basefilepath)
+
+    def __del__(self):
+        for form in self.fileformat:
+            self.writer[form].writeFooter()
+            self.files[form].close()
+
+    # opens a file for each output format
+    def openFiles(self, outfile):
+        for form in self.fileformat:
+            if form == "netlist":
+                filename = outfile
+            else:
+                filename = outfile + "." + form
+            file = open(filename, "w")
+            self.files[form] = file
+            print("opened file ", file.name)
+            self.writer[form] = MyntsWriter(form=form, file=file)
+
+    def execute(self, elements) -> str:
+        for form in self.fileformat:
+            self.writer[form].writeGeom(elements)
+        return "DaVe2Mynts"
+
+    def setForm(self, format):
+        self.format = format
 
 
 def create_mynts(grid_data, basefilepath):
