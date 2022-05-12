@@ -439,25 +439,24 @@ def create_grid(
         # plot_landuse(grid_data, api_use, output_folder)
 
     # convert power model
+    net_power = None
     if convert_power and power_levels:
         if "pandapower" in convert_power:
             net_power = create_pandapower(
                 grid_data, opt_model=opt_model, api_use=api_use, output_folder=output_folder
             )
-    else:
-        net_power = None
+
     # convert gas model
+    net_gas = None
     if convert_gas and gas_levels:
         if "pandapipes" in convert_gas:
             net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
         if "gaslib" in convert_gas:
-            net_gas = create_gaslib(
+            create_gaslib(
                 grid_data, api_use=api_use, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
         if "mynts" in convert_gas:
             create_mynts(grid_data, basefilepath=output_folder)
-    else:
-        net_gas = None
 
     # return runtime
     _stop_time = timeit.default_timer()
