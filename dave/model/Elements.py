@@ -17,9 +17,9 @@ class Element:
 
     """
 
-    def __init__(self, type="None", name=""):
+    def __init__(self, element_type="None", name=""):
         self.attributes = {}
-        self.type = type  # n, p, v, None
+        self.type = element_type  # n, p, v, None
         self.name = name
 
     # add an attribute to the element
@@ -30,8 +30,7 @@ class Element:
     def get(self, prop):
         if prop in self.attributes:
             return self.attributes[prop]
-        else:
-            return None
+        return None
 
     # iterator for the attributes, returns one attribute after the other, at the end None is returned
     def props(self):
@@ -49,23 +48,22 @@ class Elements:
 
     ignoreList = ("param", "uncertainty", "method")  # attributes of dave to be ignored
 
-    def __init__(self, type=None, data=None):
+    def __init__(self, element_type=None, data=None):
         self.elements = {}  #
         self.type = "None"  # n, p, v, None
         # self.name = ""
         self.eleIndex = 0
         self.n_ele = 0
-        if type is not None:
-            self.type = type
+        if element_type is not None:
+            self.type = element_type
         if data is not None:
-            self.insert(type, data)
+            self.insert(element_type, data)
 
     # Get the Element with the specified name; returns None if Element not found
     def get(self, name) -> Element:
         if name in self.elements:
             return self.elements[name]
-        else:
-            return None
+        return None
 
     # iterator for the Elements, returns one Element after the other;  at the end None is returned
     def nextEle(self) -> str:
@@ -73,26 +71,24 @@ class Elements:
         if self.eleIndex < self.n_ele:
             name = next(self.eleList)
             return self.elements[name]
-        else:
-            return None
+        return None
 
-    """
-    This function fills the dictionary with data elements from Dave;
-        defines:
-			 n_ele number of elements
-			 type  short form for type of the Elements: n(ode) or p(ipe) or v(alve)
+    def insert(self, element_type, data):
+        """
+        This function fills the dictionary with data elements from Dave;
+            defines:
+                         n_ele number of elements
+                         type  short form for type of the Elements: n(ode) or p(ipe) or v(alve)
 
-    INPUT:
-        **type** (src)  - 
-        **data** (dict) - all Informations about the grid elements (e.g. pandas.core.series.Series)
-    """
-
-    def insert(self, type, data):
-        self.type = type
+        INPUT:
+            **element_type** (src)  -
+            **data** (dict) - all Informations about the grid elements (e.g. pandas.core.series.Series)
+        """
+        self.type = element_type
         self.n_ele = len(data.index)
         for ele in range(0, self.n_ele):
             name = data["dave_name"][ele]
-            newElem = Element(type, name)
+            newElem = Element(element_type, name)
             for key in data.keys():
                 if key not in self.ignoreList:
                     newElem.addAttribute(key, data[key][ele])
