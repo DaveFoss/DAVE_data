@@ -418,7 +418,6 @@ def create_grid(
     # save informations in user folder
     if not api_use:
         # create dave output folder on desktop for DaVe dataset, plotting and converted model
-        print(f"\nSave DaVe output data at the following path: {output_folder}")
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         # save DaVe dataset to the output folder but not in api modus
@@ -458,9 +457,13 @@ def create_grid(
         if "mynts" in convert_gas:
             create_mynts(grid_data, basefilepath=output_folder)
 
-    # return runtime
-    _stop_time = timeit.default_timer()
-    print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
+    # show general informations from the generating process
+    if not api_use:
+        # print output folder
+        print(f"\nSave DaVe output data at the following path: {output_folder}")
+        # return runtime
+        _stop_time = timeit.default_timer()
+        print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
 
     # return data
     if net_power and net_gas:

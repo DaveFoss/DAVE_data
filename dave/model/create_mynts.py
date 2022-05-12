@@ -1,9 +1,12 @@
+from tqdm import tqdm
+
 from dave.model.converter import Converter, Strategy
 from dave.model.elements import Elements
+from dave.settings import dave_settings
 
 # dictionaries for Mynts text properties and numeric properties;  # !!! todo complete list
 # used to convert dave names to the corresponding Mynts properties
-#
+
 MyntsTextProps = {
     "dave_name": "name",
     "lat": "Y",
@@ -115,7 +118,6 @@ class DaVe2Mynts(Strategy):
                 filename = outfile + "." + form
             file = open(filename, "w")
             self.files[form] = file
-            print("opened file ", file.name)
             self.writer[form] = MyntsWriter(form=form, file=file)
 
     def execute(self, elements) -> str:
@@ -128,23 +130,38 @@ class DaVe2Mynts(Strategy):
 
 
 def create_mynts(grid_data, basefilepath):
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="create mynts network:              ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
+
     myntsconv = Converter(grid_data, basefilepath=basefilepath)  # default file names
     myntsconv.getData()  # gets data from DaVe input file
+    # update progress
+    pbar.update(50)
 
     # extract the data from DaVe
     pipes = Elements()
     pipes.insert("p", myntsconv.pipedata)  # stores all pipe elements
-    print(myntsconv.npipes, " pipes\n")
-
     valves = Elements("v", myntsconv.valvedata)
     nodes = Elements("n", myntsconv.nodedata)
+    # update progress
+    pbar.update(25)
 
     # init writing to Mynts geom.jsn file
     basefilepath = myntsconv.getBasicPath()  # basic output file path
-    print("basic path is ", basefilepath)
     myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy (kann dann auch andere sein)
 
     eletypes = [nodes, pipes, valves]  # only those now available
+
+    """
+    # print written data to mynts file
     for eletype in eletypes:
         text = myntsconv.executeStrategy(eletype)
         print(text, ": ", eletype.type, " written to Mynts Geom")
+    """
+    # update progress
+    pbar.update(25)

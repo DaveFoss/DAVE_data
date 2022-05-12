@@ -41,7 +41,6 @@ class Converter:
             self.infilename = (
                 infilename.strip()
             )  # !!! Case for read in dave_dataset.json file without generating
-            print("Read from file ", self.infilename)
             self.grid_data = from_json(self.infilename)
         else:
             self.grid_data = grid_data
