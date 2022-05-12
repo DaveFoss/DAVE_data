@@ -98,6 +98,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                 grid_data.components_power[f"{component_typ}"].drop(
                     components[components.bus.isin(nodes_dis)].index.to_list(), inplace=True
                 )
+                grid_data.components_power[f"{component_typ}"].reset_index(drop=True, inplace=True)
             elif component_typ == "transformers":
                 # this components have a sub type
                 power_components_sub = list(grid_data.components_power[f"{component_typ}"].keys())
@@ -116,6 +117,9 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                             ].index.to_list(),
                             inplace=True,
                         )
+                        grid_data.components_power[f"{component_typ}"][
+                            f"{component_subtyp}"
+                        ].reset_index(drop=True, inplace=True)
             elif component_typ == "substation":
                 # this components have a sub type
                 power_components_sub = list(grid_data.components_power[f"{component_typ}"].keys())
@@ -135,12 +139,17 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                                 components[components.dave_name.isin(nodes_dis)].index.to_list(),
                                 inplace=True,
                             )
+                            grid_data.components_power[f"{component_typ}"][
+                                f"{component_subtyp}"
+                            ].reset_index(drop=True, inplace=True)
 
         # delet needless nodes and lines
         grid_data[f"{level}_data"][f"{level}_nodes"].drop(
             nodes[nodes.dave_name.isin(nodes_dis)].index.to_list(), inplace=True
         )
+        grid_data[f"{level}_data"][f"{level}_nodes"].reset_index(drop=True, inplace=True)
         grid_data[f"{level}_data"][f"{level}_lines"].drop(lines_dis.index.to_list(), inplace=True)
+        grid_data[f"{level}_data"][f"{level}_lines"].reset_index(drop=True, inplace=True)
 
 
 def clean_disconnected_elements_gas(grid_data, min_number_nodes):
@@ -186,13 +195,16 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
                     components[components.junction.isin(junctions_dis)].index.to_list(),
                     inplace=True,
                 )
+                grid_data.components_gas[f"{component_typ}"].reset_index(drop=True, inplace=True)
         # delet needless junctions and pipelines
         grid_data[f"{level}_data"][f"{level}_junctions"].drop(
             junctions[junctions.dave_name.isin(junctions_dis)].index.to_list(), inplace=True
         )
+        grid_data[f"{level}_data"][f"{level}_junctions"].reset_index(drop=True, inplace=True)
         grid_data[f"{level}_data"][f"{level}_pipes"].drop(
             pipelines_dis.index.to_list(), inplace=True
         )
+        grid_data[f"{level}_data"][f"{level}_pipes"].reset_index(drop=True, inplace=True)
 
 
 def clean_wrong_piplines(grid_data):
@@ -207,6 +219,7 @@ def clean_wrong_piplines(grid_data):
         grid_data[f"{level}_data"][f"{level}_pipes"].drop(
             pipelines_equal.index.to_list(), inplace=True
         )
+        grid_data[f"{level}_data"][f"{level}_pipes"].reset_index(drop=True, inplace=True)
 
 
 def clean_wrong_lines(grid_data):
@@ -219,6 +232,7 @@ def clean_wrong_lines(grid_data):
         lines_equal = pipelines[pipelines.from_bus == pipelines.to_bus]
         # delet needless pipelines
         grid_data[f"{level}_data"][f"{level}_lines"].drop(lines_equal.index.to_list(), inplace=True)
+        grid_data[f"{level}_data"][f"{level}_lines"].reset_index(drop=True, inplace=True)
 
 
 def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"]):
