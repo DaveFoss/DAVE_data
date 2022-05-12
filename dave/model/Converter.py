@@ -5,9 +5,8 @@ __version__ = "0.1"
 import sys
 from abc import ABC, abstractmethod
 
-from Elements import Elements
-
 import dave.io as dio
+from dave.model.Elements import Elements
 
 
 # Strategy interface; used to define different output strategies dave2mynts, dave2...
@@ -43,16 +42,18 @@ class Converter:
         text = self.strategy.execute(elements)
         return text
 
-    def __init__(self, infilename: str = "", basefilepath: str = ""):
+    def __init__(self, grid_data, infilename: str = "", basefilepath: str = ""):
         if infilename:  # is not empty
             self.infilename = infilename.strip()
-        else:  # for testing
+        else:  # for testing  # !!! delet?
             self.infilename = "/home/cass/TransHyDE/DaVe/dave_dataset_valves.json"
         if basefilepath:
             self.basefilepath = basefilepath.strip()
         else:
-            self.basefilepath = "/tmp/dave2Mynts.geom"  # for testing
+            self.basefilepath = "/tmp/dave2Mynts.geom"  # for testing  # !!! delet?
         print("Read from file ", self.infilename)
+
+        self.grid_data = grid_data
 
     def getBasicPath(self) -> str:
         return self.basefilepath
@@ -60,16 +61,16 @@ class Converter:
     def setBasicPath(self, basefilepath):
         self.basefilepath = basefilepath
 
-    # get data from Dave as nodes, pipes and valves 	#todo: other components like compressors etc
+    # get data from Dave as nodes, pipes and valves 	# !!! todo: other components like compressors etc
     def getData(self):
-        grid_data = dio.from_json(self.infilename)
-        gas_data = grid_data.components_gas
-        hp_data = grid_data.hp_data
+        # grid_data = dio.from_json(self.infilename)
+        gas_data = self.grid_data.components_gas
+        hp_data = self.grid_data.hp_data
         # print (hp_data)  for testing
-        self.nodedata = grid_data.hp_data.hp_junctions  #
+        self.nodedata = self.grid_data.hp_data.hp_junctions  #
         # print (self.nodedata)
-        self.pipedata = grid_data.hp_data.hp_pipes  # pipes
-        self.valvedata = grid_data.components_gas.valves
+        self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
+        self.valvedata = self.grid_data.components_gas.valves
         self.compressors = gas_data.compressors  #
         self.nvalves = len(self.valvedata.index)
         self.npipes = len(self.pipedata.index)
@@ -78,7 +79,7 @@ class Converter:
         # self.nodeElements = iter(self.nodedata)
 
 
-from MyntsWriter import MyntsWriter  # Output file strategy class for Mynts
+from dave.model.MyntsWriter import MyntsWriter  # Output file strategy class for Mynts
 
 
 class DaVe2Mynts(Strategy):
@@ -129,23 +130,26 @@ class Default(Strategy):
 """
 Example usage 
 """
-myntsconv = Converter()  # default file names
-myntsconv.getData()  # gets data from DaVe input file
 
-# extract the data from DaVe
-pipes = Elements()
-pipes.insert("p", myntsconv.pipedata)  # stores all pipe elements
-print(myntsconv.npipes, " pipes\n")
 
-valves = Elements("v", myntsconv.valvedata)
-nodes = Elements("n", myntsconv.nodedata)
+def create_mynts(grid_data, basefilepath):
+    myntsconv = Converter(grid_data, basefilepath=basefilepath)  # default file names
+    myntsconv.getData()  # gets data from DaVe input file
 
-# init writing to Mynts geom.jsn file
-basefilepath = myntsconv.getBasicPath()  # basic output file path
-print("basic path is ", basefilepath)
-myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy
+    # extract the data from DaVe
+    pipes = Elements()
+    pipes.insert("p", myntsconv.pipedata)  # stores all pipe elements
+    print(myntsconv.npipes, " pipes\n")
 
-eletypes = [nodes, pipes, valves]  # only those now available
-for eletype in eletypes:
-    text = myntsconv.executeStrategy(eletype)
-    print(text, ": ", eletype.type, " written to Mynts Geom")
+    valves = Elements("v", myntsconv.valvedata)
+    nodes = Elements("n", myntsconv.nodedata)
+
+    # init writing to Mynts geom.jsn file
+    basefilepath = myntsconv.getBasicPath()  # basic output file path
+    print("basic path is ", basefilepath)
+    myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy (kann dann auch andere sein)
+
+    eletypes = [nodes, pipes, valves]  # only those now available
+    for eletype in eletypes:
+        text = myntsconv.executeStrategy(eletype)
+        print(text, ": ", eletype.type, " written to Mynts Geom")

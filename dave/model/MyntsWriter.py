@@ -1,6 +1,6 @@
-from Elements import Elements
+from dave.model.Elements import Elements
 
-# dictionaries for Mynts text properties and numeric properties;  # todo complete list
+# dictionaries for Mynts text properties and numeric properties;  # !!! todo complete list
 # used to convert dave names to the corresponding Mynts properties
 #
 MyntsTextProps = {
@@ -75,7 +75,7 @@ class MyntsWriter:
         else:
             return prop
 
-    # convert prop value to Mynts internal unit				# todo complete list
+    # convert prop value to Mynts internal unit				# !!! todo complete list
     def convertPropValue2Mynts(self, prop, value) -> str:
         fvalue = float(value)
         if prop == "diameter_mm":

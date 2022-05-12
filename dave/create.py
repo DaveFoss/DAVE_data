@@ -22,7 +22,13 @@ from dave.components import (
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io import from_archiv, to_archiv, to_hdf, to_json
-from dave.model import clean_up_data, create_gaslib, create_pandapipes, create_pandapower
+from dave.model import (
+    clean_up_data,
+    create_gaslib,
+    create_mynts,
+    create_pandapipes,
+    create_pandapower,
+)
 from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -449,8 +455,7 @@ def create_grid(
                 grid_data, api_use=api_use, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
         if "mynts" in convert_gas:
-            print("place for mynts converter")
-            # !!! add entry to mynts converter
+            create_mynts(grid_data, basefilepath=output_folder)
     else:
         net_gas = None
 

@@ -40,9 +40,9 @@ class Element:
 class Elements:
     """
     This class defines a dictionary of objects of a net as Element objects of a single type
-
-    ignoreList = ('param', 'uncertainty','method')  # attributes of dave to be ignored
     """
+
+    ignoreList = ("param", "uncertainty", "method")  # attributes of dave to be ignored
 
     def __init__(self, type=None, data=None):
         self.elements = {}  #
