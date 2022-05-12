@@ -1,4 +1,5 @@
-from dave.model.Elements import Elements
+from dave.model.converter import Converter, DaVe2Mynts
+from dave.model.elements import Elements
 
 # dictionaries for Mynts text properties and numeric properties;  # !!! todo complete list
 # used to convert dave names to the corresponding Mynts properties
@@ -84,3 +85,26 @@ class MyntsWriter:
             fvalue = fvalue * 1.0e3
         # elif prop.endswith("bar"): ok
         return str(fvalue)
+
+
+def create_mynts(grid_data, basefilepath):
+    myntsconv = Converter(grid_data, basefilepath=basefilepath)  # default file names
+    myntsconv.getData()  # gets data from DaVe input file
+
+    # extract the data from DaVe
+    pipes = Elements()
+    pipes.insert("p", myntsconv.pipedata)  # stores all pipe elements
+    print(myntsconv.npipes, " pipes\n")
+
+    valves = Elements("v", myntsconv.valvedata)
+    nodes = Elements("n", myntsconv.nodedata)
+
+    # init writing to Mynts geom.jsn file
+    basefilepath = myntsconv.getBasicPath()  # basic output file path
+    print("basic path is ", basefilepath)
+    myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy (kann dann auch andere sein)
+
+    eletypes = [nodes, pipes, valves]  # only those now available
+    for eletype in eletypes:
+        text = myntsconv.executeStrategy(eletype)
+        print(text, ": ", eletype.type, " written to Mynts Geom")
