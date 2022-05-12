@@ -1,3 +1,7 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 from abc import ABC, abstractmethod
 
 from dave.io import from_json
@@ -53,7 +57,7 @@ class Converter:
     def setBasicPath(self, basefilepath):
         self.basefilepath = basefilepath
 
-    # get data from Dave as nodes, pipes and valves 	# !!! todo: other components like compressors etc
+    # get data from Dave as nodes, pipes and valves  # !!! todo: other components like compressors etc
     def getData(self):
         self.nodedata = self.grid_data.hp_data.hp_junctions  #
         self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
