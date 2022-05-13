@@ -161,11 +161,9 @@ def create_mynts(grid_data, basefilepath):
 
     eletypes = [nodes, pipes, valves]  # only those now available
 
-    """
     # print written data to mynts file
     for eletype in eletypes:
         text = myntsconv.executeStrategy(eletype)
-        print(text, ": ", eletype.type, " written to Mynts Geom")
-    """
+        # print(text, ": ", eletype.type, " written to Mynts Geom")
     # update progress
     pbar.update(25)
