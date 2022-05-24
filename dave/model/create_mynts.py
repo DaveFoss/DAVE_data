@@ -100,7 +100,7 @@ class DaVe2Mynts(Strategy):
     """
 
     files = {}
-    fileformat = ["jsn"]  # ,'netlist', ...
+    fileformat = ["geom.jsn"]  # ,'netlist', ...
     format = ""  # format of the output file data
     writer = {}  # writers for each form
 
@@ -143,7 +143,7 @@ def create_mynts(grid_data, basefilepath):
     )
 
     myntsconv = Converter(grid_data, basefilepath=basefilepath)  # default file names
-    myntsconv.getData()  # gets data from DaVe input file
+    myntsconv.initData()  # gets data from DaVe input file
     # update progress
     pbar.update(50)
 
@@ -152,18 +152,20 @@ def create_mynts(grid_data, basefilepath):
     pipes.insert("p", myntsconv.pipedata)  # stores all pipe elements
     valves = Elements("v", myntsconv.valvedata)
     nodes = Elements("n", myntsconv.nodedata)
+    compressors = Elements("c", myntsconv.compressordata)
     # update progress
     pbar.update(25)
+    print()
 
     # init writing to Mynts geom.jsn file
     basefilepath = myntsconv.getBasicPath()  # basic output file path
     myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy (kann dann auch andere sein)
 
-    eletypes = [nodes, pipes, valves]  # only those now available
+    eletypes = [nodes, pipes, valves, compressors]  # only those now available
 
     # print written data to mynts file
     for eletype in eletypes:
         text = myntsconv.executeStrategy(eletype)
-        # print(text, ": ", eletype.type, " written to Mynts Geom")
+        print(text, ": ", eletype.type, " written to Mynts Geom")
     # update progress
     pbar.update(25)

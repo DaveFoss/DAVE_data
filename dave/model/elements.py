@@ -10,7 +10,7 @@ class Element:
         defines:
                  attributes: dictionary of properties of the object as string pairs key:value
                      key: the attribute's name, value: the attribute's value
-                 type:       type of the attribute: n(ode) or p(ipe) or v(alve)
+                 type:       type of the attribute: n(ode) or p(ipe) or v(alve)  c(ompressor)
                  name:       name of the object
 
     example usage: Element(type="p", name="Pipe_1")
@@ -19,7 +19,7 @@ class Element:
 
     def __init__(self, element_type="None", name=""):
         self.attributes = {}
-        self.type = element_type  # n, p, v, None
+        self.type = element_type  # n, p, v, c, None
         self.name = name
 
     # add an attribute to the element
@@ -46,11 +46,12 @@ class Elements:
     This class defines a dictionary of objects of a net as Element objects of a single type
     """
 
-    ignoreList = ("param", "uncertainty", "method")  # attributes of dave to be ignored
+    ignoreList = ("param", "uncertainty", "method", "geometry")  # attributes of dave to be ignored
 
     def __init__(self, element_type=None, data=None):
+        self.eleList = None
         self.elements = {}  #
-        self.type = "None"  # n, p, v, None
+        self.type = "None"  # n, p, v, d, None
         # self.name = ""
         self.eleIndex = 0
         self.n_ele = 0
@@ -78,15 +79,15 @@ class Elements:
         This function fills the dictionary with data elements from Dave;
             defines:
                          n_ele number of elements
-                         type  short form for type of the Elements: n(ode) or p(ipe) or v(alve)
+                         type  short form for type of the Elements: n(ode) or p(ipe) or v(alve) or c(ompressor)
 
         INPUT:
             **element_type** (src)  -
-            **data** (dict) - all Informations about the grid elements (e.g. pandas.core.series.Series)
+            **data** (dict) - all Information's about the grid elements (e.g. pandas.core.series.Series)
         """
         self.type = element_type
         self.n_ele = len(data.index)
-        for ele in range(0, self.n_ele):
+        for ele in range(self.n_ele):
             name = data["dave_name"][ele]
             newElem = Element(element_type, name)
             for key in data.keys():

@@ -49,7 +49,7 @@ class Converter:
         else:
             self.grid_data = grid_data
         if basefilepath:
-            self.basefilepath = basefilepath.strip() + "\\dave_mynts"
+            self.basefilepath = basefilepath.strip() + "/dave_mynts"
 
     def getBasicPath(self) -> str:
         return self.basefilepath
@@ -58,18 +58,20 @@ class Converter:
         self.basefilepath = basefilepath
 
     # get data from Dave as nodes, pipes and valves  # !!! todo: other components like compressors etc
-    def getData(self):
+    def initData(self):
         self.nodedata = self.grid_data.hp_data.hp_junctions  #
         self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
         self.valvedata = self.grid_data.components_gas.valves
-        self.compressors = self.grid_data.components_gas.compressors  #
+        self.compressordata = self.grid_data.components_gas.compressors  #
         self.nvalves = len(self.valvedata.index)
         self.npipes = len(self.pipedata.index)
         self.nnodes = len(self.nodedata.index)
-        # print ("Read ", nnodes, " nodes", npipes, " pipes", nvalves, "valves", " from file ", self.filename)
+        self.ncompressors = len(self.compressordata.index)
+        # print("Read ", self.nnodes, " nodes", self.npipes, " pipes", self.nvalves, "valves")
         # self.nodeElements = iter(self.nodedata)
 
 
 class Default(Strategy):
     def execute(self, elements=None) -> str:
         return "Default"
+
