@@ -46,7 +46,7 @@ class Elements:
     This class defines a dictionary of objects of a net as Element objects of a single type
     """
 
-    ignoreList = ("param", "uncertainty", "method", "geometry")  # attributes of dave to be ignored
+    ignoreList = ("param", "uncertainty", "method", "geometry", "dave_name")  # attributes of dave to be ignored
 
     def __init__(self, element_type=None, data=None):
         self.eleList = None
