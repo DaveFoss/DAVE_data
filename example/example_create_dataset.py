@@ -52,22 +52,15 @@ grid_data = create_grid(
     federal_state=None,
     nuts_region=None,
     own_area=_own_area,
-    # grid level parameters
-    power_levels=["lv"],
-    gas_levels=[],
-    # --- optional parameters
-    plot=True,
-    opt_model=False,
-    combine_areas=[],
     # geographical parameters
     roads=False,
     roads_plot=False,
     buildings=False,
     landuse=False,
     railways=False,
-    # converting parameters
-    convert_power=[],  # if True a second return variable must be defined
-    convert_gas=[],  # if True a second return variable must be defined
+    # grid level parameters
+    power_levels=["lv"],
+    gas_levels=[],
     # power grid components
     transformers=False,
     renewable_powerplants=False,
@@ -77,6 +70,13 @@ grid_data = create_grid(
     compressors=False,
     sinks=False,
     sources=False,
+    # --- optional parameters
+    plot=True,
+    opt_model=False,
+    combine_areas=[],
+    # converting parameters
+    convert_power=[],  # if True a second return variable must be defined
+    convert_gas=[],  # if True a second return variable must be defined
     # output settings
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",
