@@ -1,6 +1,7 @@
 # Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+import copy
 
 from tqdm import tqdm
 
@@ -18,18 +19,62 @@ MyntsTextProps = {
     "from_junction": "node1",
     "to_junction": "node2",
 }
-MyntsNumProps = {"diameter_mm": "D"}
+MyntsNumProps = {
+    "diameter_mm": "D",
+    "length_km": "L"
+}
+
+MyntsReqNodeProps = [
+    "h", "x", "y", "Web", "KTyp", "nVNB", "aFNB", "EIC", "MG", "Zuornd",
+    "Des", "GeoLat", "GeoLong", "AnLNum", "LNum", "Schemaplan", "UmstSchr",
+    "UmstTag", "NEPID", "NEPID18", "UmstJ", "UmstBer", "Zone", "Teilnetz", "Messort"
+]
+
+MyntsReqPipeProps = [
+    "node1", "node2", "l", "d", "k", "htc", "NurPlan", "Bez", "Des", "LNum"
+                                                                     "LName", "PNPipe", "Eig", "NEPID", "NEPID18",
+    "UmstJ", "ModVar", "IJahr",
+    "UmstBer", "UmstSchr", "UmstTag", "Update"
+]
+
+MyntsReqValveProps = [
+    "node1", "node2", "pimin", "pomax", "l", "d", "NurPlan", "Bez", "Des", "LNum",
+    "LName", "Autom", "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
+]
+
+MyntsReqCompressorProps = [
+    "d", "pimin", "pomax", "node1", "node2", "kind", "NurPlan", "Bez", "Des", "Autom",
+    "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
+]
+
+
+# convert prop value to Mynts internal unit				# !!! todo complete list
+def convertPropValue2Mynts(prop, value) -> str:
+    fvalue = float(value)
+    if prop == "diameter_mm":
+        fvalue = fvalue / 1.0e3
+    elif prop == "length_km":
+        fvalue = fvalue * 1.0e3
+    # elif prop.endswith("bar"): ok
+    return str(fvalue)
+
+
+# get Mynts name of DaVe property; returns original name if not in Mynts name dict
+def myntsProp(prop) -> str:
+    if prop in MyntsTextProps:
+        return MyntsTextProps[prop]
+    elif prop in MyntsNumProps:
+        return MyntsNumProps[prop]
+    else:
+        return prop
 
 
 class MyntsWriter:  # Output file strategy class for Mynts
-
     elements = Elements()
     MyntsProps = {}
 
-    def __init__(self, form="", file=None):
+    def __init__(self, file=None):
         self.file = file
-        self.form = form
-        self.writeHeader()
 
     def __del__(self):
         # self.writeFooter()
@@ -37,61 +82,63 @@ class MyntsWriter:  # Output file strategy class for Mynts
 
     def setFile(self, file):
         self.file = file
-        self.writeHeader()
 
-    def setForm(self, form):
-        self.form = form
-
-    # get the elements from Elements dict and write to file
+    # get the elements from Elements dict and write to geom file
     def writeGeom(self, elements):
         self.elements = elements
         element = elements.nextEle()
         while element is not None:
-            element_type = element.type
-            # if element_type=="p":
-            #     self.writePipe(element)
-            self.writeElement(element)
-            # else
+            self.writeGeomElement(element)
             element = elements.nextEle()
 
-    def writeHeader(self):
-        line = '{"#MYNTS_GEOM":"Base topology file "' + self.file.name + '"\n'
+    def writeScen(self, elements):
+        self.elements = elements
+        element = elements.nextEle()
+        while element is not None:
+            self.writeScenElement(element)
+            element = elements.nextEle()
+
+    def writeGeomHeader(self):
+        line = '{"#MYNTS_GEOM":"Base topology file ' + self.file.name + '"\n'
+        self.file.write(line)
+
+    def writeScenHeader(self):
+        line = '{"#MYNTS_SCEN":"Scenario ' + self.file.name + '"\n'
         self.file.write(line)
 
     def writeFooter(self):
         self.file.write("}\n")
 
-    def writeElement(self, element):
+    def writeGeomElement(self, element):
         line = ',"' + element.name + '":{"obj_type":"' + element.type + '"'
         #
         for prop in element.props():
-            newName = self.myntsProp(prop)
-            newvalue = str(element.get(prop))
+            newName = myntsProp(prop)
+            newValue = str(element.get(prop))
 
             if prop in MyntsNumProps:
-                newvalue = self.convertPropValue2Mynts(prop, newvalue)
-            line = line + ', "' + newName + '":"' + newvalue + '"'
+                newValue = convertPropValue2Mynts(prop, newValue)
+            line = line + ', "' + newName + '":"' + newValue + '"'
         line = line + "}\n"
         self.file.write(line)
 
-    # get Mynts name of DaVe property; returns original name if not in Mynts name dict
-    def myntsProp(self, prop) -> str:
-        if prop in MyntsTextProps:
-            return MyntsTextProps[prop]
-        elif prop in MyntsNumProps:
-            return MyntsNumProps[prop]
-        else:
-            return prop
+    def writeScenElement(self, element):
+        line = ',"' + element.name + '":{'
+        #
+        first_element = True        # first element written different
+        for prop in element.props():
+            newName = myntsProp(prop)
+            newValue = str(element.get(prop))
 
-    # convert prop value to Mynts internal unit				# !!! todo complete list
-    def convertPropValue2Mynts(self, prop, value) -> str:
-        fvalue = float(value)
-        if prop == "diameter_mm":
-            fvalue = fvalue / 1.0e3
-        elif prop == "length_km":
-            fvalue = fvalue * 1.0e3
-        # elif prop.endswith("bar"): ok
-        return str(fvalue)
+            if prop in MyntsNumProps:
+                newValue = convertPropValue2Mynts(prop, newValue)
+            if first_element:
+                line = line + '"' + newName + '":"' + newValue + '"'
+                first_element = False
+                continue
+            line = line + ', "' + newName + '":"' + newValue + '"'
+        line = line + "}\n"
+        self.file.write(line)
 
 
 class DaVe2Mynts(Strategy):
@@ -99,38 +146,36 @@ class DaVe2Mynts(Strategy):
     class to convert dave data to Mynts output files, one for each format
     """
 
-    files = {}
-    fileformat = ["geom.jsn"]  # ,'netlist', ...
-    format = ""  # format of the output file data
-    writer = {}  # writers for each form
-
     def __init__(self, basefilepath):
+        self.files = {}
+        self.writer = None
         self.basefilepath = basefilepath
         self.openFiles(self.basefilepath)
 
     def __del__(self):
-        for form in self.fileformat:
-            self.writer[form].writeFooter()
-            self.files[form].close()
+        for file in self.files.keys():
+            self.files[file].close()
 
     # opens a file for each output format
     def openFiles(self, outfile):
-        for form in self.fileformat:
-            if form == "netlist":
-                filename = outfile
-            else:
-                filename = outfile + "." + form
-            file = open(filename, "w")
-            self.files[form] = file
-            self.writer[form] = MyntsWriter(form=form, file=file)
+        self.files["geom"] = open(outfile + ".geom.jsn", "w")
+        self.files["scen"] = open(outfile + ".scen.jsn", "w")
+        self.writer = MyntsWriter()
 
-    def execute(self, elements) -> str:
-        for form in self.fileformat:
-            self.writer[form].writeGeom(elements)
+    def execute(self, element_types) -> str:
+        # write elements in geom file
+        self.writer.setFile(self.files["geom"])
+        self.writer.writeGeomHeader()
+        for elements in element_types:
+            self.writer.writeGeom(elements)
+        self.writer.writeFooter()
+        # write elements in scen file
+        self.writer.setFile(self.files["scen"])
+        self.writer.writeScenHeader()
+        for elements in element_types:
+            self.writer.writeScen(elements)
+        self.writer.writeFooter()
         return "DaVe2Mynts"
-
-    def setForm(self, format):
-        self.format = format
 
 
 def create_mynts(grid_data, basefilepath):
@@ -148,8 +193,7 @@ def create_mynts(grid_data, basefilepath):
     pbar.update(50)
 
     # extract the data from DaVe
-    pipes = Elements()
-    pipes.insert("p", myntsconv.pipedata)  # stores all pipe elements
+    pipes = Elements("p", myntsconv.pipedata)  # stores all pipe elements
     valves = Elements("v", myntsconv.valvedata)
     nodes = Elements("n", myntsconv.nodedata)
     compressors = Elements("c", myntsconv.compressordata)
@@ -159,13 +203,11 @@ def create_mynts(grid_data, basefilepath):
 
     # init writing to Mynts geom.jsn file
     basefilepath = myntsconv.getBasicPath()  # basic output file path
-    myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy (kann dann auch andere sein)
+    myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy
 
-    eletypes = [nodes, pipes, valves, compressors]  # only those now available
+    all_elements = [pipes, valves, nodes, compressors]
 
-    # print written data to mynts file
-    for eletype in eletypes:
-        text = myntsconv.executeStrategy(eletype)
-        print(text, ": ", eletype.type, " written to Mynts Geom")
+    text = myntsconv.executeStrategy(all_elements)
+    # print(text, ": ", ele_type.type, " written to Mynts Geom")
     # update progress
     pbar.update(25)

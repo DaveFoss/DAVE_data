@@ -68,10 +68,11 @@ class Elements:
 
     # iterator for the Elements, returns one Element after the other;  at the end None is returned
     def nextEle(self) -> str:
-        self.eleIndex += 1
-        if self.eleIndex < self.n_ele:
-            name = next(self.eleList)
+        name = next(self.eleList, None)
+        if name is not None:
+            self.eleIndex += 1
             return self.elements[name]
+        self.eleList = iter(self.elements)
         return None
 
     def insert(self, element_type, data):

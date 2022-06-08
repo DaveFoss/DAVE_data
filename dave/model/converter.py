@@ -10,7 +10,7 @@ from dave.io import from_json
 # Strategy interface; used to define different output strategies dave2mynts, dave2...
 class Strategy(ABC):
     @abstractmethod
-    def execute(self, elements) -> str:
+    def execute(self, element_types) -> str:
         pass
 
 
@@ -36,8 +36,8 @@ class Converter:
         else:
             self.strategy = Default()
 
-    def executeStrategy(self, elements) -> str:
-        text = self.strategy.execute(elements)
+    def executeStrategy(self, element_types) -> str:
+        text = self.strategy.execute(element_types)
         return text
 
     def __init__(self, grid_data, infilename: str = "", basefilepath: str = ""):
@@ -57,7 +57,7 @@ class Converter:
     def setBasicPath(self, basefilepath):
         self.basefilepath = basefilepath
 
-    # get data from Dave as nodes, pipes and valves  # !!! todo: other components like compressors etc
+    # get data from Dave as nodes, pipes and valves  # !!! todo: other components if there are any
     def initData(self):
         self.nodedata = self.grid_data.hp_data.hp_junctions  #
         self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
@@ -70,8 +70,15 @@ class Converter:
         # print("Read ", self.nnodes, " nodes", self.npipes, " pipes", self.nvalves, "valves")
         # self.nodeElements = iter(self.nodedata)
 
+    def getAllData(self):
+        all_data = self.nodedata
+        all_data.append(self.pipedata)
+        all_data.append(self.valvedata)
+        all_data.append(self.compressordata)
+        return all_data
+
 
 class Default(Strategy):
-    def execute(self, elements=None) -> str:
+    def execute(self, element_types=None) -> str:
         return "Default"
 
