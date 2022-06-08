@@ -19,6 +19,7 @@ MyntsTextProps = {
     "from_junction": "node1",
     "to_junction": "node2",
 }
+
 MyntsNumProps = {
     "diameter_mm": "D",
     "length_km": "L"
@@ -47,6 +48,12 @@ MyntsReqCompressorProps = [
     "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
 ]
 
+MyntsReqProps = {"n": MyntsReqNodeProps,
+                 "p": MyntsReqPipeProps,
+                 "v": MyntsReqValveProps,
+                 "c": MyntsReqCompressorProps,
+}
+
 
 # convert prop value to Mynts internal unit				# !!! todo complete list
 def convertPropValue2Mynts(prop, value) -> str:
@@ -65,8 +72,14 @@ def myntsProp(prop) -> str:
         return MyntsTextProps[prop]
     elif prop in MyntsNumProps:
         return MyntsNumProps[prop]
-    else:
-        return prop
+    return prop
+
+
+def daveProp(prop) -> str:
+    daveProps = {y: x for x, y in MyntsTextProps.items()}
+    if prop in daveProps:
+        return daveProps[prop]
+    return prop
 
 
 class MyntsWriter:  # Output file strategy class for Mynts
@@ -75,10 +88,6 @@ class MyntsWriter:  # Output file strategy class for Mynts
 
     def __init__(self, file=None):
         self.file = file
-
-    def __del__(self):
-        # self.writeFooter()
-        pass
 
     def setFile(self, file):
         self.file = file
@@ -112,24 +121,26 @@ class MyntsWriter:  # Output file strategy class for Mynts
     def writeGeomElement(self, element):
         line = ',"' + element.name + '":{"obj_type":"' + element.type + '"'
         #
-        for prop in element.props():
-            newName = myntsProp(prop)
-            newValue = str(element.get(prop))
-
+        for prop in MyntsReqProps[element.type]:
+            dave_prop = daveProp(prop)
+            newValue = str(element.get(dave_prop))
+            if element.get(dave_prop) is None:
+                newValue = ""
             if prop in MyntsNumProps:
                 newValue = convertPropValue2Mynts(prop, newValue)
-            line = line + ', "' + newName + '":"' + newValue + '"'
+            line = line + ', "' + prop + '":"' + newValue + '"'
         line = line + "}\n"
         self.file.write(line)
 
     def writeScenElement(self, element):
         line = ',"' + element.name + '":{'
         #
-        first_element = True        # first element written different
+        first_element = True  # first element written different
         for prop in element.props():
             newName = myntsProp(prop)
             newValue = str(element.get(prop))
-
+            if newName.casefold() in MyntsReqProps[element.type]:
+                continue
             if prop in MyntsNumProps:
                 newValue = convertPropValue2Mynts(prop, newValue)
             if first_element:
@@ -191,6 +202,7 @@ def create_mynts(grid_data, basefilepath):
     myntsconv.initData()  # gets data from DaVe input file
     # update progress
     pbar.update(50)
+    print()
 
     # extract the data from DaVe
     pipes = Elements("p", myntsconv.pipedata)  # stores all pipe elements

@@ -41,6 +41,8 @@ class Converter:
         return text
 
     def __init__(self, grid_data, infilename: str = "", basefilepath: str = ""):
+        self.pipedata = None
+        self.nodedata = None
         if infilename:  # is not empty
             self.infilename = (
                 infilename.strip()
@@ -59,7 +61,7 @@ class Converter:
 
     # get data from Dave as nodes, pipes and valves  # !!! todo: other components if there are any
     def initData(self):
-        self.nodedata = self.grid_data.hp_data.hp_junctions  #
+        self.nodedata = self.grid_data.hp_data.hp_junctions  # nodes
         self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
         self.valvedata = self.grid_data.components_gas.valves
         self.compressordata = self.grid_data.components_gas.compressors  #
