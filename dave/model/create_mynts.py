@@ -22,7 +22,8 @@ MyntsTextProps = {
 
 MyntsNumProps = {
     "diameter_mm": "D",
-    "length_km": "L"
+    "length_km": "L",
+    "h": "h"
 }
 
 MyntsReqNodeProps = [
@@ -78,6 +79,7 @@ def myntsProp(prop) -> str:
 
 
 def daveProp(prop) -> str:
+    # reversed MyntsProp dict lists
     daveProps = {y: x for x, y in MyntsTextProps.items()}
     daveNumProps = {y: x for x, y in MyntsNumProps.items()}
     if prop in daveProps:
@@ -105,6 +107,7 @@ class MyntsWriter:  # Output file strategy class for Mynts
             self.writeGeomElement(element)
             element = elements.nextEle()
 
+    # get the elements from Elements dict and write to scen file
     def writeScen(self, elements):
         self.elements = elements
         element = elements.nextEle()
@@ -123,14 +126,17 @@ class MyntsWriter:  # Output file strategy class for Mynts
     def writeFooter(self):
         self.file.write("}\n")
 
+    # write one element in geom format
     def writeGeomElement(self, element):
         line = ',"' + element.name + '":{"obj_type":"' + element.type + '"'
         #
         for prop in MyntsReqProps[element.type]:
             dave_prop = daveProp(prop)
             newValue = str(element.get(dave_prop))
+            # write required text Props even without a value
             if element.get(dave_prop) is None:
                 newValue = ""
+            # convert numeric value and ignore if it has no value
             if dave_prop in MyntsNumProps:
                 if convertPropValue2Mynts(dave_prop, newValue) == "-1":
                     continue
@@ -139,14 +145,16 @@ class MyntsWriter:  # Output file strategy class for Mynts
         line = line + "}\n"
         self.file.write(line)
 
+    # write one element in scen format
     def writeScenElement(self, element):
         line = ',"' + element.name + '":{'
         #
-        first_element = True  # first element written different
+        first_element = True
         for prop in element.props():
             newName = myntsProp(prop)
             newValue = str(element.get(prop))
-            if newName.casefold() in MyntsReqProps[element.type]:
+            if newName.casefold() in (prop.casefold() for prop in MyntsReqProps[element.type]) or \
+                    element.get(prop) is None:
                 continue
             if prop in MyntsNumProps:
                 newValue = convertPropValue2Mynts(prop, newValue)
@@ -180,6 +188,7 @@ class DaVe2Mynts(Strategy):
         self.files["scen"] = open(outfile + ".scen.jsn", "w")
         self.writer = MyntsWriter()
 
+    # writes elements to geom and scen
     def execute(self, element_types) -> str:
         # write elements in geom file
         self.writer.setFile(self.files["geom"])

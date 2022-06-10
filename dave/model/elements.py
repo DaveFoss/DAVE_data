@@ -61,17 +61,18 @@ class Elements:
             self.insert(element_type, data)
 
     # Get the Element with the specified name; returns None if Element not found
-    def get(self, name) -> Element:
+    def get(self, name):
         if name in self.elements:
             return self.elements[name]
         return None
 
     # iterator for the Elements, returns one Element after the other;  at the end None is returned
-    def nextEle(self) -> str:
+    def nextEle(self):
         name = next(self.eleList, None)
         if name is not None:
             self.eleIndex += 1
             return self.elements[name]
+        # resets after full cycle
         self.eleList = iter(self.elements)
         return None
 
