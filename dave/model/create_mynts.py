@@ -26,25 +26,25 @@ MyntsNumProps = {
 }
 
 MyntsReqNodeProps = [
-    "h", "x", "y", "Web", "KTyp", "nVNB", "aFNB", "EIC", "MG", "Zuornd",
+    "h", "X", "Y", "Web", "KTyp", "nVNB", "aFNB", "EIC", "MG", "Zuornd",
     "Des", "GeoLat", "GeoLong", "AnLNum", "LNum", "Schemaplan", "UmstSchr",
     "UmstTag", "NEPID", "NEPID18", "UmstJ", "UmstBer", "Zone", "Teilnetz", "Messort"
 ]
 
 MyntsReqPipeProps = [
-    "node1", "node2", "l", "d", "k", "htc", "NurPlan", "Bez", "Des", "LNum"
-                                                                     "LName", "PNPipe", "Eig", "NEPID", "NEPID18",
+    "node1", "node2", "L", "D", "k", "htc", "NurPlan", "Bez", "Des", "LNum",
+    "LName", "PNPipe", "Eig", "NEPID", "NEPID18",
     "UmstJ", "ModVar", "IJahr",
     "UmstBer", "UmstSchr", "UmstTag", "Update"
 ]
 
 MyntsReqValveProps = [
-    "node1", "node2", "pimin", "pomax", "l", "d", "NurPlan", "Bez", "Des", "LNum",
+    "node1", "node2", "pimin", "pomax", "L", "D", "NurPlan", "Bez", "Des", "LNum",
     "LName", "Autom", "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
 ]
 
 MyntsReqCompressorProps = [
-    "d", "pimin", "pomax", "node1", "node2", "kind", "NurPlan", "Bez", "Des", "Autom",
+    "D", "pimin", "pomax", "node1", "node2", "kind", "NurPlan", "Bez", "Des", "Autom",
     "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
 ]
 
@@ -57,6 +57,8 @@ MyntsReqProps = {"n": MyntsReqNodeProps,
 
 # convert prop value to Mynts internal unit				# !!! todo complete list
 def convertPropValue2Mynts(prop, value) -> str:
+    if value == "":
+        return "-1"
     fvalue = float(value)
     if prop == "diameter_mm":
         fvalue = fvalue / 1.0e3
@@ -77,8 +79,11 @@ def myntsProp(prop) -> str:
 
 def daveProp(prop) -> str:
     daveProps = {y: x for x, y in MyntsTextProps.items()}
+    daveNumProps = {y: x for x, y in MyntsNumProps.items()}
     if prop in daveProps:
         return daveProps[prop]
+    if prop in daveNumProps:
+        return daveNumProps[prop]
     return prop
 
 
@@ -126,8 +131,10 @@ class MyntsWriter:  # Output file strategy class for Mynts
             newValue = str(element.get(dave_prop))
             if element.get(dave_prop) is None:
                 newValue = ""
-            if prop in MyntsNumProps:
-                newValue = convertPropValue2Mynts(prop, newValue)
+            if dave_prop in MyntsNumProps:
+                if convertPropValue2Mynts(dave_prop, newValue) == "-1":
+                    continue
+                newValue = convertPropValue2Mynts(dave_prop, newValue)
             line = line + ', "' + prop + '":"' + newValue + '"'
         line = line + "}\n"
         self.file.write(line)
