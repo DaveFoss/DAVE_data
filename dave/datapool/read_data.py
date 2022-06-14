@@ -81,14 +81,16 @@ def read_nuts_regions(year):
          nuts = data.read_nuts_regions()
     """
     nuts_data = pd.HDFStore(get_data_path("nuts_regions.h5", "data"))
-    if year == '2013':
+    if year == "2013":
         nuts_regions = nuts_data.get("/nuts_2013")
-    elif year == '2016':
+    elif year == "2016":
         nuts_regions = nuts_data.get("/nuts_2016")
-    elif year == '2021':
+    elif year == "2021":
         nuts_regions = nuts_data.get("/nuts_2021")
     nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
     nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
+    # close file
+    nuts_data.close()
     # read meta data
     meta_data = pd.read_excel(get_data_path("nuts_regions_meta.xlsx", "data"), sheet_name=None)
     return nuts_regions, meta_data
