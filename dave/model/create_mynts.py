@@ -233,7 +233,7 @@ def create_mynts(grid_data, basefilepath):
     basefilepath = myntsconv.getBasicPath()  # basic output file path
     myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy
 
-    all_elements = [pipes, valves, nodes, compressors]
+    all_elements = [nodes, compressors, pipes, valves]
 
     text = myntsconv.executeStrategy(all_elements)
     # print(text, ": ", ele_type.type, " written to Mynts Geom")
