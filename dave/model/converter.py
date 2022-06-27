@@ -19,15 +19,13 @@ class Converter:
     Converter class
         defines:
                 strategy		the strategy interface
-                files
                 basefilepath	# basic file path for output files
                 infilename		# input json file with DaVe structure data
         Example Usage:
-                Converter(infilename="myDaveFile.json", basefilepath="/tmp"
+                Converter(infilename="myDaveFile.json", basefilepath="/tmp")
     """
 
     strategy: Strategy
-    files = {}  #
     basefilepath = ""
 
     def setStrategy(self, strategy: Strategy = None) -> None:
@@ -41,8 +39,6 @@ class Converter:
         return text
 
     def __init__(self, grid_data, infilename: str = "", basefilepath: str = ""):
-        self.pipedata = None
-        self.nodedata = None
         if infilename:  # is not empty
             self.infilename = (
                 infilename.strip()
@@ -52,6 +48,7 @@ class Converter:
             self.grid_data = grid_data
         if basefilepath:
             self.basefilepath = basefilepath.strip() + "/dave_mynts"
+        self.initData()
 
     def getBasicPath(self) -> str:
         return self.basefilepath

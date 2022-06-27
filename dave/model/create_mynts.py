@@ -1,7 +1,6 @@
 # Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
-import copy
 
 from tqdm import tqdm
 
@@ -23,11 +22,10 @@ MyntsTextProps = {
 MyntsNumProps = {
     "diameter_mm": "D",
     "length_km": "L",
-    "h": "h"
 }
 
 MyntsReqNodeProps = [
-    "h", "X", "Y", "Web", "KTyp", "nVNB", "aFNB", "EIC", "MG", "Zuornd",
+    "H", "X", "Y", "Web", "KTyp", "nVNB", "aFNB", "EIC", "MG", "Zuornd",
     "Des", "GeoLat", "GeoLong", "AnLNum", "LNum", "Schemaplan", "UmstSchr",
     "UmstTag", "NEPID", "NEPID18", "UmstJ", "UmstBer", "Zone", "Teilnetz", "Messort"
 ]
@@ -53,7 +51,7 @@ MyntsReqProps = {"n": MyntsReqNodeProps,
                  "p": MyntsReqPipeProps,
                  "v": MyntsReqValveProps,
                  "c": MyntsReqCompressorProps,
-}
+                 }
 
 
 # convert prop value to Mynts internal unit				# !!! todo complete list
@@ -126,7 +124,7 @@ class MyntsWriter:  # Output file strategy class for Mynts
     def writeFooter(self):
         self.file.write("}\n")
 
-    # write one element in geom format
+    # write an element in geom format
     def writeGeomElement(self, element):
         line = ',"' + element.name + '":{"obj_type":"' + element.type + '"'
         #
@@ -145,7 +143,7 @@ class MyntsWriter:  # Output file strategy class for Mynts
         line = line + "}\n"
         self.file.write(line)
 
-    # write one element in scen format
+    # write an element in scen format
     def writeScenElement(self, element):
         line = ',"' + element.name + '":{'
         #
@@ -214,8 +212,8 @@ def create_mynts(grid_data, basefilepath):
         bar_format=dave_settings()["bar_format"],
     )
 
+    # init data
     myntsconv = Converter(grid_data, basefilepath=basefilepath)  # default file names
-    myntsconv.initData()  # gets data from DaVe input file
     # update progress
     pbar.update(50)
     print()
@@ -227,12 +225,12 @@ def create_mynts(grid_data, basefilepath):
     compressors = Elements("c", myntsconv.compressordata)
     # update progress
     pbar.update(25)
-    print()
 
     # init writing to Mynts geom.jsn file
     basefilepath = myntsconv.getBasicPath()  # basic output file path
     myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy
 
+    # fixed order to write the elements
     all_elements = [nodes, compressors, pipes, valves]
 
     text = myntsconv.executeStrategy(all_elements)
