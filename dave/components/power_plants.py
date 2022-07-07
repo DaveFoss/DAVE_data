@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area, voronoi
+from dave.toolbox import adress_to_coords, intersection_with_area, voronoi
 
 
 def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):
@@ -175,6 +175,20 @@ def create_power_plant_lines(grid_data):
                 grid_data.target_input.power_levels[0],
             )
         )
+        # define related buses
+        buses_levels = {
+            1: grid_data.ehv_data.ehv_nodes,
+            3: grid_data.hv_data.hv_nodes,
+            5: grid_data.mv_data.mv_nodes,
+            7: grid_data.lv_data.lv_nodes,
+        }
+        # define related buses
+        lines_levels = {
+            1: grid_data.ehv_data.ehv_lines,
+            3: grid_data.hv_data.hv_lines,
+            5: grid_data.mv_data.mv_lines,
+            7: grid_data.lv_data.lv_lines,
+        }
         for _, plant in plants_rel_3035.iterrows():
             plant_bus = all_nodes_3035[all_nodes_3035.dave_name == plant.bus].iloc[0]
             distance = plant.geometry.distance(plant_bus.geometry)  # in meter
@@ -182,74 +196,32 @@ def create_power_plant_lines(grid_data):
                 # get plant coordinates in crs 4326
                 plant_geometry = plants_rel.loc[plant.name].geometry
                 # create auillary node
-                if plant_bus.voltage_level == 1:  # (EHV)
-                    buses = grid_data.ehv_data.ehv_nodes
-                    last_bus_name = buses.iloc[len(buses) - 1].dave_name
-                    number = int(last_bus_name.replace("node_1_", "")) + 1
-                    dave_name_bus_aux = f"node_1_{number}"
-                    auxillary_bus = gpd.GeoDataFrame(
-                        {
-                            "dave_name": dave_name_bus_aux,
-                            "voltage_kv": plant_bus.voltage_kv,
-                            "geometry": [plant_geometry],
-                            "voltage_level": plant_bus.voltage_level,
-                            "source": "dave internal",
-                        }
-                    )
-                    grid_data.ehv_data.ehv_nodes = pd.concat(
-                        [grid_data.ehv_data.ehv_nodes, auxillary_bus], ignore_index=True
-                    )
+                voltage_level = plant_bus.voltage_level
+                buses = buses_levels[voltage_level]
+                number = (
+                    int(buses.iloc[len(buses) - 1].dave_name.replace(f"node_{voltage_level}_", ""))
+                    + 1
+                )
+                dave_name_bus_aux = f"node_{voltage_level}_{number}"
+                auxillary_bus = gpd.GeoDataFrame(
+                    {
+                        "dave_name": dave_name_bus_aux,
+                        "voltage_kv": plant_bus.voltage_kv,
+                        "geometry": [plant_geometry],
+                        "voltage_level": voltage_level,
+                        "source": "dave internal",
+                    }
+                )
+                # concat buses with new auxillary bus
+                buses_new = pd.concat([buses, auxillary_bus], ignore_index=True)
+                if voltage_level == 1:  # (EHV)
+                    grid_data.ehv_data.ehv_nodes = buses_new
                 elif plant_bus.voltage_level == 3:  # (HV)
-                    buses = grid_data.hv_data.hv_nodes
-                    last_bus_name = buses.iloc[len(buses) - 1].dave_name
-                    number = int(last_bus_name.replace("node_3_", "")) + 1
-                    dave_name_bus_aux = f"node_3_{number}"
-                    auxillary_bus = gpd.GeoDataFrame(
-                        {
-                            "dave_name": dave_name_bus_aux,
-                            "voltage_kv": plant_bus.voltage_kv,
-                            "geometry": [plant_geometry],
-                            "voltage_level": plant_bus.voltage_level,
-                            "source": "dave internal",
-                        }
-                    )
-                    grid_data.hv_data.hv_nodes = pd.concat(
-                        [grid_data.hv_data.hv_nodes, auxillary_bus], ignore_index=True
-                    )
+                    grid_data.hv_data.hv_nodes = buses_new
                 elif plant_bus.voltage_level == 5:  # (MV)
-                    buses = grid_data.mv_data.mv_nodes
-                    last_bus_name = buses.iloc[len(buses) - 1].dave_name
-                    number = int(last_bus_name.replace("node_5_", "")) + 1
-                    dave_name_bus_aux = f"node_5_{number}"
-                    auxillary_bus = gpd.GeoDataFrame(
-                        {
-                            "dave_name": dave_name_bus_aux,
-                            "voltage_kv": plant_bus.voltage_kv,
-                            "geometry": [plant_geometry],
-                            "voltage_level": plant_bus.voltage_level,
-                            "source": "dave internal",
-                        }
-                    )
-                    grid_data.mv_data.mv_nodes = pd.concat(
-                        [grid_data.mv_data.mv_nodes, auxillary_bus], ignore_index=True
-                    )
+                    grid_data.mv_data.mv_nodes = buses_new
                 elif plant_bus.voltage_level == 7:  # (LV)
-                    buses = grid_data.lv_data.lv_nodes
-                    last_bus_name = buses.iloc[len(buses) - 1].dave_name
-                    number = int(last_bus_name.replace("node_7_", "")) + 1
-                    dave_name_bus_aux = f"node_7_{number}"
-                    auxillary_bus = gpd.GeoDataFrame(
-                        {
-                            "dave_name": dave_name_bus_aux,
-                            "voltage_kv": plant_bus.voltage_kv,
-                            "geometry": [plant_geometry],
-                            "voltage_level": plant_bus.voltage_level,
-                            "source": "dave internal",
-                        }
-                    )
-                    grid_data.lv_data.lv_nodes = pd.concat(
-                        [grid_data.lv_data.lv_nodes, auxillary_bus], ignore_index=True
-                    )
+                    grid_data.lv_data.lv_nodes = buses_new
                 # change bus name in power plant characteristics
                 if plant.dave_name[:3] == "con":
                     plant_index = conventionals[conventionals.dave_name == plant.dave_name].index[0]
@@ -264,20 +236,22 @@ def create_power_plant_lines(grid_data):
                 # create connection line
                 bus_origin = all_nodes[all_nodes.dave_name == plant.bus].iloc[0]
                 line_geometry = LineString([plant_geometry, bus_origin.geometry])
-                if plant_bus.voltage_level == 1:  # (EHV)
-                    ehv_lines = grid_data.ehv_data.ehv_lines
-                    last_line_name = ehv_lines.iloc[len(ehv_lines) - 1].dave_name
-                    number = int(last_line_name.replace("line_1_", "")) + 1
-                    # check if there is a line neighbor
-                    line_neighbor = ehv_lines[
-                        (ehv_lines.from_bus == bus_origin.dave_name)
-                        | (ehv_lines.to_bus == bus_origin.dave_name)
-                    ]
-                    if not line_neighbor.empty:
-                        line_neighbor = line_neighbor.iloc[0]
+                lines = lines_levels[voltage_level]
+                number = (
+                    int(lines.iloc[len(lines) - 1].dave_name.replace(f"line_{voltage_level}_", ""))
+                    + 1
+                )
+                # check if there is a line neighbor and take the first one
+                line_neighbor = lines[
+                    (lines.from_bus == bus_origin.dave_name)
+                    | (lines.to_bus == bus_origin.dave_name)
+                ]
+                if not line_neighbor.empty:
+                    line_neighbor = line_neighbor.iloc[0]
+                    if voltage_level in [1, 3]:  # (EHV and HV)
                         auxillary_line = gpd.GeoDataFrame(
                             {
-                                "dave_name": f"line_1_{number}",
+                                "dave_name": f"line_{voltage_level}_{number}",
                                 "bus0": dave_name_bus_aux,
                                 "bus1": bus_origin.dave_name,
                                 "x_ohm": line_neighbor.x_ohm_per_km / distance,
@@ -292,108 +266,36 @@ def create_power_plant_lines(grid_data):
                                 "voltage_kv": line_neighbor.voltage_kv,
                                 "max_i_ka": line_neighbor.max_i_ka,
                                 "parallel": line_neighbor.parallel,
-                                "voltage_level": line_neighbor.voltage_level,
+                                "voltage_level": voltage_level,
                                 "source": "dave internal",
                             },
                             crs=dave_settings()["crs_main"],
                         )
-                        grid_data.ehv_data.ehv_lines = pd.concat(
-                            [grid_data.ehv_data.ehv_lines, auxillary_line], ignore_index=True
-                        )
-                elif plant_bus.voltage_level == 3:  # (HV)
-                    hv_lines = grid_data.hv_data.hv_lines
-                    last_line_name = hv_lines.iloc[len(hv_lines) - 1].dave_name
-                    number = int(last_line_name.replace("line_3_", "")) + 1
-                    # check if there is a line neighbor
-                    line_neighbor = hv_lines[
-                        (hv_lines.from_bus == bus_origin.dave_name)
-                        | (hv_lines.to_bus == bus_origin.dave_name)
-                    ]
-                    if not line_neighbor.empty:
-                        line_neighbor = line_neighbor.iloc[0]
+                    elif voltage_level in [5, 7]:  # (MV and LV)
+                        # !!! Diese Parameter müssen noch angepasst werden wenn MV/LV Leitungscharakteristiken besser bestimmt werden
                         auxillary_line = gpd.GeoDataFrame(
                             {
-                                "dave_name": f"line_3_{number}",
-                                "bus0": dave_name_bus_aux,
-                                "bus1": bus_origin.dave_name,
-                                "x_ohm": line_neighbor.x_ohm_per_km / distance,
-                                "x_ohm_per_km": line_neighbor.x_ohm_per_km,
-                                "r_ohm": line_neighbor.r_ohm_per_km / distance,
-                                "r_ohm_per_km": line_neighbor.r_ohm_per_km,
-                                "c_nf": line_neighbor.c_nf_per_km / distance,
-                                "c_nf_per_km": line_neighbor.c_nf_per_km,
-                                "s_nom_mva": line_neighbor.s_nom_mva,
-                                "length_km": distance / 1000,
-                                "geometry": [line_geometry],
-                                "voltage_kv": line_neighbor.voltage_kv,
-                                "max_i_ka": line_neighbor.max_i_ka,
-                                "parallel": line_neighbor.parallel,
-                                "voltage_level": line_neighbor.voltage_level,
-                                "source": "dave internal",
-                            },
-                            crs=dave_settings()["crs_main"],
-                        )
-                        grid_data.hv_data.hv_lines = pd.concat(
-                            [grid_data.hv_data.hv_lines, auxillary_line], ignore_index=True
-                        )
-                elif plant_bus.voltage_level == 5:  # (MV)
-                    mv_lines = grid_data.mv_data.mv_lines
-                    last_line_name = mv_lines.iloc[len(mv_lines) - 1].dave_name
-                    number = int(last_line_name.replace("line_5_", "")) + 1
-                    # check if there is a line neighbor
-                    line_neighbor = mv_lines[
-                        (mv_lines.from_bus == bus_origin.dave_name)
-                        | (mv_lines.to_bus == bus_origin.dave_name)
-                    ]
-                    if not line_neighbor.empty:
-                        line_neighbor = line_neighbor.iloc[0]
-                        # Diese Parameter noch angepasst, wenn die MV Line Daten bekannt sind
-                        auxillary_line = gpd.GeoDataFrame(
-                            {
-                                "dave_name": f"line_5_{number}",
+                                "dave_name": f"line_{voltage_level}_{number}",
                                 "from_bus": dave_name_bus_aux,
                                 "to_bus": bus_origin.dave_name,
                                 "length_km": distance / 1000,
                                 "geometry": [line_geometry],
                                 "voltage_kv": line_neighbor.voltage_kv,
-                                "voltage_level": line_neighbor.voltage_level,
+                                "voltage_level": voltage_level,
                                 "source": "dave internal",
-                            },
-                            crs=dave_settings()["crs_main"],
-                        )
-                        grid_data.mv_data.mv_lines = pd.concat(
-                            [grid_data.mv_data.mv_lines, auxillary_line], ignore_index=True
-                        )
-                elif plant_bus.voltage_level == 7:  # (LV)
-                    lv_lines = grid_data.lv_data.lv_lines
-                    last_line_name = lv_lines.iloc[len(lv_lines) - 1].dave_name
-                    number = int(last_line_name.replace("line_7_", "")) + 1
-                    # check if there is a line neighbor
-                    # line neighbor muss noch angepasst werden auf from und to bus aus lv_lines
-                    line_neighbor = lv_lines[
-                        (lv_lines.from_bus == bus_origin.dave_name)
-                        | (lv_lines.to_bus == bus_origin.dave_name)
-                    ]
-                    if not line_neighbor.empty:
-                        line_neighbor = line_neighbor.iloc[0]
-                        # Diese Parameter müssen noch angepasst werden wenn lv neu berechnet wird
-                        auxillary_line = gpd.GeoDataFrame(
-                            {
-                                "dave_name": f"line_7_{number}",
-                                "length_km": distance / 1000,
-                                "geometry": [line_geometry],
-                                "voltage_kv": line_neighbor.voltage_kv,
-                                "voltage_level": line_neighbor.voltage_level,
                                 "line_type": "power plant line",
-                                "source": "dave internal",
-                                "from_bus": dave_name_bus_aux,
-                                "to_bus": bus_origin.dave_name,
                             },
                             crs=dave_settings()["crs_main"],
                         )
-                        grid_data.lv_data.lv_lines = pd.concat(
-                            [grid_data.lv_data.lv_lines, auxillary_line], ignore_index=True
-                        )
+                    line_new = pd.concat([lines, auxillary_line], ignore_index=True)
+                    if voltage_level == 1:
+                        grid_data.ehv_data.ehv_lines = line_new
+                    elif voltage_level == 3:
+                        grid_data.hv_data.hv_lines = line_new
+                    elif voltage_level == 5:
+                        grid_data.mv_data.mv_lines = line_new
+                    elif voltage_level == 7:  # (LV)
+                        grid_data.lv_data.lv_lines = line_new
             # update progress
             pbar.update(89.98 / len(plants_rel_3035))
     else:
@@ -401,6 +303,20 @@ def create_power_plant_lines(grid_data):
         pbar.update(90)
     # close progress bar
     pbar.close()
+
+
+def change_voltage(plant):
+    """
+    This function changes the voltage level of the renewable power plants
+    """
+    if plant.voltage_level:
+        voltage_level = int(plant.voltage_level[1:2])
+    # This is for plants which have a nan value at the voltage level parameter
+    elif float(plant.electrical_capacity_kw) <= 50:
+        voltage_level = 7
+    else:
+        voltage_level = 5
+    return voltage_level
 
 
 def create_renewable_powerplants(grid_data):
@@ -460,14 +376,7 @@ def create_renewable_powerplants(grid_data):
             inplace=True,
         )
         # change voltage level to numbers
-        for i, plant in renewables.iterrows():
-            if plant.voltage_level:
-                renewables.at[i, "voltage_level"] = int(plant.voltage_level[1:2])
-            # This is for plants which have a nan value at the voltage level parameter
-            elif float(plant.electrical_capacity_kw) <= 50:
-                renewables.at[i, "voltage_level"] = 7
-            else:
-                renewables.at[i, "voltage_level"] = 5
+        renewables["voltage_level"] = renewables.apply(change_voltage, axis=1)
         # restrict plants to considered power levels
         if "HV" in power_levels:
             renewables = renewables[renewables.voltage_level >= 3]
@@ -478,22 +387,21 @@ def create_renewable_powerplants(grid_data):
         # find exact location by adress for renewable power plants which are on mv-level or lower
         if any(map(lambda x: x in power_levels, ["MV", "LV"])):
             geolocator = ArcGIS(timeout=None)
-            plant_georefernce = renewables[renewables.voltage_level >= 5]
-            for i, plant in plant_georefernce.iterrows():
-                if plant.address:
-                    address = str(plant.address) + " " + str(plant.postcode) + " " + str(plant.city)
-                    location = geolocator.geocode(address)
-                    renewables.at[i, "lon"] = location.longitude
-                    renewables.at[i, "lat"] = location.latitude
-                else:
-                    pass
-                    # zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes
-                    # behalten, falls keine Adresse bekannt. Das aber noch abändern.
-                # update progress
-                pbar.update(20 / len(plant_georefernce))
-        else:
-            # update progress
-            pbar.update(20)
+            renewables["address"] = (
+                renewables.address + " " + renewables.postcode + " " + renewables.city
+            )
+            address_coords = renewables.apply(
+                lambda x: adress_to_coords(x.address, geolocator)
+                if (x.voltage_level >= 5 and x.address)
+                else (x.lon, x.lat),
+                axis=1,
+            )
+            # !!! zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes
+            # behalten, falls keine Adresse bekannt ist. Das aber noch abändern.
+            renewables["lon_v"] = address_coords.apply(lambda x: x[0])
+            renewables["lat_v"] = address_coords.apply(lambda x: x[1])
+        # update progress
+        pbar.update(20)
         # convert DataFrame into a GeoDataFrame
         renewables_geo = gpd.GeoDataFrame(
             renewables,
@@ -829,13 +737,8 @@ def create_renewable_powerplants(grid_data):
         # --- add general informations
         if not grid_data.components_power.renewable_powerplants.empty:
             # add dave name
-            name = pd.Series(
-                list(
-                    map(
-                        lambda x: f"ren_powerplant_{plant.voltage_level}_{x}",
-                        grid_data.components_power.renewable_powerplants.index,
-                    )
-                )
+            name = grid_data.components_power.renewable_powerplants.apply(
+                lambda x: f"ren_powerplant_{x.voltage_level}_{x.name}", axis=1
             )
             grid_data.components_power.renewable_powerplants.insert(0, "dave_name", name)
             # set crs
