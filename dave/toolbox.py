@@ -103,7 +103,7 @@ def voronoi(points):
     return voronoi_polygons
 
 
-def adress_to_coords(adress):
+def adress_to_coords(adress, geolocator):
     """
     This function request geocoordinates to a given adress.
 
@@ -114,8 +114,9 @@ def adress_to_coords(adress):
     OUTPUT:
         **geocoordinates** (tuple) - geocoordinates for the adress in format (longitude, latitude)
     """
-    if adress:
+    if not geolocator:
         geolocator = ArcGIS(timeout=None)
+    if adress:
         location = geolocator.geocode(adress)
         return (location.longitude, location.latitude)
 
