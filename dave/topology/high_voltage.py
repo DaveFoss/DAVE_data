@@ -270,7 +270,7 @@ def create_hv_topology(grid_data):
         hv_lines["source"] = "OEP"
         hv_lines["voltage_level"] = 3
         # update progress
-        pbar.update(10 / len(hv_lines))
+        pbar.update(10)
         # add dave name
         hv_lines.reset_index(drop=True, inplace=True)
         name = pd.Series(list(map(lambda x: f"line_3_{x}", hv_lines.index)))
@@ -285,6 +285,6 @@ def create_hv_topology(grid_data):
         pbar.update(9.999)
     else:
         # update progress
-        pbar.update(80)
+        pbar.update(40)
     # close progress bar
     pbar.close()
