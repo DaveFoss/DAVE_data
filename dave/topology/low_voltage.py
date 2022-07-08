@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave.toolbox import intersection_with_area, related_sub
 
 
 def nearest_road(building_centroids, roads):
@@ -214,15 +214,12 @@ def create_lv_topology(grid_data):
         ignore_index=True,
     )
     # search for the substations where the lv nodes are within
-    for _, bus in building_nodes_df.iterrows():
-        for _, sub in mvlv_substations.iterrows():
-            if (bus.geometry.within(sub.geometry)) or (bus.geometry.distance(sub.geometry) < 1e-05):
-                building_nodes_df.at[bus.name, "ego_subst_id"] = sub.ego_subst_id
-                building_nodes_df.at[bus.name, "subst_dave_name"] = sub.dave_name
-                building_nodes_df.at[bus.name, "subst_name"] = sub.subst_name
-                break
-        # update progress
-        pbar.update(5 / len(building_nodes_df))
+    sub_infos = building_nodes_df.geometry.apply(lambda x: related_sub(x, mvlv_substations))
+    building_nodes_df["ego_subst_id"] = sub_infos.apply(lambda x: x[0])
+    building_nodes_df["subst_dave_name"] = sub_infos.apply(lambda x: x[1])
+    building_nodes_df["subst_name"] = sub_infos.apply(lambda x: x[2])
+    # update progress
+    pbar.update(5)
     # add dave name
     building_nodes_df.reset_index(drop=True, inplace=True)
     building_nodes_df.insert(

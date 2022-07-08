@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request, read_ehv_data
 from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave.toolbox import intersection_with_area, related_sub
 
 
 def create_ehv_topology(grid_data):
@@ -139,17 +139,12 @@ def create_ehv_topology(grid_data):
     # consider data only if there are more than one ehv node in the target area
     if len(ehv_buses) > 1:
         # search for the substations where the ehv nodes are within
-        for _, bus in ehv_buses.iterrows():
-            for _, sub in ehv_substations.iterrows():
-                if (bus.geometry.within(sub.geometry)) or (
-                    bus.geometry.distance(sub.geometry) < 1e-05
-                ):
-                    ehv_buses.at[bus.name, "ego_subst_id"] = sub.ego_subst_id
-                    ehv_buses.at[bus.name, "subst_dave_name"] = sub.dave_name
-                    ehv_buses.at[bus.name, "subst_name"] = sub.subst_name
-                    break
-            # update progress
-            pbar.update(10 / len(ehv_buses))
+        sub_infos = ehv_buses.geometry.apply(lambda x: related_sub(x, ehv_substations))
+        ehv_buses["ego_subst_id"] = sub_infos.apply(lambda x: x[0])
+        ehv_buses["subst_dave_name"] = sub_infos.apply(lambda x: x[1])
+        ehv_buses["subst_name"] = sub_infos.apply(lambda x: x[2])
+        # update progress
+        pbar.update(10)
         # read ehv tso data
         ehv_data, meta_data = read_ehv_data()
         # add meta data
@@ -224,41 +219,43 @@ def create_ehv_topology(grid_data):
             (ehvhv_lines.from_bus.isin(ehv_bus_ids)) & (ehvhv_lines.to_bus.isin(ehv_bus_ids))
         ]
         # --- add additional line parameter and change bus names
-        ehv_lines.insert(ehv_lines.columns.get_loc("r_ohm") + 1, "r_ohm_per_km", None)
-        ehv_lines.insert(ehv_lines.columns.get_loc("x_ohm") + 1, "x_ohm_per_km", None)
-        ehv_lines.insert(ehv_lines.columns.get_loc("b_s") + 1, "c_nf_per_km", None)
-        ehv_lines.insert(ehv_lines.columns.get_loc("b_s") + 1, "c_nf", None)
-        # update progress
-        pbar.update(10)
-        from_bus_new = []
-        to_bus_new = []
-        for _, line in ehv_lines.iterrows():
-            # add voltage
-            line_voltage = ehv_buses.loc[
-                ehv_buses[ehv_buses.ego_bus_id == line.from_bus].index[0]
-            ].voltage_kv
-            ehv_lines.at[line.name, "voltage_kv"] = line_voltage
-            # change line bus names from ego id to dave name
-            from_bus_new.append(ehv_buses[ehv_buses.ego_bus_id == line.from_bus].iloc[0].dave_name)
-            to_bus_new.append(ehv_buses[ehv_buses.ego_bus_id == line.to_bus].iloc[0].dave_name)
-            # calculate and add r,x,c per km
-            ehv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
-            ehv_lines.at[line.name, "x_ohm_per_km"] = float(line.x_ohm) / line.length_km
-            c_nf = float(line.b_s) / (2 * math.pi * float(line.frequency)) * 1e09
-            ehv_lines.at[line.name, "c_nf"] = c_nf
-            ehv_lines.at[line.name, "c_nf_per_km"] = c_nf / line.length_km
-            # calculate and add max i
-            ehv_lines.at[line.name, "max_i_ka"] = (
-                (float(line.s_nom_mva) * 1e06) / (line_voltage * 1e03)
-            ) * 1e-03
-            # parallel lines
-            ehv_lines.at[line.name, "parallel"] = line.cables / 3
-            # update progress
-            pbar.update(20 / len(ehv_lines))
-        ehv_lines["from_bus"] = from_bus_new
-        ehv_lines["to_bus"] = to_bus_new
-        # add oep as source
+        ehv_lines.insert(
+            ehv_lines.columns.get_loc("r_ohm") + 1,
+            "r_ohm_per_km",
+            ehv_lines.r_ohm.astype("float") / ehv_lines.length_km,
+        )
+        ehv_lines.insert(
+            ehv_lines.columns.get_loc("x_ohm") + 1,
+            "x_ohm_per_km",
+            ehv_lines.x_ohm.astype("float") / ehv_lines.length_km,
+        )
+        c_nf = (
+            ehv_lines.b_s.astype("float")
+            / (2 * math.pi * ehv_lines.frequency.astype("float"))
+            * 1e09
+        )
+        ehv_lines.insert(ehv_lines.columns.get_loc("b_s") + 1, "c_nf", c_nf)
+        ehv_lines.insert(
+            ehv_lines.columns.get_loc("c_nf") + 1, "c_nf_per_km", c_nf / ehv_lines.length_km
+        )
+        line_voltage = ehv_lines.from_bus.apply(
+            lambda x: ehv_buses[ehv_buses.ego_bus_id == x].iloc[0].voltage_kv
+        )
+        ehv_lines["voltage_kv"] = line_voltage
+        ehv_lines["max_i_ka"] = (
+            ehv_lines.s_nom_mva.astype("float") * 1e06 / (line_voltage * 1e03)
+        ) * 1e-03
+        ehv_lines["parallel"] = ehv_lines.cables / 3
+        ehv_lines["from_bus"] = ehv_lines.from_bus.apply(
+            lambda x: ehv_buses[ehv_buses.ego_bus_id == x].iloc[0].dave_name
+        )
+        ehv_lines["to_bus"] = ehv_lines.to_bus.apply(
+            lambda x: ehv_buses[ehv_buses.ego_bus_id == x].iloc[0].dave_name
+        )
         ehv_lines["source"] = "OEP"
+        ehv_lines["voltage_level"] = 1
+        # update progress
+        pbar.update(30)
         """ the license of the open tso data is not clarified
         # add missing tso ehv lines which are not in the ego line data
         ehv_buses_from_tso = ehv_buses[ehv_buses.source == 'tso data'].tso_name.tolist()
@@ -296,8 +293,6 @@ def create_ehv_topology(grid_data):
                          'source': 'tso data',
                          'parallel': 1}))
         """
-        # add voltage level
-        ehv_lines["voltage_level"] = 1
         # add dave name
         ehv_lines.reset_index(drop=True, inplace=True)
         ehv_lines.insert(

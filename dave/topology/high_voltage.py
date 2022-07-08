@@ -12,23 +12,7 @@ from tqdm import tqdm
 
 from dave.datapool import oep_request
 from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
-
-
-def related_sub(bus, substations):
-    """
-    This function searches the related substation for each hv bus and returns some
-    substation information
-    """
-    sub_filtered = substations[
-        substations.geometry.apply(
-            lambda x: (bus.geometry.within(x)) or (bus.geometry.distance(x) < 1e-05)
-        )
-    ]
-    ego_subst_id = sub_filtered.ego_subst_id.to_list() if not sub_filtered.empty else []
-    subst_dave_name = sub_filtered.dave_name.to_list() if not sub_filtered.empty else []
-    subst_name = sub_filtered.subst_name.to_list() if not sub_filtered.empty else []
-    return ego_subst_id, subst_dave_name, subst_name
+from dave.toolbox import intersection_with_area, related_sub
 
 
 def create_hv_topology(grid_data):
@@ -211,7 +195,7 @@ def create_hv_topology(grid_data):
         hv_buses = hv_buses.drop(columns=(["current_type", "v_mag_pu_min", "v_mag_pu_max", "geom"]))
         # search for the substations where the hv nodes are within
         substations_rel = pd.concat([ehvhv_substations, hvmv_substations], ignore_index=True)
-        sub_infos = hv_buses.apply(lambda x: related_sub(x, substations_rel), axis=1)
+        sub_infos = hv_buses.geometry.apply(lambda x: related_sub(x, substations_rel))
         hv_buses.insert(0, "ego_subst_id", sub_infos.apply(lambda x: x[0]))
         hv_buses.insert(1, "subst_dave_name", sub_infos.apply(lambda x: x[1]))
         hv_buses.insert(2, "subst_name", sub_infos.apply(lambda x: x[2]))

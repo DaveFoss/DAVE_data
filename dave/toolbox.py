@@ -173,3 +173,24 @@ def intersection_with_area(gdf, area, remove_columns=True):
         remove_columns.remove("geometry")
         gdf_over.drop(columns=remove_columns, inplace=True)
     return gdf_over
+
+
+def related_sub(bus, substations):
+    """
+    This function searches the related substation for a bus and returns some
+    substation information
+
+    INPUT:
+        **bus** (Shapely Point) - bus geometry
+        **substations** (DataFrame) - Table of the possible substations
+
+    OUTPUT:
+        (Tuple) - Substation information for a given bus (ego_subst_id, subst_dave_name, subst_name)
+    """
+    sub_filtered = substations[
+        substations.geometry.apply(lambda x: (bus.within(x)) or (bus.distance(x) < 1e-05))
+    ]
+    ego_subst_id = sub_filtered.ego_subst_id.to_list() if not sub_filtered.empty else []
+    subst_dave_name = sub_filtered.dave_name.to_list() if not sub_filtered.empty else []
+    subst_name = sub_filtered.subst_name.to_list() if not sub_filtered.empty else []
+    return ego_subst_id, subst_dave_name, subst_name
