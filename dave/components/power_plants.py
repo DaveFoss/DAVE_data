@@ -305,7 +305,7 @@ def create_power_plant_lines(grid_data):
     pbar.close()
 
 
-def change_voltage(plant):
+def change_voltage_ren(plant):
     """
     This function changes the voltage level of the renewable power plants
     """
@@ -376,7 +376,7 @@ def create_renewable_powerplants(grid_data):
             inplace=True,
         )
         # change voltage level to numbers
-        renewables["voltage_level"] = renewables.apply(change_voltage, axis=1)
+        renewables["voltage_level"] = renewables.apply(change_voltage_ren, axis=1)
         # restrict plants to considered power levels
         if "HV" in power_levels:
             renewables = renewables[renewables.voltage_level >= 3]
@@ -754,6 +754,44 @@ def create_renewable_powerplants(grid_data):
     pbar.close()
 
 
+def change_voltage_con(plant):
+    """
+    This function changes the voltage parameter of the conventional power plants
+    """
+    if plant.voltage is None:
+        voltage = "None"
+    elif plant.voltage in ["HS", "10 und 110", "110/6"]:
+        voltage = "110"
+    elif plant.voltage in ["MS", "MSP", "10kV, 25kV", "Mai 25"]:
+        voltage = "20"
+    elif plant.voltage == "220 / 110 / 10":
+        voltage = "220"
+    elif plant.voltage == "30 auf 6":
+        voltage = "30"
+    elif plant.voltage == "6\n20":
+        voltage = "Werknetz"
+    else:
+        voltage = plant.voltage
+    return voltage
+
+
+def add_voltage_level(plant):
+    """
+    This function adds the voltage level to the conventional power plants
+    """
+    if int(plant.voltage) >= 220:
+        level = 1
+    elif (plant.voltage == "HS") or (int(plant.voltage) < 220) and (int(plant.voltage) >= 60):
+        level = 3
+    elif plant.voltage == "HS/MS":
+        level = 4
+    elif (plant.voltage == "MS") or (int(plant.voltage) < 60) and (int(plant.voltage) >= 1):
+        level = 5
+    elif int(plant.voltage) < 1:
+        level = 7
+    return level
+
+
 def create_conventional_powerplants(grid_data):
     """
     This function collects the generators based on ego_conventional_powerplant from OEP
@@ -805,19 +843,7 @@ def create_conventional_powerplants(grid_data):
             inplace=True,
         )
         # prepare power plant voltage parameter for processing
-        for i, plant in conventionals.iterrows():
-            if plant.voltage is None:
-                conventionals.at[plant.name, "voltage"] = "None"
-            elif plant.voltage in ["HS", "10 und 110", "110/6"]:
-                conventionals.at[plant.name, "voltage"] = "110"
-            elif plant.voltage in ["MS", "MSP", "10kV, 25kV", "Mai 25"]:
-                conventionals.at[plant.name, "voltage"] = "20"
-            elif plant.voltage == "220 / 110 / 10":
-                conventionals.at[plant.name, "voltage"] = "220"
-            elif plant.voltage == "30 auf 6":
-                conventionals.at[plant.name, "voltage"] = "30"
-            elif plant.voltage == "6\n20":
-                conventionals.at[plant.name, "voltage"] = "Werknetz"
+        conventionals["voltage"] = conventionals.apply(change_voltage_con, axis=1)
         # drop plants with no defined voltage, plants at factory networks and shutdowned plants
         conventionals.drop(
             conventionals[conventionals.voltage.isin(["Werknetz", "None"])].index.to_list()
@@ -825,21 +851,7 @@ def create_conventional_powerplants(grid_data):
             inplace=True,
         )
         # add voltage level
-        for i, plant in conventionals.iterrows():
-            if plant.voltage == "HS":
-                conventionals.at[i, "voltage_level"] = 3
-            elif plant.voltage == "HS/MS":
-                conventionals.at[i, "voltage_level"] = 4
-            elif plant.voltage == "MS":
-                conventionals.at[i, "voltage_level"] = 5
-            elif int(plant.voltage) >= 220:
-                conventionals.at[i, "voltage_level"] = 1
-            elif (int(plant.voltage) < 220) and (int(plant.voltage) >= 60):
-                conventionals.at[i, "voltage_level"] = 3
-            elif (int(plant.voltage) < 60) and (int(plant.voltage) >= 1):
-                conventionals.at[i, "voltage_level"] = 5
-            elif int(plant.voltage) < 1:
-                conventionals.at[i, "voltage_level"] = 7
+        conventionals["voltage_level"] = conventionals.apply(add_voltage_level, axis=1)
         # restrict plants to considered power levels
         if "hv" in power_levels:
             conventionals = conventionals[conventionals.voltage_level >= 3]
