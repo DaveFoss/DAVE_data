@@ -2,8 +2,6 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
-
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, MultiPoint, Point
@@ -294,19 +292,17 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, "from_bus"] = from_bus.iloc[0].dave_name
         else:
             # check if there is a suitable road junction in grid data
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
+            distance = road_junctions_grid.geometry.apply(
+                lambda x: Point(line_coords_from).distance(x)
+            )
             if distance.min() < 1e-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
                 # no road junction was found, create it from road junction data
-                with warnings.catch_warnings():
-                    # filter crs warning because it is not relevant
-                    warnings.filterwarnings("ignore", category=UserWarning)
-                    distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
+                distance = road_junctions_origin.geometry.apply(
+                    lambda x: Point(line_coords_from).distance(x)
+                )
                 if distance.min() < 1e-04:
                     road_junction_geom = road_junctions_origin.loc[distance.idxmin()]
                     # create lv_point for relevant road junction
@@ -336,19 +332,17 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, "to_bus"] = to_bus.iloc[0].dave_name
         else:
             # check if there is a suitable road junction in grid data
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
+            distance = road_junctions_grid.geometry.apply(
+                lambda x: Point(line_coords_to).distance(x)
+            )
             if distance.min() < 1e-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
                 # no road junction was found, create it from road junction data
-                with warnings.catch_warnings():
-                    # filter crs warning because it is not relevant
-                    warnings.filterwarnings("ignore", category=UserWarning)
-                    distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
+                distance = road_junctions_origin.geometry.apply(
+                    lambda x: Point(line_coords_to).distance(x)
+                )
                 if distance.min() < 1e-04:
                     road_junction_geom = road_junctions_origin.loc[distance.idxmin()]
                     # create lv_point for relevant road junction

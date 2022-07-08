@@ -3,7 +3,6 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import math
-import warnings
 
 import geopandas as gpd
 import numpy as np
@@ -198,10 +197,9 @@ def create_loads(grid_data):
                     else:
                         # check the case that the building centroid is outside building boundary
                         building_centroid = building_geom.centroid
-                        with warnings.catch_warnings():
-                            # filter crs warning because it is not relevant
-                            warnings.filterwarnings("ignore", category=UserWarning)
-                            centroid_distance = building_nodes.distance(building_centroid)
+                        centroid_distance = building_nodes.geometry.apply(
+                            lambda x: building_centroid.distance(x)
+                        )
                         if centroid_distance.min() < 1e-04:
                             lv_node = building_nodes.loc[centroid_distance.idxmin()]
                     # create residential load

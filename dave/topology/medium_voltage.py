@@ -2,8 +2,6 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
-
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, MultiLineString, Point
@@ -107,8 +105,8 @@ def create_mv_topology(grid_data):
             pd.Series(list(map(lambda x: f"substation_6_{x}", mvlv_substations.index))),
         )
         # add ehv substations to grid data
-        grid_data.components_power.substations.mv_lv = (
-            grid_data.components_power.substations.mv_lv.append(mvlv_substations)
+        grid_data.components_power.substations.mv_lv = pd.concat(
+            [grid_data.components_power.substations.mv_lv, mvlv_substations], ignore_index=True
         )
     else:
         mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
@@ -157,7 +155,7 @@ def create_mv_topology(grid_data):
     # update progress
     pbar.update(10)
     # consider data only if there are more than one node in the target area
-    mv_buses = mvlv_buses.append(hvmv_buses)
+    mv_buses = pd.concat([mvlv_buses, hvmv_buses], ignore_index=True)
     if len(mv_buses) > 1:
         # search for the substations dave name
         substations_rel = pd.concat([hvmv_substations, mvlv_substations])
@@ -184,10 +182,7 @@ def create_mv_topology(grid_data):
         mv_lines = gpd.GeoSeries([])
         for i, bus in mv_buses.iterrows():
             mv_buses_rel = mv_buses.drop([bus.name])
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = mv_buses_rel.geometry.distance(bus.geometry)
+            distance = mv_buses_rel.geometry.apply(lambda x: bus.geometry.distance(x))
             nearest_bus_idx = distance.idxmin()
             mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
             # check if line already exists
@@ -259,10 +254,7 @@ def create_mv_topology(grid_data):
                 distance_min = 1000  # any big number
                 # find pair of nearest nodes
                 for point in line_points:
-                    with warnings.catch_warnings():
-                        # filter crs warning because it is not relevant
-                        warnings.filterwarnings("ignore", category=UserWarning)
-                        distance = nearest_line_points.geometry.distance(point)
+                    distance = nearest_line_points.geometry.apply(lambda x: point.distance(x))
                     if distance_min > distance.min():
                         distance_min = distance.min()
                         nearest_point_idx = distance.idxmin()
@@ -283,17 +275,15 @@ def create_mv_topology(grid_data):
         # add parameters to lines
         for i, line in mv_lines.iterrows():
             # get from bus name
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                from_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][0]))
+            from_bus_distance = mv_buses.geometry.apply(
+                lambda x: Point(line.geometry.coords[:][0]).distance(x)
+            )
             from_bus_idx = from_bus_distance.idxmin()
             mv_lines.at[line.name, "from_bus"] = mv_buses.loc[from_bus_idx].dave_name
             # get to bus name
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                to_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][1]))
+            to_bus_distance = mv_buses.geometry.apply(
+                lambda x: Point(line.geometry.coords[:][1]).distance(x)
+            )
             to_bus_idx = to_bus_distance.idxmin()
             mv_lines.at[line.name, "to_bus"] = mv_buses.loc[to_bus_idx].dave_name
             # calculate length in km

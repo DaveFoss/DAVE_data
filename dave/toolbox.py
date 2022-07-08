@@ -2,8 +2,6 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
-
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -32,10 +30,7 @@ def create_interim_area(areas):
         for i, area in areas.iterrows():
             # check if the considered area adjoining an other one
             areas_other = areas.drop([i])
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = areas_other.geometry.distance(area.geometry)
+            distance = areas_other.geometry.apply(lambda x: area.geometry.distance(x))
             if distance.min() > 0:
                 areas_iso.append((i, distance.idxmin()))
         # if their are isolated areas, check for a connection on the highest grid level
