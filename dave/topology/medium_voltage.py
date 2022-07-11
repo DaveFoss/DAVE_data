@@ -182,14 +182,15 @@ def create_mv_topology(grid_data):
         mv_lines = gpd.GeoSeries([])
         for i, bus in mv_buses.iterrows():
             mv_buses_rel = mv_buses.drop([bus.name])
-            distance = mv_buses_rel.geometry.apply(lambda x: bus.geometry.distance(x))
-            nearest_bus_idx = distance.idxmin()
+            nearest_bus_idx = mv_buses_rel.geometry.apply(
+                lambda x: bus.geometry.distance(x)
+            ).idxmin()
             mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
-            # update progress
-            pbar.update(10 / len(mv_buses))
+        # update progress
+        pbar.update(10)
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         mv_lines.reset_index(drop=True, inplace=True)
         # connect line segments with each other
@@ -224,8 +225,7 @@ def create_mv_topology(grid_data):
             for i, line in mv_lines_rel.iteritems():
                 # find nearest line to considered one
                 mv_lines_con = mv_lines_rel.drop([i])
-                distance = mv_lines_con.geometry.distance(line)
-                nearest_line_idx = distance.idxmin()
+                nearest_line_idx = mv_lines_con.geometry.distance(line).idxmin()
                 # get line coordinates
                 if isinstance(line, MultiLineString):
                     line_points = gpd.GeoSeries(
