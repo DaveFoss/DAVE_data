@@ -3,9 +3,9 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 from geopy.geocoders import ArcGIS
+from numpy import append, array
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiLineString, MultiPoint
 from shapely.ops import cascaded_union, linemerge, polygonize
@@ -66,7 +66,7 @@ def voronoi(points):
     # define points for voronoi centroids
     points = points.reset_index(drop=True)  # don't use inplace
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
-    voronoi_points = np.array(voronoi_centroids)
+    voronoi_points = array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
     bound_points = MultiPoint(points.geometry).convex_hull.buffer(1).bounds
     points_boundary = [
@@ -76,13 +76,13 @@ def voronoi(points):
         [bound_points[2], bound_points[3]],
     ]
     # append boundary points to avoid infinit polygons with relevant nodes
-    voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
+    voronoi_points = append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
     vor = Voronoi(voronoi_points)
     # select finit lines and create LineStrings (regions with -1 are infinit)
     lines = [LineString(vor.vertices[line]) for line in vor.ridge_vertices if -1 not in line]
     # create polygons from the lines
-    polygons = np.array(list(polygonize(lines)))
+    polygons = array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
     voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
     # search voronoi centroids and dave name

@@ -2,7 +2,7 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import math
+from math import pi
 
 import geopandas as gpd
 import pandas as pd
@@ -229,11 +229,7 @@ def create_ehv_topology(grid_data):
             "x_ohm_per_km",
             ehv_lines.x_ohm.astype("float") / ehv_lines.length_km,
         )
-        c_nf = (
-            ehv_lines.b_s.astype("float")
-            / (2 * math.pi * ehv_lines.frequency.astype("float"))
-            * 1e09
-        )
+        c_nf = ehv_lines.b_s.astype("float") / (2 * pi * ehv_lines.frequency.astype("float")) * 1e09
         ehv_lines.insert(ehv_lines.columns.get_loc("b_s") + 1, "c_nf", c_nf)
         ehv_lines.insert(
             ehv_lines.columns.get_loc("c_nf") + 1, "c_nf_per_km", c_nf / ehv_lines.length_km

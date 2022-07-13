@@ -5,8 +5,8 @@
 import math
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
+from numpy import array, random
 from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
@@ -159,7 +159,7 @@ def create_loads(grid_data):
                 # distribute the whole population over teh considered area
                 pop_distribute = area.population
                 # construct random generator
-                rng = np.random.default_rng()
+                rng = random.default_rng()
                 while pop_distribute != 0:
                     if pop_distribute > 5:
                         # select houshold size, weighted randomly
@@ -225,7 +225,7 @@ def create_loads(grid_data):
             grid_data.buildings.commercial.building == "industrial"
         ]
         industrial_polygons_sum = unary_union(
-            np.array(list(polygonize(industrial_buildings.geometry)))
+            array(list(polygonize(industrial_buildings.geometry)))
         )
         industrial_area_full = industrial_polygons_sum.area
         for i, industrial_poly in industrial_buildings.iterrows():
@@ -261,7 +261,7 @@ def create_loads(grid_data):
             grid_data.buildings.commercial.building != "industrial"
         ]
         commercial_polygons_sum = unary_union(
-            np.array(list(polygonize(commercial_buildings.geometry)))
+            array(list(polygonize(commercial_buildings.geometry)))
         )
         commercial_area_full = commercial_polygons_sum.area
         for i, commercial_poly in commercial_buildings.iterrows():

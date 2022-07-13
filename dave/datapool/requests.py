@@ -4,8 +4,8 @@
 
 import geopandas as gpd
 import pandas as pd
-import requests
-import shapely
+from requests import get
+from shapely import wkb
 
 from dave.settings import dave_settings
 
@@ -30,13 +30,11 @@ def oep_request(schema, table, where=None, geometry=None):
     """
     oep_url = "http://oep.iks.cs.ovgu.de/"
     if where:
-        request = requests.get(
+        request = get(
             "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/?where=", where])
         )
     else:
-        request = requests.get(
-            "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/"])
-        )
+        request = get("".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/"]))
     # convert data to dataframe
     if request.status_code == 200:  # 200 is the code of a successful request
         # if request is empty their will be an JSONDecodeError
@@ -49,18 +47,14 @@ def oep_request(schema, table, where=None, geometry=None):
     if geometry:
         # --- convert into geopandas DataFrame with right crs
         # transform WKB to WKT / Geometry
-        request_data["geometry"] = request_data[geometry].apply(
-            lambda x: shapely.wkb.loads(x, hex=True)
-        )
+        request_data["geometry"] = request_data[geometry].apply(lambda x: wkb.loads(x, hex=True))
         # create geoDataFrame
         request_data = gpd.GeoDataFrame(
             request_data, crs=dave_settings()["crs_main"], geometry=request_data.geometry
         )
 
     # --- request meta informations for a dataset
-    request = requests.get(
-        "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"])
-    )
+    request = get("".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"]))
     # convert data to meta dict
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
