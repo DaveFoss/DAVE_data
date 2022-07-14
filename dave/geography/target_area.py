@@ -7,7 +7,6 @@ import time
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point, Polygon
-from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool import (
@@ -132,7 +131,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 roads = roads[roads.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -164,7 +163,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -200,7 +199,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 # filter landuses that touches the target area
                 landuse = landuse[landuse.geometry.intersects(target_geom)]
                 # convert geometry to polygon
@@ -261,20 +260,20 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 buildings = buildings[buildings.geometry.intersects(target_geom)]
                 # create building categories
                 residential = dave_settings()["buildings_residential"]
                 commercial = dave_settings()["buildings_commercial"]
                 # improve building tag with landuse parameter
                 if self.landuse and not landuse.empty:
-                    landuse_retail = unary_union(landuse[landuse.landuse == "retail"].geometry)
-                    landuse_industrial = unary_union(
-                        landuse[landuse.landuse == "industrial"].geometry
-                    )
-                    landuse_commercial = unary_union(
-                        landuse[landuse.landuse == "commercial"].geometry
-                    )
+                    landuse_retail = landuse[landuse.landuse == "retail"].geometry.unary_union
+                    landuse_industrial = landuse[
+                        landuse.landuse == "industrial"
+                    ].geometry.unary_union
+                    landuse_commercial = landuse[
+                        landuse.landuse == "commercial"
+                    ].geometry.unary_union
                     for i, building in buildings.iterrows():
                         if building.building not in commercial:
                             if building.geometry.intersects(landuse_retail):
@@ -331,7 +330,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 railways = railways[railways.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 railways.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -355,7 +354,7 @@ class target_area:
                 line_geometry = roads.iloc[0].geometry
                 # check considered line surrounding for possible intersectionpoints with other lines
                 lines_rel = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
-                other_lines = unary_union(lines_rel.geometry)
+                other_lines = lines_rel.geometry.unary_union
                 # find line intersections between considered line and other lines
                 junctions = line_geometry.intersection(other_lines)
                 if junctions.geom_type == "Point":
@@ -632,7 +631,7 @@ class target_area:
                 for diff_target in diff_targets:
                     town = self.target[self.target.town == diff_target]
                     border = (
-                        unary_union(town.geometry.tolist()).convex_hull
+                        town.geometry.unary_union.convex_hull
                         if len(town) > 1
                         else town.iloc[0].geometry.convex_hull
                     )

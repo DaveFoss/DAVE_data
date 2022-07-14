@@ -127,13 +127,15 @@ def create_loads(grid_data):
                     if not isinstance(obj.geometry, LineString)
                 ]
                 plz_residential.drop(drop_objects, inplace=True)
-                plz_residential = unary_union(list(polygonize(plz_residential.geometry)))
+                plz_residential = unary_union(
+                    list(polygonize(plz_residential.geometry))
+                )  # !!! replace unary union function
                 # calculate plz  residential area for grid area
                 plz_own_landuse = postal_own_landuse[
                     postal_own_landuse.postalcode == postal.postalcode
                 ]
                 plz_own_residential = plz_own_landuse[plz_own_landuse.landuse == "residential"]
-                plz_own_residential = unary_union(plz_own_residential.geometry.to_list())
+                plz_own_residential = plz_own_residential.geometry.unary_union
                 # calculate population for proportion of postal area
                 pop_own = (
                     plz_own_residential.area / plz_residential.area
@@ -228,7 +230,7 @@ def create_loads(grid_data):
         ]
         industrial_polygons_sum = unary_union(
             np.array(list(polygonize(industrial_buildings.geometry)))
-        )
+        )  # !!! replace unary union function
         industrial_area_full = industrial_polygons_sum.area
         for i, industrial_poly in industrial_buildings.iterrows():
             building_poly = list(polygonize(industrial_poly.geometry))[0]
