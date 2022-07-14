@@ -58,7 +58,7 @@ def read_federal_states():
     EXAMPLE:
          import dave.datapool as data
 
-         postal = data.read_federal_states()
+         federal = data.read_federal_states()
     """
     federalstatesger = pd.read_hdf(get_data_path("federalstatesger.h5", "data"))
     federalstatesger["geometry"] = federalstatesger.geometry.apply(loads)
@@ -66,6 +66,34 @@ def read_federal_states():
     # read meta data
     meta_data = pd.read_excel(get_data_path("federalstatesger_meta.xlsx", "data"), sheet_name=None)
     return federalstatesger, meta_data
+
+
+def read_nuts_regions(year):
+    """
+    This data includes the name and the geometry for the nuts regions of the years 2013, 2016 and 2021
+
+    OUTPUT:
+         **nuts_regions** (GeodataFrame) - nuts regions of the years 2013, 2016 and 2021
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         nuts = data.read_nuts_regions()
+    """
+    nuts_data = pd.HDFStore(get_data_path("nuts_regions.h5", "data"))
+    if year == "2013":
+        nuts_regions = nuts_data.get("/nuts_2013")
+    elif year == "2016":
+        nuts_regions = nuts_data.get("/nuts_2016")
+    elif year == "2021":
+        nuts_regions = nuts_data.get("/nuts_2021")
+    nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
+    nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
+    # close file
+    nuts_data.close()
+    # read meta data
+    meta_data = pd.read_excel(get_data_path("nuts_regions_meta.xlsx", "data"), sheet_name=None)
+    return nuts_regions, meta_data
 
 
 def read_ehv_data():

@@ -238,8 +238,10 @@ def create_grid(
             ['ALL'] for all citys in germany \n
         **federal_state** (List of strings) - names of the target federal states it could also be \
             choose ['ALL'] for all federal states in germany \n
-        **nuts_region** (List of strings) - codes of the target nuts regions (independent from \
-            nuts level). it could also be choose ['ALL'] for all nuts regions in europe \n
+        **nuts_region** (tuple(List of strings, string)) - this tuple includes first a list of the \
+            target nuts regions codes (independent from nuts level). It could also be choose ['ALL'] \
+            for all nuts regions in europe. The second tuple parameter defines the nuts \
+            year as string.\n
         **own_area** (string) - absolute path to a shape file which includes own target area \
             (e.g. "C:/Users/name/test/test.shp") \n
 

@@ -7,10 +7,15 @@ import time
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point, Polygon
-from shapely.ops import unary_union
 from tqdm import tqdm
 
-from dave.datapool import oep_request, query_osm, read_federal_states, read_postal
+from dave.datapool import (
+    oep_request,
+    query_osm,
+    read_federal_states,
+    read_nuts_regions,
+    read_postal,
+)
 from dave.io import archiv_inventory, from_json_string
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
@@ -126,7 +131,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 roads = roads[roads.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -158,7 +163,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -194,7 +199,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 # filter landuses that touches the target area
                 landuse = landuse[landuse.geometry.intersects(target_geom)]
                 # convert geometry to polygon
@@ -255,20 +260,20 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 buildings = buildings[buildings.geometry.intersects(target_geom)]
                 # create building categories
                 residential = dave_settings()["buildings_residential"]
                 commercial = dave_settings()["buildings_commercial"]
                 # improve building tag with landuse parameter
                 if self.landuse and not landuse.empty:
-                    landuse_retail = unary_union(landuse[landuse.landuse == "retail"].geometry)
-                    landuse_industrial = unary_union(
-                        landuse[landuse.landuse == "industrial"].geometry
-                    )
-                    landuse_commercial = unary_union(
-                        landuse[landuse.landuse == "commercial"].geometry
-                    )
+                    landuse_retail = landuse[landuse.landuse == "retail"].geometry.unary_union
+                    landuse_industrial = landuse[
+                        landuse.landuse == "industrial"
+                    ].geometry.unary_union
+                    landuse_commercial = landuse[
+                        landuse.landuse == "commercial"
+                    ].geometry.unary_union
                     for i, building in buildings.iterrows():
                         if building.building not in commercial:
                             if building.geometry.intersects(landuse_retail):
@@ -325,7 +330,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 railways = railways[railways.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 railways.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -349,7 +354,7 @@ class target_area:
                 line_geometry = roads.iloc[0].geometry
                 # check considered line surrounding for possible intersectionpoints with other lines
                 lines_rel = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
-                other_lines = unary_union(lines_rel.geometry)
+                other_lines = lines_rel.geometry.unary_union
                 # find line intersections between considered line and other lines
                 junctions = line_geometry.intersection(other_lines)
                 if junctions.geom_type == "Point":
@@ -480,35 +485,39 @@ class target_area:
         """
         This function filter the nuts region informations for the target area.
         """
+        # check user input
+        if isinstance(self.nuts_region, list):
+            self.nuts_region = (self.nuts_region, "2016")  # default year
         # request nuts-3 areas from oep
-        nuts_3, meta_data = oep_request(schema="boundaries", table="ffe_osm_nuts3", geometry="geom")
-        nuts_3.drop(columns=(["geom"]), inplace=True)
+        nuts, meta_data = read_nuts_regions(year=self.nuts_region[1])
+        nuts_3 = nuts[nuts.LEVL_CODE == 3]
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        # change crs
-        nuts_3.set_crs(dave_settings()["crs_meter"], inplace=True, allow_override=True)
-        nuts_3.to_crs(dave_settings()["crs_main"], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0].lower() == "all":
-            # in this case all federal states will be choosen
-            target = nuts_3
+        if len(self.nuts_region[0]) == 1 and self.nuts_region[0][0].lower() == "all":
+            # in this case all nuts_regions will be choosen
+            self.target = nuts_3
         else:
-            for i, region in enumerate(self.nuts_region):
-                # bring name in right format
-                area = list(region)
-                area = [letter.upper() for letter in area if letter.isalpha()]
-                self.nuts_region[i] = "".join(area)
-                # get area for nuts region
-                target = (
-                    nuts_3[nuts_3["nuts_code"].str.contains(region)]
-                    if i == 0
-                    else target.append(nuts_3[nuts_3["nuts_code"].str.contains(region)])
+            for i, region in enumerate(self.nuts_region[0]):
+                # bring NUTS ID in right format
+                region_letters = list(region)
+                region_renamed = "".join(
+                    [letter.upper() if letter.isalpha() else letter for letter in region_letters]
                 )
-                if target.empty:
+                self.nuts_region[0][i] = region_renamed
+                # get area for nuts region
+                nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region_renamed)]
+                self.target = (
+                    nuts_contains
+                    if i == 0
+                    else pd.concat([self.target, nuts_contains], ignore_index=True)
+                )
+                if nuts_contains.empty:
                     raise ValueError("nuts region name wasn`t found. Please check your input")
+        # filter duplicates
+        self.target.drop_duplicates(inplace=True)
         # merge multipolygons
         # target['geometry'] = target.geometry.apply(lambda x: unary_union(x))
-        self.target = target
         # convert nuts regions into postal code areas for target_input
         postal, meta_data = read_postal()
         # add meta data
@@ -622,7 +631,7 @@ class target_area:
                 for diff_target in diff_targets:
                     town = self.target[self.target.town == diff_target]
                     border = (
-                        unary_union(town.geometry.tolist()).convex_hull
+                        town.geometry.unary_union.convex_hull
                         if len(town) > 1
                         else town.iloc[0].geometry.convex_hull
                     )

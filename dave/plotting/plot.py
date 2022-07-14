@@ -130,12 +130,12 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         plt.legend(handles=legend_elements)
         # titel
         plt.title("Geographical Data")
-        # !!! Todo: Speichern des Plots fürt zu einem Fehler
-        # if output_folder:
-        #     # save plot in the dave output folder
-        #     if not api_use:
-        #         file_path = output_folder + "\\geographical_data.svg"
-        #         plt.savefig(file_path, dpi=300)
+        # !!! Todo: Speichern des Plots fürt zu einem Fehler, entsprechende stelle in Matplotlib auskommentiert
+        if output_folder:
+            # save plot in the dave output folder
+            if not api_use:
+                file_path = output_folder + "\\geographical_data.svg"
+                plt.savefig(file_path, dpi=300)
 
 
 def plot_grid_data(grid_data, api_use, output_folder=None):

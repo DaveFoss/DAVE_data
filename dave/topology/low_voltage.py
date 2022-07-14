@@ -7,7 +7,7 @@ import warnings
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, MultiPoint, Point
-from shapely.ops import nearest_points, unary_union
+from shapely.ops import nearest_points
 from tqdm import tqdm
 
 from dave.datapool import oep_request
@@ -29,7 +29,7 @@ def nearest_road(building_centroids, roads):
 
     """
     # create multistring of relevant roads and intersect radial lines with it
-    multiline_roads = unary_union(roads.geometry)
+    multiline_roads = roads.geometry.unary_union
     # finding nearest connection between the building centroids and the roads
     near_points = gpd.GeoSeries(
         list(map(lambda x: nearest_points(x, multiline_roads)[1], building_centroids)),
