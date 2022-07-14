@@ -7,7 +7,6 @@ from math import pi
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point
-from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool import oep_request
@@ -151,7 +150,7 @@ def create_hv_topology(grid_data):
     )
     # filter lines which are currently availible
     ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(unary_union(grid_data.area.geometry))]
+    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union)]
     # update progress
     pbar.update(10)
     # consider data only if there are minimum one line in the target area
