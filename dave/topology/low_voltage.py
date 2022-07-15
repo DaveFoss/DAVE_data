@@ -154,7 +154,7 @@ def create_lv_topology(grid_data):
         )
         # change wrong crs from oep
         mvlv_substations.crs = dave_settings()["crs_meter"]
-        mvlv_substations = mvlv_substations.to_crs(dave_settings()["crs_main"])
+        mvlv_substations.to_crs(dave_settings()["crs_main"], inplace=True)
         # filter trafos which are within the grid area
         mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
         if not mvlv_substations.empty:

@@ -99,6 +99,18 @@ class target_area:
         self.power_levels = power_levels
         self.gas_levels = gas_levels
 
+    def _target_geom(self, target_number, target_town):
+        """
+        This function searches the suitable geometry for the processing step
+
+        """
+        if target_number or target_number == 0:
+            target_geom = self.target.geometry.iloc[target_number]
+        elif target_town:
+            targets = self.target[self.target.town == target_town]
+            target_geom = targets.geometry.unary_union
+        return target_geom
+
     def _from_osm(self, target, target_number=None, target_town=None, progress_step=None):
         """
         This function searches for data on OpenStreetMap (OSM) and filters the relevant paramerters
@@ -112,6 +124,8 @@ class target_area:
         if objects_con == 0:
             # update progress
             self.pbar.update(progress_step)
+        # get target geometry for the processing step
+        target_geom = target_area._target_geom(self, target_number, target_town)
         # search relevant road informations in the target area
         if self.roads:
             roads, meta_data = query_osm(
@@ -127,11 +141,6 @@ class target_area:
                 # consider only the linestring elements
                 roads = roads[roads.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only roads which intersects the target area
-                if target_number or target_number == 0:
-                    target_geom = self.target.geometry.iloc[target_number]
-                elif target_town:
-                    targets = self.target[self.target.town == target_town]
-                    target_geom = targets.geometry.unary_union
                 roads = roads[roads.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -159,11 +168,6 @@ class target_area:
                     roads_plot.geometry.apply(lambda x: isinstance(x, LineString))
                 ]
                 # consider only roads which intersects the target area
-                if target_number or target_number == 0:
-                    target_geom = self.target.geometry.iloc[target_number]
-                elif target_town:
-                    targets = self.target[self.target.town == target_town]
-                    target_geom = targets.geometry.unary_union
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -195,12 +199,6 @@ class target_area:
                 # consider only the linestring elements
                 landuse = landuse[landuse.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only landuses which intersects the target area
-                if target_number or target_number == 0:
-                    target_geom = self.target.geometry.iloc[target_number]
-                elif target_town:
-                    targets = self.target[self.target.town == target_town]
-                    target_geom = targets.geometry.unary_union
-                # filter landuses that touches the target area
                 landuse = landuse[landuse.geometry.intersects(target_geom)]
                 # convert geometry to polygon
                 for i, land in landuse.iterrows():
@@ -256,11 +254,6 @@ class target_area:
                 # consider only the linestring elements
                 buildings = buildings[buildings.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only buildings which intersects the target area
-                if target_number or target_number == 0:
-                    target_geom = self.target.geometry.iloc[target_number]
-                elif target_town:
-                    targets = self.target[self.target.town == target_town]
-                    target_geom = targets.geometry.unary_union
                 buildings = buildings[buildings.geometry.intersects(target_geom)]
                 # create building categories
                 residential = dave_settings()["buildings_residential"]
@@ -326,11 +319,6 @@ class target_area:
                 # consider only the linestring elements
                 railways = railways[railways.geometry.apply(lambda x: isinstance(x, LineString))]
                 # consider only roads which intersects the target area
-                if target_number or target_number == 0:
-                    target_geom = self.target.geometry.iloc[target_number]
-                elif target_town:
-                    targets = self.target[self.target.town == target_town]
-                    target_geom = targets.geometry.unary_union
                 railways = railways[railways.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 railways.set_crs(dave_settings()["crs_main"], inplace=True)
