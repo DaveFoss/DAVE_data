@@ -208,8 +208,9 @@ def create_hv_topology(grid_data):
         hv_buses["source"] = "OEP"
         # add dave name
         hv_buses.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f"node_3_{x}", hv_buses.index)))
-        hv_buses.insert(0, "dave_name", name)
+        hv_buses.insert(
+            0, "dave_name", pd.Series(list(map(lambda x: f"node_3_{x}", hv_buses.index)))
+        )
         # set crs
         hv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
         # add hv nodes to grid data

@@ -257,8 +257,7 @@ def create_mv_topology(grid_data):
                     distance = nearest_line_points.geometry.apply(lambda x: point.distance(x))
                     if distance_min > distance.min():
                         distance_min = distance.min()
-                        nearest_point_idx = distance.idxmin()
-                        nearest_point = nearest_line_points[nearest_point_idx]
+                        nearest_point = nearest_line_points[distance.idxmin()]
                         line_point = point
                 # add created connection line into mv lines
                 mv_line = LineString([line_point, nearest_point])
@@ -268,40 +267,41 @@ def create_mv_topology(grid_data):
         pbar.update(40)
         # prepare dataframe for mv lines
         mv_lines = gpd.GeoDataFrame(geometry=mv_lines)
-        mv_lines.insert(0, "dave_name", None)
         # project lines to crs with unit in meter for length calculation
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         mv_lines_3035 = mv_lines.to_crs(dave_settings()["crs_meter"])
         # add parameters to lines
         for i, line in mv_lines.iterrows():
             # get from bus name
-            from_bus_distance = mv_buses.geometry.apply(
-                lambda x: Point(line.geometry.coords[:][0]).distance(x)
-            )
-            from_bus_idx = from_bus_distance.idxmin()
-            mv_lines.at[line.name, "from_bus"] = mv_buses.loc[from_bus_idx].dave_name
+            mv_lines.at[line.name, "from_bus"] = mv_buses.loc[
+                mv_buses.geometry.apply(
+                    lambda x: Point(line.geometry.coords[:][0]).distance(x)
+                ).idxmin()
+            ].dave_name
             # get to bus name
-            to_bus_distance = mv_buses.geometry.apply(
-                lambda x: Point(line.geometry.coords[:][1]).distance(x)
-            )
-            to_bus_idx = to_bus_distance.idxmin()
-            mv_lines.at[line.name, "to_bus"] = mv_buses.loc[to_bus_idx].dave_name
-            # calculate length in km
-            mv_lines.at[line.name, "length_km"] = mv_lines_3035.loc[i].geometry.length / 1000
-            # line dave name
-            mv_lines.at[line.name, "dave_name"] = f"line_5_{i}"
-            # additional informations
-            mv_lines.at[line.name, "voltage_kv"] = dave_settings()["mv_voltage"]
-            mv_lines.at[line.name, "voltage_level"] = 5
-            mv_lines.at[line.name, "source"] = "dave internal"
-            # update progress
-            pbar.update(20 / len(mv_lines))
+            mv_lines.at[line.name, "to_bus"] = mv_buses.loc[
+                mv_buses.geometry.apply(
+                    lambda x: Point(line.geometry.coords[:][1]).distance(x)
+                ).idxmin()
+            ].dave_name
+        # calculate length in km
+        mv_lines["length_km"] = mv_lines_3035.geometry.length / 100
+        # line dave name
+        mv_lines.insert(
+            0, "dave_name", pd.Series(list(map(lambda x: f"line_5_{x}", mv_lines.index)))
+        )
+        # additional informations
+        mv_lines["voltage_kv"] = dave_settings()["mv_voltage"]
+        mv_lines["voltage_level"] = 5
+        mv_lines["source"] = "dave internal"
         # set crs
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         # add mv lines to grid data
         grid_data.mv_data.mv_lines = pd.concat(
             [grid_data.mv_data.mv_lines, mv_lines], ignore_index=True
         )
+        # update progress
+        pbar.update(20)
     else:
         # update progress
         pbar.update(80)

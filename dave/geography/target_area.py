@@ -138,10 +138,11 @@ class target_area:
             if not roads.empty:
                 # define road parameters which are relevant for the grid modeling
                 roads = roads.filter(["geometry", "name", "highway"])
-                # consider only the linestring elements
-                roads = roads[roads.geometry.apply(lambda x: isinstance(x, LineString))]
-                # consider only roads which intersects the target area
-                roads = roads[roads.geometry.intersects(target_geom)]
+                # consider only roads which are linestring elements and within considered area
+                roads = roads[
+                    (roads.geometry.apply(lambda x: isinstance(x, LineString)))
+                    & (roads.geometry.intersects(target_geom))
+                ]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()["crs_main"], inplace=True)
                 self.grid_data.roads.roads = pd.concat(
@@ -163,12 +164,11 @@ class target_area:
             if not roads_plot.empty:
                 # define road parameters which are relevant for the grid modeling
                 roads_plot = roads_plot.filter(["geometry", "name"])
-                # consider only the linestring elements
+                # consider only roads which are linestring elements and within considered area
                 roads_plot = roads_plot[
-                    roads_plot.geometry.apply(lambda x: isinstance(x, LineString))
+                    (roads_plot.geometry.apply(lambda x: isinstance(x, LineString)))
+                    & (roads_plot.geometry.intersects(target_geom))
                 ]
-                # consider only roads which intersects the target area
-                roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
                 self.grid_data.roads.roads_plot = pd.concat(
@@ -196,10 +196,11 @@ class target_area:
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
                 landuse = landuse.filter(["landuse", "geometry", "name"])
-                # consider only the linestring elements
-                landuse = landuse[landuse.geometry.apply(lambda x: isinstance(x, LineString))]
-                # consider only landuses which intersects the target area
-                landuse = landuse[landuse.geometry.intersects(target_geom)]
+                # consider only landuses which are linestring elements and within considered area
+                landuse = landuse[
+                    (landuse.geometry.apply(lambda x: isinstance(x, LineString)))
+                    & (landuse.geometry.intersects(target_geom))
+                ]
                 # convert geometry to polygon
                 for i, land in landuse.iterrows():
                     if isinstance(land.geometry, LineString):
@@ -215,7 +216,9 @@ class target_area:
                 landuse = landuse.set_crs(dave_settings()["crs_main"])
                 area = self.grid_data.area.rename(columns={"name": "bundesland"})
                 # filter landuses which are within the grid area
-                landuse = intersection_with_area(landuse, area)
+                landuse = intersection_with_area(
+                    landuse, area
+                )  # !!! duplicated with intersection before?
                 # calculate polygon area in km²
                 landuse_3035 = landuse.to_crs(dave_settings()["crs_meter"])
                 landuse["area_km2"] = landuse_3035.area / 1e06
@@ -251,10 +254,11 @@ class target_area:
                         "name",
                     ]
                 )
-                # consider only the linestring elements
-                buildings = buildings[buildings.geometry.apply(lambda x: isinstance(x, LineString))]
-                # consider only buildings which intersects the target area
-                buildings = buildings[buildings.geometry.intersects(target_geom)]
+                # consider only buildings which are linestring elements and within considered area
+                buildings = buildings[
+                    (buildings.geometry.apply(lambda x: isinstance(x, LineString)))
+                    & (buildings.geometry.intersects(target_geom))
+                ]
                 # create building categories
                 residential = dave_settings()["buildings_residential"]
                 commercial = dave_settings()["buildings_commercial"]
@@ -316,10 +320,11 @@ class target_area:
                 railways = railways.filter(
                     ["name", "railway", "geometry", "tram", "train", "usage", "voltage"]
                 )
-                # consider only the linestring elements
-                railways = railways[railways.geometry.apply(lambda x: isinstance(x, LineString))]
-                # consider only roads which intersects the target area
-                railways = railways[railways.geometry.intersects(target_geom)]
+                # consider only railways which are linestring elements and within considered area
+                railways = railways[
+                    (railways.geometry.apply(lambda x: isinstance(x, LineString)))
+                    & (railways.geometry.intersects(target_geom))
+                ]
                 # write roads into grid_data
                 railways.set_crs(dave_settings()["crs_main"], inplace=True)
                 self.grid_data.railways = pd.concat(
@@ -354,8 +359,7 @@ class target_area:
                 roads.drop([0], inplace=True)
                 roads.reset_index(drop=True, inplace=True)
             # delet duplicates
-            junction_points = gpd.GeoSeries(junction_points)
-            road_junctions = junction_points.drop_duplicates()
+            road_junctions = gpd.GeoSeries(junction_points).drop_duplicates()
             # write road junctions into grid_data
             road_junctions.set_crs(dave_settings()["crs_main"], inplace=True)
             self.grid_data.roads.road_junctions = road_junctions.rename("geometry")
