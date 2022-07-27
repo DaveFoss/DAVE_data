@@ -186,7 +186,7 @@ def save_dataset_to_archiv(grid_data):
         # filter warnings because of the PerformanceWarning from pytables at the geometry type
         warnings.simplefilter("ignore")
         # save dataset to archiv
-        file_name = to_archiv(grid_data)
+        to_archiv(grid_data)
 
 
 def create_grid(

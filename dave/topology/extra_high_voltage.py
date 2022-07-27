@@ -144,12 +144,12 @@ def create_ehv_topology(grid_data):
         ehv_buses["subst_name"] = sub_infos.apply(lambda x: x[2])
         # update progress
         pbar.update(10)
+        """ the license of the open tso data is not clarified
         # read ehv tso data
         ehv_data, meta_data = read_ehv_data()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        """ the license of the open tso data is not clarified
         # assign tso ehv node names to the ego ehv nodes
         for _, node in ehv_data["ehv_nodes"].iterrows():
             if node.osm_id:
@@ -183,7 +183,7 @@ def create_ehv_topology(grid_data):
         ehv_buses_tso_names = ehv_buses.tso_name.to_list()
         area = grid_data.area.drop(columns=['name']) if 'name' in grid_data.area.keys() \
             else grid_data.area
-        # filter nodes which are within the grid area 
+        # filter nodes which are within the grid area
         ehv_buses_tso = intersection_with_area(ehv_data['ehv_nodes'], area, remove_columns=False)
         for _, tso_bus in ehv_buses_tso.iterrows():
             tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')

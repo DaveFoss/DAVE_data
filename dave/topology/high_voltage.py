@@ -96,10 +96,12 @@ def create_hv_topology(grid_data):
             inplace=True,
         )
         # filter substations with point as geometry
-        drop_substations = hvmv_substations[
-            hvmv_substations.geometry.apply(lambda x: isinstance(x, (Point, LineString)))
-        ].index.values
-        hvmv_substations.drop(drop_substations, inplace=True)
+        hvmv_substations.drop(
+            hvmv_substations[
+                hvmv_substations.geometry.apply(lambda x: isinstance(x, (Point, LineString)))
+            ].index.values,
+            inplace=True,
+        )
         # filter substations which are within the grid area
         hvmv_substations = intersection_with_area(hvmv_substations, grid_data.area)
         if not hvmv_substations.empty:
@@ -148,9 +150,11 @@ def create_hv_topology(grid_data):
         },
         inplace=True,
     )
-    # filter lines which are currently availible
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union)]
+    # filter lines which are currently available and within the considered area
+    ehvhv_lines = ehvhv_lines[
+        (ehvhv_lines.ego_scn_name == "Status Quo")
+        & (ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union))
+    ]
     # update progress
     pbar.update(10)
     # consider data only if there are minimum one line in the target area

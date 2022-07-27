@@ -86,7 +86,7 @@ def create_mv_topology(grid_data):
 
     # change wrong crs from oep
     mvlv_substations.crs = dave_settings()["crs_meter"]
-    mvlv_substations = mvlv_substations.to_crs(dave_settings()["crs_main"])
+    mvlv_substations.to_crs(dave_settings()["crs_main"], inplace=True)
     mvlv_substations.rename(
         columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
     )
@@ -181,10 +181,11 @@ def create_mv_topology(grid_data):
         # lines to connect node with the nearest node
         mv_lines = gpd.GeoSeries([])
         for i, bus in mv_buses.iterrows():
-            mv_buses_rel = mv_buses.drop([bus.name])
-            nearest_bus_idx = mv_buses_rel.geometry.apply(
-                lambda x: bus.geometry.distance(x)
-            ).idxmin()
+            nearest_bus_idx = (
+                mv_buses.drop([bus.name])
+                .geometry.apply(lambda x: bus.geometry.distance(x))
+                .idxmin()
+            )
             mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
@@ -224,8 +225,7 @@ def create_mv_topology(grid_data):
             # create lines for connecting line segments
             for i, line in mv_lines_rel.iteritems():
                 # find nearest line to considered one
-                mv_lines_con = mv_lines_rel.drop([i])
-                nearest_line_idx = mv_lines_con.geometry.distance(line).idxmin()
+                nearest_line_idx = mv_lines_rel.drop([i]).geometry.distance(line).idxmin()
                 # get line coordinates
                 if isinstance(line, MultiLineString):
                     line_points = gpd.GeoSeries(
