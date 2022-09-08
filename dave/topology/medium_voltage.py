@@ -208,15 +208,7 @@ def create_mv_topology(grid_data):
                     # get list with line objects
                     lines_list = lines_intersect.tolist()
                     # search for multilines and split them
-                    new_line = list(
-                        map(
-                            lambda x: list(map(lambda y: y, x))
-                            if isinstance(x, MultiLineString)
-                            else [x],
-                            lines_list,
-                        )
-                    )
-                    new_line = [line for sublist in new_line for line in sublist]
+                    new_line = [line for line in lines_list.geoms]
                     # merge found lines and add new line to line quantity
                     mv_lines_rel[len(mv_lines)] = linemerge(new_line)
                     # delete found lines from line quantity
@@ -234,7 +226,7 @@ def create_mv_topology(grid_data):
                 # get line coordinates
                 if isinstance(line, MultiLineString):
                     line_points = gpd.GeoSeries(
-                        [Point(coords) for segment in line for coords in segment.coords[:]]
+                        [Point(coords) for segment in line.geoms for coords in segment.coords[:]]
                     )
                 else:
                     line_points = gpd.GeoSeries([Point(coords) for coords in line.coords[:]])
@@ -244,7 +236,11 @@ def create_mv_topology(grid_data):
                 nearest_line = mv_lines_rel.loc[nearest_line_idx]
                 if isinstance(nearest_line, MultiLineString):
                     nearest_line_points = gpd.GeoSeries(
-                        [Point(coords) for segment in nearest_line for coords in segment.coords[:]]
+                        [
+                            Point(coords)
+                            for segment in nearest_line.geoms
+                            for coords in segment.coords[:]
+                        ]
                     )
                 else:
                     nearest_line_points = gpd.GeoSeries(
