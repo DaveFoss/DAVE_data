@@ -327,7 +327,7 @@ def create_transformers(grid_data):
             hv_nodes = intersection_with_area(hv_nodes, substations_reduced, remove_columns=False)
             # add dave name
             hv_nodes.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_3_{x}", hv_nodes.index)))
+            name = pd.Series(list(map(lambda x: f"node_3_{x}", hv_nodes.index)), dtype=str)
             hv_nodes.insert(0, "dave_name", name)
             # set crs
             hv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -358,7 +358,7 @@ def create_transformers(grid_data):
             mv_nodes["source"] = "OEP"
             # add dave name
             mv_nodes.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_5_{x}", mv_nodes.index)))
+            name = pd.Series(list(map(lambda x: f"node_5_{x}", mv_nodes.index)), dtype=str)
             mv_nodes.insert(0, "dave_name", name)
             # set crs
             mv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -425,7 +425,10 @@ def create_transformers(grid_data):
             pbar.update(9.98 / len(substations))
         # add dave name
         name = pd.Series(
-            list(map(lambda x: f"trafo_4_{x}", grid_data.components_power.transformers.hv_mv.index))
+            list(
+                map(lambda x: f"trafo_4_{x}", grid_data.components_power.transformers.hv_mv.index)
+            ),
+            dtype=str,
         )
         grid_data.components_power.transformers.hv_mv.insert(0, "dave_name", name)
     else:
@@ -476,7 +479,7 @@ def create_transformers(grid_data):
             mv_buses["source"] = "OEP"
             # add dave name
             mv_buses.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_5_{x}", mv_buses.index)))
+            name = pd.Series(list(map(lambda x: f"node_5_{x}", mv_buses.index)), dtype=str)
             mv_buses.insert(0, "dave_name", name)
             # set crs
             mv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -502,7 +505,7 @@ def create_transformers(grid_data):
             lv_buses["source"] = "OEP"
             # add dave name
             lv_buses.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_7_{x}", lv_buses.index)))
+            name = pd.Series(list(map(lambda x: f"node_7_{x}", lv_buses.index)), dtype=str)
             lv_buses.insert(0, "dave_name", name)
             # set crs
             lv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -602,7 +605,10 @@ def create_transformers(grid_data):
 
         # add dave name
         name = pd.Series(
-            list(map(lambda x: f"trafo_6_{x}", grid_data.components_power.transformers.mv_lv.index))
+            list(
+                map(lambda x: f"trafo_6_{x}", grid_data.components_power.transformers.mv_lv.index)
+            ),
+            dtype=str,
         )
         grid_data.components_power.transformers.mv_lv.insert(0, "dave_name", name)
         # update progress
