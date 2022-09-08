@@ -592,6 +592,9 @@ class target_area:
                 self.target = gpd.read_file(self.own_area)
             else:
                 self.target = from_json_string(self.own_area)
+            # check if the given shape file is empty
+            if self.target.empty:
+                print("The given shapefile includes no data")
             # check crs and project to the right one if needed
             if (self.target.crs) and (self.target.crs != dave_settings()["crs_main"]):
                 self.target = self.target.to_crs(dave_settings()["crs_main"])
