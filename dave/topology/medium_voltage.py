@@ -208,7 +208,15 @@ def create_mv_topology(grid_data):
                     # get list with line objects
                     lines_list = lines_intersect.tolist()
                     # search for multilines and split them
-                    new_line = [line for line in lines_list.geoms]
+                    new_line = list(
+                        map(
+                            lambda x: list(map(lambda y: y, x))
+                            if isinstance(x, MultiLineString)
+                            else [x],
+                            lines_list,
+                        )
+                    )
+                    new_line = [line for sublist in new_line for line in sublist]
                     # merge found lines and add new line to line quantity
                     mv_lines_rel[len(mv_lines)] = linemerge(new_line)
                     # delete found lines from line quantity
