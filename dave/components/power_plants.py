@@ -420,7 +420,7 @@ def create_renewable_powerplants(grid_data):
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
     typ = grid_data.target_input.typ.iloc[0]
-    if typ in ["postalcode", "federal state", "own area"]:
+    if typ in ["postalcode", "federal state", "own area", "nuts region"]:
         for plz in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(
                 schema="supply", table="ego_renewable_powerplant", where=f"postcode={plz}"
@@ -444,6 +444,8 @@ def create_renewable_powerplants(grid_data):
                 renewables = data
             else:
                 renewables = renewables.append(data)
+    else:
+        renewables = pd.DataFrame()
     # update progress
     pbar.update(10)
     # prepare the DataFrame of the renewable plants
@@ -862,7 +864,7 @@ def create_conventional_powerplants(grid_data):
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
     typ = grid_data.target_input.typ.iloc[0]
-    if typ in ["postalcode", "federal state", "own area"]:
+    if typ in ["postalcode", "federal state", "own area", "nuts region"]:
         for plz in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(
                 schema="supply", table="ego_conventional_powerplant", where=f"postcode={plz}"
