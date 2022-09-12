@@ -219,7 +219,8 @@ def create_transformers(grid_data):
                 bus1 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus1].iloc[0]
                 ehv_hv_trafos.at[trafo.name, "bus_lv"] = bus0.dave_name
                 ehv_hv_trafos.at[trafo.name, "bus_hv"] = bus1.dave_name
-                ehv_hv_trafos.at[trafo.name, "substation_name"] = bus1.subst_name
+                if "subst_name" in bus1.keys():
+                    ehv_hv_trafos.at[trafo.name, "substation_name"] = bus1.subst_name
                 if "tso_name" in bus0.keys():
                     ehv_hv_trafos.at[trafo.name, "tso_name"] = bus1.tso_name
             # change column name

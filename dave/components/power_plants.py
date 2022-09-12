@@ -832,7 +832,7 @@ def create_renewable_powerplants(grid_data):
         if not grid_data.components_power.renewable_powerplants.empty:
             # add dave name
             name = grid_data.components_power.renewable_powerplants.apply(
-                lambda x: f"ren_powerplant_{x.voltage_level}_{x.name}"
+                lambda x: f"ren_powerplant_{x.voltage_level}_{x.name}", axis=1
             )
             grid_data.components_power.renewable_powerplants.insert(0, "dave_name", name)
             # set crs
@@ -1292,7 +1292,7 @@ def create_conventional_powerplants(grid_data):
         if not grid_data.components_power.conventional_powerplants.empty:
             # add dave name
             name = grid_data.components_power.conventional_powerplants.apply(
-                lambda x: f"con_powerplant_{x.voltage_level}_{x.name}"
+                lambda x: f"con_powerplant_{x.voltage_level}_{x.name}", axis=1
             )
             grid_data.components_power.conventional_powerplants.insert(0, "dave_name", name)
             # set crs
