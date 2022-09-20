@@ -2,11 +2,10 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import time
-
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool import (
@@ -104,8 +103,6 @@ class target_area:
         This function searches for data on OpenStreetMap (OSM) and filters the relevant paramerters
         for grid modeling
         """
-        # add time delay because osm doesn't alowed more than 1 request per second.
-        time_delay = dave_settings()["osm_time_delay"]
         # count object types to consider for progress bar
         objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse, self.railways]
         objects_con = len([x for x in objects_list if x is True])
@@ -138,8 +135,6 @@ class target_area:
                 self.grid_data.roads.roads = pd.concat(
                     [self.grid_data.roads.roads, roads], ignore_index=True
                 )
-            # add time delay
-            time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search irrelevant road informations in the target area for a better overview
@@ -170,8 +165,6 @@ class target_area:
                 self.grid_data.roads.roads_plot = pd.concat(
                     [self.grid_data.roads.roads_plot, roads_plot], ignore_index=True
                 )
-            # add time delay
-            time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search landuse informations in the target area
@@ -226,8 +219,6 @@ class target_area:
                     [self.grid_data.landuse, landuse], ignore_index=True
                 )
                 self.grid_data.landuse.set_crs(dave_settings()["crs_main"], inplace=True)
-            # add time delay
-            time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search building informations in the target area
@@ -305,8 +296,6 @@ class target_area:
                     ],
                     ignore_index=True,
                 )
-            # add time delay
-            time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search railway informations in the target area
@@ -337,8 +326,6 @@ class target_area:
                 self.grid_data.railways = pd.concat(
                     [self.grid_data.railways, railways], ignore_index=True
                 )
-            # add time delay
-            time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
 
@@ -353,15 +340,16 @@ class target_area:
                 # considered line
                 line_geometry = roads.iloc[0].geometry
                 # check considered line surrounding for possible intersectionpoints with other lines
-                lines_rel = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
-                other_lines = lines_rel.geometry.unary_union
-                # find line intersections between considered line and other lines
-                junctions = line_geometry.intersection(other_lines)
-                if junctions.geom_type == "Point":
-                    junction_points.append(junctions)
-                elif junctions.geom_type == "MultiPoint":
-                    for point in junctions.geoms:
-                        junction_points.append(point)
+                lines_cross = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
+                if not lines_cross.empty:
+                    other_lines = lines_cross.geometry.unary_union
+                    # find line intersections between considered line and other lines
+                    junctions = line_geometry.intersection(other_lines)
+                    if junctions.geom_type == "Point":
+                        junction_points.append(junctions)
+                    elif junctions.geom_type == "MultiPoint":
+                        for point in junctions.geoms:
+                            junction_points.append(point)
                 # set new roads quantity for the next iterationstep
                 roads.drop([0], inplace=True)
                 roads.reset_index(drop=True, inplace=True)

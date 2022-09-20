@@ -3,6 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import collections
+import time
 import xml.etree.ElementTree as ET
 from urllib.parse import urlencode
 
@@ -12,6 +13,7 @@ from shapely.geometry import LineString, Point
 from six import string_types
 
 from dave.datapool.read_data import get_data_path
+from dave.settings import dave_settings
 
 # This functions are based on the geopandas_osm python package, which was published under the
 # following licens:
@@ -120,10 +122,22 @@ def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kw
 
     """
     url = _build_url(typ, bbox, recurse, tags, meta)
+    # add time delay because osm doesn't alowed more than 1 request per second.
+    time_delay = dave_settings()["osm_time_delay"]
 
     # TODO: Raise on non-200 (or 400-599)
-    with urlopen(url) as response:
-        content = response.read()
+    # with urlopen(url) as response:
+    #     content = response.read()
+    while True:
+        try:
+            with urlopen(url) as response:
+                content = response.read()
+                if response.getcode() == 200:
+                    break
+        except Exception as inst:
+            print(f'Retry OSM query because of "{inst}"')
+            # add time delay
+            time.sleep(time_delay)
 
     # get meta informations
     meta_data = pd.read_excel(get_data_path("osm_meta.xlsx", "data"), sheet_name=None)
