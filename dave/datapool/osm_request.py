@@ -135,7 +135,7 @@ def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kw
                 if response.getcode() == 200:
                     break
         except Exception as inst:
-            print(f'Retry OSM query because of "{inst}"')
+            print(f'\n Retry OSM query because of "{inst}"')
             # add time delay
             time.sleep(time_delay)
 

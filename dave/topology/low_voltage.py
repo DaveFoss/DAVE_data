@@ -47,7 +47,9 @@ def line_connections(grid_data):
     """
     # define relevant nodes
     nearest_building_point = gpd.GeoSeries(
-        grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == "nearest_point"].geometry
+        grid_data.lv_data.lv_nodes[
+            grid_data.lv_data.lv_nodes.node_type == "grid_connection"
+        ].geometry
     )
     all_nodes = pd.concat(
         [nearest_building_point, grid_data.roads.road_junctions]
@@ -192,7 +194,7 @@ def create_lv_topology(grid_data):
     building_nodes_df = gpd.GeoDataFrame(
         {
             "geometry": building_connections.building_centroid,
-            "node_type": "building_centroid",
+            "node_type": "building_connection",
             "voltage_level": 7,
             "voltage_kv": 0.4,
             "source": "dave internal",
@@ -204,7 +206,7 @@ def create_lv_topology(grid_data):
             gpd.GeoDataFrame(
                 {
                     "geometry": building_nearest,
-                    "node_type": "nearest_point",
+                    "node_type": "grid_connection",
                     "voltage_level": 7,
                     "voltage_kv": 0.4,
                     "source": "dave internal",
