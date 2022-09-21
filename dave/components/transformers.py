@@ -538,13 +538,12 @@ def create_transformers(grid_data):
             ):
                 bus_lv = lv_buses[lv_buses.ego_subst_id == sub.ego_subst_id].iloc[0].dave_name
             else:
-                # find closest lv node to the substation
-                multipoints_lv = MultiPoint(lv_buses.geometry.tolist())
+                # find closest lv node to the substation (only road junctions allowed)
+                multipoints_lv = MultiPoint(
+                    lv_buses[lv_buses.node_type == "road_junction"].geometry.tolist()
+                )
                 nearest_point = nearest_points(sub.geometry, multipoints_lv)[1]
-                for _, node in lv_buses.iterrows():
-                    if nearest_point == node.geometry:
-                        bus_lv = node.dave_name
-                        break
+                bus_lv = lv_buses[lv_buses.geometry == nearest_point].iloc[0].dave_name
             # create transformer
             trafo_df = gpd.GeoDataFrame(
                 {
