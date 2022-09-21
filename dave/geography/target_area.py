@@ -267,11 +267,17 @@ class target_area:
                     ].geometry.unary_union
                     for i, building in buildings.iterrows():
                         if building.building not in commercial:
-                            if building.geometry.intersects(landuse_retail):
+                            if not landuse_retail is None and building.geometry.intersects(
+                                landuse_retail
+                            ):
                                 buildings.at[i, "building"] = "retail"
-                            elif building.geometry.intersects(landuse_industrial):
+                            elif not landuse_industrial is None and building.geometry.intersects(
+                                landuse_industrial
+                            ):
                                 buildings.at[i, "building"] = "industrial"
-                            elif building.geometry.intersects(landuse_commercial):
+                            elif not landuse_commercial is None and building.geometry.intersects(
+                                landuse_commercial
+                            ):
                                 buildings.at[i, "building"] = "commercial"
                 # write buildings into grid_data
                 buildings.set_crs(dave_settings()["crs_main"], inplace=True)
