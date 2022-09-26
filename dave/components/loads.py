@@ -65,7 +65,7 @@ def create_loads(grid_data):
     if "lv" in power_levels:
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
-            grid_data.lv_data.lv_nodes.node_type == "building_centroid"
+            grid_data.lv_data.lv_nodes.node_type == "building_connection"
         ]
         # --- create lv loads for residential
         buildings_residential = grid_data.buildings.residential
@@ -159,7 +159,7 @@ def create_loads(grid_data):
                 w_3p = sizes_feds["Anteil 3 Personen [%]"] / 100
                 w_4p = sizes_feds["Anteil 4 Personen [%]"] / 100
                 w_5p = sizes_feds["Anteil 5 Personen und mehr [%]"] / 100
-                # distribute the whole population over teh considered area
+                # distribute the whole population over the considered area
                 pop_distribute = area.population
                 # construct random generator
                 rng = np.random.default_rng()
