@@ -1,5 +1,12 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
+import os
+
 import geopandas as gpd
 import pandas as pd
+import xmlschema
 from shapely.geometry import LineString
 from shapely.wkb import loads
 
@@ -39,7 +46,7 @@ def read_federal_states():
     EXAMPLE:
          import dave.datapool as data
 
-         postal = data.read_federal_states()
+         federal = data.read_federal_states()
     """
     federalstatesger = pd.read_hdf(get_data_path("federalstatesger.h5", "data"))
     federalstatesger["geometry"] = federalstatesger.geometry.apply(loads)
@@ -47,6 +54,34 @@ def read_federal_states():
     # read meta data
     meta_data = pd.read_excel(r"data\federalstatesger_meta.xlsx", sheet_name=None)
     return federalstatesger, meta_data
+
+
+def read_nuts_regions(year):
+    """
+    This data includes the name and the geometry for the nuts regions of the years 2013, 2016 and 2021
+
+    OUTPUT:
+         **nuts_regions** (GeodataFrame) - nuts regions of the years 2013, 2016 and 2021
+
+    EXAMPLE:
+         import dave.datapool as data
+
+         nuts = data.read_nuts_regions()
+    """
+    nuts_data = pd.HDFStore(get_data_path("nuts_regions.h5", "data"))
+    if year == "2013":
+        nuts_regions = nuts_data.get("/nuts_2013")
+    elif year == "2016":
+        nuts_regions = nuts_data.get("/nuts_2016")
+    elif year == "2021":
+        nuts_regions = nuts_data.get("/nuts_2021")
+    nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
+    nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
+    # close file
+    nuts_data.close()
+    # read meta data
+    meta_data = pd.read_excel(get_data_path("nuts_regions_meta.xlsx", "data"), sheet_name=None)
+    return nuts_regions, meta_data
 
 
 def read_ehv_data():
@@ -345,10 +380,10 @@ def read_scigridgas_iggielgn():
         crs=dave_settings()["crs_main"],
     )
     # inter_connection_points
-    connection_points = from_mongo("gas", "scigridgas_iggielgn_inter_connection_points")
+    inter_connection_points = from_mongo("gas", "scigridgas_iggielgn_inter_connection_points")
     inter_connection_points = gpd.GeoDataFrame(
-        connection_points,
-        geometry=gpd.points_from_xy(connection_points.long, connection_points.lat),
+        inter_connection_points,
+        geometry=gpd.points_from_xy(inter_connection_points.long, inter_connection_points.lat),
         crs=dave_settings()["crs_main"],
     )
     # lngss
@@ -387,10 +422,7 @@ def read_scigridgas_iggielgn():
     storage_data = {
         "border_points": border_points,
         "compressors": compressors,
-        "connection_points": connection_points,
         "consumers": consumers,
-        "entry_points": entry_points,
-        "inter_connection_points": inter_connection_points,
         "lngs": lngs,
         "nodes": nodes,
         "pipe_segments": pipe_segments,
@@ -400,3 +432,17 @@ def read_scigridgas_iggielgn():
     # read meta data
     meta_data = pd.read_excel(r"data\scigridgas_iggielgn_meta.xlsx", sheet_name=None)
     return storage_data, meta_data
+
+
+def read_gaslib():
+    # read data from datapool
+    schema = xmlschema.XMLSchema(get_data_path("gaslib/Gas.xsd", "data"))
+    gaslib_dict = schema.to_dict(get_data_path("gaslib/GasLib-582-v2.net", "data"))
+    # create data dictionary
+    gaslib_data = {
+        "nodes": gaslib_dict["framework:nodes"],
+        "connections": gaslib_dict["framework:connections"],
+    }
+    # read meta data
+    meta_data = gaslib_dict["framework:information"]
+    return gaslib_data, meta_data

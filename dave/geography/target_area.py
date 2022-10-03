@@ -1,4 +1,6 @@
-import time
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import geopandas as gpd
 import pandas as pd
@@ -6,9 +8,16 @@ from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 from tqdm import tqdm
 
-from dave.datapool import oep_request, query_osm, read_federal_states, read_postal
-from dave.io import archiv_inventory
+from dave.datapool import (
+    oep_request,
+    query_osm,
+    read_federal_states,
+    read_nuts_regions,
+    read_postal,
+)
+from dave.io import archiv_inventory, from_json_string
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 class target_area:
@@ -18,10 +27,10 @@ class target_area:
     INPUT:
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure
         **power_levels** (list)  - this parameter defines which power levels should be considered
-                                   options: 'EHV','HV','MV','LV', [].
+                                   options: 'ehv','hv','mv','lv', [].
                                    there could be choose: one level, multiple levels or 'ALL'
         **gas_levels** (list)    - this parameter defines which gas levels should be considered
-                                   options: 'HP','MP','LP', [].
+                                   options: 'hp','mp','lp', [].
                                    there could be choose: one level, multiple levels or 'ALL'
 
         One of these parameters must be set:
@@ -37,7 +46,7 @@ class target_area:
                                               it could also be choose ['ALL'] for all nuts regions
                                               in europe
         **own_area** (string) - full path to a shape file which includes own target area
-                                (e.g. "C:/Users/name/test/test.shp")
+                                (e.g. "C:/Users/name/test/test.shp") or Geodataframe as string
 
     OPTIONAL:
         **buffer** (float, default 0) - buffer for the target area
@@ -47,6 +56,7 @@ class target_area:
                                                   for the visualization
         **buildings** (boolean, default True) - obtain informations about buildings
         **landuse** (boolean, default True) - obtain informations about landuses
+        **railway** (boolean, default True) - obtain informations about railways
 
     OUTPUT:
 
@@ -70,6 +80,7 @@ class target_area:
         roads_plot=True,
         buildings=True,
         landuse=True,
+        railways=True,
     ):
         # Init input parameters
         self.grid_data = grid_data
@@ -82,6 +93,7 @@ class target_area:
         self.roads = roads
         self.roads_plot = roads_plot
         self.buildings = buildings
+        self.railways = railways
         self.landuse = landuse
         self.power_levels = power_levels
         self.gas_levels = gas_levels
@@ -91,10 +103,8 @@ class target_area:
         This function searches for data on OpenStreetMap (OSM) and filters the relevant paramerters
         for grid modeling
         """
-        # add time delay because osm doesn't alowed more than 1 request per second.
-        time_delay = dave_settings()["osm_time_delay"]
         # count object types to consider for progress bar
-        objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse]
+        objects_list = [self.roads, self.roads_plot, self.buildings, self.landuse, self.railways]
         objects_con = len([x for x in objects_list if x is True])
         if objects_con == 0:
             # update progress
@@ -118,13 +128,13 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 roads = roads[roads.geometry.intersects(target_geom)]
                 # write roads into grid_data
                 roads.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.roads.roads = self.grid_data.roads.roads.append(roads)
-            # add time delay
-            time.sleep(time_delay)
+                self.grid_data.roads.roads = pd.concat(
+                    [self.grid_data.roads.roads, roads], ignore_index=True
+                )
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search irrelevant road informations in the target area for a better overview
@@ -148,13 +158,13 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
                 # write plotting roads into grid_data
                 roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.roads.roads_plot = self.grid_data.roads.roads_plot.append(roads_plot)
-            # add time delay
-            time.sleep(time_delay)
+                self.grid_data.roads.roads_plot = pd.concat(
+                    [self.grid_data.roads.roads_plot, roads_plot], ignore_index=True
+                )
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search landuse informations in the target area
@@ -169,10 +179,8 @@ class target_area:
             landuse_rel, meta_data = query_osm(
                 "relation", target, recurse="down", tags=[dave_settings()["landuse_tags"]]
             )
-            landuse_rel.reset_index(drop=True, inplace=True)
             # add landuses from relations to landuses from ways
-            landuse = landuse.append(landuse_rel)
-            landuse.reset_index(drop=True, inplace=True)
+            landuse = pd.concat([landuse, landuse_rel], ignore_index=True)
             # check if there are data for landuse
             if not landuse.empty:
                 # define landuse parameters which are relevant for the grid modeling
@@ -184,7 +192,7 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 # filter landuses that touches the target area
                 landuse = landuse[landuse.geometry.intersects(target_geom)]
                 # convert geometry to polygon
@@ -201,19 +209,16 @@ class target_area:
                 # intersect landuses with the target area
                 landuse = landuse.set_crs(dave_settings()["crs_main"])
                 area = self.grid_data.area.rename(columns={"name": "bundesland"})
-                landuse = gpd.overlay(landuse, area, how="intersection")
-                if not landuse.empty:
-                    remove_columns = area.keys().tolist()
-                    remove_columns.remove("geometry")
-                    landuse.drop(columns=remove_columns, inplace=True)
+                # filter landuses which are within the grid area
+                landuse = intersection_with_area(landuse, area)
                 # calculate polygon area in km²
                 landuse_3035 = landuse.to_crs(dave_settings()["crs_meter"])
                 landuse["area_km2"] = landuse_3035.area / 1e06
                 # write landuse into grid_data
-                self.grid_data.landuse = self.grid_data.landuse.append(landuse)
+                self.grid_data.landuse = pd.concat(
+                    [self.grid_data.landuse, landuse], ignore_index=True
+                )
                 self.grid_data.landuse.set_crs(dave_settings()["crs_main"], inplace=True)
-            # add time delay
-            time.sleep(time_delay)
             # update progress
             self.pbar.update(progress_step / objects_con)
         # search building informations in the target area
@@ -246,41 +251,87 @@ class target_area:
                     target_geom = self.target.geometry.iloc[target_number]
                 elif target_town:
                     targets = self.target[self.target.town == target_town]
-                    target_geom = unary_union(targets.geometry.tolist())
+                    target_geom = targets.geometry.unary_union
                 buildings = buildings[buildings.geometry.intersects(target_geom)]
                 # create building categories
-                for_living = dave_settings()["buildings_for_living"]
+                residential = dave_settings()["buildings_residential"]
                 commercial = dave_settings()["buildings_commercial"]
                 # improve building tag with landuse parameter
                 if self.landuse and not landuse.empty:
-                    landuse_retail = unary_union(landuse[landuse.landuse == "retail"].geometry)
-                    landuse_industrial = unary_union(
-                        landuse[landuse.landuse == "industrial"].geometry
-                    )
-                    landuse_commercial = unary_union(
-                        landuse[landuse.landuse == "commercial"].geometry
-                    )
+                    landuse_retail = landuse[landuse.landuse == "retail"].geometry.unary_union
+                    landuse_industrial = landuse[
+                        landuse.landuse == "industrial"
+                    ].geometry.unary_union
+                    landuse_commercial = landuse[
+                        landuse.landuse == "commercial"
+                    ].geometry.unary_union
                     for i, building in buildings.iterrows():
                         if building.building not in commercial:
-                            if building.geometry.intersects(landuse_retail):
+                            if not landuse_retail is None and building.geometry.intersects(
+                                landuse_retail
+                            ):
                                 buildings.at[i, "building"] = "retail"
-                            elif building.geometry.intersects(landuse_industrial):
+                            elif not landuse_industrial is None and building.geometry.intersects(
+                                landuse_industrial
+                            ):
                                 buildings.at[i, "building"] = "industrial"
-                            elif building.geometry.intersects(landuse_commercial):
+                            elif not landuse_commercial is None and building.geometry.intersects(
+                                landuse_commercial
+                            ):
                                 buildings.at[i, "building"] = "commercial"
                 # write buildings into grid_data
                 buildings.set_crs(dave_settings()["crs_main"], inplace=True)
-                self.grid_data.buildings.for_living = self.grid_data.buildings.for_living.append(
-                    buildings[buildings.building.isin(for_living)]
+                self.grid_data.buildings.residential = pd.concat(
+                    [
+                        self.grid_data.buildings.residential,
+                        buildings[buildings.building.isin(residential)],
+                    ],
+                    ignore_index=True,
                 )
-                self.grid_data.buildings.commercial = self.grid_data.buildings.commercial.append(
-                    buildings[buildings.building.isin(commercial)]
+                self.grid_data.buildings.commercial = pd.concat(
+                    [
+                        self.grid_data.buildings.commercial,
+                        buildings[buildings.building.isin(commercial)],
+                    ],
+                    ignore_index=True,
                 )
-                self.grid_data.buildings.other = self.grid_data.buildings.other.append(
-                    buildings[~buildings.building.isin(for_living + commercial)]
+                self.grid_data.buildings.other = pd.concat(
+                    [
+                        self.grid_data.buildings.other,
+                        buildings[~buildings.building.isin(residential + commercial)],
+                    ],
+                    ignore_index=True,
                 )
-            # add time delay
-            time.sleep(time_delay)
+            # update progress
+            self.pbar.update(progress_step / objects_con)
+        # search railway informations in the target area
+        if self.railways:
+            railways, meta_data = query_osm(
+                "way", target, recurse="down", tags=[dave_settings()["railway_tags"]]
+            )
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
+                self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+            # check if there are data for roads
+            if not railways.empty:
+                # define road parameters which are relevant for the grid modeling
+                railways = railways.filter(
+                    ["name", "railway", "geometry", "tram", "train", "usage", "voltage"]
+                )
+                # consider only the linestring elements
+                railways = railways[railways.geometry.apply(lambda x: isinstance(x, LineString))]
+                # consider only roads which intersects the target area
+                if target_number or target_number == 0:
+                    target_geom = self.target.geometry.iloc[target_number]
+                elif target_town:
+                    targets = self.target[self.target.town == target_town]
+                    target_geom = targets.geometry.unary_union
+                railways = railways[railways.geometry.intersects(target_geom)]
+                # write roads into grid_data
+                railways.set_crs(dave_settings()["crs_main"], inplace=True)
+                self.grid_data.railways = pd.concat(
+                    [self.grid_data.railways, railways], ignore_index=True
+                )
             # update progress
             self.pbar.update(progress_step / objects_con)
 
@@ -295,15 +346,16 @@ class target_area:
                 # considered line
                 line_geometry = roads.iloc[0].geometry
                 # check considered line surrounding for possible intersectionpoints with other lines
-                lines_rel = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
-                other_lines = unary_union(lines_rel.geometry)
-                # find line intersections between considered line and other lines
-                junctions = line_geometry.intersection(other_lines)
-                if junctions.geom_type == "Point":
-                    junction_points.append(junctions)
-                elif junctions.geom_type == "MultiPoint":
-                    for point in junctions:
-                        junction_points.append(point)
+                lines_cross = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
+                if not lines_cross.empty:
+                    other_lines = lines_cross.geometry.unary_union
+                    # find line intersections between considered line and other lines
+                    junctions = line_geometry.intersection(other_lines)
+                    if junctions.geom_type == "Point":
+                        junction_points.append(junctions)
+                    elif junctions.geom_type == "MultiPoint":
+                        for point in junctions.geoms:
+                            junction_points.append(point)
                 # set new roads quantity for the next iterationstep
                 roads.drop([0], inplace=True)
                 roads.reset_index(drop=True, inplace=True)
@@ -323,7 +375,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.postalcode) == 1 and self.postalcode[0] == "ALL":
+        if len(self.postalcode) == 1 and self.postalcode[0].lower() == "all":
             # in this case all postalcode areas will be choosen
             target = postal
         else:
@@ -331,7 +383,7 @@ class target_area:
                 target = (
                     postal[postal.postalcode == plz]
                     if i == 0
-                    else target.append(postal[postal.postalcode == plz])
+                    else pd.concat([target, postal[postal.postalcode == plz]], ignore_index=True)
                 )
             # sort federal state names
             self.postalcode.sort()
@@ -345,7 +397,8 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        postal_intersection = gpd.overlay(postal, self.target, how="intersection")
+        # filter postal code areas which are within the target area
+        postal_intersection = intersection_with_area(postal, self.target, remove_columns=False)
         # filter duplicated postal codes
         self.own_postal = postal_intersection["postalcode"].unique().tolist()
 
@@ -358,7 +411,7 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.town_name) == 1 and self.town_name[0] == "ALL":
+        if len(self.town_name) == 1 and self.town_name[0].lower() == "all":
             # in this case all city names will be choosen (same case as all postalcode areas)
             target = postal
         else:
@@ -387,23 +440,25 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        if len(self.federal_state) == 1 and self.federal_state[0] == "ALL":
+        if len(self.federal_state) == 1 and self.federal_state[0].lower() == "all":
             # in this case all federal states will be choosen
             target = states
         else:
             names_right = []
-            for i in range(len(self.federal_state)):
+            for state in self.federal_state:
                 # bring name in right format
-                state_name = self.federal_state[i].split("-")
+                state_name = state.split("-")
                 if len(state_name) == 1:
                     state_name = state_name[0].capitalize()
                 else:
                     state_name = state_name[0].capitalize() + "-" + state_name[1].capitalize()
                 names_right.append(state_name)
-                if i == 0:
+                if self.federal_state[0] == state:
                     target = states[states["name"] == state_name]
                 else:
-                    target = target.append(states[states["name"] == state_name])
+                    target = pd.concat(
+                        [target, states[states["name"] == state_name]], ignore_index=True
+                    )
                 if target.empty:
                     raise ValueError("federal state name wasn`t found. Please check your input")
             # sort federal state names
@@ -415,50 +470,56 @@ class target_area:
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        postal_intersection = gpd.overlay(postal, self.target, how="intersection")
-        # filter duplikated postal codes
+        # filter postal code areas which are within the target area
+        postal_intersection = intersection_with_area(postal, self.target, remove_columns=False)
+        # filter duplicated postal codes
         self.federal_state_postal = postal_intersection["postalcode"].unique().tolist()
 
     def _target_by_nuts_region(self):
         """
         This function filter the nuts region informations for the target area.
         """
+        # check user input
+        if isinstance(self.nuts_region, list):
+            self.nuts_region = (self.nuts_region, "2016")  # default year
         # request nuts-3 areas from oep
-        nuts_3, meta_data = oep_request(schema="boundaries", table="ffe_osm_nuts3", geometry="geom")
-        nuts_3.drop(columns=(["geom"]), inplace=True)
+        nuts, meta_data = read_nuts_regions(year=self.nuts_region[1])
+        nuts_3 = nuts[nuts.LEVL_CODE == 3]
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        # change crs
-        nuts_3.set_crs(dave_settings()["crs_meter"], inplace=True, allow_override=True)
-        nuts_3.to_crs(dave_settings()["crs_main"], inplace=True)
-        if len(self.nuts_region) == 1 and self.nuts_region[0].upper() == "ALL":
-            # in this case all federal states will be choosen
-            target = nuts_3
+        if len(self.nuts_region[0]) == 1 and self.nuts_region[0][0].lower() == "all":
+            # in this case all nuts_regions will be choosen
+            self.target = nuts_3
         else:
-            for i, region in enumerate(self.nuts_region):
-                # bring name in right format
-                area = list(region)
-                area = [letter.upper() for letter in area if letter.isalpha()]
-                self.nuts_region[i] = "".join(area)
-                # get area for nuts region
-                target = (
-                    nuts_3[nuts_3["nuts_code"].str.contains(region)]
-                    if i == 0
-                    else target.append(nuts_3[nuts_3["nuts_code"].str.contains(region)])
+            for i, region in enumerate(self.nuts_region[0]):
+                # bring NUTS ID in right format
+                region_letters = list(region)
+                region_renamed = "".join(
+                    [letter.upper() if letter.isalpha() else letter for letter in region_letters]
                 )
-                if target.empty:
+                self.nuts_region[0][i] = region_renamed
+                # get area for nuts region
+                nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region_renamed)]
+                self.target = (
+                    nuts_contains
+                    if i == 0
+                    else pd.concat([self.target, nuts_contains], ignore_index=True)
+                )
+                if nuts_contains.empty:
                     raise ValueError("nuts region name wasn`t found. Please check your input")
+        # filter duplicates
+        self.target.drop_duplicates(inplace=True)
         # merge multipolygons
         # target['geometry'] = target.geometry.apply(lambda x: unary_union(x))
-        self.target = target
         # convert nuts regions into postal code areas for target_input
         postal, meta_data = read_postal()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in self.grid_data.meta_data.keys():
             self.grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        postal_intersection = gpd.overlay(postal, self.target, how="intersection")
-        # filter duplikated postal codes
+        # filter postal code areas which are within the target area
+        postal_intersection = intersection_with_area(postal, self.target, remove_columns=False)
+        # filter duplicated postal codes
         self.nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
 
     def target(self):
@@ -521,7 +582,13 @@ class target_area:
             )
             self.grid_data.target_input = target_input
         elif self.own_area:
-            self.target = gpd.read_file(self.own_area)
+            if self.own_area[-3:] == "shp":
+                self.target = gpd.read_file(self.own_area)
+            else:
+                self.target = from_json_string(self.own_area)
+            # check if the given shape file is empty
+            if self.target.empty:
+                print("The given shapefile includes no data")
             # check crs and project to the right one if needed
             if (self.target.crs) and (self.target.crs != dave_settings()["crs_main"]):
                 self.target = self.target.to_crs(dave_settings()["crs_main"])
@@ -540,7 +607,7 @@ class target_area:
         else:
             raise SyntaxError("target area wasn`t defined")
         # write area informations into grid_data
-        self.grid_data.area = self.grid_data.area.append(self.target)
+        self.grid_data.area = pd.concat([self.grid_data.area, self.target], ignore_index=True)
         if self.grid_data.area.crs is None:
             self.grid_data.area.set_crs(dave_settings()["crs_main"], inplace=True)
         elif self.grid_data.area.crs != dave_settings()["crs_main"]:
@@ -561,7 +628,7 @@ class target_area:
                 for diff_target in diff_targets:
                     town = self.target[self.target.town == diff_target]
                     border = (
-                        unary_union(town.geometry.tolist()).convex_hull
+                        town.geometry.unary_union.convex_hull
                         if len(town) > 1
                         else town.iloc[0].geometry.convex_hull
                     )
@@ -582,10 +649,11 @@ class target_area:
             self.grid_data.roads.roads.reset_index(drop=True, inplace=True)
             self.grid_data.roads.roads_plot.reset_index(drop=True, inplace=True)
             self.grid_data.landuse.reset_index(drop=True, inplace=True)
-            self.grid_data.buildings.for_living.reset_index(drop=True, inplace=True)
+            self.grid_data.buildings.residential.reset_index(drop=True, inplace=True)
             self.grid_data.buildings.commercial.reset_index(drop=True, inplace=True)
             # find road junctions
-            target_area.road_junctions(self)
+            if "lv" in self.grid_data.target_input.power_levels[0]:
+                target_area.road_junctions(self)
             # close progress bar
             self.pbar.update(float(10))
             self.pbar.close()

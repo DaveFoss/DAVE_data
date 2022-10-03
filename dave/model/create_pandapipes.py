@@ -1,13 +1,18 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 import pandapipes as ppi
 import pandas as pd
 from shapely.geometry import MultiLineString
 from tqdm import tqdm
 
+from dave.io import ppi_to_json
 from dave.settings import dave_settings
 from dave.toolbox import multiline_coords
 
 
-def create_gas_grid(grid_data):
+def create_pandapipes(grid_data, api_use, output_folder):
     """
     This function creates a pandapipes network based an the DaVe dataset
 
@@ -38,13 +43,11 @@ def create_gas_grid(grid_data):
             grid_data.lp_data.lp_junctions,
         ]
     )
-    # update progress
-    pbar.update(25)
     if not all_junctions.empty:
         all_junctions.rename(columns={"dave_name": "name"}, inplace=True)
         all_junctions.reset_index(drop=True, inplace=True)
         # write junctions into pandapipes structure
-        net.junction = net.junction.append(all_junctions)
+        net.junction = pd.concat([net.junction, all_junctions], ignore_index=True)
         net.junction_geodata["x"] = all_junctions.geometry.apply(lambda x: x.coords[:][0][0])
         net.junction_geodata["y"] = all_junctions.geometry.apply(lambda x: x.coords[:][0][1])
         # check necessary parameters and add pandapipes standart if needed
@@ -59,10 +62,14 @@ def create_gas_grid(grid_data):
             else net.junction.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
         )
         net.junction["tfluid_k"] = (
-            float(320)
+            dave_settings()["hp_pipes_tfluid_k"]
             if all(net.junction.tfluid_k.isna())
-            else net.junction.tfluid_k.apply(lambda x: float(320) if pd.isna(x) else x)
+            else net.junction.tfluid_k.apply(
+                lambda x: dave_settings()["hp_pipes_tfluid_k"] if pd.isna(x) else x
+            )
         )
+        # !!! set nominal pressure to the lowest maximal pressure of the pipelines
+        net.junction.pn_bar = grid_data.hp_data.hp_pipes.max_pressure_bar.min()
     # update progress
     pbar.update(25)
 
@@ -96,8 +103,6 @@ def create_gas_grid(grid_data):
         )
     else:
         coords_hp = pd.DataFrame([])
-    # update progress
-    pbar.update(30)
     # TODO: mp and lp, maybe other handling due to better data quality...
     pipes_mp = pd.DataFrame([])
     pipes_lp = pd.DataFrame([])
@@ -106,9 +111,9 @@ def create_gas_grid(grid_data):
     coords_lp = pd.DataFrame([])
 
     # write pipeline data into pandapipes structure
-    net.pipe = net.pipe.append(pd.concat([pipes_hp, pipes_mp, pipes_lp]), ignore_index=True)
-    net.pipe_geodata = net.pipe_geodata.append(
-        pd.concat([coords_hp, coords_mp, coords_lp]), ignore_index=True
+    net.pipe = pd.concat([net.pipe, pipes_hp, pipes_mp, pipes_lp], ignore_index=True)
+    net.pipe_geodata = pd.concat(
+        [net.pipe_geodata, coords_hp, coords_mp, coords_lp], ignore_index=True
     )
     # check necessary parameters and add pandapipes standard if needed
     net.pipe["type"] = (
@@ -137,9 +142,9 @@ def create_gas_grid(grid_data):
         else net.pipe.std_type.apply(lambda x: None if pd.isna(x) else x)
     )
     net.pipe["k_mm"] = (
-        float(0.1)
+        dave_settings()["hp_pipes_k_mm"]
         if all(net.pipe.k_mm.isna())
-        else net.pipe.k_mm.apply(lambda x: float(0.1) if pd.isna(x) else x)
+        else net.pipe.k_mm.apply(lambda x: dave_settings()["hp_pipes_k_mm"] if pd.isna(x) else x)
     )
     net.pipe["loss_coefficient"] = (
         float(0)
@@ -157,7 +162,97 @@ def create_gas_grid(grid_data):
         else net.pipe.qext_w.apply(lambda x: float(0) if pd.isna(x) else x)
     )
     # update progress
-    pbar.update(20)
+    pbar.update(25)
+
+    # --- create sink
+    sinks = grid_data.components_gas.sinks
+    # write sink data into pandapipes structure
+    if not sinks.empty:
+        sinks.rename(columns={"dave_name": "name"}, inplace=True)
+        # change junction names to ids
+        sinks["junction"] = sinks.junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        net.sink = sinks
+        # check necessary parameters and add pandapipes standard if needed
+        net.sink["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
+        net.sink["scaling"] = float(1)
+        net.sink["in_service"] = True
+        net.sink["type"] = "sink"
+    # update progress
+    pbar.update(10)
+
+    # --- create source
+    sources = grid_data.components_gas.sources
+    # write sink data into pandapipes structure
+    if not sources.empty:
+        sources.rename(columns={"dave_name": "name"}, inplace=True)
+        # change junction names to ids
+        sources["junction"] = sources.junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        net.source = sources
+        # check necessary parameters and add pandapipes standard if needed
+        net.source["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
+        net.source["scaling"] = float(1)
+        net.source["in_service"] = True
+        net.source["type"] = "source"
+    # update progress
+    pbar.update(10)
+
+    # --- compressors (ersatzknoten)
+    # --- create external grid
+    # !!! ToDo
+    # update progress
+    pbar.update(10)
+
+    # --- create compressors
+    # !!! ToDo
+    # update progress
+    pbar.update(10)
+
+    # --- create valves
+    valves = grid_data.components_gas.valves
+    # write valve data into pandapipes structure
+    if not valves.empty:
+        valves.rename(columns={"dave_name": "name"}, inplace=True)
+        # change from/to junction names to ids
+        valves["from_junction"] = valves.from_junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        valves["to_junction"] = valves.to_junction.apply(
+            lambda x: net.junction[net.junction["name"] == x].index[0]
+        )
+        valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x / 1000)
+        valves.drop(columns=["diameter_mm"], inplace=True)
+        net.valve = valves
+        # check necessary parameters and add pandapipes standard if needed
+        net.valve["loss_coefficient"] = float(0)
+        net.valve["type"] = "valve"
+    # update progress
+    pbar.update(10)
     # close progress bar
     pbar.close()
+    # run pandapower model processing
+    net = gas_processing(net)
+    # save grid model in the dave output folder
+    if not api_use:
+        file_path = output_folder + "\\dave_pandapipes.json"
+        ppi_to_json(net, file_path)
     return net
+
+
+def gas_processing(net_gas):
+    """
+    This function run a diagnosis of the pandapipes network and clean up occurring failures.
+    Furthermore the grid will be adapt so all boundarys be respected.
+
+    INPUT:
+        **net** (attrdict) - pandapipes attrdict
+
+    OUTPUT:
+        **net** (attrdict) - A cleaned up and if necessary optimized pandapipes attrdict
+    """
+    return net_gas
+    # hier wird das Gasnetzmodell nach dem es in pandapipes erstellt wurde, aufbereitet damit ein
+    # lastfluss konvergiert und sonstige Fehler bereinigen

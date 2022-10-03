@@ -1,44 +1,24 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 import json
 
 import geopandas as gpd
 import pandas as pd
+import request
 import uvicorn
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI
 
-from dave.api import request_bodys
-from dave.create import create_grid
+from dave.api import routes
 from dave.datapool import read_postal
-from dave.io import from_mongo, info_mongo, to_json, to_mongo
+from dave.io import from_mongo, info_mongo, to_mongo
 
 # initialize app object
 app = FastAPI()
 
-
-class DaveRequest:
-    def create_dataset(self, parameters):
-        # run DaVe main function to create a dataset
-        grid_data = create_grid(
-            postalcode=parameters.postalcode,
-            town_name=parameters.town_name,
-            federal_state=parameters.federal_state,
-            nuts_region=parameters.nuts_regions,
-            own_area=parameters.own_area,
-            power_levels=parameters.power_levels,
-            gas_levels=parameters.gas_levels,
-            plot=parameters.plot,
-            convert=parameters.convert,
-            opt_model=parameters.opt_model,
-            combine_areas=parameters.combine_areas,
-            transformers=parameters.transformers,
-            renewable_powerplants=parameters.renewable_powerplants,
-            conventional_powerplants=parameters.conventional_powerplants,
-            loads=parameters.loads,
-            compressors=parameters.compressors,
-            sources=parameters.sources,
-            storages_gas=parameters.storages_gas,
-        )
-        # convert dave dataset to JSON string
-        return to_json(grid_data)
+# include routes
+app.include_router(routes.router)
 
 
 class DatapoolRequest:
@@ -128,7 +108,5 @@ def info_db():
     return info_mongo()
 
 
-"""
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=9000)
-"""
+    uvicorn.run("api:app", host="127.0.0.1", port=9000, reload=True)
