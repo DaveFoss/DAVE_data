@@ -13,11 +13,20 @@ from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings
 
 
-def db_availability():
+def db_availability(dataset_name=None):
     # check if the dave database is available
     try:
         requests.get(f"http://{dave_settings()['db_ip']}/")
-        available = True
+        if dataset_name:
+            db_databases = info_mongo()
+            for database in db_databases.keys():
+                if dataset_name in db_databases[database]["collections"]:
+                    available = True
+                    break
+                else:
+                    available = False
+        else:
+            available = True
     except requests.exceptions.ConnectionError:
         available = False
     return available
