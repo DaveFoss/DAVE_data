@@ -13,14 +13,14 @@ from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings
 
 
-def db_availability(dataset_name=None):
+def db_availability(collection_name=None):
     # check if the dave database is available
     try:
         requests.get(f"http://{dave_settings()['db_ip']}/")
-        if dataset_name:
+        if collection_name:
             db_databases = info_mongo()
             for database in db_databases.keys():
-                if dataset_name in db_databases[database]["collections"]:
+                if collection_name in db_databases[database]["collections"]:
                     available = True
                     break
                 else:
@@ -146,7 +146,7 @@ def to_mongo(database, collection=None, data_df=None, filepath=None):
     """
     # --- convert diffrent data formats
     # convert GeoDataFrame into DataFrame
-    if data_df:
+    if data_df is not None:
         df_to_mongo(database, collection, data_df)
     elif filepath.split(".")[1] == "csv":
         pass
@@ -180,3 +180,13 @@ def to_mongo(database, collection=None, data_df=None, filepath=None):
             df_to_mongo(database, collection_new, data)
         # close file
         file.close()
+
+
+def drop_collection(database, collection):
+    """
+    This function drops an existing collection from the database
+    """
+    client = db_client()
+    db = client[database]
+    # drop collection
+    db[collection].drop()
