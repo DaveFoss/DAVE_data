@@ -13,32 +13,6 @@ from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings
 
 
-def db_availability(collection_name=None):
-    # check if the dave database is available
-    try:
-        requests.get(f"http://{dave_settings()['db_ip']}/")
-        if collection_name:
-            db_databases = info_mongo()
-            for database in db_databases.keys():
-                if collection_name in db_databases[database]["collections"]:
-                    available = True
-                    break
-                else:
-                    available = False
-        else:
-            available = True
-    except requests.exceptions.ConnectionError:
-        available = False
-    return available
-
-
-def db_client():
-    # define data source
-    return MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
-    )
-
-
 def info_mongo():
     info_mongo = {}
     client = db_client()
@@ -51,6 +25,31 @@ def info_mongo():
         db["collections"] = collections
         info_mongo[db["name"]] = db
     return info_mongo
+
+
+def db_availability(collection_name=None):
+    # check if the dave database is available
+    try:
+        requests.get(f"http://{dave_settings()['db_ip']}/")
+        if collection_name:
+            db_databases = info_mongo()
+            available = False
+            for database in db_databases.keys():
+                if collection_name in db_databases[database]["collections"]:
+                    available = True
+                    break
+        else:
+            available = True
+    except requests.exceptions.ConnectionError:
+        available = False
+    return available
+
+
+def db_client():
+    # define data source
+    return MongoClient(
+        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
+    )
 
 
 def from_mongo(database, collection, filter_method=None, geometry=None):
@@ -119,7 +118,7 @@ def df_to_mongo(database, collection, data_df):
             if len(data) > 1:
                 collection.insert_many(data)
             elif len(data) == 1:
-                collection.insert(data[0])
+                collection.insert_one(data[0])
         else:
             print(
                 f"The choosen database is not existing. Please choose on of these: {list(info.keys())}"
@@ -197,7 +196,9 @@ def search_database(collection):
     This function searches the suitable database name for a given collection name
     """
     db_info = info_mongo()
+    database_name = None
     for database in db_info.keys():
         if collection in db_info[database]["collections"]:
+            database_name = database
             break
-    return database
+    return database_name
