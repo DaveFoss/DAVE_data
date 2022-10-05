@@ -190,3 +190,14 @@ def drop_collection(database, collection):
     db = client[database]
     # drop collection
     db[collection].drop()
+
+
+def search_database(collection):
+    """
+    This function searches the suitable database name for a given collection name
+    """
+    db_info = info_mongo()
+    for database in db_info.keys():
+        if collection in db_info[database]["collections"]:
+            break
+    return database

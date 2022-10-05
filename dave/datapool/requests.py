@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 import shapely
 
-from dave.io import db_availability, from_mongo, info_mongo
+from dave.io import db_availability, from_mongo, info_mongo, search_database
 from dave.settings import dave_settings
 
 oep_url = "http://oep.iks.cs.ovgu.de/"
@@ -28,19 +28,21 @@ def request_to_df(request):
     return request_data
 
 
-def oep_request(schema, table, where=None, geometry=None, db_update=False):
+def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     """
     This function is to requesting data from the open energy platform.
     The available data is to find on https://openenergy-platform.org/dataedit/schemas
 
     INPUT:
-        **schema** (string) - schema name of the searched data
+        
         **table** (string) - table name of the searched data
 
     OPTIONAL:
-        **where** (string) - filter the table of the searched data
+        **schema** (string, default None) - schema name of the searched data. By default DAVE \
+            search for the schema in the settings file via table name 
+        **where** (string, default None) - filter the table of the searched data
                              example: 'postcode=34225'
-        **geometry** (string) - name of the geometry parameter in the OEP dataset
+        **geometry** (string, default None) - name of the geometry parameter in the OEP dataset
                                 to transform it from WKB to WKT
         **db_update** (boolean, default False) - If True in every case the data will be related \
             from the oep
@@ -50,16 +52,16 @@ def oep_request(schema, table, where=None, geometry=None, db_update=False):
     """
     # check dave db and dataset availibility
     if db_availability(collection_name=table) and not db_update:
-        # search database from table
-        db_info = info_mongo()
-        for database in db_info.keys():
-            if table in db_info[database]["collections"]:
-                break
-        request_data = from_mongo(database=database, collection=table, geometry=None)
+        # search database name for collection
+        database = search_database(collection=table)
+        request_data = from_mongo(database=database, collection=table)
         meta_data = None  # !!! meta data noch hinzufügen
+        # !!! hier auch noch das where zum filtern des DF einbauen
 
     else:
         # dave db or dataset is not available so request data directly from oep
+        if schema is None:
+            schema = search_database(collection=table)
         if where:
             request = requests.get(
                 "".join(
@@ -72,7 +74,10 @@ def oep_request(schema, table, where=None, geometry=None, db_update=False):
             )
         # convert data to dataframe
         request_data = request_to_df(request)
-        if geometry:
+        # check for geometry parameter
+        if geometry is None:
+            geometry = dave_settings()["oep_tables"][table][1]
+        if geometry is not None:
             # --- convert into geopandas DataFrame with right crs
             # transform WKB to WKT / Geometry
             request_data["geometry"] = request_data[geometry].apply(
