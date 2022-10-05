@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 import shapely
 
-from dave.io import db_availability, from_mongo, info_mongo, search_database
+from dave.io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
 
 oep_url = "http://oep.iks.cs.ovgu.de/"
@@ -56,16 +56,39 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
         database = search_database(collection=table)
         request_data = from_mongo(database=database, collection=table)
         meta_data = None  # !!! meta data noch hinzufügen
-        # !!! hier auch noch das where zum filtern des DF einbauen
-
+        # filter dataset
+        if where:
+            where_split = where.split("=")
+            if where_split[0] != "version":
+                # adjust argument type
+                para_type = type(request_data[where_split[0]].iloc[0])
+                if para_type is int:
+                    argument = int(where_split[1])
+                elif para_type is str:
+                    argument = str(where_split[1])
+                request_data = request_data[request_data[where_split[0]] == argument]
     else:
         # dave db or dataset is not available so request data directly from oep
         if schema is None:
-            schema = search_database(collection=table)
+            schema = dave_settings()["oep_tables"][table][0]
         if where:
             request = requests.get(
                 "".join(
                     [oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/?where=", where]
+                )
+            )
+        elif dave_settings()["oep_tables"][table][2] is not None:
+            request = requests.get(
+                "".join(
+                    [
+                        oep_url,
+                        "/api/v0/schema/",
+                        schema,
+                        "/tables/",
+                        table,
+                        "/rows/?where=",
+                        dave_settings()["oep_tables"][table][2],
+                    ]
                 )
             )
         else:
