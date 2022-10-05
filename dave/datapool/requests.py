@@ -6,6 +6,7 @@ import geopandas as gpd
 import pandas as pd
 import requests
 import shapely
+from shapely.geometry import Point
 
 from dave.io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
@@ -34,12 +35,12 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     The available data is to find on https://openenergy-platform.org/dataedit/schemas
 
     INPUT:
-        
+
         **table** (string) - table name of the searched data
 
     OPTIONAL:
         **schema** (string, default None) - schema name of the searched data. By default DAVE \
-            search for the schema in the settings file via table name 
+            search for the schema in the settings file via table name
         **where** (string, default None) - filter the table of the searched data
                              example: 'postcode=34225'
         **geometry** (string, default None) - name of the geometry parameter in the OEP dataset
@@ -109,6 +110,11 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
             # create geoDataFrame
             request_data = gpd.GeoDataFrame(
                 request_data, crs=dave_settings()["crs_main"], geometry=request_data.geometry
+            )
+        if table == "ego_pf_hv_transformer":
+            # change geometry to point because in original data the geometry was lines with length 0
+            request_data["geometry"] = request_data.geometry.apply(
+                lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
             )
 
         # --- request meta informations for a dataset

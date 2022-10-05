@@ -47,10 +47,6 @@ def create_transformers(grid_data):
             inplace=True,
         )
         hv_trafos = hv_trafos[hv_trafos.ego_scn_name == "Status Quo"]
-        # change geometry to point because in original data the geometry was lines with length 0
-        hv_trafos["geometry"] = hv_trafos.geometry.apply(
-            lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
-        )
         # filter transformers which are within the grid area
         hv_trafos = intersection_with_area(hv_trafos, grid_data.area)
         # update progress
