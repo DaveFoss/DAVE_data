@@ -24,13 +24,17 @@ def dave_settings():
         "crs_main": "EPSG:4326",  # crs which is based on the unit degree
         "crs_meter": "EPSG:3035",  # crs which is based on the unit meter
         # --- data request
-        # OEP versions:
-        "hv_buses_ver": "version=v0.4.6",
-        "hv_line_ver": "version=v0.4.6",
-        "ehv_sub_ver": "version=v0.4.5",
-        "ehvhv_trans_ver": "version=v0.4.6",
-        "hvmv_sub_ver": "version=v0.4.5",
-        "mvlv_sub_ver": "version=v0.4.5",
+        # OEP tables (oep_name:(schema, geometry_parameter, latest_version))
+        "oep_tables": {
+            "ego_pf_hv_bus": ("grid", "geom", "version=v0.4.6"),
+            "ego_pf_hv_line": ("grid", "geom", "version=v0.4.6"),
+            "ego_dp_ehv_substation": ("grid", "polygon", "version=v0.4.5"),
+            "ego_pf_hv_transformer": ("grid", "geom", "version=v0.4.6"),
+            "ego_dp_hvmv_substation": ("grid", "polygon", "version=v0.4.5"),
+            "ego_dp_mvlv_substation": ("grid", "geom", "version=v0.4.5"),
+            "ego_renewable_powerplant": ("supply", None, None),
+            "ego_conventional_powerplant": ("supply", None, None),
+        },
         # osm time delay (because osm doesn't alowed more than 1 request per second)
         "osm_time_delay": 60,  # in seconds
         # osm tags:

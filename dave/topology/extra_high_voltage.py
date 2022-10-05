@@ -34,12 +34,7 @@ def create_ehv_topology(grid_data):
     )
     # --- create ehv/ehv and ehv/hv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
-    ehv_substations, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_ehv_substation",
-        where=dave_settings()["ehv_sub_ver"],
-        geometry="polygon",
-    )
+    ehv_substations, meta_data = oep_request(table="ego_dp_ehv_substation")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -69,12 +64,7 @@ def create_ehv_topology(grid_data):
     # update progress
     pbar.update(10)
     # --- import ehv lines and reduce them to the target area
-    ehvhv_lines, meta_data = oep_request(
-        schema="grid",
-        table="ego_pf_hv_line",
-        where=dave_settings()["hv_line_ver"],
-        geometry="geom",
-    )
+    ehvhv_lines, meta_data = oep_request(table="ego_pf_hv_line")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -102,12 +92,7 @@ def create_ehv_topology(grid_data):
     if not ehvhv_lines.empty:
         # --- create ehv nodes
         # read ehv/hv node data from OpenEnergyPlatform and adapt names
-        ehvhv_buses, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_bus",
-            where=dave_settings()["hv_buses_ver"],
-            geometry="geom",
-        )
+        ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data

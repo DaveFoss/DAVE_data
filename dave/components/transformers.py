@@ -33,12 +33,7 @@ def create_transformers(grid_data):
     # --- create ehv/ehv and ehv/hv trafos
     if any(map(lambda x: x in power_levels, ["ehv", "hv"])):
         # read transformator data from OEP, filter current exsist ones and rename paramter names
-        hv_trafos, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_transformer",
-            where=dave_settings()["ehvhv_trans_ver"],
-            geometry="geom",
-        )
+        hv_trafos, meta_data = oep_request(table="ego_pf_hv_transformer")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -65,12 +60,7 @@ def create_transformers(grid_data):
             "hv" in power_levels and grid_data.ehv_data.ehv_nodes.empty
         ):
             # read ehv/hv node data from OpenEnergyPlatform and adapt names
-            ehvhv_buses, meta_data = oep_request(
-                schema="grid",
-                table="ego_pf_hv_bus",
-                where=dave_settings()["hv_buses_ver"],
-                geometry="geom",
-            )
+            ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -242,10 +232,7 @@ def create_transformers(grid_data):
         if grid_data.components_power.substations.hv_mv.empty:
             # read transformator data from OEP, filter relevant parameters and rename paramter names
             substations, meta_data = oep_request(
-                schema="grid",
-                table="ego_dp_hvmv_substation",
-                where=dave_settings()["hvmv_sub_ver"],
-                geometry="polygon",
+                table="ego_dp_hvmv_substation"
             )  # polygon to get the full area
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -290,12 +277,7 @@ def create_transformers(grid_data):
         if grid_data.hv_data.hv_nodes.empty:
             # --- in this case the missing hv nodes for the transformator must be procured from OEP
             # read hv node data from OpenEnergyPlatform and adapt names
-            hv_nodes, meta_data = oep_request(
-                schema="grid",
-                table="ego_pf_hv_bus",
-                where=dave_settings()["hv_buses_ver"],
-                geometry="geom",
-            )
+            hv_nodes, meta_data = oep_request(table="ego_pf_hv_bus")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -440,12 +422,7 @@ def create_transformers(grid_data):
     if any(map(lambda x: x in power_levels, ["mv", "lv"])):
         if grid_data.components_power.substations.mv_lv.empty:
             # get transformator data from OEP
-            substations, meta_data = oep_request(
-                schema="grid",
-                table="ego_dp_mvlv_substation",
-                where=dave_settings()["mvlv_sub_ver"],
-                geometry="geom",
-            )
+            substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data

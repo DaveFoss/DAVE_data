@@ -36,12 +36,7 @@ def create_hv_topology(grid_data):
     # --- create substations
     # create ehv/hv substations
     if grid_data.components_power.substations.ehv_hv.empty:
-        ehvhv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_ehv_substation",
-            where=dave_settings()["ehv_sub_ver"],
-            geometry="polygon",
-        )
+        ehvhv_substations, meta_data = oep_request(table="ego_dp_ehv_substation")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -76,10 +71,7 @@ def create_hv_topology(grid_data):
     # create hv/mv substations
     if grid_data.components_power.substations.hv_mv.empty:
         hvmv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_hvmv_substation",
-            where=dave_settings()["hvmv_sub_ver"],
-            geometry="polygon",
+            table="ego_dp_hvmv_substation"
         )  # take polygon for full area
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -122,12 +114,7 @@ def create_hv_topology(grid_data):
     # update progress
     pbar.update(10)
     # --- import hv lines and reduce them to the target area
-    ehvhv_lines, meta_data = oep_request(
-        schema="grid",
-        table="ego_pf_hv_line",
-        where=dave_settings()["hv_line_ver"],
-        geometry="geom",
-    )
+    ehvhv_lines, meta_data = oep_request(table="ego_pf_hv_line")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -154,12 +141,7 @@ def create_hv_topology(grid_data):
     # consider data only if there are minimum one line in the target area
     if not ehvhv_lines.empty:
         # --- create hv nodes
-        ehvhv_buses, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_bus",
-            where=dave_settings()["hv_buses_ver"],
-            geometry="geom",
-        )
+        ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
