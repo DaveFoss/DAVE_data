@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 import shapely
 
-from dave.io import db_availability
+from dave.io import db_availability, from_mongo, info_mongo
 from dave.settings import dave_settings
 
 oep_url = "http://oep.iks.cs.ovgu.de/"
@@ -49,10 +49,14 @@ def oep_request(schema, table, where=None, geometry=None, db_update=False):
         **requested_data** (DataFrame) - table of the requested data
     """
     # check dave db and dataset availibility
-    db_available = db_availability(collection_name=table)
-    if db_available and not db_update:
-        print("data from db")
-        # hier muss der bezug der oep table aus der db hin
+    if db_availability(collection_name=table) and not db_update:
+        # search database from table
+        db_info = info_mongo()
+        for database in db_info.keys():
+            if table in db_info[database]["collections"]:
+                break
+        request_data = from_mongo(database=database, collection=table, geometry=None)
+        meta_data = None  # !!! meta data noch hinzufügen
 
     else:
         # dave db or dataset is not available so request data directly from oep
