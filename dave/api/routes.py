@@ -8,10 +8,11 @@ import geopandas as gpd
 import pandas as pd
 from fastapi import APIRouter, Depends, Request
 
-from dave.api import request_bodys
+from dave.api.request_bodys import Datapool_param, Dataset_param, Db_param, Db_up_param
 from dave.create import create_grid
-from dave.datapool import read_postal
-from dave.io import from_mongo, info_mongo, to_json, to_mongo
+from dave.datapool.read_data import read_postal
+from dave.io.database_io import from_mongo, info_mongo, to_mongo
+from dave.io.file_io import to_json
 
 router = APIRouter(
     prefix="",
@@ -65,9 +66,7 @@ class DaveRequest:
 
 # get method for dave dataset request
 @router.get("/request_dataset")
-def request_dataset(
-    parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)
-):
+def request_dataset(parameters: Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
     grid_data = dave.create_dataset(parameters)
     return grid_data
 
@@ -92,9 +91,7 @@ class DatapoolRequest:
 
 # get method for datapool request
 @router.get("/request_datapool")
-def request_datapool(
-    parameters: request_bodys.Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)
-):
+def request_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)):
     if parameters.data_name == "postalcode":
         data = pool.get_postalcodes()
     elif parameters.data_name == "town_name":
@@ -118,7 +115,7 @@ class DbRequest:
 
 # get method for database request
 @router.get("/request_db")
-def request_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
+def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
     data = db.db_request(parameters)
     return data
 
@@ -140,5 +137,5 @@ class DbPost:
 
 # post method to upload data to database
 @router.post("/post_db")
-def post_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
+def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
     db.db_post(parameters)

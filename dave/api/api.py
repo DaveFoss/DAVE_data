@@ -9,16 +9,18 @@ import pandas as pd
 import uvicorn
 from fastapi import Depends, FastAPI, Request
 
-from dave.api import request_bodys, routes
+from dave.api.request_bodys import Datapool_param, Dataset_param, Db_param, Db_up_param
+from dave.api.routes import router
 from dave.create import create_grid
-from dave.datapool import read_postal
-from dave.io import from_mongo, info_mongo, to_json, to_mongo
+from dave.datapool.read_data import read_postal
+from dave.io.database_io import from_mongo, info_mongo, to_mongo
+from dave.io.file_io import to_json
 
 # initialize app object
 app = FastAPI()
 
 # include routes
-app.include_router(routes.router)
+app.include_router(router)
 
 
 class DaveRequest:
@@ -98,16 +100,14 @@ def read_main(request: Request):
 
 # get method for dave dataset request
 @app.get("/request_dataset")
-def index(parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
+def index(parameters: Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
     grid_data = dave.create_dataset(parameters)
     return grid_data
 
 
 # get method for datapool request
 @app.get("/request_datapool")
-def index_datapool(
-    parameters: request_bodys.Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)
-):
+def index_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)):
     if parameters.data_name == "postalcode":
         data = pool.get_postalcodes()
     elif parameters.data_name == "town_name":
@@ -118,14 +118,14 @@ def index_datapool(
 
 # get method for database request
 @app.get("/request_db")
-def index_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
+def index_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
     data = db.db_request(parameters)
     return data
 
 
 # post method to upload data to database
 @app.post("/post_db")
-def upload_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
+def upload_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
     db.db_post(parameters)
 
 

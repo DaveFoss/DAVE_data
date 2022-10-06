@@ -3,10 +3,10 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import pytest
-import requests
 from pandas import DataFrame
+from requests import get
 
-from dave.datapool import oep_request
+from dave.datapool.requests import oep_request
 from dave.settings import dave_settings
 
 
@@ -16,7 +16,7 @@ def test_sources_availability():
     """
     # check open energy platform
     oep_url = "http://oep.iks.cs.ovgu.de/"
-    request_oep = requests.get("http://oep.iks.cs.ovgu.de/")
+    request_oep = get("http://oep.iks.cs.ovgu.de/")
     assert request_oep.status_code == 200
     # check open energy platform datasets
     datasets = DataFrame(
@@ -35,12 +35,12 @@ def test_sources_availability():
         }
     )
     for i, dataset in datasets.iterrows():
-        request = requests.get(
+        request = get(
             "".join([oep_url, "/api/v0/schema/", dataset.schema, "/tables/", dataset.table])
         )
         assert request.status_code == 200
     # check open street map (overpass api)
-    request_oep = requests.get("http://www.overpass-api.de/")
+    request_oep = get("http://www.overpass-api.de/")
     assert request_oep.status_code == 200
 
 

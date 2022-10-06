@@ -8,14 +8,9 @@ from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 from tqdm import tqdm
 
-from dave.datapool import (
-    oep_request,
-    query_osm,
-    read_federal_states,
-    read_nuts_regions,
-    read_postal,
-)
-from dave.io import archiv_inventory, from_json_string
+from dave.datapool.osm_request import query_osm
+from dave.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
+from dave.io.file_io import archiv_inventory, from_json_string
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 

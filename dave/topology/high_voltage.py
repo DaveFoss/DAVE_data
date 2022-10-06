@@ -9,7 +9,7 @@ import pandas as pd
 from shapely.geometry import LineString, Point
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.requests import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 

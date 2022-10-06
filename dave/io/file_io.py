@@ -20,7 +20,7 @@ from pandapower.io_utils import (
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.wkb import dumps, loads
 
-import dave.create
+import dave.create as create
 from dave.dave_structure import davestructure
 from dave.io.convert_format import change_empty_gpd, wkb_to_wkt, wkt_to_wkb
 from dave.io.io_utils import FromSerializableRegistryDaVe, archiv_inventory, isinstance_partial
@@ -101,7 +101,7 @@ def from_hdf(dataset_path):
     # check if path exist
     if os.path.exists(dataset_path):
         # create empty dave dataset
-        grid_data = dave.create.create_empty_dataset()
+        grid_data = create.create_empty_dataset()
         # open hdf file
         file = pd.HDFStore(dataset_path)
         # --- create dave dataset from archiv file

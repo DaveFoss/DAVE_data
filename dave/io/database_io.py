@@ -4,7 +4,7 @@
 
 import geopandas as gpd
 import pandas as pd
-import requests
+import requests as req
 from pymongo import GEOSPHERE, MongoClient
 from shapely.geometry import mapping, shape
 from shapely.wkt import loads
@@ -30,7 +30,7 @@ def info_mongo():
 def db_availability(collection_name=None):
     # check if the dave database is available
     try:
-        requests.get(f"http://{dave_settings()['db_ip']}/")
+        req.get(f"http://{dave_settings()['db_ip']}/")
         if collection_name:
             db_databases = info_mongo()
             available = False
@@ -40,7 +40,7 @@ def db_availability(collection_name=None):
                     break
         else:
             available = True
-    except requests.exceptions.ConnectionError:
+    except req.exceptions.ConnectionError:
         available = False
     return available
 

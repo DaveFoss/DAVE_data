@@ -2,15 +2,13 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
-
 import geopandas as gpd
 import pandas as pd
-import xmlschema
 from shapely.geometry import LineString
 from shapely.wkb import loads
+from xmlschema import XMLSchema
 
-from dave.io import from_mongo
+from dave.io.database_io import from_mongo
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 
@@ -436,7 +434,7 @@ def read_scigridgas_iggielgn():
 
 def read_gaslib():
     # read data from datapool
-    schema = xmlschema.XMLSchema(get_data_path("gaslib/Gas.xsd", "data"))
+    schema = XMLSchema(get_data_path("gaslib/Gas.xsd", "data"))
     gaslib_dict = schema.to_dict(get_data_path("gaslib/GasLib-582-v2.net", "data"))
     # create data dictionary
     gaslib_data = {

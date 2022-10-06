@@ -2,14 +2,15 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import math
+from math import pi
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from dave.datapool import oep_request, read_ehv_data
+from dave.datapool.read_data import read_ehv_data
+from dave.datapool.requests import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 
@@ -228,7 +229,7 @@ def create_ehv_topology(grid_data):
             # calculate and add r,x,c per km
             ehv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
             ehv_lines.at[line.name, "x_ohm_per_km"] = float(line.x_ohm) / line.length_km
-            c_nf = float(line.b_s) / (2 * math.pi * float(line.frequency)) * 1e09
+            c_nf = float(line.b_s) / (2 * pi * float(line.frequency)) * 1e09
             ehv_lines.at[line.name, "c_nf"] = c_nf
             ehv_lines.at[line.name, "c_nf_per_km"] = c_nf / line.length_km
             # calculate and add max i

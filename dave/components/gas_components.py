@@ -6,7 +6,7 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
-from dave.datapool import read_scigridgas_iggielgn
+from dave.datapool.read_data import read_scigridgas_iggielgn
 from dave.settings import dave_settings
 
 

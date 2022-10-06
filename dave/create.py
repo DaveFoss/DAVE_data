@@ -11,30 +11,31 @@ import pandas as pd
 
 # imports from dave
 from dave import __version__
-from dave.components import (
+from dave.components.gas_components import gas_components
+from dave.components.loads import create_loads
+from dave.components.power_plants import (
     create_conventional_powerplants,
-    create_loads,
     create_power_plant_lines,
     create_renewable_powerplants,
-    create_transformers,
-    gas_components,
 )
+from dave.components.transformers import create_transformers
 from dave.dave_structure import davestructure
 from dave.geography import target_area
-from dave.io import from_archiv, to_archiv, to_hdf, to_json
-from dave.model import clean_up_data, create_gaslib, create_pandapipes, create_pandapower
-from dave.plotting import plot_geographical_data, plot_grid_data, plot_landuse
+from dave.io.file_io import from_archiv, to_archiv, to_hdf, to_json
+from dave.model.create_gaslib import create_gaslib
+from dave.model.create_pandapipes import create_pandapipes
+from dave.model.create_pandapower import create_pandapower
+from dave.model.model_utils import clean_up_data
+from dave.plotting.plot import plot_geographical_data, plot_grid_data, plot_landuse
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
-from dave.topology import (
-    create_ehv_topology,
-    create_hp_topology,
-    create_hv_topology,
-    create_lp_topology,
-    create_lv_topology,
-    create_mp_topology,
-    create_mv_topology,
-)
+from dave.topology.extra_high_voltage import create_ehv_topology
+from dave.topology.high_pressure import create_hp_topology
+from dave.topology.high_voltage import create_hv_topology
+from dave.topology.low_pressure import create_lp_topology
+from dave.topology.low_voltage import create_lv_topology
+from dave.topology.medium_pressure import create_mp_topology
+from dave.topology.medium_voltage import create_mv_topology
 
 
 def create_empty_dataset():

@@ -2,14 +2,14 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
 from copy import deepcopy
+from os import path
 
 import geopandas as gpd
 import pandas as pd
 from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
 
-import dave
+import dave.create as create
 from dave.dave_structure import davestructure
 from dave.toolbox import get_data_path
 
@@ -26,7 +26,7 @@ def archiv_inventory(grid_data, read_only=False):
     postalcode = target_input.data if target_input.typ == "postalcode" else "None"
     town_name = target_input.data if target_input.typ == "town name" else "None"
     federal_state = target_input.data if target_input.typ == "federal state" else "None"
-    if os.path.isfile(inventory_path):
+    if path.isfile(inventory_path):
         # read inventory file
         inventory_list = pd.read_csv(inventory_path)
         # create dataset file
@@ -107,11 +107,11 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
     @from_serializable.register(class_name="davestructure", module_name="dave.dave_structure")
     def davestructure(self):
         if isinstance(self.obj, str):  # backwards compatibility
-            from dave.io import from_json_string
+            from dave.io.file_io import from_json_string
 
             return from_json_string(self.obj)
         else:
-            dave_dataset = dave.create_empty_dataset()
+            dave_dataset = create.create_empty_dataset()
             dataset = None
             for key in dave_dataset.keys():
                 if (not isinstance(dave_dataset[key], str)) and (

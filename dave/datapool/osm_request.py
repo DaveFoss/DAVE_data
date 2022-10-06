@@ -2,10 +2,10 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import collections
 import time
-import xml.etree.ElementTree as ET
+from collections import namedtuple
 from urllib.parse import urlencode
+from xml.etree.ElementTree import fromstring
 
 import pandas as pd
 from pandas.io.common import urlopen
@@ -41,9 +41,7 @@ from dave.settings import dave_settings
 # SOFTWARE.
 
 
-OSMData = collections.namedtuple(
-    "OSMData", ("nodes", "waynodes", "waytags", "relmembers", "reltags")
-)
+OSMData = namedtuple("OSMData", ("nodes", "waynodes", "waytags", "relmembers", "reltags"))
 _crs = "epsg:4326"
 
 # Tags to remove so we don't clobber the output. This list comes from
@@ -201,7 +199,7 @@ def read_osm(content, render=True, **kwargs):
     the DataFrames to GeoDataFrames.
 
     """
-    doc = ET.fromstring(content)
+    doc = fromstring(content)
 
     nodes = read_nodes(doc)
     waynodes, waytags = read_ways(doc)
