@@ -9,7 +9,7 @@ from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 
@@ -425,9 +425,6 @@ def create_transformers(grid_data):
             substations.rename(
                 columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
             )
-            # change wrong crs from oep
-            substations.crs = dave_settings()["crs_meter"]
-            substations = substations.to_crs(dave_settings()["crs_main"])
             # filter substations which are within the grid area
             substations = intersection_with_area(substations, grid_data.area)
         else:

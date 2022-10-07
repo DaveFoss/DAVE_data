@@ -9,8 +9,8 @@ import pandas as pd
 from shapely.geometry import LineString
 from tqdm import tqdm
 
+from dave.datapool.oep_request import oep_request
 from dave.datapool.read_data import read_ehv_data
-from dave.datapool.requests import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 

@@ -5,10 +5,10 @@
 import geopandas as gpd
 import pandas as pd
 import requests
-import shapely
 from shapely.geometry import Point
+from shapely.wkb import loads
 
-from dave.io import db_availability, from_mongo, search_database
+from dave.io.database_io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
 
 oep_url = "http://oep.iks.cs.ovgu.de/"
@@ -104,18 +104,21 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
         if geometry is not None:
             # --- convert into geopandas DataFrame with right crs
             # transform WKB to WKT / Geometry
-            request_data["geometry"] = request_data[geometry].apply(
-                lambda x: shapely.wkb.loads(x, hex=True)
-            )
+            request_data["geometry"] = request_data[geometry].apply(lambda x: loads(x, hex=True))
             # create geoDataFrame
             request_data = gpd.GeoDataFrame(
                 request_data, crs=dave_settings()["crs_main"], geometry=request_data.geometry
             )
+        # fix some mistakes in the oep data
         if table == "ego_pf_hv_transformer":
             # change geometry to point because in original data the geometry was lines with length 0
             request_data["geometry"] = request_data.geometry.apply(
                 lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
             )
+        if table == "ego_dp_mvlv_substation":
+            # change wrong crs from oep
+            request_data.crs = dave_settings()["crs_meter"]
+            request_data = request_data.to_crs(dave_settings()["crs_main"])
 
         # --- request meta informations for a dataset
         request = requests.get(

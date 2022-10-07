@@ -6,7 +6,7 @@ import pytest
 from pandas import DataFrame
 from requests import get
 
-from dave.datapool.requests import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 
 

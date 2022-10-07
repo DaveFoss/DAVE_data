@@ -6,7 +6,7 @@ import timeit
 
 from tqdm import tqdm
 
-from dave.datapool.requests import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.io.database_io import db_availability, drop_collection, from_mongo, to_mongo
 from dave.settings import dave_settings
 
