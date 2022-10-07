@@ -11,6 +11,34 @@ from dave.io.database_io import db_availability, drop_collection, from_mongo, to
 from dave.settings import dave_settings
 
 
+def change_oep_version(table, new_version):
+    """
+    This function changes the version for an oep table to the latest
+    """
+    filepath = dave_settings()["dave_dir"] + "\\settings.py"
+    # read settings file
+    with open(filepath) as f:
+        lines = f.readlines()
+    # adjust oep version if there is a newer one
+    table = "ego_pf_hv_line"
+    for line in lines:
+        if table in line:
+            # get line index
+            line_idx = lines.index(line)
+            # change version
+            line_split = line.split('"')
+            for segment in line_split:
+                if segment.startswith("version"):
+                    line = line.replace(segment, new_version)
+                    break
+            lines[line_idx] = line
+            break
+    # write changed lines into settings file
+    with open(filepath, "w") as f:
+        f.writelines(lines)
+        f.close()
+
+
 def oep_update():
     """
     This function updates the relevant data from the open energy platform
@@ -45,6 +73,8 @@ def oep_update():
                     drop_collection(database="power", collection=table)
                     # Write dataset to database
                     to_mongo(database="power", collection=table, data_df=dataset)
+                    # change version in dave settings
+                    change_oep_version(table=table, new_version=latest_version)
             else:
                 # Write dataset to database
                 to_mongo(database="power", collection=table, data_df=dataset)
