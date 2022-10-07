@@ -43,7 +43,8 @@ class Db_param(BaseModel):
     database: str
     collection: str
     filter_method: Optional[str] = None
-    geometry: Optional[str] = None
+    filter_param: Optional[str] = None
+    filter_value: Optional[str] = None
 
 
 # create request body for upload to the database

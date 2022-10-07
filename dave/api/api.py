@@ -71,7 +71,8 @@ class DbRequest:
             database=parameters.database,
             collection=parameters.collection,
             filter_method=parameters.filter_method,
-            geometry=parameters.geometry,
+            filter_param=parameters.filter_param,
+            filter_value=parameters.filter_value,
         )
         # convert postalcodes to JSON string
         return data.to_json()

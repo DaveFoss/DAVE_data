@@ -52,23 +52,33 @@ def db_client():
     )
 
 
-def from_mongo(database, collection, filter_method=None, geometry=None):
+def from_mongo(database, collection, filter_method=None, filter_param=None, filter_value=None):
     """
     This function requests data from the mongo db
 
     INPUT:
-        **filter_method** (string) - method for the geometrical data filtering
-        **geometry** (string) - shapely geometry object as string for the filtering
+        **filter_method** (string) - method for the data filtering. Examples: \
+            "eq" - matches documents where the value of a field equals the specified value. \
+            "geoIntersects" - Selects documents whose geospatial data intersects with a specified \
+                geometrical object
+        **filter_param** (string) - parameter to be filtered by
+        **filter_value** (string) - value for the filtering
     """
     client = db_client()
     db = client[database]
-    if (filter_method is not None) and (geometry is not None):
-        # transform geometry from string to shapely object
-        geometry = loads(geometry)
-        # request data with geometrical filtering
-        request = db[collection].find(
-            {"geometry": {f"${filter_method}": {"$geometry": mapping(geometry)}}}
-        )
+    if (filter_method is not None) and (filter_value is not None):
+        if filter_param == "geometry":
+            # transform geometry from string to shapely object
+            filter_value = loads(filter_value)
+            # request data with geometrical filtering
+            request = db[collection].find(
+                {f"{filter_param}": {f"${filter_method}": {"$geometry": mapping(filter_value)}}}
+            )
+        else:
+            # request data with filtering
+            request = db[collection].find(
+                {f"{filter_param}": {f"${filter_method}": f"{filter_value}"}}
+            )
     else:
         # request all data from defined collection
         request = db[collection].find()
