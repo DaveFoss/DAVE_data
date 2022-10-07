@@ -55,19 +55,17 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     if db_availability(collection_name=table) and not db_update:
         # search database name for collection
         database = search_database(collection=table)
-        request_data = from_mongo(database=database, collection=table)
+        if where and where.split("=")[0] != "version":
+            request_data = from_mongo(
+                database=database,
+                collection=table,
+                filter_method="eq",
+                filter_param=f"{where.split('=')[0]}",
+                filter_value=f"{where.split('=')[1]}",
+            )
+        else:
+            request_data = from_mongo(database=database, collection=table)
         meta_data = None  # !!! meta data noch hinzufügen
-        # filter dataset
-        if where:
-            where_split = where.split("=")
-            if where_split[0] != "version":
-                # adjust argument type
-                para_type = type(request_data[where_split[0]].iloc[0])
-                if para_type is int:
-                    argument = int(where_split[1])
-                elif para_type is str:
-                    argument = str(where_split[1])
-                request_data = request_data[request_data[where_split[0]] == argument]
     else:
         # dave db or dataset is not available so request data directly from oep
         if schema is None:

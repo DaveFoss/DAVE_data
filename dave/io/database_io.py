@@ -57,11 +57,11 @@ def from_mongo(database, collection, filter_method=None, filter_param=None, filt
     This function requests data from the mongo db
 
     INPUT:
-        **filter_method** (string) - method for the data filtering. Examples: \
-            "eq" - matches documents where the value of a field equals the specified value. \
-            "geoIntersects" - Selects documents whose geospatial data intersects with a specified \
-                geometrical object
-        **filter_param** (string) - parameter to be filtered by
+        **filter_method** (string) - method for the data filtering. Examples: \n
+        "eq" - matches documents where the value of a field equals the specified value. \n
+        "geoIntersects" - Selects documents whose geospatial data intersects with a specified \
+                geometrical object \n
+        **filter_param** (string) - parameter to be filtered by \n
         **filter_value** (string) - value for the filtering
     """
     client = db_client()
