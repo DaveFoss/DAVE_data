@@ -19,24 +19,17 @@ def test_sources_availability():
     request_oep = get("http://oep.iks.cs.ovgu.de/")
     assert request_oep.status_code == 200
     # check open energy platform datasets
-    datasets = DataFrame(
-        {
-            "schema": ["supply", "supply", "grid", "grid", "grid", "grid", "grid", "grid"],
-            "table": [
-                "ego_renewable_powerplant",
-                "ego_conventional_powerplant",
-                "ego_pf_hv_transformer",
-                "ego_pf_hv_bus",
-                "ego_dp_hvmv_substation",
-                "ego_dp_mvlv_substation",
-                "ego_dp_ehv_substation",
-                "ego_pf_hv_line",
-            ],
-        }
-    )
-    for i, dataset in datasets.iterrows():
+    for dataset in dave_settings()["oep_tables"].keys():
         request = get(
-            "".join([oep_url, "/api/v0/schema/", dataset.schema, "/tables/", dataset.table])
+            "".join(
+                [
+                    oep_url,
+                    "/api/v0/schema/",
+                    dave_settings()["oep_tables"][dataset][0],
+                    "/tables/",
+                    dataset,
+                ]
+            )
         )
         assert request.status_code == 200
     # check open street map (overpass api)
@@ -49,10 +42,10 @@ def test_oep_request():
     Checking the request function for the open energy platform
     """
     ehvhv_substations, meta_data = oep_request(
-        schema="grid",
+        schema=dave_settings()["oep_tables"]["ego_dp_ehv_substation"][0],
         table="ego_dp_ehv_substation",
-        where=dave_settings()["ehv_sub_ver"],
-        geometry="polygon",
+        where=dave_settings()["oep_tables"]["ego_dp_ehv_substation"][2],
+        geometry=dave_settings()["oep_tables"]["ego_dp_ehv_substation"][1],
     )
     # check if data returns
     assert len(ehvhv_substations) != 0
