@@ -37,12 +37,44 @@ def dave_settings():
         },
         # osm time delay (because osm doesn't alowed more than 1 request per second)
         "osm_time_delay": 60,  # in seconds
-        # osm tags:
-        "road_tags": 'highway~"secondary|tertiary|unclassified|residential|living_street|footway"',
-        "road_plot_tags": 'highway~"motorway|trunk|primary"',
-        "landuse_tags": 'landuse~"commercial|industrial|residential|retail"',
-        "building_tags": "building",
-        "railway_tags": 'railway~"construction|disused|light_rail|monorail|narrow_gauge|rail|subway|tram"',
+        # osm considered area (data for this area will be downloaded and impplemented in database)
+        "osm_area": "germany",
+        # osm tags: (type: (osm_key, tags, osm_type, recurse))
+        "osm_tags": {
+            "road": (
+                "highway",
+                [
+                    "secondary",
+                    "tertiary",
+                    "unclassified",
+                    "residential",
+                    "living_street",
+                    "footway",
+                ],
+                ["way"],
+            ),
+            "road_plot": ("highway", ["motorway", "trunk", "primary"], ["way"]),
+            "landuse": (
+                "landuse",
+                ["commercial", "industrial", "residential", "retail"],
+                ["way", "relation"],
+            ),
+            "building": ("building", True, ["way"]),
+            "railway": (
+                "railway",
+                [
+                    "construction",
+                    "disused",
+                    "light_rail",
+                    "monorail",
+                    "narrow_gauge",
+                    "rail",
+                    "subway",
+                    "tram",
+                ],
+                ["way"],
+            ),
+        },
         # osm categories
         "buildings_residential": [
             "apartments",
