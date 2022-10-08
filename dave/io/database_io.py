@@ -66,7 +66,7 @@ def from_mongo(database, collection, filter_method=None, filter_param=None, filt
     """
     client = db_client()
     db = client[database]
-    if (filter_method is not None) and (filter_value is not None):
+    if all([filter_method is not None, filter_param is not None, filter_value is not None]):
         if filter_param == "geometry":
             # transform geometry from string to shapely object
             filter_value = loads(filter_value)
