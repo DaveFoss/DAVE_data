@@ -4,6 +4,7 @@
 
 import timeit
 
+from pyrosm import OSM, get_data
 from tqdm import tqdm
 
 from dave.datapool.oep_request import oep_request
@@ -91,14 +92,44 @@ def osm_update():
     """
     This function updates the relevant data from the OpenStreetMap
     """
-    pass
-    # # set progress bar
-    # pbar = tqdm(
-    #     total=100,
-    #     desc="update data from OSM: ",
-    #     position=0,
-    #     bar_format=dave_settings()["bar_format"],
-    # )
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="update data from OSM: ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
+    # considerd area
+    osm_area = dave_settings()["osm_area"]
+    # download data from osm
+    filepath = get_data(
+        osm_area, directory=dave_settings()["dave_dir"] + "\\datapool\\data", update=True
+    )
+    # Initialize the OSM object
+    osm = OSM(filepath)
+    pbar.update(10)
+    # filter data from local osm file and write to database
+    for data_type in dave_settings()["osm_tags"].keys():
+        # create collection name
+        collection = f"osm_{data_type}_{osm_area}"
+        # get data parameter
+        data_param = dave_settings()["osm_tags"][data_type]
+        # filter data_type
+        dataset = osm.get_data_by_custom_criteria(
+            custom_filter={data_param[0]: data_param[1]},
+            # Keep data matching the criteria above
+            filter_type="keep",
+            keep_nodes=True if "node" in data_param[2] else False,
+            keep_ways=True if "way" in data_param[2] else False,
+            keep_relations=True if "relation" in data_param[2] else False,
+        )
+        if db_availability(collection_name=collection):
+            # drop existing collection
+            drop_collection(database="geo", collection=collection)
+        # Write dataset to database
+        to_mongo(database="geo", collection=collection, data_df=dataset)
+        # update progress
+        pbar.update(90 / len(dave_settings()["osm_tags"].keys()))
 
 
 if __name__ == "__main__":
