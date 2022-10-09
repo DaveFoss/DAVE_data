@@ -36,12 +36,16 @@ def osm_request(data_type, area):
     else:
         request_data = gpd.GeoDataFrame([])
         for osm_type in data_param[2]:
-            # get data from OSM directly via API query
-            data, meta_data = query_osm(
-                osm_type, area, recurse="down", tags=f'{data_param[0]}~"{"|".join(data_param[1])}"'
+            # create tags
+            tags = (
+                f'{data_param[0]}~"{"|".join(data_param[1])}"'
+                if isinstance(data_param[1], list)
+                else f"{data_param[0]}"
             )
+            # get data from OSM directly via API query
+            data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
             request_data = pd.concat([request_data, data], ignore_index=True)
-    return data, meta_data
+    return request_data, meta_data
 
     # !!! hier function hin schreiben die entscheidet ob aus Dataenbank (is available) oder direct von OSM
     # !!! in target area query umschreiben
