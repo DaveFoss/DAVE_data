@@ -55,7 +55,7 @@ def _from_osm(
     buildings,
     landuse,
     railways,
-    target,
+    target_geom,
     target_number=None,
     target_town=None,
     progress_step=None,
@@ -63,6 +63,8 @@ def _from_osm(
     """
     This function searches for data on OpenStreetMap (OSM) and filters the relevant paramerters
     for grid modeling
+
+    target = geometry of the considerd target
     """
     # count object types to consider for progress bar
     objects_list = [roads, roads_plot, buildings, landuse, railways]
@@ -70,9 +72,11 @@ def _from_osm(
     if objects_con == 0:
         # update progress
         pbar.update(progress_step)
+    # create border for osm query
+    border = target_geom.convex_hull
     # search relevant road informations in the target area
     if roads:
-        roads, meta_data = osm_request(data_type="road", area=target)
+        roads, meta_data = osm_request(data_type="road", area=border)
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -83,11 +87,6 @@ def _from_osm(
             # consider only the linestring elements
             roads = roads[roads.geometry.apply(lambda x: isinstance(x, LineString))]
             # consider only roads which intersects the target area
-            if target_number or target_number == 0:
-                target_geom = target.geometry.iloc[target_number]
-            elif target_town:
-                targets = target[target.town == target_town]
-                target_geom = targets.geometry.unary_union
             roads = roads[roads.geometry.intersects(target_geom)]
             # write roads into grid_data
             roads.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -96,7 +95,7 @@ def _from_osm(
         pbar.update(progress_step / objects_con)
     # search irrelevant road informations in the target area for a better overview
     if roads_plot:
-        roads_plot, meta_data = osm_request(data_type="road_plot", area=target)
+        roads_plot, meta_data = osm_request(data_type="road_plot", area=border)
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -107,11 +106,6 @@ def _from_osm(
             # consider only the linestring elements
             roads_plot = roads_plot[roads_plot.geometry.apply(lambda x: isinstance(x, LineString))]
             # consider only roads which intersects the target area
-            if target_number or target_number == 0:
-                target_geom = target.geometry.iloc[target_number]
-            elif target_town:
-                targets = target[target.town == target_town]
-                target_geom = targets.geometry.unary_union
             roads_plot = roads_plot[roads_plot.geometry.intersects(target_geom)]
             # write plotting roads into grid_data
             roads_plot.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -122,7 +116,7 @@ def _from_osm(
         pbar.update(progress_step / objects_con)
     # search landuse informations in the target area
     if landuse:
-        landuse, meta_data = osm_request(data_type="landuse", area=target)
+        landuse, meta_data = osm_request(data_type="landuse", area=border)
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -133,12 +127,6 @@ def _from_osm(
             # consider only the linestring elements
             landuse = landuse[landuse.geometry.apply(lambda x: isinstance(x, LineString))]
             # consider only landuses which intersects the target area
-            if target_number or target_number == 0:
-                target_geom = target.geometry.iloc[target_number]
-            elif target_town:
-                targets = target[target.town == target_town]
-                target_geom = targets.geometry.unary_union
-            # filter landuses that touches the target area
             landuse = landuse[landuse.geometry.intersects(target_geom)]
             # convert geometry to polygon
             for i, land in landuse.iterrows():
@@ -166,7 +154,7 @@ def _from_osm(
         pbar.update(progress_step / objects_con)
     # search building informations in the target area
     if buildings:
-        buildings, meta_data = osm_request(data_type="building", area=target)
+        buildings, meta_data = osm_request(data_type="building", area=border)
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -177,17 +165,12 @@ def _from_osm(
             # consider only the linestring elements
             buildings = buildings[buildings.geometry.apply(lambda x: isinstance(x, LineString))]
             # consider only buildings which intersects the target area
-            if target_number or target_number == 0:
-                target_geom = target.geometry.iloc[target_number]
-            elif target_town:
-                targets = target[target.town == target_town]
-                target_geom = targets.geometry.unary_union
             buildings = buildings[buildings.geometry.intersects(target_geom)]
             # create building categories
             residential = dave_settings()["buildings_residential"]
             commercial = dave_settings()["buildings_commercial"]
             # improve building tag with landuse parameter
-            if landuse and not landuse.empty:
+            if landuse if isinstance(landuse, bool) else not landuse.empty:
                 landuse_retail = landuse[landuse.landuse == "retail"].geometry.unary_union
                 landuse_industrial = landuse[landuse.landuse == "industrial"].geometry.unary_union
                 landuse_commercial = landuse[landuse.landuse == "commercial"].geometry.unary_union
@@ -232,22 +215,17 @@ def _from_osm(
         pbar.update(progress_step / objects_con)
     # search railway informations in the target area
     if railways:
-        railways, meta_data = osm_request(data_type="railway", area=target)
+        railways, meta_data = osm_request(data_type="railway", area=border)
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        # check if there are data for roads
+        # check if there are data for railways
         if not railways.empty:
             # define road parameters which are relevant for the grid modeling
             railways = railways.filter(dave_settings()["osm_tags"]["railway"][3])
             # consider only the linestring elements
             railways = railways[railways.geometry.apply(lambda x: isinstance(x, LineString))]
             # consider only roads which intersects the target area
-            if target_number or target_number == 0:
-                target_geom = target.geometry.iloc[target_number]
-            elif target_town:
-                targets = target[target.town == target_town]
-                target_geom = targets.geometry.unary_union
             railways = railways[railways.geometry.intersects(target_geom)]
             # write roads into grid_data
             railways.set_crs(dave_settings()["crs_main"], inplace=True)
@@ -490,7 +468,7 @@ def target_area(
         target = _target_by_postalcode(
             grid_data,
             postalcode,
-        )  # !!! benötigt target zurück
+        )
         target_input = pd.DataFrame(
             {
                 "typ": "postalcode",
@@ -583,11 +561,7 @@ def target_area(
             progress_step = 80 / len(diff_targets)
             for diff_target in diff_targets:
                 town = target[target.town == diff_target]
-                border = (
-                    town.geometry.unary_union.convex_hull
-                    if len(town) > 1
-                    else town.iloc[0].geometry.convex_hull
-                )
+                target_geom = town.geometry.unary_union if len(town) > 1 else town.iloc[0].geometry
                 # Obtain data from OSM
                 _from_osm(
                     grid_data,
@@ -597,7 +571,7 @@ def target_area(
                     buildings,
                     landuse,
                     railways,
-                    target=border,
+                    target_geom=target_geom,
                     target_town=diff_target,
                     progress_step=progress_step,
                 )
@@ -605,7 +579,7 @@ def target_area(
             for i in range(0, len(target)):
                 # define progress step
                 progress_step = 80 / len(target)
-                border = target.iloc[i].geometry.convex_hull
+                target_geom = target.geometry.iloc[i]
                 # Obtain data from OSM
                 _from_osm(
                     grid_data,
@@ -615,7 +589,7 @@ def target_area(
                     buildings,
                     landuse,
                     railways,
-                    target=border,
+                    target_geom=target_geom,
                     target_number=i,
                     progress_step=progress_step,
                 )

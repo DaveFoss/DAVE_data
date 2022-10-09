@@ -329,7 +329,7 @@ def create_grid(
         buildings=bool(buildings or buildings_l),
         landuse=bool(landuse or landuse_l),
         railways=railways,
-    ).target()
+    )
 
     # --- collect data for the requested dataset
     if not file_exists:
