@@ -39,7 +39,7 @@ def dave_settings():
         "osm_time_delay": 60,  # in seconds
         # osm considered area (data for this area will be downloaded and impplemented in database)
         "osm_area": "germany",
-        # osm tags: (type: (osm_key, tags, osm_type, recurse))
+        # osm tags: (type: (osm key, osm tags, osm type, parameter))
         "osm_tags": {
             "road": (
                 "highway",
@@ -52,14 +52,35 @@ def dave_settings():
                     "footway",
                 ],
                 ["way"],
+                ["geometry", "name", "highway"],
             ),
-            "road_plot": ("highway", ["motorway", "trunk", "primary"], ["way"]),
+            "road_plot": (
+                "highway",
+                ["motorway", "trunk", "primary"],
+                ["way"],
+                ["geometry", "name"],
+            ),
             "landuse": (
                 "landuse",
                 ["commercial", "industrial", "residential", "retail"],
                 ["way", "relation"],
+                ["landuse", "geometry", "name"],
             ),
-            "building": ("building", True, ["way"]),
+            "building": (
+                "building",
+                True,
+                ["way"],
+                [
+                    "addr:housenumber",
+                    "addr:street",
+                    "addr:suburb",
+                    "amenity",
+                    "building",
+                    "building:levels",
+                    "geometry",
+                    "name",
+                ],
+            ),
             "railway": (
                 "railway",
                 [
@@ -73,6 +94,7 @@ def dave_settings():
                     "tram",
                 ],
                 ["way"],
+                ["name", "railway", "geometry", "tram", "train", "usage", "voltage"],
             ),
         },
         # osm categories
