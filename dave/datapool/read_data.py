@@ -29,7 +29,7 @@ def read_postal():
     # requestn data from database
     postalger = from_mongo("geo", "postalcodes")
     # read meta data
-    meta_data = pd.read_excel(r"data\postalger_meta.xlsx", sheet_name=None)
+    meta_data = pd.read_excel(get_data_path("postalger_meta.xlsx", "data"), sheet_name=None)
     return postalger, meta_data
 
 
