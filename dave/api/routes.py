@@ -46,10 +46,16 @@ class DaveRequest:
             federal_state=parameters.federal_state,
             nuts_region=parameters.nuts_regions,
             own_area=parameters.own_area,
+            roads=parameters.roads,
+            roads_plot=parameters.roads_plot,
+            buildings=parameters.buildings,
+            landuse=parameters.landuse,
+            railways=parameters.railways,
             power_levels=parameters.power_levels,
             gas_levels=parameters.gas_levels,
             plot=parameters.plot,
-            convert=parameters.convert,
+            convert_power=parameters.convert_power,
+            convert_gas=parameters.convert_gas,
             opt_model=parameters.opt_model,
             combine_areas=parameters.combine_areas,
             transformers=parameters.transformers,
@@ -57,8 +63,10 @@ class DaveRequest:
             conventional_powerplants=parameters.conventional_powerplants,
             loads=parameters.loads,
             compressors=parameters.compressors,
+            sinks=parameters.sinks,
             sources=parameters.sources,
             storages_gas=parameters.storages_gas,
+            valves=parameters.valves,
         )
         # convert dave dataset to JSON string
         return to_json(grid_data)
@@ -79,8 +87,7 @@ class DatapoolRequest:
         # read postalcode area data from datapool
         postal, meta_data = read_postal()
         # convert postalcodes to JSON string
-        postal_json = postal.postalcode.to_json()
-        return postal_json
+        return postal.postalcode.to_json()
 
     def get_town_names(self):
         # read postalcode area data from datapool
@@ -107,7 +114,8 @@ class DbRequest:
             database=parameters.database,
             collection=parameters.collection,
             filter_method=parameters.filter_method,
-            geometry=parameters.geometry,
+            filter_param=parameters.filter_param,
+            filter_value=parameters.filter_value,
         )
         # convert postalcodes to JSON string
         return data.to_json()

@@ -17,10 +17,16 @@ class Dataset_param(BaseModel):
     federal_state: Optional[list] = None
     nuts_regions: Optional[list] = None
     own_area: Optional[str] = None
+    roads: Optional[bool] = False
+    roads_plot: Optional[bool] = False
+    buildings: Optional[bool] = False
+    landuse: Optional[bool] = False
+    railways: Optional[bool] = False
     power_levels: Optional[list] = []
     gas_levels: Optional[list] = []
     plot: Optional[bool] = True
-    convert: Optional[bool] = True
+    convert_power: Optional[list] = []
+    convert_gas: Optional[list] = []
     opt_model: Optional[bool] = True
     combine_areas: Optional[list] = []
     transformers: Optional[bool] = True
@@ -28,8 +34,10 @@ class Dataset_param(BaseModel):
     conventional_powerplants: Optional[bool] = True
     loads: Optional[bool] = True
     compressors: Optional[bool] = True
+    sinks: Optional[bool] = True
     sources: Optional[bool] = True
     storages_gas: Optional[bool] = True
+    valves: Optional[bool] = True
     output_folder: Optional[str] = dave_settings()["dave_output_dir"]
 
 

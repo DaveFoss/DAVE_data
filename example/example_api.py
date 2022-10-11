@@ -28,7 +28,6 @@ request_dataset = requests.get(
             "postalcode": ["34225"],
             "power_levels": [],
             "plot": False,
-            "convert": False,
             "opt_model": False,
             "transformers": False,
             "renewable_powerplants": False,
