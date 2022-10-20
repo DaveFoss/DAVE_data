@@ -108,11 +108,8 @@ def df_to_mongo(database, collection, data_df):
     client = db_client()
     # request existing databases and list collections
     info = info_mongo()
-    collection_list = []
-    for key in info.keys():
-        collection_list.extend(info[key]["collections"])
     # check if collection is not None
-    if collection and (collection not in collection_list):
+    if collection and not db_availability(collection_name=collection):
         # check if database exist. No creation of new databases allowed
         if database in list(info.keys()):
             db = client[database]
@@ -139,7 +136,34 @@ def df_to_mongo(database, collection, data_df):
         ) if collection else print("Please set a collection name")
 
 
-def to_mongo(database, collection=None, data_df=None, filepath=None):
+def df_to_mongo_merge(database, collection, data_df):
+    """
+    This function uploads data into the mongo db and merge it with an existing collection
+    """
+    client = db_client()
+    # check if collection is not None
+    if collection:
+        # check if collection is available
+        if db_availability(collection_name=collection):
+            db = client[database]
+            collection = db[collection]
+            if isinstance(data_df, gpd.GeoDataFrame):
+                # convert geometry to geojson
+                data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
+            # convert df to dict
+            data = data_df.to_dict(orient="records")
+            # insert data to database
+            if len(data) > 1:
+                collection.insert_many(data)
+            elif len(data) == 1:
+                collection.insert_one(data[0])
+        else:
+            print(f"There is no collection with the name {collection} available to merge data")
+    else:
+        print("Please set a collection name")
+
+
+def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False):
     """
     This function uploads data into the mongo db
 
@@ -152,11 +176,15 @@ def to_mongo(database, collection=None, data_df=None, filepath=None):
                                   it is necessary
         **data_df** ((Geo)DataFrame) - the data which should uploaded as DataFrame or GeoDataFrame
         **filepath** (string) - absolute path to data if this is not in DataFrame format
+        **merge** (boolean) - If True the uploaded data will be merged into an existing collection
     """
     # --- convert diffrent data formats
     # convert GeoDataFrame into DataFrame
     if data_df is not None:
-        df_to_mongo(database, collection, data_df)
+        if merge:
+            df_to_mongo_merge(database, collection, data_df)
+        else:
+            df_to_mongo(database, collection, data_df)
     elif filepath.split(".")[1] == "csv":
         pass
     elif filepath.split(".")[1] == "xlsx":

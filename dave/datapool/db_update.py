@@ -5,11 +5,13 @@
 import timeit
 
 from pyrosm import OSM, get_data
+from pyrosm.data import sources
 from tqdm import tqdm
 
 from dave.datapool.oep_request import oep_request
 from dave.io.database_io import db_availability, drop_collection, from_mongo, to_mongo
 from dave.settings import dave_settings
+from dave.toolbox import get_data_path
 
 
 def change_oep_version(table, new_version):
@@ -101,48 +103,114 @@ def osm_update():
     )
     # considerd area
     osm_area = dave_settings()["osm_area"]
-    # download data from osm
-    filepath = get_data(
-        osm_area, directory=dave_settings()["dave_dir"] + "\\datapool\\data", update=True
-    )
-    # Initialize the OSM object
-    osm = OSM(filepath)
-    pbar.update(10)
-    # filter data from local osm file and write to database
-    for data_type in dave_settings()["osm_tags"].keys():
-        # create collection name
-        collection = f"osm_{data_type}_{osm_area}"
-        # get data parameter
-        data_param = dave_settings()["osm_tags"][data_type]
-        # filter data_type
-        dataset = osm.get_data_by_custom_criteria(
-            custom_filter={data_param[0]: data_param[1]},
-            # Keep data matching the criteria above
-            filter_type="keep",
-            keep_nodes=True if "node" in data_param[2] else False,
-            keep_ways=True if "way" in data_param[2] else False,
-            keep_relations=True if "relation" in data_param[2] else False,
+    # in the case of considering germany the data has to be considered in supregions because otherwise there could be an memory error
+    if osm_area == "germany":
+        sub_regions = [
+            "baden_wuerttemberg",
+            "bayern",
+            "brandenburg",
+            "bremen",
+            "hamburg",
+            "hessen",
+            "mecklenburg_vorpommern",
+            "niedersachsen",
+            "nordrhein_westfalen",
+            "rheinland_pfalz",
+            "saarland",
+            "sachsen",
+            "sachsen_anhalt",
+            "schleswig_holstein",
+            "thueringen",
+        ]  # hint: The dataset "brandenburg" at geofabrik contains berlin
+    for idx, region in enumerate(sub_regions):
+        # download data from osm
+        filepath = get_data(
+            region, directory=dave_settings()["dave_dir"] + "\\datapool\\data\\osm", update=True
         )
-        if db_availability(collection_name=collection):
-            # drop existing collection
-            drop_collection(database="geo", collection=collection)
-        # Write dataset to database
-        to_mongo(database="geo", collection=collection, data_df=dataset)
-        # update progress
-        pbar.update(90 / len(dave_settings()["osm_tags"].keys()))
+        # Initialize the OSM object
+        osm = OSM(filepath)
+        pbar.update(10)
+        pbar.update(10 / len(sub_regions))
+        # filter data from local osm file and write to database
+        for data_type in dave_settings()["osm_tags"].keys():
+            print(f"{region}_{data_type}")  # !!! only for testing
+            # create collection name
+            collection = f"osm_{data_type}_{osm_area}"
+            # get data parameter
+            data_param = dave_settings()["osm_tags"][data_type]
+            # filter data_type
+            dataset = osm.get_data_by_custom_criteria(
+                custom_filter={data_param[0]: data_param[1]},
+                # Keep data matching the criteria above
+                filter_type="keep",
+                keep_nodes=True if "node" in data_param[2] else False,
+                keep_ways=True if "way" in data_param[2] else False,
+                keep_relations=True if "relation" in data_param[2] else False,
+            )
+            if idx == 0:
+                if db_availability(collection_name=collection):
+                    # drop existing collection
+                    drop_collection(database="geo", collection=collection)
+                # Write dataset to database
+                to_mongo(database="geo", collection=collection, data_df=dataset)
+            else:
+                # Write dataset to database in existing collection
+                to_mongo(database="geo", collection=collection, data_df=dataset, merge=True)
+            # update progress
+            pbar.update(90 / (len(sub_regions) * len(dave_settings()["osm_tags"].keys())))
+
+
+def local_data_update():
+    """
+    This function writes the local data from the Datapool into the database
+    """
+    datasets_geo = ["postalger.h5", "federalstatesger.h5", "nuts_regions.h5"]
+    for file in datasets_geo:
+        # write dataset to database
+        to_mongo(
+            database="geo",
+            collection=None,
+            data_df=None,
+            filepath=get_data_path(file, "data"),
+            merge=False,
+        )
+    datasets_gas = ["gas_storage_ugs.h5", "scigridgas_igginl.h5", "scigridgas_iggielgn.h5"]
+    for file in datasets_gas:
+        # write dataset to database
+        to_mongo(
+            database="gas",
+            collection=None,
+            data_df=None,
+            filepath=get_data_path(file, "data"),
+            merge=False,
+        )
+    datasets_power = ["household_consumptions", "household_sizes"]
+    for file in datasets_power:
+        # write dataset to database
+        to_mongo(
+            database="power",
+            collection=None,
+            data_df=None,
+            filepath=get_data_path(file, "data"),
+            merge=False,
+        )
 
 
 if __name__ == "__main__":
     # start runtime
     _start_time = timeit.default_timer()
+    # set parameter for rebuild the db e.g. in the case the db is crashed
+    rebuild_db = False
     # check if database is available
     if db_availability():
         print("-------------------------Update DAVE Database-------------------------")
         # update oep data
-        oep_update()
+        # oep_update()
         # update osm data
         osm_update()
-        # update local data
+        if rebuild_db == True:
+            # update local data
+            local_data_update()
     else:
         print("Database is not available")
     # stop and show runtime

@@ -223,10 +223,9 @@ def read_gas_storage_ugs():
     """
     if all(
         [
-            db_availability(collection_name="ehv_nodes"),
-            db_availability(collection_name="ehv_node_changes"),
-            db_availability(collection_name="ehv_lines"),
-            db_availability(collection_name="ehv_trafos"),
+            db_availability(collection_name="fluid_cavern_storage"),
+            db_availability(collection_name="natural_gas_cavern_storage"),
+            db_availability(collection_name="natural_gas_pore_storage"),
         ]
     ):
         # --- request data from database
