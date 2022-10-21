@@ -122,6 +122,7 @@ def osm_update():
             "schleswig_holstein",
             "thueringen",
         ]  # hint: The dataset "brandenburg" at geofabrik contains berlin
+
     for idx, region in enumerate(sub_regions):
         # download data from osm
         filepath = get_data(
@@ -206,6 +207,7 @@ if __name__ == "__main__":
         print("-------------------------Update DAVE Database-------------------------")
         # update oep data
         # oep_update()
+
         # update osm data
         osm_update()
         if rebuild_db == True:

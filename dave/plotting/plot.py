@@ -109,7 +109,7 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         # plot buildings
         if not buildings_residential.empty:
             buildings_residential.plot(ax=ax, color="g")
-            legend_elements.append(Line2D([0], [0], color="k", lw=2, label="Residential Buildings"))
+            legend_elements.append(Line2D([0], [0], color="g", lw=2, label="Residential Buildings"))
         if not buildings_commercial.empty:
             buildings_commercial.plot(ax=ax, color="b")
             legend_elements.append(Line2D([0], [0], color="b", lw=2, label="Commercial Buildings"))
@@ -125,7 +125,9 @@ def plot_geographical_data(grid_data, api_use, output_folder=None):
         # plot railways
         if not railways.empty:
             railways.plot(ax=ax, color="k", linestyle="--")
-            legend_elements.append(Line2D([0], [0], color="k", linestyle="--", lw=2, label="Roads"))
+            legend_elements.append(
+                Line2D([0], [0], color="k", linestyle="--", lw=2, label="Railways")
+            )
         # legende
         plt.legend(handles=legend_elements)
         # titel
