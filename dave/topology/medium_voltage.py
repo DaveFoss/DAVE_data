@@ -8,9 +8,10 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
+from shapely.wkb import loads
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 
@@ -37,10 +38,7 @@ def create_mv_topology(grid_data):
     # create hv/mv substations
     if grid_data.components_power.substations.hv_mv.empty:
         hvmv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_hvmv_substation",
-            where=dave_settings()["hvmv_sub_ver"],
-            geometry="polygon",
+            table="ego_dp_hvmv_substation"
         )  # take polygon for full area
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -76,12 +74,7 @@ def create_mv_topology(grid_data):
     # update progress
     pbar.update(5)
     # create mv/lv substations
-    mvlv_substations, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_mvlv_substation",
-        where=dave_settings()["mvlv_sub_ver"],
-        geometry="geom",
-    )
+    mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -121,12 +114,9 @@ def create_mv_topology(grid_data):
     # update progress
     pbar.update(5)
     # nodes for hv/mv trafos us side
-    hvmv_buses, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_hvmv_substation",
-        where=dave_settings()["hvmv_sub_ver"],
-        geometry="point",
-    )
+    hvmv_buses, meta_data = oep_request(table="ego_dp_hvmv_substation")
+    # change geometry to point
+    hvmv_buses["geometry"] = hvmv_buses.point.apply(lambda x: loads(x, hex=True))
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data

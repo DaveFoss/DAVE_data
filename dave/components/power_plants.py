@@ -8,7 +8,7 @@ from geopy.geocoders import ArcGIS
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area, voronoi
 
@@ -422,9 +422,7 @@ def create_renewable_powerplants(grid_data):
     typ = grid_data.target_input.typ.iloc[0]
     if typ in ["postalcode", "federal state", "own area", "nuts region"]:
         for plz in grid_data.target_input.data.iloc[0]:
-            data, meta_data = oep_request(
-                schema="supply", table="ego_renewable_powerplant", where=f"postcode={plz}"
-            )
+            data, meta_data = oep_request(table="ego_renewable_powerplant", where=f"postcode={plz}")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -434,9 +432,7 @@ def create_renewable_powerplants(grid_data):
                 renewables = pd.concat([renewables, data], ignore_index=True)
     elif typ == "town name":
         for name in grid_data.target_input.data.iloc[0]:
-            data, meta_data = oep_request(
-                schema="supply", table="ego_renewable_powerplant", where=f"city={name}"
-            )
+            data, meta_data = oep_request(table="ego_renewable_powerplant", where=f"city={name}")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -867,7 +863,7 @@ def create_conventional_powerplants(grid_data):
     if typ in ["postalcode", "federal state", "own area", "nuts region"]:
         for plz in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(
-                schema="supply", table="ego_conventional_powerplant", where=f"postcode={plz}"
+                table="ego_conventional_powerplant", where=f"postcode={plz}"
             )
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -878,9 +874,7 @@ def create_conventional_powerplants(grid_data):
                 conventionals = pd.concat([conventionals, data], ignore_index=True)
     elif typ == "town name":
         for name in grid_data.target_input.data.iloc[0]:
-            data, meta_data = oep_request(
-                schema="supply", table="ego_conventional_powerplant", where=f"city={name}"
-            )
+            data, meta_data = oep_request(table="ego_conventional_powerplant", where=f"city={name}")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data

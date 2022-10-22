@@ -2,6 +2,7 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+import os
 import warnings
 
 import geopandas as gpd
@@ -54,7 +55,6 @@ def create_interim_area(areas):
                     [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
                     ignore_index=True,
                 )
-
     return areas
 
 
@@ -132,6 +132,18 @@ def multiline_coords(line_geometry):
         else merged_line.coords[:]
     )
     return line_coords
+
+
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    path = (
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+    )
+    return path
 
 
 def intersection_with_area(gdf, area, remove_columns=True):

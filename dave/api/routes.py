@@ -7,11 +7,22 @@ import json
 import geopandas as gpd
 import pandas as pd
 from fastapi import APIRouter, Depends, Request
+from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
-from dave.api import request_bodys
+from dave.api.authentication import auth_token
+from dave.api.request_bodys import (
+    Auth_param,
+    Datapool_param,
+    Dataset_param,
+    Db_param,
+    Db_up_param,
+    Info_param,
+)
 from dave.create import create_grid
-from dave.datapool import read_postal
-from dave.io import from_mongo, info_mongo, to_json, to_mongo
+from dave.datapool.read_data import read_postal
+from dave.io.database_io import from_mongo, info_mongo, to_mongo
+from dave.io.file_io import to_json
+from dave.settings import dave_settings
 
 router = APIRouter(
     prefix="",
@@ -27,10 +38,32 @@ def read_main(request: Request):
     return {"message": "Welcome to the DaVe API"}
 
 
-# get method for database informations
-@router.get("/db_info")
-def db_info():
-    return info_mongo()
+# -------------------------------
+#  Authentication
+# -------------------------------
+class Login:
+    def request_token(self, parameters):
+        # set keycloak open id client
+        keycloak_openid = KeycloakOpenID(
+            server_url=dave_settings()["keycloak_server_url"],
+            client_id=dave_settings()["client_id"],
+            realm_name=dave_settings()["realm_name"],
+            client_secret_key=dave_settings()["client_secret_key"],
+        )
+
+        # request token from keycloak server
+        try:
+            token = keycloak_openid.token(parameters.user_name, parameters.user_password)
+        except KeycloakAuthenticationError:
+            token = "invalid user credentials"
+        return token
+
+
+# get method for login
+@router.get("/login")
+def login(parameters: Auth_param, auth: Login = Depends(Login)):
+    token = auth.request_token(parameters)
+    return token
 
 
 # -------------------------------
@@ -45,10 +78,16 @@ class DaveRequest:
             federal_state=parameters.federal_state,
             nuts_region=parameters.nuts_regions,
             own_area=parameters.own_area,
+            roads=parameters.roads,
+            roads_plot=parameters.roads_plot,
+            buildings=parameters.buildings,
+            landuse=parameters.landuse,
+            railways=parameters.railways,
             power_levels=parameters.power_levels,
             gas_levels=parameters.gas_levels,
             plot=parameters.plot,
-            convert=parameters.convert,
+            convert_power=parameters.convert_power,
+            convert_gas=parameters.convert_gas,
             opt_model=parameters.opt_model,
             combine_areas=parameters.combine_areas,
             transformers=parameters.transformers,
@@ -56,8 +95,10 @@ class DaveRequest:
             conventional_powerplants=parameters.conventional_powerplants,
             loads=parameters.loads,
             compressors=parameters.compressors,
+            sinks=parameters.sinks,
             sources=parameters.sources,
             storages_gas=parameters.storages_gas,
+            valves=parameters.valves,
         )
         # convert dave dataset to JSON string
         return to_json(grid_data)
@@ -65,11 +106,13 @@ class DaveRequest:
 
 # get method for dave dataset request
 @router.get("/request_dataset")
-def request_dataset(
-    parameters: request_bodys.Dataset_param, dave: DaveRequest = Depends(DaveRequest)
-):
-    grid_data = dave.create_dataset(parameters)
-    return grid_data
+def request_dataset(parameters: Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        grid_data = dave.create_dataset(parameters)
+        return grid_data
+    else:
+        return "Token expired or invalid"
 
 
 # -------------------------------
@@ -80,8 +123,7 @@ class DatapoolRequest:
         # read postalcode area data from datapool
         postal, meta_data = read_postal()
         # convert postalcodes to JSON string
-        postal_json = postal.postalcode.to_json()
-        return postal_json
+        return postal.postalcode.to_json()
 
     def get_town_names(self):
         # read postalcode area data from datapool
@@ -92,15 +134,27 @@ class DatapoolRequest:
 
 # get method for datapool request
 @router.get("/request_datapool")
-def request_datapool(
-    parameters: request_bodys.Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)
-):
-    if parameters.data_name == "postalcode":
-        data = pool.get_postalcodes()
-    elif parameters.data_name == "town_name":
-        data = pool.get_town_names()
-    # data = db.create_dataset()
-    return data
+def request_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        if parameters.data_name == "postalcode":
+            data = pool.get_postalcodes()
+        elif parameters.data_name == "town_name":
+            data = pool.get_town_names()
+        # data = db.create_dataset()
+        return data
+    else:
+        return "Token expired or invalid"
+
+
+# get method for database informations
+@router.get("/db_info")
+def db_info(parameters: Info_param):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        return info_mongo()
+    else:
+        return "Token expired or invalid"
 
 
 class DbRequest:
@@ -110,7 +164,8 @@ class DbRequest:
             database=parameters.database,
             collection=parameters.collection,
             filter_method=parameters.filter_method,
-            geometry=parameters.geometry,
+            filter_param=parameters.filter_param,
+            filter_value=parameters.filter_value,
         )
         # convert postalcodes to JSON string
         return data.to_json()
@@ -118,9 +173,13 @@ class DbRequest:
 
 # get method for database request
 @router.get("/request_db")
-def request_db(parameters: request_bodys.Db_param, db: DbRequest = Depends(DbRequest)):
-    data = db.db_request(parameters)
-    return data
+def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        data = db.db_request(parameters)
+        return data
+    else:
+        return "Token expired or invalid"
 
 
 class DbPost:
@@ -140,5 +199,9 @@ class DbPost:
 
 # post method to upload data to database
 @router.post("/post_db")
-def post_db(parameters: request_bodys.Db_up_param, db: DbPost = Depends(DbPost)):
-    db.db_post(parameters)
+def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        db.db_post(parameters)
+    else:
+        return "Token expired or invalid"

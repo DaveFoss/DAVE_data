@@ -25,5 +25,6 @@ pymongo
 xmlschema
 lxml
 networkx
+pyrosm
 # via pip
 #pandapipes

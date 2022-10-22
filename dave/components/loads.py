@@ -2,17 +2,18 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import math
 import warnings
+from math import acos, sin
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
+from numpy import array, random
 from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
 
-from dave.datapool import query_osm, read_federal_states, read_household_consumption, read_postal
+from dave.datapool.osm_request import query_osm
+from dave.datapool.read_data import read_federal_states, read_household_consumption, read_postal
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area, voronoi
 
@@ -35,7 +36,7 @@ def get_household_power(consumption_data, household_size):
     p_mw = (household_consumption.iloc[0]["Durchschnitt  [kwh/a]"] / 1000) / dave_settings()[
         "h_per_a"
     ]
-    q_mvar = p_mw * math.sin(math.acos(cos_phi_residential)) / cos_phi_residential
+    q_mvar = p_mw * sin(acos(cos_phi_residential)) / cos_phi_residential
     return p_mw, q_mvar
 
 
@@ -162,7 +163,7 @@ def create_loads(grid_data):
                 # distribute the whole population over the considered area
                 pop_distribute = area.population
                 # construct random generator
-                rng = np.random.default_rng()
+                rng = random.default_rng()
                 while pop_distribute != 0:
                     if pop_distribute > 5:
                         # select houshold size, weighted randomly
@@ -229,7 +230,7 @@ def create_loads(grid_data):
             grid_data.buildings.commercial.building == "industrial"
         ]
         industrial_polygons_sum = unary_union(
-            np.array(list(polygonize(industrial_buildings.geometry)))
+            array(list(polygonize(industrial_buildings.geometry)))
         )  # !!! replace unary union function
         industrial_area_full = industrial_polygons_sum.area
         for i, industrial_poly in industrial_buildings.iterrows():
@@ -245,9 +246,7 @@ def create_loads(grid_data):
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": industrial_load_full
                             * (building_poly.area / industrial_area_full),
-                            "q_mvar": p_mw
-                            * math.sin(math.acos(cos_phi_industrial))
-                            / cos_phi_industrial,
+                            "q_mvar": p_mw * sin(acos(cos_phi_industrial)) / cos_phi_industrial,
                             "landuse": "industrial",
                             "voltage_level": [7],
                             "geometry": building_point.iloc[0].geometry,
@@ -265,7 +264,7 @@ def create_loads(grid_data):
             grid_data.buildings.commercial.building != "industrial"
         ]
         commercial_polygons_sum = unary_union(
-            np.array(list(polygonize(commercial_buildings.geometry)))
+            array(list(polygonize(commercial_buildings.geometry)))
         )
         commercial_area_full = commercial_polygons_sum.area
         for i, commercial_poly in commercial_buildings.iterrows():
@@ -281,9 +280,7 @@ def create_loads(grid_data):
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": commercial_load_full
                             * (building_poly.area / commercial_area_full),
-                            "q_mvar": p_mw
-                            * math.sin(math.acos(cos_phi_commercial))
-                            / cos_phi_commercial,
+                            "q_mvar": p_mw * sin(acos(cos_phi_commercial)) / cos_phi_commercial,
                             "landuse": "commercial",
                             "voltage_level": [7],
                             "geometry": building_point.iloc[0].geometry,
@@ -350,19 +347,19 @@ def create_loads(grid_data):
                     ]
                     area = residential_polygons.area_km2.sum()
                     p_mw = residential_load * area
-                    q_mvar = p_mw * math.sin(math.acos(cos_phi_residential)) / cos_phi_residential
+                    q_mvar = p_mw * sin(acos(cos_phi_residential)) / cos_phi_residential
                 elif loadtype == "industrial":
                     industrial_polygons = landuse_polygons[landuse_polygons.landuse == "industrial"]
                     area = industrial_polygons.area_km2.sum()
                     p_mw = industrial_load * area
-                    q_mvar = p_mw * math.sin(math.acos(cos_phi_industrial)) / cos_phi_industrial
+                    q_mvar = p_mw * sin(acos(cos_phi_industrial)) / cos_phi_industrial
                 elif loadtype == "commercial":
                     commercial_polygons = landuse_polygons[
                         landuse_polygons.landuse.isin(["commercial", "retail"])
                     ]
                     area = commercial_polygons.area_km2.sum()
                     p_mw = commercial_load * area
-                    q_mvar = p_mw * math.sin(math.acos(cos_phi_commercial)) / cos_phi_commercial
+                    q_mvar = p_mw * sin(acos(cos_phi_commercial)) / cos_phi_commercial
                 if p_mw != 0:
                     load_df = gpd.GeoDataFrame(
                         {

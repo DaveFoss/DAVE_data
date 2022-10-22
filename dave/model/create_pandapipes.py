@@ -7,7 +7,7 @@ import pandas as pd
 from shapely.geometry import MultiLineString
 from tqdm import tqdm
 
-from dave.io import ppi_to_json
+from dave.io.file_io import ppi_to_json
 from dave.settings import dave_settings
 from dave.toolbox import multiline_coords
 

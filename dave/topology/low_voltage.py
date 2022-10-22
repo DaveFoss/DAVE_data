@@ -10,7 +10,7 @@ from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 
@@ -144,12 +144,7 @@ def create_lv_topology(grid_data):
     # --- create substations
     # create mv/lv substations
     if grid_data.components_power.substations.mv_lv.empty:
-        mvlv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_mvlv_substation",
-            where=dave_settings()["mvlv_sub_ver"],
-            geometry="geom",
-        )
+        mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data

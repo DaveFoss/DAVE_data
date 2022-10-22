@@ -2,14 +2,15 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import math
+from math import pi
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from dave.datapool import oep_request, read_ehv_data
+from dave.datapool.oep_request import oep_request
+from dave.datapool.read_data import read_ehv_data
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 
@@ -34,12 +35,7 @@ def create_ehv_topology(grid_data):
     )
     # --- create ehv/ehv and ehv/hv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
-    ehv_substations, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_ehv_substation",
-        where=dave_settings()["ehv_sub_ver"],
-        geometry="polygon",
-    )
+    ehv_substations, meta_data = oep_request(table="ego_dp_ehv_substation")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -69,12 +65,7 @@ def create_ehv_topology(grid_data):
     # update progress
     pbar.update(10)
     # --- import ehv lines and reduce them to the target area
-    ehvhv_lines, meta_data = oep_request(
-        schema="grid",
-        table="ego_pf_hv_line",
-        where=dave_settings()["hv_line_ver"],
-        geometry="geom",
-    )
+    ehvhv_lines, meta_data = oep_request(table="ego_pf_hv_line")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -102,12 +93,7 @@ def create_ehv_topology(grid_data):
     if not ehvhv_lines.empty:
         # --- create ehv nodes
         # read ehv/hv node data from OpenEnergyPlatform and adapt names
-        ehvhv_buses, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_bus",
-            where=dave_settings()["hv_buses_ver"],
-            geometry="geom",
-        )
+        ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -243,7 +229,7 @@ def create_ehv_topology(grid_data):
             # calculate and add r,x,c per km
             ehv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
             ehv_lines.at[line.name, "x_ohm_per_km"] = float(line.x_ohm) / line.length_km
-            c_nf = float(line.b_s) / (2 * math.pi * float(line.frequency)) * 1e09
+            c_nf = float(line.b_s) / (2 * pi * float(line.frequency)) * 1e09
             ehv_lines.at[line.name, "c_nf"] = c_nf
             ehv_lines.at[line.name, "c_nf_per_km"] = c_nf / line.length_km
             # calculate and add max i
