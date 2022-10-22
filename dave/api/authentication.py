@@ -29,7 +29,4 @@ def auth_token(token):
         token=token["access_token"],
     )
     content = json.loads(result.content.decode())
-    if not content["active"]:
-        raise HTTPException(status_code=401, detail="Token expired or invalid")
-    else:
-        return True
+    return content["active"]

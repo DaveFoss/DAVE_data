@@ -17,6 +17,7 @@ class Auth_param(BaseModel):
 
 # create request body for the DaVe dataset request
 class Dataset_param(BaseModel):
+    auth_token: dict
     # these are all parameters needed in the dave main function
     postalcode: Optional[list] = None
     town_name: Optional[list] = None
@@ -49,11 +50,18 @@ class Dataset_param(BaseModel):
 
 # create request body for the datapool request
 class Datapool_param(BaseModel):
+    auth_token: dict
     data_name: str
+
+
+# create request body for info database request
+class Info_param(BaseModel):
+    auth_token: dict
 
 
 # create request body for the database request
 class Db_param(BaseModel):
+    auth_token: dict
     database: str
     collection: str
     filter_method: Optional[str] = None
@@ -63,6 +71,7 @@ class Db_param(BaseModel):
 
 # create request body for upload to the database
 class Db_up_param(BaseModel):
+    auth_token: dict
     database: str
     collection: str
     data: str

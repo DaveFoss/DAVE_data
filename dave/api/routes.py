@@ -10,7 +10,14 @@ from fastapi import APIRouter, Depends, Request
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
 from dave.api.authentication import auth_token
-from dave.api.request_bodys import Auth_param, Datapool_param, Dataset_param, Db_param, Db_up_param
+from dave.api.request_bodys import (
+    Auth_param,
+    Datapool_param,
+    Dataset_param,
+    Db_param,
+    Db_up_param,
+    Info_param,
+)
 from dave.create import create_grid
 from dave.datapool.read_data import read_postal
 from dave.io.database_io import from_mongo, info_mongo, to_mongo
@@ -100,8 +107,12 @@ class DaveRequest:
 # get method for dave dataset request
 @router.get("/request_dataset")
 def request_dataset(parameters: Dataset_param, dave: DaveRequest = Depends(DaveRequest)):
-    grid_data = dave.create_dataset(parameters)
-    return grid_data
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        grid_data = dave.create_dataset(parameters)
+        return grid_data
+    else:
+        return "Token expired or invalid"
 
 
 # -------------------------------
@@ -124,18 +135,26 @@ class DatapoolRequest:
 # get method for datapool request
 @router.get("/request_datapool")
 def request_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)):
-    if parameters.data_name == "postalcode":
-        data = pool.get_postalcodes()
-    elif parameters.data_name == "town_name":
-        data = pool.get_town_names()
-    # data = db.create_dataset()
-    return data
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        if parameters.data_name == "postalcode":
+            data = pool.get_postalcodes()
+        elif parameters.data_name == "town_name":
+            data = pool.get_town_names()
+        # data = db.create_dataset()
+        return data
+    else:
+        return "Token expired or invalid"
 
 
 # get method for database informations
 @router.get("/db_info")
-def db_info():
-    return info_mongo()
+def db_info(parameters: Info_param):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        return info_mongo()
+    else:
+        return "Token expired or invalid"
 
 
 class DbRequest:
@@ -155,8 +174,12 @@ class DbRequest:
 # get method for database request
 @router.get("/request_db")
 def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
-    data = db.db_request(parameters)
-    return data
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        data = db.db_request(parameters)
+        return data
+    else:
+        return "Token expired or invalid"
 
 
 class DbPost:
@@ -177,4 +200,8 @@ class DbPost:
 # post method to upload data to database
 @router.post("/post_db")
 def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
-    db.db_post(parameters)
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        db.db_post(parameters)
+    else:
+        return "Token expired or invalid"
