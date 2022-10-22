@@ -1,7 +1,13 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
+import os
 import warnings
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 from geopy.geocoders import ArcGIS
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiLineString, MultiPoint
@@ -32,7 +38,7 @@ def create_interim_area(areas):
                 warnings.filterwarnings("ignore", category=UserWarning)
                 distance = areas_other.geometry.distance(area.geometry)
             if distance.min() > 0:
-                areas_iso.append((i, distance[distance == distance.min()].index[0]))
+                areas_iso.append((i, distance.idxmin()))
         # if their are isolated areas, check for a connection on the highest grid level
         if len(areas_iso) > 0:
             for area_iso in areas_iso:
@@ -45,11 +51,10 @@ def create_interim_area(areas):
                 difference = convex_hull.difference(geom1)
                 difference = difference.difference(geom2)
                 # add difference area to areas
-                areas = areas.append(
-                    gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})
+                areas = pd.concat(
+                    [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
+                    ignore_index=True,
                 )
-                areas.reset_index(drop=True, inplace=True)
-
     return areas
 
 
@@ -127,3 +132,55 @@ def multiline_coords(line_geometry):
         else merged_line.coords[:]
     )
     return line_coords
+
+
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    path = (
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+    )
+    return path
+
+
+def intersection_with_area(gdf, area, remove_columns=True):
+    """
+    This function intersects a given geodataframe with an area in consideration of mixed geometry
+    types at both input variables
+    """
+    # check if geodataframe has mixed geometries
+    geom_types_gdf = set(map(type, gdf.geometry))
+    geom_types_area = set(map(type, area.geometry))
+    if len(geom_types_gdf) > 1:
+        # in this case the geodataframe has mixed geometrie information. A seperated consideration
+        # of overlay is necessary because the function can not handle mixed geometries
+        gdf_over = gpd.GeoDataFrame([])
+        for geom_type in geom_types_gdf:
+            gdf_geom_idx = [
+                row.name for i, row in gdf.iterrows() if isinstance(row.geometry, (geom_type))
+            ]
+            # check for values in the target area
+            gdf_over_geom = gpd.overlay(gdf.loc[gdf_geom_idx], area, how="intersection")
+            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+    elif len(geom_types_area) > 1:
+        # in this case the geodataframe has mixed geometrie information. A seperated consideration
+        # of overlay is necessary because the function can not handle mixed geometries
+        gdf_over = gpd.GeoDataFrame([])
+        for geom_type in geom_types_area:
+            area_geom_idx = [
+                row.name for i, row in area.iterrows() if isinstance(row.geometry, (geom_type))
+            ]
+            # check for values in the target area
+            gdf_over_geom = gpd.overlay(gdf, area.loc[area_geom_idx], how="intersection")
+            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+    else:
+        gdf_over = gpd.overlay(gdf, area, how="intersection")
+    # remove parameters from area
+    if (not gdf_over.empty) and (remove_columns):
+        remove_columns = area.keys().tolist()
+        remove_columns.remove("geometry")
+        gdf_over.drop(columns=remove_columns, inplace=True)
+    return gdf_over

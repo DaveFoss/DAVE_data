@@ -1,3 +1,7 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 import json
 
 import geopandas as gpd
@@ -9,7 +13,7 @@ from dave.io import from_json_string
 
 # local url of the dave api
 # url = "http://141.5.108.4:80/api"  # production server
-url = "http://127.0.0.1:80/api"  # develop local
+url = "http://127.0.0.1/api"  # develop local
 
 
 # --- get dave dataset
@@ -24,7 +28,6 @@ request_dataset = requests.get(
             "postalcode": ["34225"],
             "power_levels": [],
             "plot": False,
-            "convert": False,
             "opt_model": False,
             "transformers": False,
             "renewable_powerplants": False,
@@ -71,7 +74,7 @@ request_collection = requests.get(
 )
 data_collection = gpd.GeoDataFrame.from_features(json.loads(request_collection.json()))
 
-# get filtert part of a collection
+# get filtert part of a collection with geometrical filtering
 """
 With this script you can download a geometrical filtert part of a collection
 Example: All postalcodes which intersects with a special geometrical point
@@ -84,7 +87,8 @@ request_geo = requests.get(
             "database": "geodata",
             "collection": "postalcodes",
             "filter_method": "geoIntersects",
-            "geometry": str(point),
+            "filter_param": "geometry",
+            "filter_value": str(point),
         }
     ),
 )

@@ -1,3 +1,7 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 import json
 import os
 from functools import partial
@@ -16,17 +20,17 @@ from pandapower.io_utils import (
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.wkb import dumps, loads
 
-import dave.create
-from dave.datapool import get_data_path
+import dave.create as create
 from dave.dave_structure import davestructure
 from dave.io.convert_format import change_empty_gpd, wkb_to_wkt, wkt_to_wkb
 from dave.io.io_utils import FromSerializableRegistryDaVe, archiv_inventory, isinstance_partial
 from dave.settings import dave_settings
+from dave.toolbox import get_data_path
 
 
 def from_json(file_path, encryption_key=None):
     """
-    Load a dave dataset from a JSON file or string.
+    Load a dave dataset from a JSON file.
     """
     if hasattr(file_path, "read"):
         json_string = file_path.read()
@@ -60,6 +64,8 @@ def to_json(grid_data, file_path=None, encryption_key=None):
         **grid_data** (dict) - all Informations about the grid area
         **file_path** (str , default None) - absoulut path where the JSON file will be stored. If
                                              None is given the function returns only a JSON string
+        **encrytion_key** (string, None) - If given, the DaVe dataset is stored as an encrypted \
+            json string
     OUTPUT:
         **file** (json) - the dave dataset in JSON format
 
@@ -95,7 +101,7 @@ def from_hdf(dataset_path):
     # check if path exist
     if os.path.exists(dataset_path):
         # create empty dave dataset
-        grid_data = dave.create.create_empty_dataset()
+        grid_data = create.create_empty_dataset()
         # open hdf file
         file = pd.HDFStore(dataset_path)
         # --- create dave dataset from archiv file
@@ -114,6 +120,9 @@ def from_hdf(dataset_path):
                     else:
                         grid_data[key_parts[0]] = grid_data[key_parts[0]].append(data)
                 elif len(key_parts) == 2:
+                    # data road junctions has to convert into series object
+                    if key_parts[1] == "road_junctions":
+                        data = data.geometry
                     grid_data[key_parts[0]][key_parts[1]] = grid_data[key_parts[0]][
                         key_parts[1]
                     ].append(data)
