@@ -26,5 +26,6 @@ xmlschema
 lxml
 networkx
 pyrosm
+python-keycloak
 # via pip
 #pandapipes
