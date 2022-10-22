@@ -7,12 +7,15 @@ import json
 import geopandas as gpd
 import pandas as pd
 from fastapi import APIRouter, Depends, Request
+from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
-from dave.api.request_bodys import Datapool_param, Dataset_param, Db_param, Db_up_param
+from dave.api.authentication import auth_token
+from dave.api.request_bodys import Auth_param, Datapool_param, Dataset_param, Db_param, Db_up_param
 from dave.create import create_grid
 from dave.datapool.read_data import read_postal
 from dave.io.database_io import from_mongo, info_mongo, to_mongo
 from dave.io.file_io import to_json
+from dave.settings import dave_settings
 
 router = APIRouter(
     prefix="",
@@ -28,10 +31,32 @@ def read_main(request: Request):
     return {"message": "Welcome to the DaVe API"}
 
 
-# get method for database informations
-@router.get("/db_info")
-def db_info():
-    return info_mongo()
+# -------------------------------
+#  Authentication
+# -------------------------------
+class Login:
+    def request_token(self, parameters):
+        # set keycloak open id client
+        keycloak_openid = KeycloakOpenID(
+            server_url=dave_settings()["keycloak_server_url"],
+            client_id=dave_settings()["client_id"],
+            realm_name=dave_settings()["realm_name"],
+            client_secret_key=dave_settings()["client_secret_key"],
+        )
+
+        # request token from keycloak server
+        try:
+            token = keycloak_openid.token(parameters.user_name, parameters.user_password)
+        except KeycloakAuthenticationError:
+            token = "invalid user credentials"
+        return token
+
+
+# get method for login
+@router.get("/login")
+def login(parameters: Auth_param, auth: Login = Depends(Login)):
+    token = auth.request_token(parameters)
+    return token
 
 
 # -------------------------------
@@ -105,6 +130,12 @@ def request_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends
         data = pool.get_town_names()
     # data = db.create_dataset()
     return data
+
+
+# get method for database informations
+@router.get("/db_info")
+def db_info():
+    return info_mongo()
 
 
 class DbRequest:

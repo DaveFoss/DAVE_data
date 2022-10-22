@@ -9,6 +9,12 @@ from pydantic import BaseModel
 from dave.settings import dave_settings
 
 
+# create authentification body for the login
+class Auth_param(BaseModel):
+    user_name: str
+    user_password: str
+
+
 # create request body for the DaVe dataset request
 class Dataset_param(BaseModel):
     # these are all parameters needed in the dave main function
@@ -41,7 +47,7 @@ class Dataset_param(BaseModel):
     output_folder: Optional[str] = dave_settings()["dave_output_dir"]
 
 
-# create request body for the database request
+# create request body for the datapool request
 class Datapool_param(BaseModel):
     data_name: str
 
