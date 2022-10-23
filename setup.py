@@ -44,7 +44,7 @@ setup(
         "pytest-cov",
         "pytest-xdist",
         "pandapipes",
-        "pytables",
+        "tables",
         "pymongo",
         "xmlschema",
         "lxml",

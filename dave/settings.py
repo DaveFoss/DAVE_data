@@ -5,7 +5,7 @@
 import os
 
 # switch develop and production parameters
-develop = True  # set True for develop modus
+develop = False  # set True for develop modus
 if develop:
     # keycloak server url in develop mode
     keycloak_server_url = "http://127.0.0.1/auth/"

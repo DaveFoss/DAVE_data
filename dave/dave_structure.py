@@ -10,7 +10,7 @@ from pandapower.auxiliary import ADict
 
 class davestructure(ADict):
     """
-    This class is for showing a overview of the DaVe dataset in the python console
+    This class is for showing a overview of the DAVE dataset in the python console
     """
 
     def __init__(self, *args, **kwargs):
