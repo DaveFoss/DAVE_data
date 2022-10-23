@@ -24,5 +24,6 @@ lxml
 networkx
 pyrosm
 python-keycloak
+authlib
 # via pip
 #pandapipes
