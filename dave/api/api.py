@@ -6,6 +6,10 @@ import uvicorn
 from fastapi import FastAPI
 
 from dave.api.routes import router
+from dave.toolbox import auth_available
+
+# Wait until DAVE authentication server is ready
+auth_available()
 
 # initialize app object
 app = FastAPI()

@@ -184,3 +184,26 @@ def intersection_with_area(gdf, area, remove_columns=True):
         remove_columns.remove("geometry")
         gdf_over.drop(columns=remove_columns, inplace=True)
     return gdf_over
+
+
+def auth_available():
+    import time
+
+    import requests
+
+    """
+    This function checks the avalibility of the DAVE authentication and retry the connection until it is ready
+    """
+    # wait until dave api is ready
+    auth_available = False
+    while not auth_available:
+        try:
+            request = requests.get(dave_settings()["keycloak_server_url"])
+            if request.status_code == 200:
+                auth_available = True
+            elif request.status_code == 404:
+                print("DAVE auth server is not ready, retry in 10 seconds")
+                time.sleep(10)
+        except requests.ConnectionError:
+            print("DAVE auth server is not available, retry in 10 seconds")
+            time.sleep(10)
