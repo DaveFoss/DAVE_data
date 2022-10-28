@@ -18,12 +18,13 @@ def info_mongo():
     client = db_client()
     # wirte databases
     for db in list(client.list_databases()):
-        db_name = client[db["name"]]
-        collections = []
-        for collection in list(db_name.list_collections()):
-            collections.append(collection["name"])
-        db["collections"] = collections
-        info_mongo[db["name"]] = db
+        if db["name"] not in ["admin", "config", "local"]:
+            db_name = client[db["name"]]
+            collections = []
+            for collection in list(db_name.list_collections()):
+                collections.append(collection["name"])
+            db["collections"] = collections
+            info_mongo[db["name"]] = db
     return info_mongo
 
 
@@ -57,12 +58,17 @@ def from_mongo(database, collection, filter_method=None, filter_param=None, filt
     This function requests data from the mongo db
 
     INPUT:
+        **database** (string) - name of the database \n
+        **collection** (string) - nome of the collection \n
+
+    OPTIONAL:
         **filter_method** (string) - method for the data filtering. Examples: \n
         "eq" - matches documents where the value of a field equals the specified value. \n
         "geoIntersects" - Selects documents whose geospatial data intersects with a specified \
                 geometrical object \n
         **filter_param** (string) - parameter to be filtered by \n
         **filter_value** (string) - value for the filtering
+        
     """
     client = db_client()
     db = client[database]
