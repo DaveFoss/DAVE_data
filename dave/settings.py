@@ -4,14 +4,20 @@
 
 import os
 
-# switch develop and production parameters
+# switch develop and production mode
 develop = False  # set True for develop modus
 if develop:
-    # keycloak server url in develop mode
+    # --- parameter for develop mode
+    # keycloak server url
     keycloak_server_url = "http://127.0.0.1/auth/"
+    # mongo db url
+    db_url = "127.0.0.1:27017"
 else:
-    # keycloak server url in production mode
+    # --- parameter for porduction mode
+    # keycloak server url
     keycloak_server_url = "http://192.168.1.84/auth/"
+    # mongo db url
+    db_url = "172.20.0.10:27017"
 
 
 def dave_settings():
@@ -25,8 +31,7 @@ def dave_settings():
         # database definitions (mongo db)
         "db_user": "root",
         "db_pw": "example",
-        "db_ip": "127.0.0.1:27017",  # in develop version
-        # "db_ip": "172.20.0.10:27017",  # in production version
+        "db_ip": db_url,
         # authentification definitions
         "keycloak_server_url": keycloak_server_url,
         "client_id": "dave_login",
