@@ -87,8 +87,10 @@ def create_ehv_topology(grid_data):
         inplace=True,
     )
     # filter lines which are currently availible
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union)]
+    ehvhv_lines = ehvhv_lines[
+        (ehvhv_lines.ego_scn_name == "Status Quo")
+        & (ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union))
+    ]
     # consider data only if there are minimum one line in the target area
     if not ehvhv_lines.empty:
         # --- create ehv nodes

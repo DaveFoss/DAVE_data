@@ -3,10 +3,11 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import os
-import warnings
+import time
 
 import geopandas as gpd
 import pandas as pd
+import requests
 from geopy.geocoders import ArcGIS
 from numpy import append, array
 from scipy.spatial import Voronoi
@@ -206,20 +207,17 @@ def related_sub(bus, substations):
 
 
 def auth_available():
-    import time
-
-    import requests
-
     """
-    This function checks the avalibility of the DAVE authentication and retry the connection until it is ready
+    This function checks the avalibility of the DAVE authentication and retry the connection until
+    it is ready
     """
     # wait until dave api is ready
-    auth_available = False
-    while not auth_available:
+    available = False
+    while not available:
         try:
             request = requests.get(dave_settings()["keycloak_server_url"])
             if request.status_code == 200:
-                auth_available = True
+                available = True
             elif request.status_code == 404:
                 print("DAVE auth server is not ready, retry in 10 seconds")
                 time.sleep(10)

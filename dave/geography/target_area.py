@@ -351,7 +351,6 @@ def target_area(
                     landuse,
                     railways,
                     target_geom=target_geom,
-                    target_town=diff_target,
                     progress_step=progress_step,
                 )
         else:
@@ -369,7 +368,6 @@ def target_area(
                     landuse,
                     railways,
                     target_geom=target_geom,
-                    target_number=i,
                     progress_step=progress_step,
                 )
         # reset index for all osm data
