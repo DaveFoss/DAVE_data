@@ -5,7 +5,7 @@
 import os
 
 # switch develop and production mode
-develop = False  # set True for develop modus
+develop = True  # set True for develop modus
 if develop:
     # --- parameter for develop mode
     # keycloak server url

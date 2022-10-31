@@ -9,7 +9,7 @@ from pyrosm.data import sources
 from tqdm import tqdm
 
 from dave.datapool.oep_request import oep_request
-from dave.io.database_io import db_availability, drop_collection, from_mongo, to_mongo
+from dave.io.database_io import db_availability, drop_collection, from_mongo, info_mongo, to_mongo
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 
@@ -88,6 +88,8 @@ def oep_update():
             to_mongo(database="power", collection=table, data_df=dataset)
         # update progress
         pbar.update(100 / len(relevant_tables.keys()))
+    # close progress bar
+    pbar.close()
 
 
 def osm_update():
@@ -130,7 +132,6 @@ def osm_update():
         )
         # Initialize the OSM object
         osm = OSM(filepath)
-        pbar.update(10)
         pbar.update(10 / len(sub_regions))
         # filter data from local osm file and write to database
         for data_type in dave_settings()["osm_tags"].keys():
@@ -159,15 +160,28 @@ def osm_update():
                 to_mongo(database="geo", collection=collection, data_df=dataset, merge=True)
             # update progress
             pbar.update(90 / (len(sub_regions) * len(dave_settings()["osm_tags"].keys())))
+    # close progress bar
+    pbar.close()
 
 
 def local_data_update():
     """
     This function writes the local data from the Datapool into the database
     """
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="update data from OSM: ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
+    # define datasets
     datasets_geo = ["postalger.h5", "federalstatesger.h5", "nuts_regions.h5"]
+    datasets_gas = ["gas_storage_ugs.h5", "scigridgas_igginl.h5", "scigridgas_iggielgn.h5"]
+    datasets_power = ["household_consumptions", "household_sizes"]
+    number_datasets = len(datasets_geo + datasets_gas + datasets_power)
+    # write geo dataset to database
     for file in datasets_geo:
-        # write dataset to database
         to_mongo(
             database="geo",
             collection=None,
@@ -175,9 +189,10 @@ def local_data_update():
             filepath=get_data_path(file, "data"),
             merge=False,
         )
-    datasets_gas = ["gas_storage_ugs.h5", "scigridgas_igginl.h5", "scigridgas_iggielgn.h5"]
+        # update progress
+        pbar.update(100 / number_datasets)
+    # write gas dataset to database
     for file in datasets_gas:
-        # write dataset to database
         to_mongo(
             database="gas",
             collection=None,
@@ -185,9 +200,10 @@ def local_data_update():
             filepath=get_data_path(file, "data"),
             merge=False,
         )
-    datasets_power = ["household_consumptions", "household_sizes"]
+        # update progress
+        pbar.update(100 / number_datasets)
+    # write power dataset to database
     for file in datasets_power:
-        # write dataset to database
         to_mongo(
             database="power",
             collection=None,
@@ -195,21 +211,26 @@ def local_data_update():
             filepath=get_data_path(file, "data"),
             merge=False,
         )
+        # update progress
+        pbar.update(100 / number_datasets)
+    # close progress bar
+    pbar.close()
 
 
 if __name__ == "__main__":
     # start runtime
     _start_time = timeit.default_timer()
     # set parameter for rebuild the db e.g. in the case the db is crashed
+    info_mongo()
     rebuild_db = False
     # check if database is available
     if db_availability():
         print("-------------------------Update DAVE Database-------------------------")
         # update oep data
-        # oep_update()
+        oep_update()
 
         # update osm data
-        osm_update()
+        # osm_update()  # !!! memory error
         if rebuild_db == True:
             # update local data
             local_data_update()
