@@ -45,7 +45,6 @@ class Dataset_param(BaseModel):
     sources: Optional[bool] = True
     storages_gas: Optional[bool] = True
     valves: Optional[bool] = True
-    output_folder: Optional[str] = dave_settings()["dave_output_dir"]
 
 
 # create request body for the datapool request

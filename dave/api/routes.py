@@ -201,7 +201,11 @@ class DbPost:
 @router.post("/post_db")
 def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
     # authenticate user
-    if auth_token(token=parameters.auth_token):
-        db.db_post(parameters)
+    active_status, roles = auth_token(token=parameters.auth_token, roles=True)
+    if active_status:
+        if "developer" in roles:
+            db.db_post(parameters)
+        else:
+            return "You need developer rights to upload data to the database"
     else:
         return "Token expired or invalid"

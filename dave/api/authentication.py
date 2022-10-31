@@ -9,9 +9,20 @@ from authlib.integrations.requests_client import OAuth2Session
 from dave.settings import dave_settings
 
 
-def auth_token(token):
+def auth_token(token, roles=False):
     """
     This functions verifies the user via jwt
+
+    INPUT:
+
+        **token** (string) - jwt for authentification
+
+    OPTIONAL:
+        **role** (boolean, default False) - option to return also the roles for the user
+
+    OUTPUT:
+        **active_status** (boolean) - active status for the given jwt
+        **roles** (boolean) - roles for the given jwt
     """
     # authentification
     oauth = OAuth2Session(
@@ -22,4 +33,7 @@ def auth_token(token):
         token=token["access_token"],
     )
     content = json.loads(result.content.decode())
-    return content["active"]
+    if roles:
+        return content["active"], content["realm_access"]["roles"]
+    else:
+        return content["active"]
