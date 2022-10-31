@@ -53,14 +53,14 @@ grid_data = create_grid(
     nuts_region=None,
     own_area=_own_area,
     # grid level parameters
-    power_levels=["lv"],
+    power_levels=[],
     gas_levels=[],
     # --- optional parameters
-    plot=True,
+    plot=False,
     opt_model=False,
     combine_areas=[],
     # geographical parameters
-    roads=False,
+    roads=True,
     roads_plot=False,
     buildings=False,
     landuse=False,

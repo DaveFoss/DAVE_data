@@ -8,7 +8,7 @@ from geopy.geocoders import ArcGIS
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import adress_to_coords, intersection_with_area, voronoi
 
@@ -336,11 +336,9 @@ def create_renewable_powerplants(grid_data):
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
     typ = grid_data.target_input.typ.iloc[0]
-    if typ in ["postalcode", "federal state", "own area"]:
+    if typ in ["postalcode", "federal state", "own area", "nuts region"]:
         for plz in grid_data.target_input.data.iloc[0]:
-            data, meta_data = oep_request(
-                schema="supply", table="ego_renewable_powerplant", where=f"postcode={plz}"
-            )
+            data, meta_data = oep_request(table="ego_renewable_powerplant", where=f"postcode={plz}")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -350,9 +348,7 @@ def create_renewable_powerplants(grid_data):
                 renewables = pd.concat([renewables, data], ignore_index=True)
     elif typ == "town name":
         for name in grid_data.target_input.data.iloc[0]:
-            data, meta_data = oep_request(
-                schema="supply", table="ego_renewable_powerplant", where=f"city={name}"
-            )
+            data, meta_data = oep_request(table="ego_renewable_powerplant", where=f"city={name}")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -360,6 +356,8 @@ def create_renewable_powerplants(grid_data):
                 renewables = data
             else:
                 renewables = renewables.append(data)
+    else:
+        renewables = pd.DataFrame()
     # update progress
     pbar.update(10)
     # prepare the DataFrame of the renewable plants
@@ -808,10 +806,10 @@ def create_conventional_powerplants(grid_data):
     power_levels = grid_data.target_input.power_levels[0]
     # load powerplant data in target area
     typ = grid_data.target_input.typ.iloc[0]
-    if typ in ["postalcode", "federal state", "own area"]:
+    if typ in ["postalcode", "federal state", "own area", "nuts region"]:
         for plz in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(
-                schema="supply", table="ego_conventional_powerplant", where=f"postcode={plz}"
+                table="ego_conventional_powerplant", where=f"postcode={plz}"
             )
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -822,9 +820,7 @@ def create_conventional_powerplants(grid_data):
                 conventionals = pd.concat([conventionals, data], ignore_index=True)
     elif typ == "town name":
         for name in grid_data.target_input.data.iloc[0]:
-            data, meta_data = oep_request(
-                schema="supply", table="ego_conventional_powerplant", where=f"city={name}"
-            )
+            data, meta_data = oep_request(table="ego_conventional_powerplant", where=f"city={name}")
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -1209,13 +1205,8 @@ def create_conventional_powerplants(grid_data):
         # --- add general informations
         if not grid_data.components_power.conventional_powerplants.empty:
             # add dave name
-            name = pd.Series(
-                list(
-                    map(
-                        lambda x: f"con_powerplant_{voltage_level}_{x}",
-                        grid_data.components_power.conventional_powerplants.index,
-                    )
-                )
+            name = grid_data.components_power.conventional_powerplants.apply(
+                lambda x: f"con_powerplant_{x.voltage_level}_{x.name}", axis=1
             )
             grid_data.components_power.conventional_powerplants.insert(0, "dave_name", name)
             # set crs

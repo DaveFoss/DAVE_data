@@ -2,6 +2,7 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+import warnings
 from math import acos, sin
 
 import geopandas as gpd
@@ -11,7 +12,8 @@ from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
 
-from dave.datapool import query_osm, read_federal_states, read_household_consumption, read_postal
+from dave.datapool.osm_request import query_osm
+from dave.datapool.read_data import read_federal_states, read_household_consumption, read_postal
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area, voronoi
 
@@ -66,7 +68,7 @@ def create_loads(grid_data):
     if "lv" in power_levels:
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
-            grid_data.lv_data.lv_nodes.node_type == "building_centroid"
+            grid_data.lv_data.lv_nodes.node_type == "building_connection"
         ]
         # --- create lv loads for residential
         federal_states, meta_data = read_federal_states()
@@ -159,7 +161,7 @@ def create_loads(grid_data):
                 w_3p = sizes_feds["Anteil 3 Personen [%]"] / 100
                 w_4p = sizes_feds["Anteil 4 Personen [%]"] / 100
                 w_5p = sizes_feds["Anteil 5 Personen und mehr [%]"] / 100
-                # distribute the whole population over teh considered area
+                # distribute the whole population over the considered area
                 pop_distribute = area.population
                 # construct random generator
                 rng = random.default_rng()

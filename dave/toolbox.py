@@ -2,6 +2,9 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+import os
+import warnings
+
 import geopandas as gpd
 import pandas as pd
 from geopy.geocoders import ArcGIS
@@ -49,7 +52,6 @@ def create_interim_area(areas):
                     [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
                     ignore_index=True,
                 )
-
     return areas
 
 
@@ -130,6 +132,18 @@ def multiline_coords(line_geometry):
     return line_coords
 
 
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    path = (
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+    )
+    return path
+
+
 def intersection_with_area(gdf, area, remove_columns=True):
     """
     This function intersects a given geodataframe with an area in consideration of mixed geometry
@@ -189,3 +203,26 @@ def related_sub(bus, substations):
     subst_dave_name = sub_filtered.dave_name.to_list() if not sub_filtered.empty else []
     subst_name = sub_filtered.subst_name.to_list() if not sub_filtered.empty else []
     return ego_subst_id, subst_dave_name, subst_name
+
+
+def auth_available():
+    import time
+
+    import requests
+
+    """
+    This function checks the avalibility of the DAVE authentication and retry the connection until it is ready
+    """
+    # wait until dave api is ready
+    auth_available = False
+    while not auth_available:
+        try:
+            request = requests.get(dave_settings()["keycloak_server_url"])
+            if request.status_code == 200:
+                auth_available = True
+            elif request.status_code == 404:
+                print("DAVE auth server is not ready, retry in 10 seconds")
+                time.sleep(10)
+        except requests.ConnectionError:
+            print("DAVE auth server is not available, retry in 10 seconds")
+            time.sleep(10)

@@ -8,7 +8,7 @@ from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area, related_sub
 
@@ -45,7 +45,9 @@ def line_connections(grid_data):
     """
     # define relevant nodes
     nearest_building_point = gpd.GeoSeries(
-        grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == "nearest_point"].geometry
+        grid_data.lv_data.lv_nodes[
+            grid_data.lv_data.lv_nodes.node_type == "grid_connection"
+        ].geometry
     )
     all_nodes = pd.concat(
         [nearest_building_point, grid_data.roads.road_junctions]
@@ -140,12 +142,7 @@ def create_lv_topology(grid_data):
     # --- create substations
     # create mv/lv substations
     if grid_data.components_power.substations.mv_lv.empty:
-        mvlv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_mvlv_substation",
-            where=dave_settings()["mvlv_sub_ver"],
-            geometry="geom",
-        )
+        mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -190,7 +187,7 @@ def create_lv_topology(grid_data):
     building_nodes_df = gpd.GeoDataFrame(
         {
             "geometry": building_connections.building_centroid,
-            "node_type": "building_centroid",
+            "node_type": "building_connection",
             "voltage_level": 7,
             "voltage_kv": 0.4,
             "source": "dave internal",
@@ -202,7 +199,7 @@ def create_lv_topology(grid_data):
             gpd.GeoDataFrame(
                 {
                     "geometry": building_nearest,
-                    "node_type": "nearest_point",
+                    "node_type": "grid_connection",
                     "voltage_level": 7,
                     "voltage_kv": 0.4,
                     "source": "dave internal",
