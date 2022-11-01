@@ -221,8 +221,7 @@ if __name__ == "__main__":
     # start runtime
     _start_time = timeit.default_timer()
     # set parameter for rebuild the db e.g. in the case the db is crashed
-    info_mongo()
-    rebuild_db = False
+    rebuild_db = True if len(info_mongo().keys()) == 0 else False
     # check if database is available
     if db_availability():
         print("-------------------------Update DAVE Database-------------------------")
@@ -231,7 +230,7 @@ if __name__ == "__main__":
 
         # update osm data
         # osm_update()  # !!! memory error
-        if rebuild_db == True:
+        if rebuild_db:
             # update local data
             local_data_update()
     else:
