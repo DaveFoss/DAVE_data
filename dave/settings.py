@@ -15,9 +15,9 @@ if develop:
 else:
     # --- parameter for porduction mode
     # keycloak server url
-    keycloak_server_url = "http://192.168.1.84/auth/"
+    keycloak_server_url = "http://keycloak:8080"
     # mongo db url
-    db_url = "172.20.0.10:27017"
+    db_url = "mongo_db:27017"
 
 
 def dave_settings():
