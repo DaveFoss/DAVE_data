@@ -5,7 +5,7 @@
 import os
 
 # switch develop and production mode
-develop = True  # set True for develop modus
+develop = False  # set True for develop modus
 if develop:
     # --- parameter for develop mode
     # keycloak server url
@@ -15,9 +15,9 @@ if develop:
 else:
     # --- parameter for porduction mode
     # keycloak server url
-    keycloak_server_url = "http://keycloak:8080"
+    keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
     # mongo db url
-    db_url = "mongo_db:27017"
+    db_url = "172.20.0.10:27017"
 
 
 def dave_settings():
