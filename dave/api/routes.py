@@ -204,7 +204,11 @@ def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
     active_status, roles = auth_token(token=parameters.auth_token, roles=True)
     if active_status:
         if "developer" in roles:
-            db.db_post(parameters)
+            databases = info_mongo().keys()
+            if parameters.database in databases:
+                db.db_post(parameters)
+            else:
+                return f"The choosen database is not existing. Please choose on of these: {list(databases)}"
         else:
             return "You need developer rights to upload data to the database"
     else:

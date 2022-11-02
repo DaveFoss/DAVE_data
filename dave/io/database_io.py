@@ -171,7 +171,7 @@ def df_to_mongo_merge(database, collection, data_df):
 
 def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False):
     """
-    This function uploads data into the mongo db
+    This function uploads data into the mongo db. Hint: The choosen database has to exist
 
     INPUT:
         **database** (string) - name of the database where the data should added. Note: It is not
@@ -223,6 +223,18 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
             df_to_mongo(database, collection_new, data)
         # close file
         file.close()
+
+
+def create_database(database_names):
+    """
+    This function creates a new database in the DAVE database
+
+    INPUT:
+        **database_names** (list) - names of new databases which should create
+    """
+    client = db_client()
+    for name in database_names:
+        client[name]
 
 
 def drop_collection(database, collection):

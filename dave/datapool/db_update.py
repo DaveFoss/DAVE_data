@@ -9,7 +9,14 @@ from pyrosm.data import sources
 from tqdm import tqdm
 
 from dave.datapool.oep_request import oep_request
-from dave.io.database_io import db_availability, drop_collection, from_mongo, info_mongo, to_mongo
+from dave.io.database_io import (
+    create_database,
+    db_availability,
+    drop_collection,
+    from_mongo,
+    info_mongo,
+    to_mongo,
+)
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 
@@ -225,14 +232,17 @@ if __name__ == "__main__":
     # check if database is available
     if db_availability():
         print("-------------------------Update DAVE Database-------------------------")
+        if rebuild_db:
+            # create databases
+            create_database(database_names=["geo", "gas", "power"])
+            # update local data
+            local_data_update()
         # update oep data
         oep_update()
 
         # update osm data
         # osm_update()  # !!! memory error
-        if rebuild_db:
-            # update local data
-            local_data_update()
+
     else:
         print("Database is not available")
     # stop and show runtime
