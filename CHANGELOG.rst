@@ -2,7 +2,7 @@ Change Log
 =============
 
 
-[1.1.0] - 
+[1.1.0] - 2022-11-03
 ----------------------
 - [EVENT]   first open accessible "software as a service" platform version
 - [ADDED]   algorithm for automated deployment
