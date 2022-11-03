@@ -1,3 +1,7 @@
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
 from copy import deepcopy
 
 import pandas as pd
@@ -6,7 +10,7 @@ from pandapower.auxiliary import ADict
 
 class davestructure(ADict):
     """
-    This class is for showing a overview of the DaVe dataset in the python console
+    This class is for showing a overview of the DAVE dataset in the python console
     """
 
     def __init__(self, *args, **kwargs):

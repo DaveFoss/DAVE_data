@@ -1,16 +1,60 @@
-import collections
-import xml.etree.ElementTree as ET
-from urllib.parse import urlencode
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+import time
+from collections import namedtuple
+from urllib.parse import urlencode
+from xml.etree.ElementTree import fromstring
+
+import geopandas as gpd
 import pandas as pd
 from pandas.io.common import urlopen
 from shapely.geometry import LineString, Point
 from six import string_types
 
 from dave.datapool.read_data import get_data_path
+from dave.io.database_io import db_availability, from_mongo, search_database
+from dave.settings import dave_settings
+
+
+def osm_request(data_type, area):
+    """
+    This function requests OSM data from database or OSM directly
+    """
+    data_param = dave_settings()["osm_tags"][data_type]
+    # create database collection name
+    collection = f"osm_{data_type}_{dave_settings()['osm_area']}"
+    if db_availability(collection_name=collection):
+        request_data = from_mongo(
+            database=search_database(collection=collection),
+            collection=collection,
+            filter_method="eq",
+            filter_param=f"{where.split('=')[0]}",
+            filter_value=f"{where.split('=')[1]}",
+        )  # !!! noch umändern zu geometrical filtering based on area (intersect?)
+    else:
+        request_data = gpd.GeoDataFrame([])
+        for osm_type in data_param[2]:
+            # create tags
+            tags = (
+                f'{data_param[0]}~"{"|".join(data_param[1])}"'
+                if isinstance(data_param[1], list)
+                else f"{data_param[0]}"
+            )
+            # get data from OSM directly via API query
+            data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
+            request_data = pd.concat([request_data, data], ignore_index=True)
+    return request_data, meta_data
+
+    # !!! hier function hin schreiben die entscheidet ob aus Dataenbank (is available) oder direct von OSM
+    # !!! in target area query umschreiben
+
+
+# --- request directly from OSM via Overpass API and geopandas_osm package
 
 # This functions are based on the geopandas_osm python package, which was published under the
-# following licens:
+# following license:
 
 # The MIT License (MIT)
 
@@ -35,9 +79,7 @@ from dave.datapool.read_data import get_data_path
 # SOFTWARE.
 
 
-OSMData = collections.namedtuple(
-    "OSMData", ("nodes", "waynodes", "waytags", "relmembers", "reltags")
-)
+OSMData = namedtuple("OSMData", ("nodes", "waynodes", "waytags", "relmembers", "reltags"))
 _crs = "epsg:4326"
 
 # Tags to remove so we don't clobber the output. This list comes from
@@ -116,10 +158,22 @@ def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kw
 
     """
     url = _build_url(typ, bbox, recurse, tags, meta)
+    # add time delay because osm doesn't alowed more than 1 request per second.
+    time_delay = dave_settings()["osm_time_delay"]
 
     # TODO: Raise on non-200 (or 400-599)
-    with urlopen(url) as response:
-        content = response.read()
+    # with urlopen(url) as response:
+    #     content = response.read()
+    while True:
+        try:
+            with urlopen(url) as response:
+                content = response.read()
+                if response.getcode() == 200:
+                    break
+        except Exception as inst:
+            print(f'\n Retry OSM query because of "{inst}"')
+            # add time delay
+            time.sleep(time_delay)
 
     # get meta informations
     meta_data = pd.read_excel(get_data_path("osm_meta.xlsx", "data"), sheet_name=None)
@@ -183,7 +237,7 @@ def read_osm(content, render=True, **kwargs):
     the DataFrames to GeoDataFrames.
 
     """
-    doc = ET.fromstring(content)
+    doc = fromstring(content)
 
     nodes = read_nodes(doc)
     waynodes, waytags = read_ways(doc)
@@ -318,8 +372,8 @@ def render_to_gdf(osmdata, drop_untagged=True):
                 ways.at[i, "landuse"] = rel_landuse
 
     if ways is not None:
-        # We should get append working
-        nodes = nodes.append(ways).set_geometry("geometry", crs=_crs)
+        nodes = pd.concat([nodes, ways], ignore_index=True)
+        nodes = nodes.set_geometry("geometry", crs=_crs)
 
     return nodes
 

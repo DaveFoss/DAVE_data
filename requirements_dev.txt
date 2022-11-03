@@ -19,7 +19,14 @@ pytest-cov
 pytest-xdist
 pytables
 pre-commit
+black
 isort
 pymongo
+xmlschema
+lxml
+networkx
+pyrosm
+python-keycloak
+authlib
 # via pip
 #pandapipes

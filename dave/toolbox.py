@@ -1,8 +1,15 @@
-import warnings
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
+import os
+import time
 
 import geopandas as gpd
-import numpy as np
+import pandas as pd
+import requests
 from geopy.geocoders import ArcGIS
+from numpy import append, array
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiLineString, MultiPoint
 from shapely.ops import cascaded_union, linemerge, polygonize
@@ -27,12 +34,9 @@ def create_interim_area(areas):
         for i, area in areas.iterrows():
             # check if the considered area adjoining an other one
             areas_other = areas.drop([i])
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = areas_other.geometry.distance(area.geometry)
+            distance = areas_other.geometry.apply(lambda x: area.geometry.distance(x))
             if distance.min() > 0:
-                areas_iso.append((i, distance[distance == distance.min()].index[0]))
+                areas_iso.append((i, distance.idxmin()))
         # if their are isolated areas, check for a connection on the highest grid level
         if len(areas_iso) > 0:
             for area_iso in areas_iso:
@@ -45,11 +49,10 @@ def create_interim_area(areas):
                 difference = convex_hull.difference(geom1)
                 difference = difference.difference(geom2)
                 # add difference area to areas
-                areas = areas.append(
-                    gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})
+                areas = pd.concat(
+                    [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
+                    ignore_index=True,
                 )
-                areas.reset_index(drop=True, inplace=True)
-
     return areas
 
 
@@ -66,7 +69,7 @@ def voronoi(points):
     # define points for voronoi centroids
     points = points.reset_index(drop=True)  # don't use inplace
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
-    voronoi_points = np.array(voronoi_centroids)
+    voronoi_points = array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
     bound_points = MultiPoint(points.geometry).convex_hull.buffer(1).bounds
     points_boundary = [
@@ -76,13 +79,13 @@ def voronoi(points):
         [bound_points[2], bound_points[3]],
     ]
     # append boundary points to avoid infinit polygons with relevant nodes
-    voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
+    voronoi_points = append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
     vor = Voronoi(voronoi_points)
     # select finit lines and create LineStrings (regions with -1 are infinit)
     lines = [LineString(vor.vertices[line]) for line in vor.ridge_vertices if -1 not in line]
     # create polygons from the lines
-    polygons = np.array(list(polygonize(lines)))
+    polygons = array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
     voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
     # search voronoi centroids and dave name
@@ -98,7 +101,7 @@ def voronoi(points):
     return voronoi_polygons
 
 
-def adress_to_coords(adress):
+def adress_to_coords(adress, geolocator):
     """
     This function request geocoordinates to a given adress.
 
@@ -109,8 +112,9 @@ def adress_to_coords(adress):
     OUTPUT:
         **geocoordinates** (tuple) - geocoordinates for the adress in format (longitude, latitude)
     """
-    if adress:
+    if not geolocator:
         geolocator = ArcGIS(timeout=None)
+    if adress:
         location = geolocator.geocode(adress)
         return (location.longitude, location.latitude)
 
@@ -127,3 +131,96 @@ def multiline_coords(line_geometry):
         else merged_line.coords[:]
     )
     return line_coords
+
+
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    path = (
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+    )
+    return path
+
+
+def intersection_with_area(gdf, area, remove_columns=True):
+    """
+    This function intersects a given geodataframe with an area in consideration of mixed geometry
+    types at both input variables
+    """
+    # check if geodataframe has mixed geometries
+    geom_types_gdf = set(map(type, gdf.geometry))
+    geom_types_area = set(map(type, area.geometry))
+    if len(geom_types_gdf) > 1:
+        # in this case the geodataframe has mixed geometrie information. A seperated consideration
+        # of overlay is necessary because the function can not handle mixed geometries
+        gdf_over = gpd.GeoDataFrame([])
+        for geom_type in geom_types_gdf:
+            gdf_geom_idx = [
+                row.name for i, row in gdf.iterrows() if isinstance(row.geometry, (geom_type))
+            ]
+            # check for values in the target area
+            gdf_over_geom = gpd.overlay(gdf.loc[gdf_geom_idx], area, how="intersection")
+            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+    elif len(geom_types_area) > 1:
+        # in this case the geodataframe has mixed geometrie information. A seperated consideration
+        # of overlay is necessary because the function can not handle mixed geometries
+        gdf_over = gpd.GeoDataFrame([])
+        for geom_type in geom_types_area:
+            area_geom_idx = [
+                row.name for i, row in area.iterrows() if isinstance(row.geometry, (geom_type))
+            ]
+            # check for values in the target area
+            gdf_over_geom = gpd.overlay(gdf, area.loc[area_geom_idx], how="intersection")
+            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+    else:
+        gdf_over = gpd.overlay(gdf, area, how="intersection")
+    # remove parameters from area
+    if (not gdf_over.empty) and (remove_columns):
+        remove_columns = area.keys().tolist()
+        remove_columns.remove("geometry")
+        gdf_over.drop(columns=remove_columns, inplace=True)
+    return gdf_over
+
+
+def related_sub(bus, substations):
+    """
+    This function searches the related substation for a bus and returns some
+    substation information
+
+    INPUT:
+        **bus** (Shapely Point) - bus geometry
+        **substations** (DataFrame) - Table of the possible substations
+
+    OUTPUT:
+        (Tuple) - Substation information for a given bus (ego_subst_id, subst_dave_name, subst_name)
+    """
+    sub_filtered = substations[
+        substations.geometry.apply(lambda x: (bus.within(x)) or (bus.distance(x) < 1e-05))
+    ]
+    ego_subst_id = sub_filtered.ego_subst_id.to_list() if not sub_filtered.empty else []
+    subst_dave_name = sub_filtered.dave_name.to_list() if not sub_filtered.empty else []
+    subst_name = sub_filtered.subst_name.to_list() if not sub_filtered.empty else []
+    return ego_subst_id, subst_dave_name, subst_name
+
+
+def auth_available():
+    """
+    This function checks the avalibility of the DAVE authentication and retry the connection until
+    it is ready
+    """
+    # wait until dave api is ready
+    available = False
+    while not available:
+        try:
+            request = requests.get(dave_settings()["keycloak_server_url"])
+            if request.status_code == 200:
+                available = True
+            elif request.status_code == 404:
+                print("DAVE auth server is not ready, retry in 10 seconds")
+                time.sleep(10)
+        except requests.ConnectionError:
+            print("DAVE auth server is not available, retry in 10 seconds")
+            time.sleep(10)

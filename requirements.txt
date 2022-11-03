@@ -19,5 +19,11 @@ pytest-cov
 pytest-xdist
 pytables
 pymongo
+xmlschema
+lxml
+networkx
+pyrosm
+python-keycloak
+authlib
 # via pip
 #pandapipes

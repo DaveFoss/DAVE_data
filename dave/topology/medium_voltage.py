@@ -1,13 +1,17 @@
-import warnings
+# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge
+from shapely.wkb import loads
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
+from dave.toolbox import intersection_with_area
 
 
 def create_mv_topology(grid_data):
@@ -32,10 +36,7 @@ def create_mv_topology(grid_data):
     # create hv/mv substations
     if grid_data.components_power.substations.hv_mv.empty:
         hvmv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_hvmv_substation",
-            where=dave_settings()["hvmv_sub_ver"],
-            geometry="polygon",
+            table="ego_dp_hvmv_substation"
         )  # take polygon for full area
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -49,19 +50,9 @@ def create_mv_topology(grid_data):
             },
             inplace=True,
         )
-        # filter substations with point as geometry
-        drop_substations = [
-            sub.name
-            for i, sub in hvmv_substations.iterrows()
-            if isinstance(sub.geometry, (Point, LineString))
-        ]
-        hvmv_substations.drop(drop_substations, inplace=True)
-        # check for substations in the target area
-        hvmv_substations = gpd.overlay(hvmv_substations, grid_data.area, how="intersection")
+        # filter substations which are within the grid area
+        hvmv_substations = intersection_with_area(hvmv_substations, grid_data.area)
         if not hvmv_substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            hvmv_substations.drop(columns=remove_columns, inplace=True)
             hvmv_substations["voltage_level"] = 4
             # add dave name
             hvmv_substations.reset_index(drop=True, inplace=True)
@@ -73,97 +64,63 @@ def create_mv_topology(grid_data):
             # set crs
             hvmv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
             # add ehv substations to grid data
-            grid_data.components_power.substations.hv_mv = (
-                grid_data.components_power.substations.hv_mv.append(hvmv_substations)
+            grid_data.components_power.substations.hv_mv = pd.concat(
+                [grid_data.components_power.substations.hv_mv, hvmv_substations]
             )
     else:
         hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
     # update progress
     pbar.update(5)
     # create mv/lv substations
-    if grid_data.components_power.substations.mv_lv.empty:
-        mvlv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_mvlv_substation",
-            where=dave_settings()["mvlv_sub_ver"],
-            geometry="geom",
-        )
-        # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        mvlv_substations.rename(
-            columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
-        )
-        # change wrong crs from oep
-        mvlv_substations.crs = dave_settings()["crs_meter"]
-        mvlv_substations = mvlv_substations.to_crs(dave_settings()["crs_main"])
-        # filter trafos for target area
-        mvlv_substations = gpd.overlay(mvlv_substations, grid_data.area, how="intersection")
-        if not mvlv_substations.empty:
-            remove_columns = grid_data.area.keys().tolist()
-            remove_columns.remove("geometry")
-            mvlv_substations.drop(columns=remove_columns, inplace=True)
-            mvlv_substations["voltage_level"] = 6
-            # add dave name
-            mvlv_substations.reset_index(drop=True, inplace=True)
-            mvlv_substations.insert(
-                0,
-                "dave_name",
-                pd.Series(list(map(lambda x: f"substation_6_{x}", mvlv_substations.index))),
-            )
-            # add ehv substations to grid data
-            grid_data.components_power.substations.mv_lv = (
-                grid_data.components_power.substations.mv_lv.append(mvlv_substations)
-            )
-    else:
-        mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
-    # update progress
-    pbar.update(5)
-
-    # --- create mv nodes
-    # nodes for mv/lv traofs hv side
-    mvlv_buses, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_mvlv_substation",
-        where=dave_settings()["mvlv_sub_ver"],
-        geometry="geom",
-    )
+    mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    mvlv_buses.drop(columns=(["la_id", "geom", "subst_id", "is_dummy", "subst_cnt"]), inplace=True)
-    mvlv_buses.rename(
+
+    # change wrong crs from oep
+    mvlv_substations.crs = dave_settings()["crs_meter"]
+    mvlv_substations.to_crs(dave_settings()["crs_main"], inplace=True)
+    mvlv_substations.rename(
         columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
     )
-    # change wrong crs from oep
-    mvlv_buses.crs = dave_settings()["crs_meter"]
-    mvlv_buses = mvlv_buses.to_crs(dave_settings()["crs_main"])
-    # filter trafos for target area
-    mvlv_buses = gpd.overlay(mvlv_buses, grid_data.area, how="intersection")
-    if not mvlv_buses.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        mvlv_buses.drop(columns=remove_columns, inplace=True)
-    mvlv_buses["node_type"] = "mvlv_substation"
+
+    # filter trafos which are within the grid area
+    mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
+    # copy data for mv node creation
+    mvlv_buses = mvlv_substations.copy()
+    if grid_data.components_power.substations.mv_lv.empty and not mvlv_substations.empty:
+        mvlv_substations["voltage_level"] = 6
+        # add dave name
+        mvlv_substations.reset_index(drop=True, inplace=True)
+        mvlv_substations.insert(
+            0,
+            "dave_name",
+            pd.Series(list(map(lambda x: f"substation_6_{x}", mvlv_substations.index))),
+        )
+        # add ehv substations to grid data
+        grid_data.components_power.substations.mv_lv = pd.concat(
+            [grid_data.components_power.substations.mv_lv, mvlv_substations], ignore_index=True
+        )
+    else:
+        mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
     # update progress
     pbar.update(10)
+    # --- create mv nodes
+    # nodes for mv/lv traofs hv side
+    mvlv_buses.drop(columns=(["la_id", "geom", "subst_id", "is_dummy", "subst_cnt"]), inplace=True)
+    mvlv_buses["node_type"] = "mvlv_substation"
+    # update progress
+    pbar.update(5)
     # nodes for hv/mv trafos us side
-    hvmv_buses, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_hvmv_substation",
-        where=dave_settings()["hvmv_sub_ver"],
-        geometry="point",
-    )
+    hvmv_buses, meta_data = oep_request(table="ego_dp_hvmv_substation")
+    # change geometry to point
+    hvmv_buses["geometry"] = hvmv_buses.point.apply(lambda x: loads(x, hex=True))
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     hvmv_buses = hvmv_buses.rename(columns={"version": "ego_version", "subst_id": "ego_subst_id"})
-    # filter trafos for target area
-    hvmv_buses = gpd.overlay(hvmv_buses, grid_data.area, how="intersection")
-    if not hvmv_buses.empty:
-        remove_columns = grid_data.area.keys().tolist()
-        remove_columns.remove("geometry")
-        hvmv_buses = hvmv_buses.drop(columns=remove_columns)
+    # filter trafos which are within the grid area
+    hvmv_buses = intersection_with_area(hvmv_buses, grid_data.area)
     hvmv_buses.drop(
         columns=(
             [
@@ -188,7 +145,7 @@ def create_mv_topology(grid_data):
     # update progress
     pbar.update(10)
     # consider data only if there are more than one node in the target area
-    mv_buses = mvlv_buses.append(hvmv_buses)
+    mv_buses = pd.concat([mvlv_buses, hvmv_buses])
     if len(mv_buses) > 1:
         # search for the substations dave name
         substations_rel = pd.concat([hvmv_substations, mvlv_substations])
@@ -207,23 +164,24 @@ def create_mv_topology(grid_data):
         # set crs
         mv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
         # add mv nodes to grid data
-        grid_data.mv_data.mv_nodes = grid_data.mv_data.mv_nodes.append(mv_buses)
+        grid_data.mv_data.mv_nodes = pd.concat(
+            [grid_data.mv_data.mv_nodes, mv_buses], ignore_index=True
+        )
         # --- create mv lines
         # lines to connect node with the nearest node
         mv_lines = gpd.GeoSeries([])
         for i, bus in mv_buses.iterrows():
-            mv_buses_rel = mv_buses.drop([bus.name])
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = mv_buses_rel.geometry.distance(bus.geometry)
-            nearest_bus_idx = distance[distance == distance.min()].index[0]
+            nearest_bus_idx = (
+                mv_buses.drop([bus.name])
+                .geometry.apply(lambda x: bus.geometry.distance(x))
+                .idxmin()
+            )
             mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
-            # update progress
-            pbar.update(10 / len(mv_buses))
+        # update progress
+        pbar.update(10)
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         mv_lines.reset_index(drop=True, inplace=True)
         # connect line segments with each other
@@ -257,13 +215,11 @@ def create_mv_topology(grid_data):
             # create lines for connecting line segments
             for i, line in mv_lines_rel.iteritems():
                 # find nearest line to considered one
-                mv_lines_con = mv_lines_rel.drop([i])
-                distance = mv_lines_con.geometry.distance(line)
-                nearest_line_idx = distance[distance == distance.min()].index[0]
+                nearest_line_idx = mv_lines_rel.drop([i]).geometry.distance(line).idxmin()
                 # get line coordinates
                 if isinstance(line, MultiLineString):
                     line_points = gpd.GeoSeries(
-                        [Point(coords) for segment in line for coords in segment.coords[:]]
+                        [Point(coords) for segment in line.geoms for coords in segment.coords[:]]
                     )
                 else:
                     line_points = gpd.GeoSeries([Point(coords) for coords in line.coords[:]])
@@ -273,7 +229,11 @@ def create_mv_topology(grid_data):
                 nearest_line = mv_lines_rel.loc[nearest_line_idx]
                 if isinstance(nearest_line, MultiLineString):
                     nearest_line_points = gpd.GeoSeries(
-                        [Point(coords) for segment in nearest_line for coords in segment.coords[:]]
+                        [
+                            Point(coords)
+                            for segment in nearest_line.geoms
+                            for coords in segment.coords[:]
+                        ]
                     )
                 else:
                     nearest_line_points = gpd.GeoSeries(
@@ -288,14 +248,10 @@ def create_mv_topology(grid_data):
                 distance_min = 1000  # any big number
                 # find pair of nearest nodes
                 for point in line_points:
-                    with warnings.catch_warnings():
-                        # filter crs warning because it is not relevant
-                        warnings.filterwarnings("ignore", category=UserWarning)
-                        distance = nearest_line_points.geometry.distance(point)
+                    distance = nearest_line_points.geometry.apply(lambda x: point.distance(x))
                     if distance_min > distance.min():
                         distance_min = distance.min()
-                        nearest_point_idx = distance[distance == distance.min()].index[0]
-                        nearest_point = nearest_line_points[nearest_point_idx]
+                        nearest_point = nearest_line_points[distance.idxmin()]
                         line_point = point
                 # add created connection line into mv lines
                 mv_line = LineString([line_point, nearest_point])
@@ -305,40 +261,41 @@ def create_mv_topology(grid_data):
         pbar.update(40)
         # prepare dataframe for mv lines
         mv_lines = gpd.GeoDataFrame(geometry=mv_lines)
-        mv_lines.insert(0, "dave_name", None)
         # project lines to crs with unit in meter for length calculation
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         mv_lines_3035 = mv_lines.to_crs(dave_settings()["crs_meter"])
         # add parameters to lines
         for i, line in mv_lines.iterrows():
             # get from bus name
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                from_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][0]))
-            from_bus_idx = from_bus_distance[from_bus_distance == from_bus_distance.min()].index[0]
-            mv_lines.at[line.name, "from_bus"] = mv_buses.loc[from_bus_idx].dave_name
+            mv_lines.at[line.name, "from_bus"] = mv_buses.loc[
+                mv_buses.geometry.apply(
+                    lambda x: Point(line.geometry.coords[:][0]).distance(x)
+                ).idxmin()
+            ].dave_name
             # get to bus name
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                to_bus_distance = mv_buses.distance(Point(line.geometry.coords[:][1]))
-            to_bus_idx = to_bus_distance[to_bus_distance == to_bus_distance.min()].index[0]
-            mv_lines.at[line.name, "to_bus"] = mv_buses.loc[to_bus_idx].dave_name
-            # calculate length in km
-            mv_lines.at[line.name, "length_km"] = mv_lines_3035.loc[i].geometry.length / 1000
-            # line dave name
-            mv_lines.at[line.name, "dave_name"] = f"line_5_{i}"
-            # additional informations
-            mv_lines.at[line.name, "voltage_kv"] = dave_settings()["mv_voltage"]
-            mv_lines.at[line.name, "voltage_level"] = 5
-            mv_lines.at[line.name, "source"] = "dave internal"
-            # update progress
-            pbar.update(20 / len(mv_lines))
+            mv_lines.at[line.name, "to_bus"] = mv_buses.loc[
+                mv_buses.geometry.apply(
+                    lambda x: Point(line.geometry.coords[:][1]).distance(x)
+                ).idxmin()
+            ].dave_name
+        # calculate length in km
+        mv_lines["length_km"] = mv_lines_3035.geometry.length / 100
+        # line dave name
+        mv_lines.insert(
+            0, "dave_name", pd.Series(list(map(lambda x: f"line_5_{x}", mv_lines.index)))
+        )
+        # additional informations
+        mv_lines["voltage_kv"] = dave_settings()["mv_voltage"]
+        mv_lines["voltage_level"] = 5
+        mv_lines["source"] = "dave internal"
         # set crs
         mv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
         # add mv lines to grid data
-        grid_data.mv_data.mv_lines = grid_data.mv_data.mv_lines.append(mv_lines)
+        grid_data.mv_data.mv_lines = pd.concat(
+            [grid_data.mv_data.mv_lines, mv_lines], ignore_index=True
+        )
+        # update progress
+        pbar.update(20)
     else:
         # update progress
         pbar.update(80)
