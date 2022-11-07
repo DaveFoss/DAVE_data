@@ -8,14 +8,16 @@ import os
 develop = False  # set True for develop modus
 if develop:
     # --- parameter for develop mode
-    # keycloak server url
+    # keycloak settings
     keycloak_server_url = "http://127.0.0.1/auth/"
+    client_secret_key = "088d3f9e-58ea-405c-acf9-bf96b97ed922"
     # mongo db url
     db_url = "127.0.0.1:27017"
 else:
     # --- parameter for porduction mode
-    # keycloak server url
+    # keycloak settings
     keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
+    client_secret_key = "2ba37da1-d8e5-493b-8475-55e005474ea2"
     # mongo db url
     db_url = "172.20.0.10:27017"
 
@@ -36,7 +38,7 @@ def dave_settings():
         "keycloak_server_url": keycloak_server_url,
         "client_id": "dave_login",
         "realm_name": "dave",
-        "client_secret_key": "088d3f9e-58ea-405c-acf9-bf96b97ed922",
+        "client_secret_key": client_secret_key,
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
