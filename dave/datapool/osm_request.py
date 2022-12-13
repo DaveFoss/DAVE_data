@@ -5,11 +5,11 @@
 import time
 from collections import namedtuple
 from urllib.parse import urlencode
+from urllib.request import urlopen
 from xml.etree.ElementTree import fromstring
 
 import geopandas as gpd
 import pandas as pd
-from pandas.io.common import urlopen
 from shapely.geometry import LineString, Point
 from six import string_types
 
