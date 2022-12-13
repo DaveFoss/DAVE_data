@@ -35,7 +35,7 @@ router = APIRouter(
 # main page with root path information
 @router.get("/")
 def read_main(request: Request):
-    return {"message": "Welcome to the DaVe API"}
+    return {"message": "Welcome to the DAVE API"}
 
 
 # -------------------------------
@@ -133,7 +133,7 @@ class DatapoolRequest:
 
 
 # get method for datapool request
-@router.get("/request_datapool")
+@router.get("/request_datapool")  # !!! route rausnehmen da request db das auch funktioniert
 def request_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends(DatapoolRequest)):
     # authenticate user
     if auth_token(token=parameters.auth_token):
