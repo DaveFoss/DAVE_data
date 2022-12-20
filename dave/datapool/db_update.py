@@ -178,7 +178,7 @@ def local_data_update():
     # set progress bar
     pbar = tqdm(
         total=100,
-        desc="update data from OSM: ",
+        desc="update data from local datapool: ",
         position=0,
         bar_format=dave_settings()["bar_format"],
     )
