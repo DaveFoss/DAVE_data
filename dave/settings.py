@@ -31,8 +31,8 @@ def dave_settings():
         "dave_dir": os.path.dirname(os.path.realpath(__file__)),
         "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
         # database definitions (mongo db)
-        "db_user": "root",
-        "db_pw": "example",
+        "db_user": "dave_db_admin",
+        "db_pw": "RxOPwwnahGhIKwLLhPH2",
         "db_ip": db_url,
         # authentification definitions
         "keycloak_server_url": keycloak_server_url,
