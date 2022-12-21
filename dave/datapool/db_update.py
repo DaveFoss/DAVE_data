@@ -185,7 +185,7 @@ def local_data_update():
     # define datasets
     datasets_geo = ["postalger.h5", "federalstatesger.h5", "nuts_regions.h5"]
     datasets_gas = ["gas_storage_ugs.h5", "scigridgas_igginl.h5", "scigridgas_iggielgn.h5"]
-    datasets_power = ["household_consumptions", "household_sizes"]
+    datasets_power = ["household_power_consumption.h5"]
     number_datasets = len(datasets_geo + datasets_gas + datasets_power)
     # write geo dataset to database
     for file in datasets_geo:
