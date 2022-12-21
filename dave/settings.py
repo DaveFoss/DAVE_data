@@ -4,16 +4,23 @@
 
 import os
 
-# switch develop and production mode
-develop = False  # set True for develop modus
-if develop:
+# switch develop stage
+stage = "local"  # set True for develop modus
+if stage == "develop":
     # --- parameter for develop mode
     # keycloak settings
     keycloak_server_url = "http://127.0.0.1/auth/"
     client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
     # mongo db url
     db_url = "127.0.0.1:27017"
-else:
+elif stage == "local":
+    # --- parameter for local porduction mode
+    # keycloak settings
+    keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
+    client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
+    # mongo db url
+    db_url = "172.20.0.10:27017"
+elif stage == "production":
     # --- parameter for porduction mode
     # keycloak settings
     keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
