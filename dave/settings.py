@@ -10,7 +10,7 @@ if develop:
     # --- parameter for develop mode
     # keycloak settings
     keycloak_server_url = "http://127.0.0.1/auth/"
-    client_secret_key = "088d3f9e-58ea-405c-acf9-bf96b97ed922"
+    client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
     # mongo db url
     db_url = "127.0.0.1:27017"
 else:
