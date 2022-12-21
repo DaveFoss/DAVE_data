@@ -49,7 +49,7 @@ def db_availability(collection_name=None):
 def db_client():
     # define data source
     return MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}'
+        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}', authSource='admin'
     )
 
 
