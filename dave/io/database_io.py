@@ -49,7 +49,8 @@ def db_availability(collection_name=None):
 def db_client():
     # define data source
     return MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}', authSource='admin'
+        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}',
+        authSource="admin",
     )
 
 
@@ -234,7 +235,10 @@ def create_database(database_names):
     """
     client = db_client()
     for name in database_names:
-        client[name]
+        database = client[name]
+        collection = database["init"]
+        data = {"database_name": name, "description": f"This database staores {name} informations"}
+        collection.insert_one(data)
 
 
 def drop_collection(database, collection):
