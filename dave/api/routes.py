@@ -20,7 +20,7 @@ from dave.api.request_bodys import (
 )
 from dave.create import create_grid
 from dave.datapool.read_data import read_postal
-from dave.io.database_io import from_mongo, info_mongo, to_mongo
+from dave.io.database_io import db_availability, from_mongo, info_mongo, to_mongo
 from dave.io.file_io import to_json
 from dave.settings import dave_settings
 
@@ -160,15 +160,18 @@ def db_info(parameters: Info_param):
 class DbRequest:
     def db_request(self, parameters):
         # read data from mongo db
-        data = from_mongo(
-            database=parameters.database,
-            collection=parameters.collection,
-            filter_method=parameters.filter_method,
-            filter_param=parameters.filter_param,
-            filter_value=parameters.filter_value,
-        )
-        # convert postalcodes to JSON string
-        return data.to_json()
+        if db_availability(collection_name=parameters.collection):
+            data = from_mongo(
+                database=parameters.database,
+                collection=parameters.collection,
+                filter_method=parameters.filter_method,
+                filter_param=parameters.filter_param,
+                filter_value=parameters.filter_value,
+            )
+            # convert postalcodes to JSON string
+            return data.to_json()
+        else:
+            return "Database collection is not available"
 
 
 # get method for database request
