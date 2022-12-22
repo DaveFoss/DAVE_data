@@ -6,6 +6,7 @@ import os
 import timeit
 import warnings
 
+os.environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
 import geopandas as gpd
 import pandas as pd
 
