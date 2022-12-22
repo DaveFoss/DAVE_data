@@ -183,7 +183,7 @@ def local_data_update():
         bar_format=dave_settings()["bar_format"],
     )
     # define datasets
-    datasets_geo = ["postalger.h5", "federalstatesger.h5", "nuts_regions.h5"]
+    datasets_geo = ["postalcodesger.h5", "federalstatesger.h5", "nuts_regions.h5"]
     datasets_gas = ["gas_storage_ugs.h5", "scigridgas_igginl.h5", "scigridgas_iggielgn.h5"]
     datasets_power = ["household_power_consumption.h5"]
     number_datasets = len(datasets_geo + datasets_gas + datasets_power)
