@@ -53,9 +53,13 @@ def read_federal_states():
 
          federal = data.read_federal_states()
     """
-    federalstatesger = pd.read_hdf(get_data_path("federalstatesger.h5", "data"))
-    federalstatesger["geometry"] = federalstatesger.geometry.apply(loads)
-    federalstatesger = gpd.GeoDataFrame(federalstatesger, crs=dave_settings()["crs_main"])
+    if db_availability(collection_name="federalstatesger"):
+        # request data from database
+        federalstatesger = from_mongo("geo", "federalstatesger")
+    else:
+        federalstatesger = pd.read_hdf(get_data_path("federalstatesger.h5", "data"))
+        federalstatesger["geometry"] = federalstatesger.geometry.apply(loads)
+        federalstatesger = gpd.GeoDataFrame(federalstatesger, crs=dave_settings()["crs_main"])
     # read meta data
     meta_data = pd.read_excel(get_data_path("federalstatesger_meta.xlsx", "data"), sheet_name=None)
     return federalstatesger, meta_data
@@ -73,17 +77,30 @@ def read_nuts_regions(year):
 
          nuts = data.read_nuts_regions()
     """
-    nuts_data = pd.HDFStore(get_data_path("nuts_regions.h5", "data"))
     if year == "2013":
-        nuts_regions = nuts_data.get("/nuts_2013")
+        if db_availability(collection_name="nuts_2013"):
+            # request data from database
+            nuts_regions = from_mongo("geo", "nuts_2013")
+        else:
+            nuts_regions = pd.read_hdf(get_data_path("nuts_regions.h5", "data"), key="/nuts_2013")
+            nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
+            nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
     elif year == "2016":
-        nuts_regions = nuts_data.get("/nuts_2016")
+        if db_availability(collection_name="nuts_2016"):
+            # request data from database
+            nuts_regions = from_mongo("geo", "nuts_2016")
+        else:
+            nuts_regions = pd.read_hdf(get_data_path("nuts_regions.h5", "data"), key="/nuts_2016")
+            nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
+            nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
     elif year == "2021":
-        nuts_regions = nuts_data.get("/nuts_2021")
-    nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-    nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
-    # close file
-    nuts_data.close()
+        if db_availability(collection_name="nuts_2021"):
+            # request data from database
+            nuts_regions = from_mongo("geo", "nuts_2021")
+        else:
+            nuts_regions = pd.read_hdf(get_data_path("nuts_regions.h5", "data"), key="/nuts_2021")
+            nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
+            nuts_regions = gpd.GeoDataFrame(nuts_regions, crs=dave_settings()["crs_main"])
     # read meta data
     meta_data = pd.read_excel(get_data_path("nuts_regions_meta.xlsx", "data"), sheet_name=None)
     return nuts_regions, meta_data
