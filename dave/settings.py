@@ -5,7 +5,7 @@
 import os
 
 # switch develop stage
-stage = "local"  # set True for develop modus
+stage = "production"  # set development modus
 if stage == "develop":
     # --- parameter for develop mode
     # keycloak settings
