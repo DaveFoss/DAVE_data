@@ -777,13 +777,17 @@ def add_voltage_level(plant):
     """
     This function adds the voltage level to the conventional power plants
     """
-    if int(plant.voltage) >= 220:
-        level = 1
-    elif (plant.voltage == "HS") or (int(plant.voltage) < 220) and (int(plant.voltage) >= 60):
+    if plant.voltage == "HS":
         level = 3
     elif plant.voltage == "HS/MS":
         level = 4
-    elif (plant.voltage == "MS") or (int(plant.voltage) < 60) and (int(plant.voltage) >= 1):
+    elif plant.voltage == "MS":
+        level = 5
+    elif int(plant.voltage) >= 220:
+        level = 1
+    elif (int(plant.voltage) < 220) and (int(plant.voltage) >= 60):
+        level = 3
+    elif (int(plant.voltage) < 60) and (int(plant.voltage) >= 1):
         level = 5
     elif int(plant.voltage) < 1:
         level = 7
