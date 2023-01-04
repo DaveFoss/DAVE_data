@@ -90,24 +90,25 @@ def from_mongo(database, collection, filter_method=None, filter_param=None, filt
         # request all data from defined collection
         request = db[collection].find()
     data_list = list(request)
-    if "geometry" in data_list[0].keys() and len(data_list) != 0:
-        # convert geometries to shapely objects
-        for row in data_list:
-            if "geometry" in row.keys():
-                row["geometry"] = shape(row["geometry"])
-        if len(data_list) > 1:
-            df = gpd.GeoDataFrame(data_list, crs=dave_settings()["crs_main"])
-        elif len(data_list) == 1:
-            df = gpd.GeoDataFrame([data_list[0]], crs=dave_settings()["crs_main"])
-    elif len(data_list) != 0:
-        if len(data_list) > 1:
-            df = pd.DataFrame(data_list)
-        elif len(data_list) == 1:
-            df = pd.DataFrame([data_list[0]])
+    if len(data_list) != 0:
+        if "geometry" in data_list[0].keys():
+            # convert geometries to shapely objects
+            for row in data_list:
+                if "geometry" in row.keys():
+                    row["geometry"] = shape(row["geometry"])
+            if len(data_list) > 1:
+                df = gpd.GeoDataFrame(data_list, crs=dave_settings()["crs_main"])
+            elif len(data_list) == 1:
+                df = gpd.GeoDataFrame([data_list[0]], crs=dave_settings()["crs_main"])
+        else:
+            if len(data_list) > 1:
+                df = pd.DataFrame(data_list)
+            elif len(data_list) == 1:
+                df = pd.DataFrame([data_list[0]])
+        # remove mongo db id object
+        df.drop(columns=["_id"], inplace=True)
     else:
         df = pd.DataFrame([])
-    # remove mongo db id object
-    df.drop(columns=["_id"], inplace=True)
     return df
 
 
