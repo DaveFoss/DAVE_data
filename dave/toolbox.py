@@ -126,7 +126,7 @@ def multiline_coords(line_geometry):
     merged_line = linemerge(line_geometry)
     # sometimes line merge can not merge the lines correctly
     line_coords = (
-        [line.coords[:] for line in merged_line]
+        [line.coords[:] for line in list(merged_line.geoms)]
         if isinstance(merged_line, MultiLineString)
         else merged_line.coords[:]
     )
