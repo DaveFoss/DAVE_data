@@ -90,7 +90,7 @@ def dave_settings():
             ),
             "landuse": (
                 "landuse",
-                ["commercial", "industrial", "residential", "retail"],
+                ["commercial", "industrial", "residential", "retail", "grass"],
                 ["way", "relation"],
                 ["landuse", "geometry", "name"],
             ),
