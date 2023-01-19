@@ -81,18 +81,19 @@ def dave_settings():
                 ],
                 ["way"],
                 ["geometry", "name", "highway"],
+                "id",
             ),
             "road_plot": (
                 "highway",
                 ["motorway", "trunk", "primary"],
                 ["way"],
-                ["geometry", "name"],
+                ["geometry", "name", "id"],
             ),
             "landuse": (
                 "landuse",
                 ["commercial", "industrial", "residential", "retail", "grass"],
                 ["way", "relation"],
-                ["landuse", "geometry", "name"],
+                ["landuse", "geometry", "name", "id"],
             ),
             "building": (
                 "building",
@@ -107,6 +108,7 @@ def dave_settings():
                     "building:levels",
                     "geometry",
                     "name",
+                    "id",
                 ],
             ),
             "railway": (
@@ -122,7 +124,20 @@ def dave_settings():
                     "tram",
                 ],
                 ["way"],
-                ["name", "railway", "geometry", "tram", "train", "usage", "voltage"],
+                ["name", "railway", "geometry", "tram", "train", "usage", "voltage", "id"],
+            ),
+            "waterway": (
+                "waterway",
+                [
+                    "river",
+                    "stream",
+                    "canal",
+                    "tidal_channel ",
+                    "pressurised",
+                    "drain",
+                ],
+                ["way"],
+                ["name", "waterway", "geometry", "depth", "id"],
             ),
         },
         # osm categories

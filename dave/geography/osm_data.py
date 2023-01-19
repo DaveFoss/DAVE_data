@@ -30,6 +30,7 @@ def get_osm_data(grid_data, key, border, target_geom):
     if not data.empty:
         # filter data parameters which are relevant for the grid modeling
         data = data.filter(dave_settings()["osm_tags"][key][3])
+        data.rename(columns={"id": "osm_id"}, inplace=True)
         # consider only data which are linestring elements and within considered area
         data = data[
             (data.geometry.apply(lambda x: isinstance(x, LineString)))
@@ -47,6 +48,7 @@ def from_osm(
     buildings,
     landuse,
     railways,
+    waterways,
     target_geom,
     progress_step=None,
 ):
@@ -57,7 +59,7 @@ def from_osm(
     target = geometry of the considerd target
     """
     # count object types to consider for progress bar
-    objects_list = [roads, roads_plot, buildings, landuse, railways]
+    objects_list = [roads, roads_plot, buildings, landuse, railways, waterways]
     objects_con = len([x for x in objects_list if x is True])
     if objects_con == 0:
         # update progress
@@ -163,6 +165,12 @@ def from_osm(
     if railways:
         railways = get_osm_data(grid_data, "railway", border, target_geom)
         grid_data.railways = pd.concat([grid_data.railways, railways], ignore_index=True)
+        # update progress
+        pbar.update(progress_step / objects_con)
+    # search waterway informations in the target area
+    if waterways:
+        waterways = get_osm_data(grid_data, "waterway", border, target_geom)
+        grid_data.waterways = pd.concat([grid_data.waterways, waterways], ignore_index=True)
         # update progress
         pbar.update(progress_step / objects_con)
 

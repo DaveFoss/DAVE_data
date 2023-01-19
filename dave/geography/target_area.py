@@ -190,6 +190,7 @@ def target_area(
     buildings=True,
     landuse=True,
     railways=True,
+    waterways=True,
 ):
     """
     This function calculate all relevant geographical informations for the
@@ -228,6 +229,7 @@ def target_area(
         **buildings** (boolean, default True) - obtain informations about buildings
         **landuse** (boolean, default True) - obtain informations about landuses
         **railway** (boolean, default True) - obtain informations about railways
+        **waterways** (boolean, default True) - obtain informations about waterways
 
     OUTPUT:
 
@@ -350,6 +352,7 @@ def target_area(
                     buildings,
                     landuse,
                     railways,
+                    waterways,
                     target_geom=target_geom,
                     progress_step=progress_step,
                 )
@@ -367,6 +370,7 @@ def target_area(
                     buildings,
                     landuse,
                     railways,
+                    waterways,
                     target_geom=target_geom,
                     progress_step=progress_step,
                 )
