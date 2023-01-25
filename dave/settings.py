@@ -24,7 +24,7 @@ elif stage == "production":
     # --- parameter for porduction mode
     # keycloak settings
     keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
-    client_secret_key = "2ba37da1-d8e5-493b-8475-55e005474ea2"
+    client_secret_key = "lpVjKsFc73HmrAu0FTMF9jq28nktxuvX"
     # mongo db url
     db_url = "172.20.0.10:27017"
 
@@ -91,9 +91,21 @@ def dave_settings():
             ),
             "landuse": (
                 "landuse",
-                ["commercial", "industrial", "residential", "retail", "grass"],
+                True,
                 ["way", "relation"],
                 ["landuse", "geometry", "name", "id"],
+            ),
+            "leisure": (
+                "leisure",
+                ["golf_course", "garden", "park"],
+                ["relation"],
+                ["id"],  # !!!parameter noch eintragen
+            ),
+            "natural": (
+                "natural",
+                ["scrub", "grassland", "water", "wood"],
+                ["relation"],
+                ["id"],  # !!!parameter noch eintragen
             ),
             "building": (
                 "building",
