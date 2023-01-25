@@ -22,7 +22,7 @@ pymongo
 xmlschema
 lxml
 networkx
-pyrosm
+#pyrosm
 python-keycloak
 authlib
 # via pip
