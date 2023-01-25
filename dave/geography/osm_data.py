@@ -82,7 +82,14 @@ def from_osm(
         pbar.update(progress_step / objects_con)
     # search landuse informations in the target area
     if landuse:
+        # request landuse information
         landuse = get_osm_data(grid_data, "landuse", border, target_geom)
+        # request some leisure place information which are relevant as landuse area
+        # leisure = get_osm_data(grid_data, "leisure", border, target_geom)  # !!! sind falsch getaggt
+        # request some natural place information which are relevant as landuse area
+        # natural = get_osm_data(grid_data, "natural", border, target_geom) # !!! Fehler landuse attribute
+        # natural parameter in landuse umbenennen und zu landuse hinzufügen?
+
         # check if there are data for landuse
         if not landuse.empty:
             # convert geometry to polygon
@@ -108,6 +115,10 @@ def from_osm(
             # write landuse into grid_data
             grid_data.landuse = pd.concat([grid_data.landuse, landuse], ignore_index=True)
             grid_data.landuse.set_crs(dave_settings()["crs_main"], inplace=True)
+
+        # !!! abfrage von natural und bei landuse hinzufügen
+        # hier wood und evt auch wasser mit rein nehmen
+
         # update progress
         pbar.update(progress_step / objects_con)
     # search building informations in the target area
