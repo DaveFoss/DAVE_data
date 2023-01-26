@@ -11,6 +11,7 @@ pytest
 pytest-cov
 pytest-xdist
 pymongo
+xmlschema
 lxml
 pyrosm
 python-keycloak
