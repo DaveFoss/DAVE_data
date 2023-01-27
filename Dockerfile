@@ -9,13 +9,14 @@ WORKDIR /dave
 
 # update existing packages
 RUN apt-get update && apt-get install -y git
+RUN conda update conda
 
 # update python version
 RUN conda install python==3.10.8
 
 # install packages via conda forge
 RUN conda config --add channels conda-forge
-RUN conda config --set channel_priority strict
+RUN conda config --set channel_priority flexible
 RUN conda config --remove channels defaults
 RUN conda install --file requirements.txt
 

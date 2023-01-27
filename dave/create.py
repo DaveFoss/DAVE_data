@@ -469,7 +469,7 @@ def create_grid(
         save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
 
     # plot informations
-    if plot:
+    if not api_use and plot:
         if any([roads, roads_plot, buildings, landuse]):
             plot_geographical_data(grid_data, api_use, output_folder)
         if any(power_levels + gas_levels):
