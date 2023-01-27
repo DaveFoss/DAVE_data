@@ -85,11 +85,14 @@ def from_osm(
         # request landuse information
         landuse = get_osm_data(grid_data, "landuse", border, target_geom)
         # request some leisure place information which are relevant as landuse area
-        # leisure = get_osm_data(grid_data, "leisure", border, target_geom)  # !!! sind falsch getaggt
+        leisure = get_osm_data(grid_data, "leisure", border, target_geom)
         # request some natural place information which are relevant as landuse area
-        # natural = get_osm_data(grid_data, "natural", border, target_geom) # !!! Fehler landuse attribute
+        natural = get_osm_data(
+            grid_data, "natural", border, target_geom
+        )  # !!! Fehler landuse attribute
         # natural parameter in landuse umbenennen und zu landuse hinzufügen?
-
+        # hier noch concat von den dreien
+        landuse = pd.concat([landuse, leisure, natural], ignore_index=True)
         # check if there are data for landuse
         if not landuse.empty:
             # convert geometry to polygon
