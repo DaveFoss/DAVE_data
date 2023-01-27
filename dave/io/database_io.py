@@ -193,11 +193,11 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
             df_to_mongo_merge(database, collection, data_df)
         else:
             df_to_mongo(database, collection, data_df)
-    elif filepath.split(".")[1] == "csv":
+    elif filepath.split(".")[-1] == "csv":
         pass
-    elif filepath.split(".")[1] == "xlsx":
+    elif filepath.split(".")[-1] == "xlsx":
         pass
-    elif filepath.split(".")[1] == "h5":
+    elif filepath.split(".")[-1] == "h5":
         # open hdf file
         file = pd.HDFStore(filepath)
         for key in file.keys():
