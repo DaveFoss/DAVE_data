@@ -98,14 +98,14 @@ def dave_settings():
             "leisure": (
                 "leisure",
                 ["golf_course", "garden", "park"],
-                ["relation"],
-                ["id"],  # !!!parameter noch eintragen
+                ["way", "relation"],
+                ["leisure", "landuse", "natural", "name", "geometry", "id"],
             ),
             "natural": (
                 "natural",
                 ["scrub", "grassland", "water", "wood"],
-                ["relation"],
-                ["id"],  # !!!parameter noch eintragen
+                ["way", "relation"],
+                ["natural", "landuse", "leisure", "name", "geometry", "id"],
             ),
             "building": (
                 "building",
