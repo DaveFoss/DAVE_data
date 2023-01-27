@@ -367,9 +367,9 @@ def render_to_gdf(osmdata, drop_untagged=True):
             rel_id = osmdata.relmembers[osmdata.relmembers.ref == way.id].iloc[0].id
             ways.at[i, "relation_id"] = rel_id
             # get and add origin relation landuse if needed
-            rel_landuse = osmdata.reltags[osmdata.reltags.id == rel_id].iloc[0].landuse
-            if str(way.landuse) == "nan":
-                ways.at[i, "landuse"] = rel_landuse
+            osm_reltag = osmdata.reltags[osmdata.reltags.id == rel_id].iloc[0]
+            if "landuse" in osm_reltag.keys() and str(way.landuse) == "nan":
+                ways.at[i, "landuse"] = osm_reltag.landuse
 
     if ways is not None:
         nodes = pd.concat([nodes, ways], ignore_index=True)
