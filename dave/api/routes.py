@@ -160,7 +160,7 @@ def db_info(parameters: Info_param):
 
 
 # get method for database update
-@router.get("/db_info")
+@router.get("/db_update")
 def db_update(parameters: Update_param):
     # authenticate user
     if auth_token(token=parameters.auth_token):
