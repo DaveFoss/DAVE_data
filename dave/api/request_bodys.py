@@ -58,6 +58,11 @@ class Info_param(BaseModel):
     auth_token: dict
 
 
+# create request body for update database request
+class Update_param(BaseModel):
+    auth_token: dict
+
+
 # create request body for the database request
 class Db_param(BaseModel):
     auth_token: dict

@@ -17,8 +17,10 @@ from dave.api.request_bodys import (
     Db_param,
     Db_up_param,
     Info_param,
+    Update_param,
 )
 from dave.create import create_grid
+from dave.datapool.db_update import update_database
 from dave.datapool.read_data import read_postal
 from dave.io.database_io import db_availability, from_mongo, info_mongo, to_mongo
 from dave.io.file_io import to_json
@@ -153,6 +155,17 @@ def db_info(parameters: Info_param):
     # authenticate user
     if auth_token(token=parameters.auth_token):
         return info_mongo()
+    else:
+        return "Token expired or invalid"
+
+
+# get method for database update
+@router.get("/db_info")
+def db_update(parameters: Update_param):
+    # authenticate user
+    if auth_token(token=parameters.auth_token):
+        update_database()
+        return "Database successfully updated"
     else:
         return "Token expired or invalid"
 

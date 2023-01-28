@@ -224,7 +224,7 @@ def local_data_update():
     pbar.close()
 
 
-if __name__ == "__main__":
+def update_database():
     # start runtime
     _start_time = timeit.default_timer()
     # set parameter for rebuild the db e.g. in the case the db is crashed
