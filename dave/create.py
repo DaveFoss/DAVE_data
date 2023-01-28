@@ -334,12 +334,12 @@ def create_grid(
         nuts_region=nuts_region,
         own_area=own_area,
         buffer=0,
-        roads=bool("roads" in geodata or roads_l),
-        roads_plot=bool("roads_plot" in geodata or roads_plot_l),
-        buildings=bool("buildings" in geodata or buildings_l),
-        landuse=bool("landuse" in geodata or landuse_l),
-        railways=bool("railways" in geodata),
-        waterways=bool("waterways" in geodata),
+        roads=bool("roads" in geodata or "ALL" in geodata or roads_l),
+        roads_plot=bool("roads_plot" in geodata or "ALL" in geodata or roads_plot_l),
+        buildings=bool("buildings" in geodata or "ALL" in geodata or buildings_l),
+        landuse=bool("landuse" in geodata or "ALL" in geodata or landuse_l),
+        railways=bool("railways" in geodata or "ALL" in geodata),
+        waterways=bool("waterways" in geodata or "ALL" in geodata),
     )
     # save interim status of the informations in user folder
     save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)

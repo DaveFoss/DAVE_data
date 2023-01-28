@@ -60,11 +60,7 @@ grid_data = create_grid(
     opt_model=False,
     combine_areas=[],
     # geographical parameters
-    roads=True,
-    roads_plot=False,
-    buildings=False,
-    landuse=False,
-    railways=False,
+    geodata=["roads", "railways"],
     # converting parameters
     convert_power=[],  # if True a second return variable must be defined
     convert_gas=[],  # if True a second return variable must be defined
