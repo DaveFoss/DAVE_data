@@ -212,12 +212,7 @@ def create_grid(
     federal_state=None,
     nuts_region=None,
     own_area=None,
-    roads=False,
-    roads_plot=False,
-    buildings=False,
-    landuse=False,
-    railways=False,
-    waterways=False,
+    geodata=[],
     power_levels=[],
     gas_levels=[],
     plot=True,
@@ -258,18 +253,9 @@ def create_grid(
             (e.g. "C:/Users/name/test/test.shp") \n
 
     OPTIONAL:
-        **roads** (bool, default False) - if true, road information are added to the grid \
-            model which are grid relevant \n
-        **roads_plot** (bool, default False) - if true, road information are added to the grid \
-            model which are only for a better orientation in the plotting \n
-        **buildings** (bool, default False) - if true, building information are added to the grid \
-            model \n
-        **landuse** (bool, default False) - if true, landuse information are added to the grid \
-            model \n
-        **railways** (bool, default False) - if true, railway information are added to the grid \
-            model \n
-        **waterways** (bool, default False) - if true, waterway information are added to the grid \
-            model \n
+        **geodata** (list, default []) - this parameter defines which geodata should be considered.\
+            options: 'roads','roads_plot','buildings','landuse', 'railways', 'waterways', []. \
+                there could be choose: one/multiple geoobjects or 'ALL' \n
         **power_levels** (list, default []) - this parameter defines which power levels should be \
             considered. options: 'ehv','hv','mv','lv', []. there could be choose: one/multiple \
                 level(s) or 'ALL' \n
@@ -348,11 +334,12 @@ def create_grid(
         nuts_region=nuts_region,
         own_area=own_area,
         buffer=0,
-        roads=bool(roads or roads_l),
-        roads_plot=bool(roads_plot or roads_plot_l),
-        buildings=bool(buildings or buildings_l),
-        landuse=bool(landuse or landuse_l),
-        railways=railways,
+        roads=bool("roads" in geodata or roads_l),
+        roads_plot=bool("roads_plot" in geodata or roads_plot_l),
+        buildings=bool("buildings" in geodata or buildings_l),
+        landuse=bool("landuse" in geodata or landuse_l),
+        railways=bool("railways" in geodata),
+        waterways=bool("waterways" in geodata),
     )
     # save interim status of the informations in user folder
     save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
