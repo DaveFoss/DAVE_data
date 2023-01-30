@@ -39,7 +39,18 @@ def from_json(file_path, encryption_key=None):
     else:
         with open(file_path) as file:
             json_string = file.read()
-    return from_json_string(json_string, encryption_key=encryption_key)
+    # check if it is a json string in DAVE structure
+    json_type = json.loads(json_string)["_module"]
+    if json_type == "dave.dave_structure":
+        return from_json_string(json_string, encryption_key=encryption_key)
+    elif json_type == "pandapower.auxiliary":
+        print("A pandapower network is given as input and will be convertert in pandapower format")
+        return pp.from_json(file_path)
+    elif json_type == "ppi":
+        print("A pandapipes network is given as input and will be convertert in pandapipes format")
+        return ppi.from_json(file_path)
+    else:
+        raise UserWarning("The given json file is not a DAVE dataset")
 
 
 def from_json_string(json_string, encryption_key=None):
