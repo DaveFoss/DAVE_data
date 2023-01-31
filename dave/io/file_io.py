@@ -28,6 +28,7 @@ from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 
 
+# --- JSON
 def from_json(file_path, encryption_key=None):
     """
     Load a dave dataset from a JSON file.
@@ -100,6 +101,7 @@ def to_json(grid_data, file_path=None, encryption_key=None):
             file.write(json_string)
 
 
+# --- HDF5
 def from_hdf(dataset_path):
     """
     This functions reads a dave dataset in HDF5 format from a user given path
@@ -167,11 +169,13 @@ def to_hdf(grid_data, dataset_path):
                             )
                 elif isinstance(grid_data[key][key_sec], gpd.GeoDataFrame):
                     file.put(f"/{key}/{key_sec}", wkt_to_wkb(grid_data[key][key_sec]))
-                elif isinstance(grid_data[key][key_sec], gpd.GeoSeries):
-                    if not grid_data[key][key_sec].empty:
-                        data = pd.DataFrame({"geometry": grid_data[key][key_sec]})
-                        data["geometry"] = data.geometry.apply(dumps)
-                        file.put(f"/{key}/{key_sec}", data)
+                elif (
+                    isinstance(grid_data[key][key_sec], gpd.GeoSeries)
+                    and not grid_data[key][key_sec].empty
+                ):
+                    data = pd.DataFrame({"geometry": grid_data[key][key_sec]})
+                    data["geometry"] = data.geometry.apply(dumps)
+                    file.put(f"/{key}/{key_sec}", data)
                 elif isinstance(grid_data[key][key_sec], pd.DataFrame):
                     file.put(f"/{key}/{key_sec}", grid_data[key][key_sec])
         elif isinstance(grid_data[key], gpd.GeoDataFrame):
@@ -184,6 +188,42 @@ def to_hdf(grid_data, dataset_path):
     file.close()
 
 
+# --- geopackage (GPKG)
+def to_gpkg(grid_data, dataset_path):
+    """
+    This functions stores a dave dataset at a given path in the geopackage format
+    """
+    # go trough the dave dataset keys and save each data in the gpkg file
+    for key in grid_data.keys():
+        if isinstance(grid_data[key], davestructure):
+            for key_sec in grid_data[key].keys():
+                if isinstance(grid_data[key][key_sec], davestructure):
+                    for key_trd in grid_data[key][key_sec].keys():
+                        if (
+                            isinstance(grid_data[key][key_sec][key_trd], gpd.GeoDataFrame)
+                            and not grid_data[key][key_sec][key_trd].empty
+                        ):
+                            grid_data[key][key_sec][key_trd].to_file(
+                                dataset_path, layer=f"{key}/{key_sec}/{key_trd}", driver="GPKG"
+                            )
+                elif (
+                    isinstance(grid_data[key][key_sec], gpd.GeoDataFrame)
+                    and not grid_data[key][key_sec].empty
+                ):
+                    grid_data[key][key_sec].to_file(
+                        dataset_path, layer=f"{key}/{key_sec}", driver="GPKG"
+                    )
+                elif (
+                    isinstance(grid_data[key][key_sec], gpd.GeoSeries)
+                    and not grid_data[key][key_sec].empty
+                ):
+                    data = gpd.GeoDataFrame({"geometry": grid_data[key][key_sec]})
+                    data.to_file(dataset_path, layer=f"{key}/{key_sec}", driver="GPKG")
+        elif isinstance(grid_data[key], gpd.GeoDataFrame) and not grid_data[key].empty:
+            grid_data[key].to_file(dataset_path, layer=f"{key}", driver="GPKG")
+
+
+# --- Archiv
 def from_archiv(dataset_name):
     """
     This functions reads a dave dataset from the dave internal archiv
@@ -214,6 +254,7 @@ def to_archiv(grid_data):
     return file_name
 
 
+# --- pandapower
 def pp_to_json(net, file_path):
     """
     This functions converts a pandapower model into a json file
@@ -255,6 +296,7 @@ def json_to_pp(file_path):
     return net
 
 
+# --- pandapipes
 def ppi_to_json(net, file_path):
     """
     This functions converts a pandapipes model into a json file

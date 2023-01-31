@@ -22,7 +22,7 @@ from dave.components.power_plants import (
 from dave.components.transformers import create_transformers
 from dave.dave_structure import davestructure
 from dave.geography import target_area
-from dave.io.file_io import from_archiv, to_archiv, to_hdf, to_json
+from dave.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
 from dave.model.create_gaslib import create_gaslib
 from dave.model.create_pandapipes import create_pandapipes
 from dave.model.create_pandapower import create_pandapower
@@ -204,6 +204,8 @@ def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use
                 to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
             elif output_format == "hdf":
                 to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
+            elif output_format == "gpkg":
+                to_gpkg(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.gpkg")
 
 
 def create_grid(

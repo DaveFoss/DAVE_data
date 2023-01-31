@@ -2,6 +2,13 @@ Change Log
 =============
 
 
+[1.1.1] - (2023--) 
+----------------------
+- [ADDED]   geopackage as output format
+- [ADDED]   extend geographical data with more landuse information and data for waterways
+- [CHANGED] input parameters for geographical objects reduced to one parameter "geodata" 
+
+
 [1.1.0] - 2022-11-03
 ----------------------
 - [EVENT]   first open accessible "software as a service" platform version
