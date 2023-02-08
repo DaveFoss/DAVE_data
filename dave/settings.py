@@ -5,7 +5,7 @@
 import os
 
 # switch develop stage
-stage = "production"  # set development modus
+stage = "develop"  # set development modus
 if stage == "develop":
     # --- parameter for develop mode
     # keycloak settings
@@ -78,6 +78,8 @@ def dave_settings():
                     "residential",
                     "living_street",
                     "footway",
+                    "track",
+                    "path",
                 ],
                 ["way"],
                 ["geometry", "name", "highway", "surface"],

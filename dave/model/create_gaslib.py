@@ -284,7 +284,7 @@ def create_gaslib(grid_data, api_use, output_folder):
             pipe, "heatTransferCoefficient", {"unit": "W_per_m_square_per_K", "value": "2"}
         )  # !!! annahme
         connections.append(pipe)
-    # create compressors
+    # create compressor station
     for _, compressor in compressors_dave.iterrows():
         nodeid = (
             mapping[compressor.junction]
@@ -347,3 +347,9 @@ def create_gaslib(grid_data, api_use, output_folder):
     # update progress
     pbar.update(100)  # !!! Muss noch verteilt werden
     # return net
+
+
+def create_gaslib_cs():
+    pass
+    # hier Compressor station abgleich machen und cs file erstellen
+    # !!! cs file erstellen
