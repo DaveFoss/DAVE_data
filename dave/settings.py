@@ -4,8 +4,11 @@
 
 import os
 
-# switch develop stage
-stage = "develop"  # set development modus
+# --- switch develop stage
+# develop mode: running dave from ide and keycloak in local docker network
+# local mode: runing dave and keycloak in local docker network
+# production mode: running dave and keycloak on production server docker network
+stage = "production"  # set development modus
 if stage == "develop":
     # --- parameter for develop mode
     # keycloak settings
