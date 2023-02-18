@@ -24,11 +24,7 @@ class Dataset_param(BaseModel):
     federal_state: Optional[list] = None
     nuts_regions: Optional[list] = None
     own_area: Optional[str] = None
-    roads: Optional[bool] = False
-    roads_plot: Optional[bool] = False
-    buildings: Optional[bool] = False
-    landuse: Optional[bool] = False
-    railways: Optional[bool] = False
+    geodata: Optional[list] = []
     power_levels: Optional[list] = []
     gas_levels: Optional[list] = []
     plot: Optional[bool] = True
