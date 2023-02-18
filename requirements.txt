@@ -3,7 +3,6 @@ Shapely
 geopandas 
 matplotlib
 geopy
-pandapower
 contextily  # schauen ob man das raus bekommt
 fastapi
 uvicorn
@@ -17,4 +16,5 @@ pyrosm
 python-keycloak
 authlib
 # via pip
+#pandapower
 #pandapipes
