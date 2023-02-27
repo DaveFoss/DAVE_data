@@ -78,7 +78,7 @@ class DaveRequest:
             postalcode=parameters.postalcode,
             town_name=parameters.town_name,
             federal_state=parameters.federal_state,
-            nuts_region=parameters.nuts_regions,
+            nuts_region=parameters.nuts_region,
             own_area=parameters.own_area,
             geodata=parameters.geodata,
             power_levels=parameters.power_levels,

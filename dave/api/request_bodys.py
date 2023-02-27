@@ -22,7 +22,7 @@ class Dataset_param(BaseModel):
     postalcode: Optional[list] = None
     town_name: Optional[list] = None
     federal_state: Optional[list] = None
-    nuts_regions: Optional[list] = None
+    nuts_region: Optional[tuple] = None
     own_area: Optional[str] = None
     geodata: Optional[list] = []
     power_levels: Optional[list] = []
