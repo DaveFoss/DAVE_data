@@ -13,6 +13,7 @@ pre-commit
 black
 isort
 pymongo
+openpyxl
 xmlschema
 lxml
 pyrosm
