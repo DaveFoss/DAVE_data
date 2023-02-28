@@ -19,14 +19,14 @@ RUN conda config --add channels conda-forge
 RUN conda config --set channel_priority flexible
 RUN conda config --remove channels defaults
 RUN conda install --file requirements.txt
-RUN conda install openpyxl
 
 # install some packages via pip because they not availible in conda
 RUN pip install -U pip
-RUN pip install pandapower
+#RUN pip install pandapower
 RUN pip install pandapipes
 
 # install dave
+RUN conda update pyopenssl
 RUN python setup.py install && \
     python setup.py clean --all
 
