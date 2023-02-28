@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y git
 RUN conda update conda
 
 # update python version
-RUN conda install python==3.10.8
+RUN conda install python==3.10.9
 
 # install packages via conda forge
 RUN conda config --add channels conda-forge
