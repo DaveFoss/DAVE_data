@@ -292,7 +292,7 @@ def create_lv_topology(grid_data):
             distance = road_junctions_grid.geometry.apply(
                 lambda x: Point(line_coords_from).distance(x)
             )
-            if distance.min() < 1e-04:
+            if not distance.empty and distance.min() < 1e-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
