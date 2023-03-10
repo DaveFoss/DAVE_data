@@ -70,6 +70,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
     # --- create lines
     # create lines ehv + hv
     lines_ehvhv = pd.concat([grid_data.ehv_data.ehv_lines, grid_data.hv_data.hv_lines])
+    lines_ehvhv.reset_index(drop=True, inplace=True)
     if not lines_ehvhv.empty:
         lines_ehvhv.rename(columns={"dave_name": "name"}, inplace=True)
         lines_ehvhv["from_bus"] = lines_ehvhv.from_bus.apply(

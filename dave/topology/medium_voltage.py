@@ -78,8 +78,7 @@ def create_mv_topology(grid_data):
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
 
     # change wrong crs from oep
-    mvlv_substations.crs = dave_settings()["crs_meter"]
-    mvlv_substations.to_crs(dave_settings()["crs_main"], inplace=True)
+    mvlv_substations.crs = dave_settings()["crs_main"]
     mvlv_substations.rename(
         columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
     )
