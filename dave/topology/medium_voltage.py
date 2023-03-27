@@ -39,7 +39,7 @@ def create_mv_topology(grid_data):
             table="ego_dp_hvmv_substation"
         )  # take polygon for full area
         # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         hvmv_substations.rename(
             columns={
@@ -74,7 +74,7 @@ def create_mv_topology(grid_data):
     # create mv/lv substations
     mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
     # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+    if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
 
     # change wrong crs from oep
@@ -115,7 +115,7 @@ def create_mv_topology(grid_data):
     # change geometry to point
     hvmv_buses["geometry"] = hvmv_buses.point.apply(lambda x: loads(x, hex=True))
     # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+    if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     hvmv_buses = hvmv_buses.rename(columns={"version": "ego_version", "subst_id": "ego_subst_id"})
     # filter trafos which are within the grid area

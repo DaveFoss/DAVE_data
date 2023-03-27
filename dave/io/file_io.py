@@ -42,7 +42,7 @@ def from_json(file_path, encryption_key=None):
             json_string = file.read()
     # check if it is a json string in DAVE structure
     json_type = json.loads(json_string)["_module"]
-    if json_type == "dave.dave_structure":
+    if json_type == "dave.dave_structure":  # !!! Fehler??
         return from_json_string(json_string, encryption_key=encryption_key)
     elif json_type == "pandapower.auxiliary":
         print("A pandapower network is given as input and will be convertert in pandapower format")

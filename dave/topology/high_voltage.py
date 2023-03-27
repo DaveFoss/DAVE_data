@@ -38,7 +38,7 @@ def create_hv_topology(grid_data):
     if grid_data.components_power.substations.ehv_hv.empty:
         ehvhv_substations, meta_data = oep_request(table="ego_dp_ehv_substation")
         # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         ehvhv_substations.rename(
             columns={"version": "ego_version", "subst_id": "ego_subst_id", "voltage": "voltage_kv"},
@@ -76,7 +76,7 @@ def create_hv_topology(grid_data):
             table="ego_dp_hvmv_substation"
         )  # take polygon for full area
         # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         hvmv_substations.rename(
             columns={
@@ -118,7 +118,7 @@ def create_hv_topology(grid_data):
     # --- import hv lines and reduce them to the target area
     ehvhv_lines, meta_data = oep_request(table="ego_pf_hv_line")
     # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+    if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehvhv_lines.rename(
         columns={
@@ -149,7 +149,7 @@ def create_hv_topology(grid_data):
         # --- create hv nodes
         ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
         # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         ehvhv_buses.rename(
             columns={

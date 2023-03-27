@@ -68,7 +68,6 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
             )
         else:
             request_data = from_mongo(database=database, collection=table)
-        meta_data = None  # !!! meta data noch hinzufügen
     else:
         # dave db or dataset is not available so request data directly from oep
         if where:
@@ -120,6 +119,7 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
             request_data = request_data.to_crs(dave_settings()["crs_main"])
 
     # --- request meta informations for a dataset
+    # !!! Todo: seperate option for getting data from DB. When there are no meta data in DB then check OEP Url
     request = requests.get(
         "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"])
     )
@@ -127,7 +127,7 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
         # get region
-        if request_meta["spatial"]["location"]:
+        if 'location' in request_meta["spatial"].keys():
             region = request_meta["spatial"]["location"]
         elif "extent" in request_meta["spatial"].keys():
             region = request_meta["spatial"]["extent"]
@@ -135,11 +135,6 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
             region = request_meta["spatial"]["extend"]
         else:
             region = None
-        # get meta version
-        if "metadata_version" in request_meta.keys():
-            meta_version = request_meta["metadata_version"]
-        elif "meta_version" in request_meta.keys():
-            meta_version = request_meta["meta_version"]
         # create dict
         meta_data = {
             "Main": pd.DataFrame(
@@ -147,16 +142,15 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
                     "Titel": request_meta["title"],
                     "Description": request_meta["description"],
                     "Region": region,
-                    "License": request_meta["license"]["id"],
-                    "License_url": request_meta["license"]["url"],
-                    "copyright": request_meta["license"]["copyright"],
-                    "metadata_version": meta_version,
+                    "Licenses": [license['title'] for license in request_meta["licenses"]],
+                    "Licenses_url": [license['path'] for license in request_meta["licenses"]],
+                    "metadata_version": request_meta['metaMetadata']['metadataVersion'],
                 },
                 index=[0],
             ),
             "Sources": pd.DataFrame(request_meta["sources"]),
-            "Data": pd.DataFrame(request_meta["resources"][0]["fields"]),
+            "Data": pd.DataFrame(request_meta["resources"][0]['schema']["fields"]),
         }
     else:
-        meta_data = pd.DataFrame()
+        meta_data = {}
     return request_data, meta_data

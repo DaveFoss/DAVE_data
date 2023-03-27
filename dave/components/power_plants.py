@@ -340,7 +340,7 @@ def create_renewable_powerplants(grid_data):
         for plz in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(table="ego_renewable_powerplant", where=f"postcode={plz}")
             # add meta data
-            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if plz == grid_data.target_input.data.iloc[0][0]:
                 renewables = data
@@ -350,7 +350,7 @@ def create_renewable_powerplants(grid_data):
         for name in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(table="ego_renewable_powerplant", where=f"city={name}")
             # add meta data
-            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if name == grid_data.target_input.data.iloc[0][0]:
                 renewables = data
@@ -816,7 +816,7 @@ def create_conventional_powerplants(grid_data):
                 table="ego_conventional_powerplant", where=f"postcode={plz}"
             )
             # add meta data
-            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if plz == grid_data.target_input.data.iloc[0][0]:
                 conventionals = data
@@ -826,7 +826,7 @@ def create_conventional_powerplants(grid_data):
         for name in grid_data.target_input.data.iloc[0]:
             data, meta_data = oep_request(table="ego_conventional_powerplant", where=f"city={name}")
             # add meta data
-            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             if name == grid_data.target_input.data.iloc[0][0]:
                 conventionals = data
