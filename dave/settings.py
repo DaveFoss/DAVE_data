@@ -40,6 +40,7 @@ def dave_settings():
         # main definitions
         "dave_dir": os.path.dirname(os.path.realpath(__file__)),
         "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
+        "stage": stage,
         # database definitions (mongo db)
         "db_user": "dave_db_admin",
         "db_pw": "RxOPwwnahGhIKwLLhPH2",

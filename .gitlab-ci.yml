@@ -28,8 +28,24 @@ before_script:
 #     # master or develop branch and no schedule piplines
 #     - if: ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop") && $CI_PIPELINE_SOURCE != "schedule"
 
+# --- build develop docker image from develop branch (push to git zv container registry)
+build_develop_container:
+  stage: docker
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+    - asprunner
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
+  rules:
+    # develop branch 
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: manual
 
-# build release docker image from master branch (incl. push to gwdg server)
+# --- build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
   stage: docker
   image:
@@ -46,22 +62,20 @@ build_release_container:
     # master branch and no schedule piplines
     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
 
-# build develop docker image from develop branch (push to git zv container registry)
-build_develop_container:
-  stage: docker
-  image:
-    name: gcr.io/kaniko-project/executor:debug
+# --- testing deployment conditions 
+deployment_test:
+  stage: deploy
+  image: 
+    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
     entrypoint: [""]
   tags:
     - asprunner
   script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context dir:///$CI_PROJECT_DIR/ --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY/dave/dave:latest --insecure --skip-tls-verify --insecure-pull --cleanup
+    - pytest dave/tests/deployment --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
   rules:
-    # develop branch 
-    - if: $CI_COMMIT_BRANCH == "develop"
-      when: manual
+    # master or develop branch and no schedule piplines
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+
 
 # deploy new docker image release to server and reastart system
 # Furthermore restart system if there are any changes on the system relevant files (e.g. docker-compose)
