@@ -251,8 +251,10 @@ def create_grid(
             target nuts regions codes (independent from nuts level). It could also be choose ['ALL'] \
             for all nuts regions in europe. The second tuple parameter defines the nuts \
             year as string.\n
-        **own_area** (string) - absolute path to a shape file which includes own target area \
-            (e.g. "C:/Users/name/test/test.shp") \n
+        **own_area** (string / Polygon) - First Option for this parameter is to hand over a string \
+            which could be the absolute path to a shape file which includes own target area \
+            (e.g. "C:/Users/name/test/test.shp") or a JSON string with the area information. The \
+            second option is to hand over a shapely Polygon which defines the area \n
 
     OPTIONAL:
         **geodata** (list, default []) - this parameter defines which geodata should be considered.\

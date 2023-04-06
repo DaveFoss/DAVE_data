@@ -5,6 +5,7 @@
 import geopandas as gpd
 import pandas as pd
 from shapely.ops import unary_union
+from shapely.geometry import Polygon
 from tqdm import tqdm
 
 from dave.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
@@ -38,10 +39,31 @@ def _target_by_postalcode(grid_data, postalcode):
     return target
 
 
-def _own_area_postal(grid_data, target):
+
+def _target_by_own_area(grid_data, own_area):
     """
-    This functions searches for the postal codes which intersects with the own area
+    This function define the target area by a own area from the user. This could be a shapefile or 
+    directly a polygon. Furthermore the function filter the postalcode informations for the target area.
     """
+    if isinstance(own_area, str):
+        if own_area[-3:] == "shp":
+            target = gpd.read_file(own_area)
+        else:
+            target = from_json_string(own_area)
+        # check if the given shape file is empty
+        if target.empty:
+            print("The given shapefile includes no data")
+    elif isinstance(own_area, Polygon):
+        target = gpd.GeoDataFrame({'name': ['own area'], 'geometry': [own_area]}, crs=dave_settings()["crs_main"])
+    else:
+        print("The given format is unknown")
+    
+    # check crs and project to the right one if needed
+    if (target.crs) and (target.crs != dave_settings()["crs_main"]):
+        target = target.to_crs(dave_settings()["crs_main"])
+    if "id" in target.keys():
+        target = target.drop(columns=["id"])   
+    # convert own area into postal code areas for target_input
     postal, meta_data = read_postal()
     # add meta data
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -50,7 +72,7 @@ def _own_area_postal(grid_data, target):
     postal_intersection = intersection_with_area(postal, target, remove_columns=False)
     # filter duplicated postal codes
     own_postal = postal_intersection["postalcode"].unique().tolist()
-    return own_postal
+    return target, own_postal
 
 
 def _target_by_town_name(grid_data, town_name):
@@ -297,19 +319,7 @@ def target_area(
         )
         grid_data.target_input = target_input
     elif own_area:
-        if own_area[-3:] == "shp":
-            target = gpd.read_file(own_area)
-        else:
-            target = from_json_string(own_area)
-        # check if the given shape file is empty
-        if target.empty:
-            print("The given shapefile includes no data")
-        # check crs and project to the right one if needed
-        if (target.crs) and (target.crs != dave_settings()["crs_main"]):
-            target = target.to_crs(dave_settings()["crs_main"])
-        if "id" in target.keys():
-            target = target.drop(columns=["id"])
-        own_postal = _own_area_postal(grid_data, target)
+        target, own_postal = _target_by_own_area(grid_data, own_area)
         target_input = pd.DataFrame(
             {
                 "typ": "own area",

@@ -11,7 +11,7 @@ from dave.settings import dave_settings
 
 def test_sources_availability():
     """
-    Checking the availability of all data sources that DaVe uses via an API
+    Checking the availability of all data sources that DAVE uses via an API
     """
     # check open energy platform
     oep_url = "http://oep.iks.cs.ovgu.de/"

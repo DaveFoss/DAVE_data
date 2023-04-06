@@ -6,7 +6,7 @@ stages:
     - deploy
     
 # define task which should execute before each jobs
-before_script:
+#before_script:
     # add something
 
 # testing changes 
