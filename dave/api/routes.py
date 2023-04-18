@@ -22,7 +22,7 @@ from dave.api.request_bodys import (
 from dave.create import create_grid
 from dave.datapool.db_update import update_database
 from dave.datapool.read_data import read_postal
-from dave.io.database_io import db_availability, from_mongo, info_mongo, to_mongo
+from dave.io.database_io import db_availability, from_mongo, info_mongo, to_mongo, denied_databases
 from dave.io.file_io import to_json
 from dave.settings import dave_settings
 
@@ -149,8 +149,9 @@ def request_datapool(parameters: Datapool_param, pool: DatapoolRequest = Depends
 @router.get("/db_info")
 def db_info(parameters: Info_param):
     # authenticate user
-    if auth_token(token=parameters.auth_token):
-        return info_mongo()
+    active, roles = auth_token(token=parameters.auth_token, roles=True)
+    if active:
+        return info_mongo(roles)
     else:
         return "Token expired or invalid"
 
@@ -167,18 +168,21 @@ def db_update(parameters: Update_param):
 
 
 class DbRequest:
-    def db_request(self, parameters):
+    def db_request(self, parameters, roles):
         # read data from mongo db
         if db_availability(collection_name=parameters.collection):
-            data = from_mongo(
-                database=parameters.database,
-                collection=parameters.collection,
-                filter_method=parameters.filter_method,
-                filter_param=parameters.filter_param,
-                filter_value=parameters.filter_value,
-            )
-            # convert postalcodes to JSON string
-            return data.to_json()
+            if parameters.database not in denied_databases(roles):
+                data = from_mongo(
+                    database=parameters.database,
+                    collection=parameters.collection,
+                    filter_method=parameters.filter_method,
+                    filter_param=parameters.filter_param,
+                    filter_value=parameters.filter_value,
+                )
+                # convert postalcodes to JSON string
+                return data.to_json()
+            else:
+                return "You don't have access to this database"
         else:
             return "Database collection is not available"
 
@@ -187,8 +191,9 @@ class DbRequest:
 @router.get("/request_db")
 def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
     # authenticate user
-    if auth_token(token=parameters.auth_token):
-        data = db.db_request(parameters)
+    active, roles = auth_token(token=parameters.auth_token, roles=True)
+    if active:
+        data = db.db_request(parameters, roles)
         return data
     else:
         return "Token expired or invalid"

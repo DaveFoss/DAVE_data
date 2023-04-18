@@ -13,12 +13,31 @@ from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings
 
 
-def info_mongo():
+def denied_databases(roles):
+    """
+    This function define all databases that the current user does not have access to
+
+    """
+    # define denied databases
+    denied_databases = ["admin", "config", "local"]
+    if 'transhyde' not in roles:
+        denied_databases += ['transhyde']
+    return denied_databases
+
+
+def info_mongo(roles):
+    """
+    This function returns information about all datasets available in the database
+
+    INPUT:
+        **roles** (list) - all roles of the current user
+
+    """
     info_mongo = {}
     client = db_client()
     # wirte databases
     for db in list(client.list_databases()):
-        if db["name"] not in ["admin", "config", "local"]:
+        if db["name"] not in denied_databases(roles):
             db_name = client[db["name"]]
             collections = []
             for collection in list(db_name.list_collections()):
