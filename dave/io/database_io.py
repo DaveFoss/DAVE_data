@@ -13,19 +13,20 @@ from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings
 
 
-def denied_databases(roles):
+def denied_databases(roles=[]):
     """
     This function define all databases that the current user does not have access to
 
     """
     # define denied databases
-    denied_databases = ["admin", "config", "local"]
+    denied_databases = ["admin", "config", "local"]  # !!! evt roles optional machen und die als default??
+    # check confidential databases
     if 'transhyde' not in roles:
         denied_databases += ['transhyde']
     return denied_databases
 
 
-def info_mongo(roles):
+def info_mongo(roles=[]):
     """
     This function returns information about all datasets available in the database
 
@@ -47,12 +48,12 @@ def info_mongo(roles):
     return info_mongo
 
 
-def db_availability(collection_name=None):
+def db_availability(collection_name=None, roles=[]):
     # check if the dave database is available
     try:
         requests.get(f"http://{dave_settings()['db_ip']}/")
         if collection_name:
-            db_databases = info_mongo()
+            db_databases = info_mongo(roles)
             available = False
             for database in db_databases.keys():
                 if collection_name in db_databases[database]["collections"]:

@@ -170,7 +170,7 @@ def db_update(parameters: Update_param):
 class DbRequest:
     def db_request(self, parameters, roles):
         # read data from mongo db
-        if db_availability(collection_name=parameters.collection):
+        if db_availability(collection_name=parameters.collection, roles=roles):
             if parameters.database not in denied_databases(roles):
                 data = from_mongo(
                     database=parameters.database,
