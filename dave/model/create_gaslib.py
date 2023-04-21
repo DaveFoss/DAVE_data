@@ -59,6 +59,9 @@ def create_gaslib(grid_data, api_use, output_folder):
 
     # read data from dave dictionary
     nodes_dave = grid_data.hp_data.hp_junctions
+    # set junctions external to the considered area to import and export to 1
+    nodes_dave["is_import"] = nodes_dave.apply(lambda x: int(1) if x.external == True else x.is_import, axis=1)
+    nodes_dave["is_export"] = nodes_dave.apply(lambda x: int(1) if x.external == True else x.is_export, axis=1)
     # nodes_dave_ext = nodes_dave[nodes_dave.external == True].dave_name.to_list()
     pipes_dave = grid_data.hp_data.hp_pipes
     compressors_dave = grid_data.components_gas.compressors
@@ -284,7 +287,7 @@ def create_gaslib(grid_data, api_use, output_folder):
             pipe, "heatTransferCoefficient", {"unit": "W_per_m_square_per_K", "value": "2"}
         )  # !!! annahme
         connections.append(pipe)
-    # create compressors
+    # create compressor station
     for _, compressor in compressors_dave.iterrows():
         nodeid = (
             mapping[compressor.junction]
@@ -347,3 +350,9 @@ def create_gaslib(grid_data, api_use, output_folder):
     # update progress
     pbar.update(100)  # !!! Muss noch verteilt werden
     # return net
+
+
+def create_gaslib_cs():
+    pass
+    # hier Compressor station abgleich machen und cs file erstellen
+    # !!! cs file erstellen

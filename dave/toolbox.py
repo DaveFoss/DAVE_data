@@ -2,12 +2,14 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
+import os
+import time
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
+import requests
 from geopy.geocoders import ArcGIS
+from numpy import append, array
 from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiLineString, MultiPoint
 from shapely.ops import cascaded_union, linemerge, polygonize
@@ -32,10 +34,7 @@ def create_interim_area(areas):
         for i, area in areas.iterrows():
             # check if the considered area adjoining an other one
             areas_other = areas.drop([i])
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = areas_other.geometry.distance(area.geometry)
+            distance = areas_other.geometry.apply(lambda x: area.geometry.distance(x))
             if distance.min() > 0:
                 areas_iso.append((i, distance.idxmin()))
         # if their are isolated areas, check for a connection on the highest grid level
@@ -54,7 +53,6 @@ def create_interim_area(areas):
                     [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
                     ignore_index=True,
                 )
-
     return areas
 
 
@@ -71,7 +69,7 @@ def voronoi(points):
     # define points for voronoi centroids
     points = points.reset_index(drop=True)  # don't use inplace
     voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
-    voronoi_points = np.array(voronoi_centroids)
+    voronoi_points = array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
     bound_points = MultiPoint(points.geometry).convex_hull.buffer(1).bounds
     points_boundary = [
@@ -81,13 +79,13 @@ def voronoi(points):
         [bound_points[2], bound_points[3]],
     ]
     # append boundary points to avoid infinit polygons with relevant nodes
-    voronoi_points = np.append(voronoi_points, points_boundary, axis=0)
+    voronoi_points = append(voronoi_points, points_boundary, axis=0)
     # carry out voronoi analysis
     vor = Voronoi(voronoi_points)
     # select finit lines and create LineStrings (regions with -1 are infinit)
     lines = [LineString(vor.vertices[line]) for line in vor.ridge_vertices if -1 not in line]
     # create polygons from the lines
-    polygons = np.array(list(polygonize(lines)))
+    polygons = array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
     voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
     # search voronoi centroids and dave name
@@ -103,7 +101,7 @@ def voronoi(points):
     return voronoi_polygons
 
 
-def adress_to_coords(adress):
+def adress_to_coords(adress, geolocator):
     """
     This function request geocoordinates to a given adress.
 
@@ -114,8 +112,9 @@ def adress_to_coords(adress):
     OUTPUT:
         **geocoordinates** (tuple) - geocoordinates for the adress in format (longitude, latitude)
     """
-    if adress:
+    if not geolocator:
         geolocator = ArcGIS(timeout=None)
+    if adress:
         location = geolocator.geocode(adress)
         return (location.longitude, location.latitude)
 
@@ -126,12 +125,25 @@ def multiline_coords(line_geometry):
     """
     merged_line = linemerge(line_geometry)
     # sometimes line merge can not merge the lines correctly
-    line_coords = (
-        [line.coords[:] for line in merged_line]
-        if isinstance(merged_line, MultiLineString)
-        else merged_line.coords[:]
-    )
+    line_coords = []
+    if isinstance(merged_line, MultiLineString):
+        for line in list(merged_line.geoms):
+            line_coords += line.coords[:]
+    else:
+        line_coords += merged_line.coords[:]
     return line_coords
+
+
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    path = (
+        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+    )
+    return path
 
 
 def intersection_with_area(gdf, area, remove_columns=True):
@@ -172,3 +184,44 @@ def intersection_with_area(gdf, area, remove_columns=True):
         remove_columns.remove("geometry")
         gdf_over.drop(columns=remove_columns, inplace=True)
     return gdf_over
+
+
+def related_sub(bus, substations):
+    """
+    This function searches the related substation for a bus and returns some
+    substation information
+
+    INPUT:
+        **bus** (Shapely Point) - bus geometry
+        **substations** (DataFrame) - Table of the possible substations
+
+    OUTPUT:
+        (Tuple) - Substation information for a given bus (ego_subst_id, subst_dave_name, subst_name)
+    """
+    sub_filtered = substations[
+        substations.geometry.apply(lambda x: (bus.within(x)) or (bus.distance(x) < 1e-05))
+    ]
+    ego_subst_id = sub_filtered.ego_subst_id.to_list() if not sub_filtered.empty else []
+    subst_dave_name = sub_filtered.dave_name.to_list() if not sub_filtered.empty else []
+    subst_name = sub_filtered.subst_name.to_list() if not sub_filtered.empty else []
+    return ego_subst_id, subst_dave_name, subst_name
+
+
+def auth_available():
+    """
+    This function checks the avalibility of the DAVE authentication and retry the connection until
+    it is ready
+    """
+    # wait until dave api is ready
+    available = False
+    while not available:
+        try:
+            request = requests.get(dave_settings()["keycloak_server_url"])
+            if request.status_code == 200:
+                available = True
+            elif request.status_code == 404:
+                print("DAVE auth server is not ready, retry in 10 seconds")
+                time.sleep(10)
+        except requests.ConnectionError:
+            print("DAVE auth server is not available, retry in 10 seconds")
+            time.sleep(10)

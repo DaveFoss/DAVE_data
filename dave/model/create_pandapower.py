@@ -7,7 +7,7 @@ import pandas as pd
 from shapely.geometry import MultiLineString
 from tqdm import tqdm
 
-from dave.io import pp_to_json
+from dave.io.file_io import pp_to_json
 from dave.settings import dave_settings
 from dave.toolbox import multiline_coords
 
@@ -70,6 +70,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
     # --- create lines
     # create lines ehv + hv
     lines_ehvhv = pd.concat([grid_data.ehv_data.ehv_lines, grid_data.hv_data.hv_lines])
+    lines_ehvhv.reset_index(drop=True, inplace=True)
     if not lines_ehvhv.empty:
         lines_ehvhv.rename(columns={"dave_name": "name"}, inplace=True)
         lines_ehvhv["from_bus"] = lines_ehvhv.from_bus.apply(
@@ -431,7 +432,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
         # check if their are convolutional power plants in the grid area
         if not net.gen.empty:
             # set gens with max p_mw as slack bus
-            net.gen.at[net.gen[net.gen.p_mw == net.gen.p_mw.max()].index, "slack"] = True
+            net.gen.at[net.gen[net.gen.p_mw == net.gen.p_mw.max()].index[0], "slack"] = True
         # in case there is no convolutional power plant
         else:
             # create a ext grid on the first ehv grid bus
@@ -679,7 +680,7 @@ def power_processing(
                     net.load.p_mw = net.res_load.p_mw
                     net.load.q_mvar = net.res_load.q_mvar
                     net.gen.p_mw = net.res_gen.p_mw
-                    net.gen.sn_mva = (net.res_gen.p_mw ** 2 + net.res_gen.q_mvar ** 2).pow(1 / 2)
+                    net.gen.sn_mva = (net.res_gen.p_mw**2 + net.res_gen.q_mvar**2).pow(1 / 2)
                     net.gen.vm_pu = net.res_gen.vm_pu
             except:
                 print("optimal power flow did not converged")

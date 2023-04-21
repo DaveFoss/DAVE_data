@@ -1,12 +1,47 @@
 Change Log
 =============
 
+
+[1.1.1] - (2023--) 
+----------------------
+- [ADDED]   geopackage as output format
+- [ADDED]   extend geographical data with more landuse information and data for waterways
+- [CHANGED] input parameters for geographical objects reduced to one parameter "geodata" 
+
+
+[1.1.0] - 2022-11-03
+----------------------
+- [EVENT]   first open accessible "software as a service" platform version
+- [ADDED]   algorithm for automated deployment
+- [ADDED]   api authentication
+- [ADDED]   own database for DAVE (mongo db) and restructured data requests
+- [ADDED]   algorithm for regular automated database updates
+- [ADDED]   algorithm for regular automated database dump
+- [EVENT]   DAVE licensed under a three clause bsd license 
+- [ADDED]   geography module and separated geographical data from grid model generation
+- [ADDED]   restructured target area functions
+- [FIXED]   osm gateway timeout
+- [FIXED]   stack overflow error
+- [ADDED]   different years as option for nuts regions 
+- [CHANGED] renamed building category from "for_living" to "residential" 
+- [ADDED]   function for intersection with considering mixed geometries 
+- [FIXED]   duplicate naming
+- [ADDED]   topology cleanup for power and gas models 
+- [CHANGED] power components script splitted to separate scripts according to the components
+- [CHANGED] bus naming in ehv and hv models from "bus0/bus1" to "from/to_bus" 
+- [ADDED]   gaslib converter
+- [CHANGED] channel for required packages to only "conda forge" because of anaconda terms changes
+- [ADDED]   gas component: source, sink, compressor
+- [ADDED]   pandapipes converter
+- [ADDED]   function to transform address into coordinates
+
+
 [1.0.6] - 2021-10-20
 ----------------------
 - [ADDED]   option for output folder path
 - [FIXED]   wrong/missing types at pandapower converter
 - [FIXED]   missing crs definitions
-- [ADDED]   application programming interface (api)
+- [ADDED]   application programming interface (api) module
 - [CHANGED] build seperated io modul, changed structure and moved existing io functions to that
 - [CHANGED] rebuild from/to hdf functions and merged with from/to archiv 
 - [ADDED]   functions for serialization

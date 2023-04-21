@@ -2,17 +2,18 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import math
 import warnings
+from math import acos, sin
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
+from numpy import array, random
 from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
 
-from dave.datapool import query_osm, read_federal_states, read_household_consumption, read_postal
+from dave.datapool.osm_request import query_osm
+from dave.datapool.read_data import read_federal_states, read_household_consumption, read_postal
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area, voronoi
 
@@ -27,15 +28,17 @@ def get_household_power(consumption_data, household_size):
         **household_size** (int) - size of the houshold between 1 and 5 person
     """
     # set power factor
-    cos_phi_residential = dave_settings()["cos_phi_residential"]
-    household_consumptions = consumption_data["household_consumptions"]
-    household_consumption = household_consumptions[
-        household_consumptions["Personen pro Haushalt"] == household_size
+    household_consumption = consumption_data["household_consumptions"][
+        consumption_data["household_consumptions"]["Personen pro Haushalt"] == household_size
     ]
     p_mw = (household_consumption.iloc[0]["Durchschnitt  [kwh/a]"] / 1000) / dave_settings()[
         "h_per_a"
     ]
-    q_mvar = p_mw * math.sin(math.acos(cos_phi_residential)) / cos_phi_residential
+    q_mvar = (
+        p_mw
+        * sin(acos(dave_settings()["cos_phi_residential"]))
+        / dave_settings()["cos_phi_residential"]
+    )
     return p_mw, q_mvar
 
 
@@ -65,21 +68,21 @@ def create_loads(grid_data):
     if "lv" in power_levels:
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
-            grid_data.lv_data.lv_nodes.node_type == "building_centroid"
+            grid_data.lv_data.lv_nodes.node_type == "building_connection"
         ]
         # --- create lv loads for residential
-        buildings_residential = grid_data.buildings.residential
         federal_states, meta_data = read_federal_states()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        federal_states = federal_states.rename(columns={"name": "federal state"})
-        drop_columns = federal_states.keys().drop("federal state").drop("geometry")
-        # intersect buildings with federal state areas to get the suitable federal state
+        federal_states.rename(columns={"name": "federal state"}, inplace=True)
+        # intersect residential buildings with federal state areas to get the suitable federal state
         buildings_feds = intersection_with_area(
-            buildings_residential, federal_states, remove_columns=False
+            grid_data.buildings.residential, federal_states, remove_columns=False
         )
-        buildings_feds.drop(columns=drop_columns, inplace=True)
+        buildings_feds.drop(
+            columns=federal_states.keys().drop("federal state").drop("geometry"), inplace=True
+        )
         # read consumption data
         consumption_data, meta_data = read_household_consumption()
         # update progress
@@ -116,7 +119,7 @@ def create_loads(grid_data):
                 # Obtain data from OSM
                 plz_residential, meta_data = query_osm(
                     "way", border, recurse="down", tags=['landuse~"residential"']
-                )
+                )  # !!! nicht sowieso in landuse enthalten?
                 # add meta data
                 if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                     grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -148,7 +151,6 @@ def create_loads(grid_data):
             if area.population != 0:
                 # filter buildings for considered area
                 buildings_area = buildings_feds[buildings_feds.geometry.within(area.geometry)]
-                buildings_idx = buildings_area.index.to_list()
                 buildings_idx_first = buildings_area.index.to_list()  # this will be reduced later
                 federal_state = buildings_area.iloc[0]["federal state"]
                 household_sizes = consumption_data["household_sizes"]
@@ -159,10 +161,10 @@ def create_loads(grid_data):
                 w_3p = sizes_feds["Anteil 3 Personen [%]"] / 100
                 w_4p = sizes_feds["Anteil 4 Personen [%]"] / 100
                 w_5p = sizes_feds["Anteil 5 Personen und mehr [%]"] / 100
-                # distribute the whole population over teh considered area
+                # distribute the whole population over the considered area
                 pop_distribute = area.population
                 # construct random generator
-                rng = np.random.default_rng()
+                rng = random.default_rng()
                 while pop_distribute != 0:
                     if pop_distribute > 5:
                         # select houshold size, weighted randomly
@@ -183,7 +185,7 @@ def create_loads(grid_data):
                         buildings_idx_first.remove(building_idx)
                     # distribution for the rest loads makes no matter so selected randomly
                     else:
-                        building_idx = rng.choice(buildings_idx, 1)[0]
+                        building_idx = rng.choice(buildings_area.index.to_list(), 1)[0]
                     # search for suitable grid node
                     building_boundary = buildings_area.loc[building_idx].geometry
                     if isinstance(building_boundary, LineString):
@@ -200,10 +202,9 @@ def create_loads(grid_data):
                     else:
                         # check the case that the building centroid is outside building boundary
                         building_centroid = building_geom.centroid
-                        with warnings.catch_warnings():
-                            # filter crs warning because it is not relevant
-                            warnings.filterwarnings("ignore", category=UserWarning)
-                            centroid_distance = building_nodes.distance(building_centroid)
+                        centroid_distance = building_nodes.geometry.apply(
+                            lambda x: building_centroid.distance(x)
+                        )
                         if centroid_distance.min() < 1e-04:
                             lv_node = building_nodes.loc[centroid_distance.idxmin()]
                     # create residential load
@@ -229,7 +230,7 @@ def create_loads(grid_data):
             grid_data.buildings.commercial.building == "industrial"
         ]
         industrial_polygons_sum = unary_union(
-            np.array(list(polygonize(industrial_buildings.geometry)))
+            array(list(polygonize(industrial_buildings.geometry)))
         )  # !!! replace unary union function
         industrial_area_full = industrial_polygons_sum.area
         for i, industrial_poly in industrial_buildings.iterrows():
@@ -245,9 +246,7 @@ def create_loads(grid_data):
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": industrial_load_full
                             * (building_poly.area / industrial_area_full),
-                            "q_mvar": p_mw
-                            * math.sin(math.acos(cos_phi_industrial))
-                            / cos_phi_industrial,
+                            "q_mvar": p_mw * sin(acos(cos_phi_industrial)) / cos_phi_industrial,
                             "landuse": "industrial",
                             "voltage_level": [7],
                             "geometry": building_point.iloc[0].geometry,
@@ -265,7 +264,7 @@ def create_loads(grid_data):
             grid_data.buildings.commercial.building != "industrial"
         ]
         commercial_polygons_sum = unary_union(
-            np.array(list(polygonize(commercial_buildings.geometry)))
+            array(list(polygonize(commercial_buildings.geometry)))
         )
         commercial_area_full = commercial_polygons_sum.area
         for i, commercial_poly in commercial_buildings.iterrows():
@@ -281,9 +280,7 @@ def create_loads(grid_data):
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": commercial_load_full
                             * (building_poly.area / commercial_area_full),
-                            "q_mvar": p_mw
-                            * math.sin(math.acos(cos_phi_commercial))
-                            / cos_phi_commercial,
+                            "q_mvar": p_mw * sin(acos(cos_phi_commercial)) / cos_phi_commercial,
                             "landuse": "commercial",
                             "voltage_level": [7],
                             "geometry": building_point.iloc[0].geometry,
@@ -350,19 +347,19 @@ def create_loads(grid_data):
                     ]
                     area = residential_polygons.area_km2.sum()
                     p_mw = residential_load * area
-                    q_mvar = p_mw * math.sin(math.acos(cos_phi_residential)) / cos_phi_residential
+                    q_mvar = p_mw * sin(acos(cos_phi_residential)) / cos_phi_residential
                 elif loadtype == "industrial":
                     industrial_polygons = landuse_polygons[landuse_polygons.landuse == "industrial"]
                     area = industrial_polygons.area_km2.sum()
                     p_mw = industrial_load * area
-                    q_mvar = p_mw * math.sin(math.acos(cos_phi_industrial)) / cos_phi_industrial
+                    q_mvar = p_mw * sin(acos(cos_phi_industrial)) / cos_phi_industrial
                 elif loadtype == "commercial":
                     commercial_polygons = landuse_polygons[
                         landuse_polygons.landuse.isin(["commercial", "retail"])
                     ]
                     area = commercial_polygons.area_km2.sum()
                     p_mw = commercial_load * area
-                    q_mvar = p_mw * math.sin(math.acos(cos_phi_commercial)) / cos_phi_commercial
+                    q_mvar = p_mw * sin(acos(cos_phi_commercial)) / cos_phi_commercial
                 if p_mw != 0:
                     load_df = gpd.GeoDataFrame(
                         {
@@ -382,15 +379,12 @@ def create_loads(grid_data):
             # update progress
             pbar.update(79.8 / len(trafo_names))
     # add dave name
-    name = pd.Series(
-        list(
-            map(
-                lambda x, y: f"load_{x}_{y}",
-                grid_data.components_power.loads.voltage_level,
-                grid_data.components_power.loads.index,
-            )
-        )
+    grid_data.components_power.loads.insert(
+        0,
+        "dave_name",
+        grid_data.components_power.loads.apply(
+            lambda x: f"load_{x.voltage_level}_{x.index}", axis=1
+        ),
     )
-    grid_data.components_power.loads.insert(0, "dave_name", name)
     # close progress bar
     pbar.close()

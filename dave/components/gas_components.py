@@ -6,11 +6,11 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
-from dave.datapool import read_scigridgas_iggielgn
+from dave.datapool.read_data import read_scigridgas_iggielgn
 from dave.settings import dave_settings
 
 
-def sources(grid_data, scigrid_productions):
+def create_sources(grid_data, scigrid_productions):
     """
     This function adds the data for gas sources
     """
@@ -72,7 +72,7 @@ def sources(grid_data, scigrid_productions):
     pbar.close()
 
 
-def compressors(grid_data, scigrid_compressors):
+def create_compressors(grid_data, scigrid_compressors):
     """
     This function adds the data for gas compressors
     """
@@ -131,7 +131,7 @@ def compressors(grid_data, scigrid_compressors):
     pbar.close()
 
 
-def sinks(grid_data, scigrid_consumers):
+def create_sinks(grid_data, scigrid_consumers):
     """
     This function adds the data for gas consumers
     """
@@ -191,7 +191,7 @@ def sinks(grid_data, scigrid_consumers):
     pbar.close()
 
 
-def storages_gas(grid_data, scigrid_storages):
+def create_storages_gas(grid_data, scigrid_storages):
     pass
     # gas storages in germany
     # read_gas_storage_ugs()
@@ -199,7 +199,7 @@ def storages_gas(grid_data, scigrid_storages):
     # check for duplicated strorages in both datasets
 
 
-def valves(grid_data):
+def create_valves(grid_data):
     """
     This function adds the data for valves between junctions
     """
@@ -219,16 +219,16 @@ def gas_components(grid_data, compressor, sink, source, storage_gas, valve):
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     # add compressors
     if compressor:
-        compressors(grid_data, scigrid_compressors=scigrid_data["compressors"])
+        create_compressors(grid_data, scigrid_compressors=scigrid_data["compressors"])
     # add sinks
     if sink:
-        sinks(grid_data, scigrid_consumers=scigrid_data["consumers"])
+        create_sinks(grid_data, scigrid_consumers=scigrid_data["consumers"])
     # add sources
     if source:
-        sources(grid_data, scigrid_productions=scigrid_data["productions"])
+        create_sources(grid_data, scigrid_productions=scigrid_data["productions"])
     # add storages
     if storage_gas:
-        storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
+        create_storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
     # add valves
     if valve:
-        valves(grid_data)
+        create_valves(grid_data)

@@ -7,7 +7,7 @@ import pandas as pd
 from shapely.geometry import MultiLineString
 from tqdm import tqdm
 
-from dave.io import ppi_to_json
+from dave.io.file_io import ppi_to_json
 from dave.settings import dave_settings
 from dave.toolbox import multiline_coords
 
@@ -82,12 +82,14 @@ def create_pandapipes(grid_data, api_use, output_folder):
         pipes_hp["diameter_m"] = pipes_hp.diameter_mm.apply(lambda x: x / 1000)
         pipes_hp.drop(columns=["diameter_mm"])
         # change from/to junction names to ids
-        pipes_hp["from_junction"] = pipes_hp.from_junction.apply(
-            lambda x: net.junction[net.junction["name"] == x].index[0]
-        )
-        pipes_hp["to_junction"] = pipes_hp.to_junction.apply(
-            lambda x: net.junction[net.junction["name"] == x].index[0]
-        )
+        if not "from_junction" in pipes_hp.keys():
+            pipes_hp["from_junction"] = pipes_hp.from_junction.apply(
+                lambda x: net.junction[net.junction["name"] == x].index[0]
+            )
+        if not "to_junction" in pipes_hp.keys():
+            pipes_hp["to_junction"] = pipes_hp.to_junction.apply(
+                lambda x: net.junction[net.junction["name"] == x].index[0]
+            )
         # geodata
         coords_hp = pd.DataFrame(
             {
@@ -207,7 +209,26 @@ def create_pandapipes(grid_data, api_use, output_folder):
     pbar.update(10)
 
     # --- create compressors
-    # !!! ToDo
+    compressors = grid_data.components_gas.compressors
+    if not compressors.empty:
+        # write compressor data into pandapipes structure
+        if "compressor" in net.keys():
+            net.compressor = pd.concat([net.compressor, compressors], ignore_index=True)
+        else:
+            net.compressor = compressors
+        # check necessary parameters and add pandapipes standard if needed
+        net.compressor["pressure_ratio"] = float(1)
+        net.compressor["in_service"] = True
+        # net.compressor["pressure_ratio"] = (
+        #     float(1)
+        #     if all(net.compressor.pressure_ratio.isna())
+        #     else net.compressor.pressure_ratio.apply(lambda x: bool(True) if pd.isna(x) else x)
+        # )
+        # net.compressor["in_service"] = (
+        #     bool(True)
+        #     if all(net.compressor.in_service.isna())
+        #     else net.compressor.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
+        # )
     # update progress
     pbar.update(10)
 
@@ -217,12 +238,14 @@ def create_pandapipes(grid_data, api_use, output_folder):
     if not valves.empty:
         valves.rename(columns={"dave_name": "name"}, inplace=True)
         # change from/to junction names to ids
-        valves["from_junction"] = valves.from_junction.apply(
-            lambda x: net.junction[net.junction["name"] == x].index[0]
-        )
-        valves["to_junction"] = valves.to_junction.apply(
-            lambda x: net.junction[net.junction["name"] == x].index[0]
-        )
+        if not "from_junction" in valves.keys():
+            valves["from_junction"] = valves.from_junction.apply(
+                lambda x: net.junction[net.junction["name"] == x].index[0]
+            )
+        if not "to_junction" in valves.keys():
+            valves["to_junction"] = valves.to_junction.apply(
+                lambda x: net.junction[net.junction["name"] == x].index[0]
+            )
         valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x / 1000)
         valves.drop(columns=["diameter_mm"], inplace=True)
         net.valve = valves

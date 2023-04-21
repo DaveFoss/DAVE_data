@@ -2,17 +2,15 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
-
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points
 from tqdm import tqdm
 
-from dave.datapool import oep_request
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave.toolbox import intersection_with_area, related_sub
 
 
 def nearest_road(building_centroids, roads):
@@ -47,7 +45,9 @@ def line_connections(grid_data):
     """
     # define relevant nodes
     nearest_building_point = gpd.GeoSeries(
-        grid_data.lv_data.lv_nodes[grid_data.lv_data.lv_nodes.node_type == "nearest_point"].geometry
+        grid_data.lv_data.lv_nodes[
+            grid_data.lv_data.lv_nodes.node_type == "grid_connection"
+        ].geometry
     )
     all_nodes = pd.concat(
         [nearest_building_point, grid_data.roads.road_junctions]
@@ -142,21 +142,15 @@ def create_lv_topology(grid_data):
     # --- create substations
     # create mv/lv substations
     if grid_data.components_power.substations.mv_lv.empty:
-        mvlv_substations, meta_data = oep_request(
-            schema="grid",
-            table="ego_dp_mvlv_substation",
-            where=dave_settings()["mvlv_sub_ver"],
-            geometry="geom",
-        )
+        mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
         # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         mvlv_substations.rename(
             columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
         )
         # change wrong crs from oep
-        mvlv_substations.crs = dave_settings()["crs_meter"]
-        mvlv_substations = mvlv_substations.to_crs(dave_settings()["crs_main"])
+        mvlv_substations.crs = dave_settings()["crs_main"]
         # filter trafos which are within the grid area
         mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
         if not mvlv_substations.empty:
@@ -192,7 +186,7 @@ def create_lv_topology(grid_data):
     building_nodes_df = gpd.GeoDataFrame(
         {
             "geometry": building_connections.building_centroid,
-            "node_type": "building_centroid",
+            "node_type": "building_connection",
             "voltage_level": 7,
             "voltage_kv": 0.4,
             "source": "dave internal",
@@ -204,7 +198,7 @@ def create_lv_topology(grid_data):
             gpd.GeoDataFrame(
                 {
                     "geometry": building_nearest,
-                    "node_type": "nearest_point",
+                    "node_type": "grid_connection",
                     "voltage_level": 7,
                     "voltage_kv": 0.4,
                     "source": "dave internal",
@@ -214,15 +208,12 @@ def create_lv_topology(grid_data):
         ignore_index=True,
     )
     # search for the substations where the lv nodes are within
-    for _, bus in building_nodes_df.iterrows():
-        for _, sub in mvlv_substations.iterrows():
-            if (bus.geometry.within(sub.geometry)) or (bus.geometry.distance(sub.geometry) < 1e-05):
-                building_nodes_df.at[bus.name, "ego_subst_id"] = sub.ego_subst_id
-                building_nodes_df.at[bus.name, "subst_dave_name"] = sub.dave_name
-                building_nodes_df.at[bus.name, "subst_name"] = sub.subst_name
-                break
-        # update progress
-        pbar.update(5 / len(building_nodes_df))
+    sub_infos = building_nodes_df.geometry.apply(lambda x: related_sub(x, mvlv_substations))
+    building_nodes_df["ego_subst_id"] = sub_infos.apply(lambda x: x[0])
+    building_nodes_df["subst_dave_name"] = sub_infos.apply(lambda x: x[1])
+    building_nodes_df["subst_name"] = sub_infos.apply(lambda x: x[2])
+    # update progress
+    pbar.update(5)
     # add dave name
     building_nodes_df.reset_index(drop=True, inplace=True)
     building_nodes_df.insert(
@@ -297,19 +288,17 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, "from_bus"] = from_bus.iloc[0].dave_name
         else:
             # check if there is a suitable road junction in grid data
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = road_junctions_grid.geometry.distance(Point(line_coords_from))
-            if distance.min() < 1e-04:
+            distance = road_junctions_grid.geometry.apply(
+                lambda x: Point(line_coords_from).distance(x)
+            )
+            if not distance.empty and distance.min() < 1e-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
                 # no road junction was found, create it from road junction data
-                with warnings.catch_warnings():
-                    # filter crs warning because it is not relevant
-                    warnings.filterwarnings("ignore", category=UserWarning)
-                    distance = road_junctions_origin.geometry.distance(Point(line_coords_from))
+                distance = road_junctions_origin.geometry.apply(
+                    lambda x: Point(line_coords_from).distance(x)
+                )
                 if distance.min() < 1e-04:
                     road_junction_geom = road_junctions_origin.loc[distance.idxmin()]
                     # create lv_point for relevant road junction
@@ -339,19 +328,17 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, "to_bus"] = to_bus.iloc[0].dave_name
         else:
             # check if there is a suitable road junction in grid data
-            with warnings.catch_warnings():
-                # filter crs warning because it is not relevant
-                warnings.filterwarnings("ignore", category=UserWarning)
-                distance = road_junctions_grid.geometry.distance(Point(line_coords_to))
+            distance = road_junctions_grid.geometry.apply(
+                lambda x: Point(line_coords_to).distance(x)
+            )
             if distance.min() < 1e-04:
                 # road junction node was found
                 dave_name = road_junctions_grid.loc[distance.idxmin()].dave_name
             else:
                 # no road junction was found, create it from road junction data
-                with warnings.catch_warnings():
-                    # filter crs warning because it is not relevant
-                    warnings.filterwarnings("ignore", category=UserWarning)
-                    distance = road_junctions_origin.geometry.distance(Point(line_coords_to))
+                distance = road_junctions_origin.geometry.apply(
+                    lambda x: Point(line_coords_to).distance(x)
+                )
                 if distance.min() < 1e-04:
                     road_junction_geom = road_junctions_origin.loc[distance.idxmin()]
                     # create lv_point for relevant road junction

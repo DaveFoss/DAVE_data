@@ -4,6 +4,33 @@
 
 import os
 
+# --- switch develop stage
+# develop mode: running dave from ide and keycloak in local docker network
+# local mode: runing dave and keycloak in local docker network
+# production mode: running dave and keycloak on production server docker network
+stage = "production"  # set development modus
+if stage == "develop":
+    # --- parameter for develop mode
+    # keycloak settings
+    keycloak_server_url = "http://127.0.0.1/auth/"
+    client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
+    # mongo db url
+    db_url = "127.0.0.1:27017"
+elif stage == "local":
+    # --- parameter for local porduction mode
+    # keycloak settings
+    keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
+    client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
+    # mongo db url
+    db_url = "172.20.0.10:27017"
+elif stage == "production":
+    # --- parameter for porduction mode
+    # keycloak settings
+    keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
+    client_secret_key = "lpVjKsFc73HmrAu0FTMF9jq28nktxuvX"
+    # mongo db url
+    db_url = "172.20.0.10:27017"
+
 
 def dave_settings():
     """
@@ -13,32 +40,124 @@ def dave_settings():
         # main definitions
         "dave_dir": os.path.dirname(os.path.realpath(__file__)),
         "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
+        "stage": stage,
         # database definitions (mongo db)
-        "db_user": "root",
-        "db_pw": "example",
-        # "db_ip": "127.0.0.1:27017",  # in develop version
-        "db_ip": "172.20.0.10:27017",  # in production version
+        "db_user": "dave_db_admin",
+        "db_pw": "RxOPwwnahGhIKwLLhPH2",
+        "db_ip": db_url,
+        # authentification definitions
+        "keycloak_server_url": keycloak_server_url,
+        "client_id": "dave_login",
+        "realm_name": "dave",
+        "client_secret_key": client_secret_key,
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
         "crs_main": "EPSG:4326",  # crs which is based on the unit degree
         "crs_meter": "EPSG:3035",  # crs which is based on the unit meter
         # --- data request
-        # OEP versions:
-        "hv_buses_ver": "version=v0.4.6",
-        "hv_line_ver": "version=v0.4.6",
-        "ehv_sub_ver": "version=v0.4.5",
-        "ehvhv_trans_ver": "version=v0.4.6",
-        "hvmv_sub_ver": "version=v0.4.5",
-        "mvlv_sub_ver": "version=v0.4.5",
+        # OEP tables (oep_name:(schema, geometry_parameter, latest_version))
+        "oep_tables": {
+            "ego_pf_hv_bus": ("grid", "geom", "version=v0.4.6"),
+            "ego_pf_hv_line": ("grid", "geom", "version=v0.4.6"),
+            "ego_dp_ehv_substation": ("grid", "polygon", "version=v0.4.5"),
+            "ego_pf_hv_transformer": ("grid", "geom", "version=v0.4.6"),
+            "ego_dp_hvmv_substation": ("grid", "polygon", "version=v0.4.5"),
+            "ego_dp_mvlv_substation": ("grid", "geom", "version=v0.4.5"),
+            "ego_renewable_powerplant": ("supply", None, None),
+            "ego_conventional_powerplant": ("supply", None, None),
+        },
         # osm time delay (because osm doesn't alowed more than 1 request per second)
         "osm_time_delay": 60,  # in seconds
-        # osm tags:
-        "road_tags": 'highway~"secondary|tertiary|unclassified|residential|living_street|footway"',
-        "road_plot_tags": 'highway~"motorway|trunk|primary"',
-        "landuse_tags": 'landuse~"commercial|industrial|residential|retail"',
-        "building_tags": "building",
-        "railway_tags": 'railway~"construction|disused|light_rail|monorail|narrow_gauge|rail|subway|tram"',
+        # osm considered area (data for this area will be downloaded and impplemented in database)
+        "osm_area": "germany",
+        # osm tags: (type: (osm key, osm tags, osm type, parameter))
+        "osm_tags": {
+            "road": (
+                "highway",
+                [
+                    "secondary",
+                    "tertiary",
+                    "unclassified",
+                    "residential",
+                    "living_street",
+                    "footway",
+                    "track",
+                    "path",
+                ],
+                ["way"],
+                ["geometry", "name", "highway", "surface"],
+                "id",
+            ),
+            "road_plot": (
+                "highway",
+                ["motorway", "trunk", "primary"],
+                ["way"],
+                ["geometry", "name", "id", "surface"],
+            ),
+            "landuse": (
+                "landuse",
+                True,
+                ["way", "relation"],
+                ["landuse", "geometry", "name", "id", "surface"],
+            ),
+            "leisure": (
+                "leisure",
+                ["golf_course", "garden", "park"],
+                ["way", "relation"],
+                ["leisure", "landuse", "natural", "name", "geometry", "id", "surface"],
+            ),
+            "natural": (
+                "natural",
+                ["scrub", "grassland", "water", "wood"],
+                ["way", "relation"],
+                ["natural", "landuse", "leisure", "name", "geometry", "id", "surface"],
+            ),
+            "building": (
+                "building",
+                True,
+                ["way"],
+                [
+                    "addr:housenumber",
+                    "addr:street",
+                    "addr:suburb",
+                    "amenity",
+                    "building",
+                    "building:levels",
+                    "geometry",
+                    "name",
+                    "id",
+                ],
+            ),
+            "railway": (
+                "railway",
+                [
+                    "construction",
+                    "disused",
+                    "light_rail",
+                    "monorail",
+                    "narrow_gauge",
+                    "rail",
+                    "subway",
+                    "tram",
+                ],
+                ["way"],
+                ["name", "railway", "geometry", "tram", "train", "usage", "voltage", "id"],
+            ),
+            "waterway": (
+                "waterway",
+                [
+                    "river",
+                    "stream",
+                    "canal",
+                    "tidal_channel ",
+                    "pressurised",
+                    "drain",
+                ],
+                ["way"],
+                ["name", "waterway", "geometry", "depth", "id"],
+            ),
+        },
         # osm categories
         "buildings_residential": [
             "apartments",

@@ -2,16 +2,17 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import math
+from math import pi
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from dave.datapool import oep_request, read_ehv_data
+from dave.datapool.oep_request import oep_request
+from dave.datapool.read_data import read_ehv_data
 from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave.toolbox import intersection_with_area, related_sub
 
 
 def create_ehv_topology(grid_data):
@@ -34,14 +35,9 @@ def create_ehv_topology(grid_data):
     )
     # --- create ehv/ehv and ehv/hv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
-    ehv_substations, meta_data = oep_request(
-        schema="grid",
-        table="ego_dp_ehv_substation",
-        where=dave_settings()["ehv_sub_ver"],
-        geometry="polygon",
-    )
+    ehv_substations, meta_data = oep_request(table="ego_dp_ehv_substation")
     # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+    if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehv_substations.rename(
         columns={"version": "ego_version", "subst_id": "ego_subst_id", "voltage": "voltage_kv"},
@@ -69,14 +65,9 @@ def create_ehv_topology(grid_data):
     # update progress
     pbar.update(10)
     # --- import ehv lines and reduce them to the target area
-    ehvhv_lines, meta_data = oep_request(
-        schema="grid",
-        table="ego_pf_hv_line",
-        where=dave_settings()["hv_line_ver"],
-        geometry="geom",
-    )
+    ehvhv_lines, meta_data = oep_request(table="ego_pf_hv_line")
     # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+    if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     ehvhv_lines.rename(
         columns={
@@ -96,20 +87,17 @@ def create_ehv_topology(grid_data):
         inplace=True,
     )
     # filter lines which are currently availible
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.ego_scn_name == "Status Quo"]
-    ehvhv_lines = ehvhv_lines[ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union)]
+    ehvhv_lines = ehvhv_lines[
+        (ehvhv_lines.ego_scn_name == "Status Quo")
+        & (ehvhv_lines.geometry.intersects(grid_data.area.geometry.unary_union))
+    ]
     # consider data only if there are minimum one line in the target area
     if not ehvhv_lines.empty:
         # --- create ehv nodes
         # read ehv/hv node data from OpenEnergyPlatform and adapt names
-        ehvhv_buses, meta_data = oep_request(
-            schema="grid",
-            table="ego_pf_hv_bus",
-            where=dave_settings()["hv_buses_ver"],
-            geometry="geom",
-        )
+        ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
         # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         ehvhv_buses.rename(
             columns={
@@ -138,23 +126,18 @@ def create_ehv_topology(grid_data):
     # consider data only if there are more than one ehv node in the target area
     if len(ehv_buses) > 1:
         # search for the substations where the ehv nodes are within
-        for _, bus in ehv_buses.iterrows():
-            for _, sub in ehv_substations.iterrows():
-                if (bus.geometry.within(sub.geometry)) or (
-                    bus.geometry.distance(sub.geometry) < 1e-05
-                ):
-                    ehv_buses.at[bus.name, "ego_subst_id"] = sub.ego_subst_id
-                    ehv_buses.at[bus.name, "subst_dave_name"] = sub.dave_name
-                    ehv_buses.at[bus.name, "subst_name"] = sub.subst_name
-                    break
-            # update progress
-            pbar.update(10 / len(ehv_buses))
+        sub_infos = ehv_buses.geometry.apply(lambda x: related_sub(x, ehv_substations))
+        ehv_buses["ego_subst_id"] = sub_infos.apply(lambda x: x[0])
+        ehv_buses["subst_dave_name"] = sub_infos.apply(lambda x: x[1])
+        ehv_buses["subst_name"] = sub_infos.apply(lambda x: x[2])
+        # update progress
+        pbar.update(10)
+        """ the license of the open tso data is not clarified
         # read ehv tso data
         ehv_data, meta_data = read_ehv_data()
         # add meta data
         if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-        """ the license of the open tso data is not clarified
         # assign tso ehv node names to the ego ehv nodes
         for _, node in ehv_data["ehv_nodes"].iterrows():
             if node.osm_id:
@@ -188,7 +171,7 @@ def create_ehv_topology(grid_data):
         ehv_buses_tso_names = ehv_buses.tso_name.to_list()
         area = grid_data.area.drop(columns=['name']) if 'name' in grid_data.area.keys() \
             else grid_data.area
-        # filter nodes which are within the grid area 
+        # filter nodes which are within the grid area
         ehv_buses_tso = intersection_with_area(ehv_data['ehv_nodes'], area, remove_columns=False)
         for _, tso_bus in ehv_buses_tso.iterrows():
             tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
@@ -243,7 +226,7 @@ def create_ehv_topology(grid_data):
             # calculate and add r,x,c per km
             ehv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
             ehv_lines.at[line.name, "x_ohm_per_km"] = float(line.x_ohm) / line.length_km
-            c_nf = float(line.b_s) / (2 * math.pi * float(line.frequency)) * 1e09
+            c_nf = float(line.b_s) / (2 * pi * float(line.frequency)) * 1e09
             ehv_lines.at[line.name, "c_nf"] = c_nf
             ehv_lines.at[line.name, "c_nf_per_km"] = c_nf / line.length_km
             # calculate and add max i
@@ -258,6 +241,9 @@ def create_ehv_topology(grid_data):
         ehv_lines["to_bus"] = to_bus_new
         # add oep as source
         ehv_lines["source"] = "OEP"
+        ehv_lines["voltage_level"] = 1
+        # update progress
+        pbar.update(30)
         """ the license of the open tso data is not clarified
         # add missing tso ehv lines which are not in the ego line data
         ehv_buses_from_tso = ehv_buses[ehv_buses.source == 'tso data'].tso_name.tolist()
@@ -295,8 +281,6 @@ def create_ehv_topology(grid_data):
                          'source': 'tso data',
                          'parallel': 1}))
         """
-        # add voltage level
-        ehv_lines["voltage_level"] = 1
         # add dave name
         ehv_lines.reset_index(drop=True, inplace=True)
         ehv_lines.insert(
