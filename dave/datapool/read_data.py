@@ -636,40 +636,40 @@ def read_scigridgas_iggielgn():
         # read data
         iggielgn_data = pd.HDFStore(get_data_path("scigridgas_iggielgn.h5", "data"))
         # border_points
-        border_points = iggielgn_data.get("/border_points")
+        border_points = iggielgn_data.get("/scigridgas_iggielgn_border_points")
         border_points = gpd.GeoDataFrame(
             border_points,
             geometry=gpd.points_from_xy(border_points.long, border_points.lat),
             crs=dave_settings()["crs_main"],
         )
         # compressors
-        compressors = iggielgn_data.get("/compressors")
+        compressors = iggielgn_data.get("/scigridgas_iggielgn_compressors")
         compressors = gpd.GeoDataFrame(
             compressors,
             geometry=gpd.points_from_xy(compressors.long, compressors.lat),
             crs=dave_settings()["crs_main"],
         )
         # comsumer
-        consumers = iggielgn_data.get("/consumers")
+        consumers = iggielgn_data.get("/scigridgas_iggielgn_consumers")
         consumers = gpd.GeoDataFrame(
             consumers,
             geometry=gpd.points_from_xy(consumers.long, consumers.lat),
             crs=dave_settings()["crs_main"],
         )
         # lngss
-        lngs = iggielgn_data.get("/lngs")
+        lngs = iggielgn_data.get("/scigridgas_iggielgn_lngs")
         lngs = gpd.GeoDataFrame(
             lngs, geometry=gpd.points_from_xy(lngs.long, lngs.lat), crs=dave_settings()["crs_main"]
         )
         # nodes
-        nodes = iggielgn_data.get("/nodes")
+        nodes = iggielgn_data.get("/scigridgas_iggielgn_nodes")
         nodes = gpd.GeoDataFrame(
             nodes,
             geometry=gpd.points_from_xy(nodes.long, nodes.lat),
             crs=dave_settings()["crs_main"],
         )
         # pipe_segments
-        pipe_segments = iggielgn_data.get("/pipe_segments")
+        pipe_segments = iggielgn_data.get("/scigridgas_iggielgn_pipe_segments")
         pipe_segments.lat = pipe_segments.lat.apply(eval)
         pipe_segments.long = pipe_segments.long.apply(eval)
         geometry = [
@@ -679,14 +679,14 @@ def read_scigridgas_iggielgn():
             pipe_segments, geometry=pd.Series(geometry), crs=dave_settings()["crs_main"]
         )
         # productions
-        productions = iggielgn_data.get("/productions")
+        productions = iggielgn_data.get("/scigridgas_iggielgn_productions")
         productions = gpd.GeoDataFrame(
             productions,
             geometry=gpd.points_from_xy(productions.long, productions.lat),
             crs=dave_settings()["crs_main"],
         )
         # storages
-        storages = iggielgn_data.get("/storages")
+        storages = iggielgn_data.get("/scigridgas_iggielgn_storages")
         storages = gpd.GeoDataFrame(
             storages,
             geometry=gpd.points_from_xy(storages.long, storages.lat),
