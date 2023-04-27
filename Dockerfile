@@ -22,7 +22,7 @@ RUN conda install --file requirements.txt
 
 # install some packages via pip because they not availible in conda
 RUN pip install -U pip
-#RUN pip install pandapower
+RUN pip install pandapower
 RUN pip install pandapipes
 
 # install dave

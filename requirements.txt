@@ -3,7 +3,6 @@ Shapely
 geopandas 
 matplotlib
 geopy
-pandapower
 contextily  # schauen ob man das raus bekommt
 fastapi
 uvicorn
