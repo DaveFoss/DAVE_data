@@ -10,7 +10,7 @@ pytest
 pytest-cov
 pytest-xdist
 pymongo
-#openpyxl
+openpyxl
 xmlschema
 lxml
 pyrosm
