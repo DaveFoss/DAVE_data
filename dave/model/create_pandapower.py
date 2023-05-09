@@ -18,7 +18,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
 
     INPUT:
         **grid_data** (attrdict) - calculated grid data from dave
-        **opt_model** (bool) - optimize model during model processintg
+        **opt_model** (bool) - optimize model during model processing
 
     OUTPUT:
         **net** (attrdict) - pandapower attrdict with grid data

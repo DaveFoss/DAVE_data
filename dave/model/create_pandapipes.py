@@ -12,12 +12,24 @@ from dave.settings import dave_settings
 from dave.toolbox import multiline_coords
 
 
-def create_pandapipes(grid_data, api_use, output_folder):
+def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="dave_name"):
     """
     This function creates a pandapipes network based an the DaVe dataset
 
     INPUT:
         **grid_data** (attrdict) - calculated grid data from dave
+        **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
+            local folder
+        **output_folder** (string, default user desktop) - absolute path to the folder where the \
+            generated data should be saved. if for this path no folder exists, dave will be \
+                create one \n
+    
+    OPTIONAL:
+        **idx_ref** (str, default='dave_name') - defines parameter which should use as referenz \
+            for setting the indices
+        **fluid** (str, default=None) - A fluid that can be added to the net from the start. A \
+            fluid is required for pipeflow calculations. Existing fluids in pandapipes are “hgas”, \
+            “lgas”, “hydrogen”, “methane”, “water”, “air” \n
 
     OUTPUT:
         **net** (attrdict) - pandapipes attrdict with grid data
@@ -30,7 +42,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
         bar_format=dave_settings()["bar_format"],
     )
     # create empty network
-    net = ppi.create_empty_network()
+    net = ppi.create_empty_network(fluid=fluid)
     # add dave version
     net["dave_version"] = grid_data.dave_version
 
@@ -44,7 +56,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
         ]
     )
     if not all_junctions.empty:
-        all_junctions.rename(columns={"dave_name": "name"}, inplace=True)
+        all_junctions.rename(columns={idx_ref: "name"}, inplace=True)
         all_junctions.reset_index(drop=True, inplace=True)
         # write junctions into pandapipes structure
         net.junction = pd.concat([net.junction, all_junctions], ignore_index=True)
@@ -77,16 +89,16 @@ def create_pandapipes(grid_data, api_use, output_folder):
     # create pipes hp
     pipes_hp = grid_data.hp_data.hp_pipes
     if not pipes_hp.empty:
-        pipes_hp.rename(columns={"dave_name": "name"}, inplace=True)
+        pipes_hp.rename(columns={idx_ref: "name"}, inplace=True)
         # conver diameter from mm to m
         pipes_hp["diameter_m"] = pipes_hp.diameter_mm.apply(lambda x: x / 1000)
         pipes_hp.drop(columns=["diameter_mm"])
         # change from/to junction names to ids
-        if not "from_junction" in pipes_hp.keys():
+        if "from_junction" in pipes_hp.keys():
             pipes_hp["from_junction"] = pipes_hp.from_junction.apply(
                 lambda x: net.junction[net.junction["name"] == x].index[0]
             )
-        if not "to_junction" in pipes_hp.keys():
+        if "to_junction" in pipes_hp.keys():
             pipes_hp["to_junction"] = pipes_hp.to_junction.apply(
                 lambda x: net.junction[net.junction["name"] == x].index[0]
             )
@@ -170,7 +182,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
     sinks = grid_data.components_gas.sinks
     # write sink data into pandapipes structure
     if not sinks.empty:
-        sinks.rename(columns={"dave_name": "name"}, inplace=True)
+        sinks.rename(columns={idx_ref: "name"}, inplace=True)
         # change junction names to ids
         sinks["junction"] = sinks.junction.apply(
             lambda x: net.junction[net.junction["name"] == x].index[0]
@@ -188,7 +200,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
     sources = grid_data.components_gas.sources
     # write sink data into pandapipes structure
     if not sources.empty:
-        sources.rename(columns={"dave_name": "name"}, inplace=True)
+        sources.rename(columns={idx_ref: "name"}, inplace=True)
         # change junction names to ids
         sources["junction"] = sources.junction.apply(
             lambda x: net.junction[net.junction["name"] == x].index[0]
@@ -236,7 +248,7 @@ def create_pandapipes(grid_data, api_use, output_folder):
     valves = grid_data.components_gas.valves
     # write valve data into pandapipes structure
     if not valves.empty:
-        valves.rename(columns={"dave_name": "name"}, inplace=True)
+        valves.rename(columns={idx_ref: "name"}, inplace=True)
         # change from/to junction names to ids
         if not "from_junction" in valves.keys():
             valves["from_junction"] = valves.from_junction.apply(
