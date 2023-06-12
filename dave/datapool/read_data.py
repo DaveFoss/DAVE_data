@@ -724,3 +724,14 @@ def read_gaslib():
     # read meta data
     meta_data = gaslib_dict["framework:information"]
     return gaslib_data, meta_data
+
+
+def read_gaslib_cs():
+    # read data from datapool
+    schema = XMLSchema(get_data_path("gaslib/CompressorStations.xsd", "data"))
+    gaslib_dict_cs = schema.to_dict(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
+    # create data dictionary
+    gaslib_data_cs = {"compressor_station": gaslib_dict_cs["framework:compressorStation"]}
+    # read meta data  # TODO: evt aus net nehmen
+    # meta_data = gaslib_dict["framework:information"]
+    return gaslib_data_cs
