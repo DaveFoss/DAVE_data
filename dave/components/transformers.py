@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -35,7 +35,10 @@ def create_transformers(grid_data):
         # read transformator data from OEP, filter current exsist ones and rename paramter names
         hv_trafos, meta_data = oep_request(table="ego_pf_hv_transformer")
         # add meta data
-        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if (
+            bool(meta_data)
+            and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+        ):
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         hv_trafos.rename(
             columns={
@@ -58,7 +61,10 @@ def create_transformers(grid_data):
             # read ehv/hv node data from OpenEnergyPlatform and adapt names
             ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
             # add meta data
-            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if (
+                bool(meta_data)
+                and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+            ):
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             ehvhv_buses.rename(
                 columns={
@@ -231,7 +237,10 @@ def create_transformers(grid_data):
                 table="ego_dp_hvmv_substation"
             )  # polygon to get the full area
             # add meta data
-            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if (
+                bool(meta_data)
+                and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+            ):
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             substations.rename(
                 columns={
@@ -275,7 +284,10 @@ def create_transformers(grid_data):
             # read hv node data from OpenEnergyPlatform and adapt names
             hv_nodes, meta_data = oep_request(table="ego_pf_hv_bus")
             # add meta data
-            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if (
+                bool(meta_data)
+                and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+            ):
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             hv_nodes.rename(
                 columns={
@@ -420,7 +432,10 @@ def create_transformers(grid_data):
             # get transformator data from OEP
             substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
             # add meta data
-            if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+            if (
+                bool(meta_data)
+                and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+            ):
                 grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
             substations.rename(
                 columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True

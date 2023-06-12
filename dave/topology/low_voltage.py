@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -144,7 +144,10 @@ def create_lv_topology(grid_data):
     if grid_data.components_power.substations.mv_lv.empty:
         mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
         # add meta data
-        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if (
+            bool(meta_data)
+            and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+        ):
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         mvlv_substations.rename(
             columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True

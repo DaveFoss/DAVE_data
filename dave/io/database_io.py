@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -19,10 +19,14 @@ def denied_databases(roles=[]):
 
     """
     # define denied databases
-    denied_databases = ["admin", "config", "local"]  # !!! evt roles optional machen und die als default??
+    denied_databases = [
+        "admin",
+        "config",
+        "local",
+    ]  # !!! evt roles optional machen und die als default??
     # check confidential databases
-    if 'transhyde' not in roles:
-        denied_databases += ['transhyde']
+    if "transhyde" not in roles:
+        denied_databases += ["transhyde"]
     return denied_databases
 
 
