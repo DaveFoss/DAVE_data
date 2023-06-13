@@ -43,7 +43,7 @@ def create_sources(grid_data, scigrid_productions):
         sources_junctions = sources.junction.to_list()
         for _, junction in grid_data.hp_data.hp_junctions.iterrows():
             if junction.dave_name in sources_junctions:
-                grid_data.hp_data.hp_junctions.at[junction.name, "is_import"] = 1
+                grid_data.hp_data.hp_junctions.at[junction.name, "is_import"] = True
         # set grid level number
         sources["pressure_level"] = 1
         # get some relevant parameters out from scigrid param and write in single parameter
@@ -164,7 +164,7 @@ def create_sinks(grid_data, scigrid_consumers):
         sink_junctions = sinks.junction.to_list()
         for _, junction in grid_data.hp_data.hp_junctions.iterrows():
             if junction.dave_name in sink_junctions:
-                grid_data.hp_data.hp_junctions.at[junction.name, "is_export"] = 1
+                grid_data.hp_data.hp_junctions.at[junction.name, "is_export"] = True
         # set grid level number
         sinks["pressure_level"] = 1
         # get some relevant parameters out from scigrid param and write in single parameter
