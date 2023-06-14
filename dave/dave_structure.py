@@ -1,9 +1,6 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
-
-from copy import deepcopy
-
 import pandas as pd
 from pandapower.auxiliary import ADict
 
@@ -21,7 +18,7 @@ class davestructure(ADict):
             self.update(**net.deepcopy())
 
     def __repr__(self):  # pragma: no cover
-        titel = "This DaVe dataset includes the following parameter tables:"
+        titel = "This DAVE dataset includes the following parameter tables:"
         for key in list(self.keys()):
             if isinstance(self[key], pd.DataFrame) and not self[key].empty:
                 length = len(self[key])

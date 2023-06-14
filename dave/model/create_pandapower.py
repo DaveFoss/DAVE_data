@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -18,7 +18,7 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
 
     INPUT:
         **grid_data** (attrdict) - calculated grid data from dave
-        **opt_model** (bool) - optimize model during model processintg
+        **opt_model** (bool) - optimize model during model processing
 
     OUTPUT:
         **net** (attrdict) - pandapower attrdict with grid data

@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -127,7 +127,7 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
         # get region
-        if 'location' in request_meta["spatial"].keys():
+        if "location" in request_meta["spatial"].keys():
             region = request_meta["spatial"]["location"]
         elif "extent" in request_meta["spatial"].keys():
             region = request_meta["spatial"]["extent"]
@@ -142,14 +142,14 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
                     "Titel": request_meta["title"],
                     "Description": request_meta["description"],
                     "Region": region,
-                    "Licenses": [license['title'] for license in request_meta["licenses"]],
-                    "Licenses_url": [license['path'] for license in request_meta["licenses"]],
-                    "metadata_version": request_meta['metaMetadata']['metadataVersion'],
+                    "Licenses": [license["title"] for license in request_meta["licenses"]],
+                    "Licenses_url": [license["path"] for license in request_meta["licenses"]],
+                    "metadata_version": request_meta["metaMetadata"]["metadataVersion"],
                 },
                 index=[0],
             ),
             "Sources": pd.DataFrame(request_meta["sources"]),
-            "Data": pd.DataFrame(request_meta["resources"][0]['schema']["fields"]),
+            "Data": pd.DataFrame(request_meta["resources"][0]["schema"]["fields"]),
         }
     else:
         meta_data = {}

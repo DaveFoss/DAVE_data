@@ -1,11 +1,11 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import geopandas as gpd
 import pandas as pd
-from shapely.ops import unary_union
 from shapely.geometry import Polygon
+from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
@@ -39,10 +39,9 @@ def _target_by_postalcode(grid_data, postalcode):
     return target
 
 
-
 def _target_by_own_area(grid_data, own_area):
     """
-    This function define the target area by a own area from the user. This could be a shapefile or 
+    This function define the target area by a own area from the user. This could be a shapefile or
     directly a polygon. Furthermore the function filter the postalcode informations for the target area.
     """
     if isinstance(own_area, str):
@@ -54,15 +53,17 @@ def _target_by_own_area(grid_data, own_area):
         if target.empty:
             print("The given shapefile includes no data")
     elif isinstance(own_area, Polygon):
-        target = gpd.GeoDataFrame({'name': ['own area'], 'geometry': [own_area]}, crs=dave_settings()["crs_main"])
+        target = gpd.GeoDataFrame(
+            {"name": ["own area"], "geometry": [own_area]}, crs=dave_settings()["crs_main"]
+        )
     else:
         print("The given format is unknown")
-    
+
     # check crs and project to the right one if needed
     if (target.crs) and (target.crs != dave_settings()["crs_main"]):
         target = target.to_crs(dave_settings()["crs_main"])
     if "id" in target.keys():
-        target = target.drop(columns=["id"])   
+        target = target.drop(columns=["id"])
     # convert own area into postal code areas for target_input
     postal, meta_data = read_postal()
     # add meta data

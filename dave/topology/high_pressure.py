@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -108,8 +108,8 @@ def create_hp_topology(grid_data):
     scigrid_nodes["pressure_level"] = 1
     # set import and export to default. This parameters are useful to define the kind of nodes and
     # they will be overwritten in the sink and source scripts
-    scigrid_nodes["is_export"] = 0
-    scigrid_nodes["is_import"] = 0
+    scigrid_nodes["is_export"] = False
+    scigrid_nodes["is_import"] = False
     # set height
     scigrid_nodes["height_m"] = dave_settings()["hp_nodes_height_m"]
     # filter junctions which are within the grid area
@@ -137,8 +137,8 @@ def create_hp_topology(grid_data):
             ]
         )
         hp_junctions_ext = scigrid_nodes[scigrid_nodes.scigrid_id.isin(junctions_extern.unique())]
-        hp_junctions_ext["is_export"] = 1
-        hp_junctions_ext["is_import"] = 1
+        hp_junctions_ext["is_export"] = True
+        hp_junctions_ext["is_import"] = True
         hp_junctions_ext["external"] = True
         # add external junctions to hp_junctions
         hp_junctions = pd.concat(

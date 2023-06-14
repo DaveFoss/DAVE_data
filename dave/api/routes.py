@@ -1,10 +1,12 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import json
 
 import geopandas as gpd
+import pandapipes as ppi
+import pandapower as pp
 import pandas as pd
 from fastapi import APIRouter, Depends, Request
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
@@ -22,7 +24,7 @@ from dave.api.request_bodys import (
 from dave.create import create_grid
 from dave.datapool.db_update import update_database
 from dave.datapool.read_data import read_postal
-from dave.io.database_io import db_availability, from_mongo, info_mongo, to_mongo, denied_databases
+from dave.io.database_io import db_availability, denied_databases, from_mongo, info_mongo, to_mongo
 from dave.io.file_io import to_json
 from dave.settings import dave_settings
 
@@ -73,33 +75,124 @@ def login(parameters: Auth_param, auth: Login = Depends(Login)):
 # -------------------------------
 class DaveRequest:
     def create_dataset(self, parameters):
-        # run DaVe main function to create a dataset
-        grid_data = create_grid(
-            postalcode=parameters.postalcode,
-            town_name=parameters.town_name,
-            federal_state=parameters.federal_state,
-            nuts_region=parameters.nuts_region,
-            own_area=parameters.own_area,
-            geodata=parameters.geodata,
-            power_levels=parameters.power_levels,
-            gas_levels=parameters.gas_levels,
-            plot=parameters.plot,
-            convert_power=parameters.convert_power,
-            convert_gas=parameters.convert_gas,
-            opt_model=parameters.opt_model,
-            combine_areas=parameters.combine_areas,
-            transformers=parameters.transformers,
-            renewable_powerplants=parameters.renewable_powerplants,
-            conventional_powerplants=parameters.conventional_powerplants,
-            loads=parameters.loads,
-            compressors=parameters.compressors,
-            sinks=parameters.sinks,
-            sources=parameters.sources,
-            storages_gas=parameters.storages_gas,
-            valves=parameters.valves,
-        )
-        # convert dave dataset to JSON string
-        return to_json(grid_data)
+        if parameters.convert_power and parameters.convert_gas:
+            # run DaVe main function to create a dataset
+            grid_data, net_power, net_gas = create_grid(
+                postalcode=parameters.postalcode,
+                town_name=parameters.town_name,
+                federal_state=parameters.federal_state,
+                nuts_region=parameters.nuts_region,
+                own_area=parameters.own_area,
+                geodata=parameters.geodata,
+                power_levels=parameters.power_levels,
+                gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
+                convert_power=parameters.convert_power,
+                convert_gas=parameters.convert_gas,
+                opt_model=parameters.opt_model,
+                combine_areas=parameters.combine_areas,
+                transformers=parameters.transformers,
+                renewable_powerplants=parameters.renewable_powerplants,
+                conventional_powerplants=parameters.conventional_powerplants,
+                loads=parameters.loads,
+                compressors=parameters.compressors,
+                sinks=parameters.sinks,
+                sources=parameters.sources,
+                storages_gas=parameters.storages_gas,
+                valves=parameters.valves,
+            )
+            # convert dave dataset to JSON string
+            return json.dumps(
+                {
+                    "grid_data": to_json(grid_data),
+                    "net_power": pp.to_json(net_power),
+                    "net_gas": ppi.to_json(net_gas),
+                }
+            )
+        elif parameters.convert_power:
+            # run DaVe main function to create a dataset
+            grid_data, net_power = create_grid(
+                postalcode=parameters.postalcode,
+                town_name=parameters.town_name,
+                federal_state=parameters.federal_state,
+                nuts_region=parameters.nuts_region,
+                own_area=parameters.own_area,
+                geodata=parameters.geodata,
+                power_levels=parameters.power_levels,
+                gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
+                convert_power=parameters.convert_power,
+                convert_gas=parameters.convert_gas,
+                opt_model=parameters.opt_model,
+                combine_areas=parameters.combine_areas,
+                transformers=parameters.transformers,
+                renewable_powerplants=parameters.renewable_powerplants,
+                conventional_powerplants=parameters.conventional_powerplants,
+                loads=parameters.loads,
+                compressors=parameters.compressors,
+                sinks=parameters.sinks,
+                sources=parameters.sources,
+                storages_gas=parameters.storages_gas,
+                valves=parameters.valves,
+            )
+            # convert dave dataset to JSON string
+            return json.dumps({"grid_data": to_json(grid_data), "net_power": pp.to_json(net_power)})
+        elif parameters.convert_gas:
+            # run DaVe main function to create a dataset
+            grid_data, net_gas = create_grid(
+                postalcode=parameters.postalcode,
+                town_name=parameters.town_name,
+                federal_state=parameters.federal_state,
+                nuts_region=parameters.nuts_region,
+                own_area=parameters.own_area,
+                geodata=parameters.geodata,
+                power_levels=parameters.power_levels,
+                gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
+                convert_power=parameters.convert_power,
+                convert_gas=parameters.convert_gas,
+                opt_model=parameters.opt_model,
+                combine_areas=parameters.combine_areas,
+                transformers=parameters.transformers,
+                renewable_powerplants=parameters.renewable_powerplants,
+                conventional_powerplants=parameters.conventional_powerplants,
+                loads=parameters.loads,
+                compressors=parameters.compressors,
+                sinks=parameters.sinks,
+                sources=parameters.sources,
+                storages_gas=parameters.storages_gas,
+                valves=parameters.valves,
+            )
+            # convert dave dataset to JSON string
+            return json.dumps({"grid_data": to_json(grid_data), "net_gas": ppi.to_json(net_gas)})
+        else:
+            # run DaVe main function to create a dataset
+            grid_data = create_grid(
+                postalcode=parameters.postalcode,
+                town_name=parameters.town_name,
+                federal_state=parameters.federal_state,
+                nuts_region=parameters.nuts_region,
+                own_area=parameters.own_area,
+                geodata=parameters.geodata,
+                power_levels=parameters.power_levels,
+                gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
+                convert_power=parameters.convert_power,
+                convert_gas=parameters.convert_gas,
+                opt_model=parameters.opt_model,
+                combine_areas=parameters.combine_areas,
+                transformers=parameters.transformers,
+                renewable_powerplants=parameters.renewable_powerplants,
+                conventional_powerplants=parameters.conventional_powerplants,
+                loads=parameters.loads,
+                compressors=parameters.compressors,
+                sinks=parameters.sinks,
+                sources=parameters.sources,
+                storages_gas=parameters.storages_gas,
+                valves=parameters.valves,
+            )
+            # convert dave dataset to JSON string
+            return to_json(grid_data)
 
 
 # get method for dave dataset request
