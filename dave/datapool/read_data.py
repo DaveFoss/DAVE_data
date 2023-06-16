@@ -734,4 +734,16 @@ def read_gaslib_cs():
     gaslib_data_cs = {"compressor_station": gaslib_dict_cs["framework:compressorStation"]}
     # read meta data  # TODO: evt aus net nehmen
     # meta_data = gaslib_dict["framework:information"]
-    return gaslib_data_cs
+
+    from lxml import etree
+
+    gaslib_data_cs_xml = etree.iterparse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
+
+    root = etree.fromstring(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
+
+    import xml.etree.ElementTree as ET
+
+    tree = ET.parse()
+    gaslib_data_cs_xml = tree.getroot()
+
+    return gaslib_data_cs, gaslib_data_cs_xml
