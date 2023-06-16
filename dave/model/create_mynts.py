@@ -25,33 +25,108 @@ MyntsNumProps = {
 }
 
 MyntsReqNodeProps = [
-    "H", "X", "Y", "Web", "KTyp", "nVNB", "aFNB", "EIC", "MG", "Zuornd",
-    "Des", "GeoLat", "GeoLong", "AnLNum", "LNum", "Schemaplan", "UmstSchr",
-    "UmstTag", "NEPID", "NEPID18", "UmstJ", "UmstBer", "Zone", "Teilnetz", "Messort"
+    "H",
+    "X",
+    "Y",
+    "Web",
+    "KTyp",
+    "nVNB",
+    "aFNB",
+    "EIC",
+    "MG",
+    "Zuornd",
+    "Des",
+    "GeoLat",
+    "GeoLong",
+    "AnLNum",
+    "LNum",
+    "Schemaplan",
+    "UmstSchr",
+    "UmstTag",
+    "NEPID",
+    "NEPID18",
+    "UmstJ",
+    "UmstBer",
+    "Zone",
+    "Teilnetz",
+    "Messort",
 ]
 
 MyntsReqPipeProps = [
-    "node1", "node2", "L", "D", "k", "htc", "NurPlan", "Bez", "Des", "LNum",
-    "LName", "PNPipe", "Eig", "NEPID", "NEPID18",
-    "UmstJ", "ModVar", "IJahr",
-    "UmstBer", "UmstSchr", "UmstTag", "Update"
+    "node1",
+    "node2",
+    "L",
+    "D",
+    "k",
+    "htc",
+    "NurPlan",
+    "Bez",
+    "Des",
+    "LNum",
+    "LName",
+    "PNPipe",
+    "Eig",
+    "NEPID",
+    "NEPID18",
+    "UmstJ",
+    "ModVar",
+    "IJahr",
+    "UmstBer",
+    "UmstSchr",
+    "UmstTag",
+    "Update",
 ]
 
 MyntsReqValveProps = [
-    "node1", "node2", "pimin", "pomax", "L", "D", "NurPlan", "Bez", "Des", "LNum",
-    "LName", "Autom", "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
+    "node1",
+    "node2",
+    "pimin",
+    "pomax",
+    "L",
+    "D",
+    "NurPlan",
+    "Bez",
+    "Des",
+    "LNum",
+    "LName",
+    "Autom",
+    "Eig",
+    "NEPID",
+    "NEPID18",
+    "UmstJ",
+    "ModVar",
+    "IJahr",
+    "UmstSchr",
+    "Update",
 ]
 
 MyntsReqCompressorProps = [
-    "D", "pimin", "pomax", "node1", "node2", "kind", "NurPlan", "Bez", "Des", "Autom",
-    "Eig", "NEPID", "NEPID18", "UmstJ", "ModVar", "IJahr", "UmstSchr", "Update"
+    "D",
+    "pimin",
+    "pomax",
+    "node1",
+    "node2",
+    "kind",
+    "NurPlan",
+    "Bez",
+    "Des",
+    "Autom",
+    "Eig",
+    "NEPID",
+    "NEPID18",
+    "UmstJ",
+    "ModVar",
+    "IJahr",
+    "UmstSchr",
+    "Update",
 ]
 
-MyntsReqProps = {"n": MyntsReqNodeProps,
-                 "p": MyntsReqPipeProps,
-                 "v": MyntsReqValveProps,
-                 "c": MyntsReqCompressorProps,
-                 }
+MyntsReqProps = {
+    "n": MyntsReqNodeProps,
+    "p": MyntsReqPipeProps,
+    "v": MyntsReqValveProps,
+    "c": MyntsReqCompressorProps,
+}
 
 
 # convert prop value to Mynts internal unit				# !!! todo complete list
@@ -151,8 +226,10 @@ class MyntsWriter:  # Output file strategy class for Mynts
         for prop in element.props():
             newName = myntsProp(prop)
             newValue = str(element.get(prop))
-            if newName.casefold() in (prop.casefold() for prop in MyntsReqProps[element.type]) or \
-                    element.get(prop) is None:
+            if (
+                newName.casefold() in (prop.casefold() for prop in MyntsReqProps[element.type])
+                or element.get(prop) is None
+            ):
                 continue
             if prop in MyntsNumProps:
                 newValue = convertPropValue2Mynts(prop, newValue)
@@ -203,7 +280,13 @@ class DaVe2Mynts(Strategy):
         return "DaVe2Mynts"
 
 
-def create_mynts(grid_data, basefilepath):
+def create_mynts(grid_data, basefilepath, idx_ref="dave_name"):
+    """
+    OPTIONAL:
+        **idx_ref** (str, default='dave_name') - defines parameter which should use as referenz \
+            for setting the indices
+
+    """
     # set progress bar
     pbar = tqdm(
         total=100,

@@ -1,6 +1,7 @@
 # Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+import pandas as pd
 
 
 class Element:
@@ -46,7 +47,13 @@ class Elements:
     This class defines a dictionary of objects of a net as Element objects of a single type
     """
 
-    ignoreList = ("param", "uncertainty", "method", "geometry", "dave_name")  # attributes of dave to be ignored
+    ignoreList = (
+        "param",
+        "uncertainty",
+        "method",
+        "geometry",
+        "dave_name",
+    )  # attributes of dave to be ignored
 
     def __init__(self, element_type=None, data=None):
         self.eleList = None
@@ -89,6 +96,16 @@ class Elements:
         """
         self.type = element_type
         self.n_ele = len(data.index)
+        # create dave names in case there are none
+        type_names = {"p": "pipe"}
+        if not "dave_name" in data.keys():
+            data.insert(
+                0,
+                "dave_name",
+                pd.Series(
+                    list(map(lambda x: f"{type_names[element_type]}_{x}", data.index)), data.index
+                ),
+            )
         for ele in range(self.n_ele):
             name = data["dave_name"][ele]
             newElem = Element(element_type, name)
