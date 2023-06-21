@@ -9,7 +9,7 @@ import os
 # local mode: runing dave and keycloak in local docker network
 # production mode: running dave and keycloak on production server docker network
 stage = "develop"  # set development modus
-if stage == "develop":
+if stage == "production":
     # --- parameter for develop mode
     # keycloak settings
     keycloak_server_url = "http://127.0.0.1/auth/"
