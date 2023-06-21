@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -97,7 +97,10 @@ def create_ehv_topology(grid_data):
         # read ehv/hv node data from OpenEnergyPlatform and adapt names
         ehvhv_buses, meta_data = oep_request(table="ego_pf_hv_bus")
         # add meta data
-        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if (
+            bool(meta_data)
+            and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+        ):
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         ehvhv_buses.rename(
             columns={

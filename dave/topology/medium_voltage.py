@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -39,7 +39,10 @@ def create_mv_topology(grid_data):
             table="ego_dp_hvmv_substation"
         )  # take polygon for full area
         # add meta data
-        if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        if (
+            bool(meta_data)
+            and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys()
+        ):
             grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
         hvmv_substations.rename(
             columns={

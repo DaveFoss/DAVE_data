@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -8,7 +8,7 @@ import os
 # develop mode: running dave from ide and keycloak in local docker network
 # local mode: runing dave and keycloak in local docker network
 # production mode: running dave and keycloak on production server docker network
-stage = "production"  # set development modus
+stage = "develop"  # set development modus
 if stage == "develop":
     # --- parameter for develop mode
     # keycloak settings
@@ -220,3 +220,15 @@ def dave_settings():
         "min_number_nodes": 4,
     }
     return settings
+
+
+def db_restriction():
+    """
+    This function returns a dictonary with database collection restrictions for specific users and
+    the user role they need to access it
+    """
+    restriction = {
+        # restrictions for the tu berlin gas grid data
+        "postalcodes": "transhyde",
+    }
+    return restriction
