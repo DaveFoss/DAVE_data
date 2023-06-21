@@ -319,7 +319,7 @@ def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
     active_status, roles = auth_token(token=parameters.auth_token, roles=True)
     if active_status:
         if "developer" in roles:
-            databases = info_mongo().keys()
+            databases = info_mongo(roles).keys()
             if parameters.database in databases:
                 db.db_post(parameters)
             else:
