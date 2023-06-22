@@ -229,6 +229,6 @@ def db_restriction():
     """
     restriction = {
         # restrictions for the tu berlin gas grid data
-        "postalcodes": "transhyde",
+        # "postalcodes": "transhyde",  # example
     }
     return restriction
