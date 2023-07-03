@@ -286,13 +286,21 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         map_junctions_simone_id_to_pandapipes_id)
     if not compressors.empty:
         # write compressor data into pandapipes structure
-        if "compressor" in net.keys():
-            net.compressor = pd.concat([net.compressor, compressors], ignore_index=True)
-        else:
-            net.compressor = compressors
+        # if "compressor" in net.keys():
+        #     net.compressor = pd.concat([net.compressor, compressors], ignore_index=True)
+        # else:
+        #     net.compressor = compressors
+        for _, c in compressors.iterrows():
+            _ = ppi.create_compressor(net,
+                                      c["from_junction"],
+                                      c["to_junction"],
+                                      pressure_ratio=c.get("pressure_ratio", 1),
+                                      **c.drop(["from_junction", "to_junction", "pressure_ratio"],
+                                               errors="ignore") # ignore if pressure_ratio is not found
+                                      )
         # check necessary parameters and add pandapipes standard if needed
-        net.compressor["pressure_ratio"] = float(1)
-        net.compressor["in_service"] = True
+        # net.compressor["pressure_ratio"] = float(1)
+        # net.compressor["in_service"] = True
         # net.compressor["pressure_ratio"] = (
         #     float(1)
         #     if all(net.compressor.pressure_ratio.isna())
@@ -336,10 +344,16 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         #     )
         valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x / 1000)
         valves.drop(columns=["diameter_mm"], inplace=True)
-        net.valve = valves
+        _ = ppi.create_valves(net,
+                              from_junctions=valves["from_junction"],
+                              to_junctions=valves["to_junction"],
+                              diameter_m=valves["diameter_m"],
+                              **valves.drop(["from_junction", "to_junction", "diameter_m"], axis=1)
+                              )
+        # net.valve = valves
         # check necessary parameters and add pandapipes standard if needed
-        net.valve["loss_coefficient"] = float(0)
-        net.valve["type"] = "valve"
+        # net.valve["loss_coefficient"] = float(0)
+        # net.valve["type"] = "valve"
         assert net.valve.from_junction.isin(net.junction.index).all(), \
             "some valves are connected to non-existing junctions!"
         assert net.valve.to_junction.isin(net.junction.index).all(), \
