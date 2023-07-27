@@ -97,7 +97,7 @@ class Elements:
         self.type = element_type
         self.n_ele = len(data.index)
         # create dave names in case there are none
-        type_names = {"p": "pipe"}
+        type_names = {"p": "pipe", "v": "valve", "n": "node", "c": "compressor"}
         if not "dave_name" in data.keys():
             data.insert(
                 0,
