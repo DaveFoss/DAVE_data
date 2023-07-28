@@ -735,15 +735,13 @@ def read_gaslib_cs():
     # read meta data  # TODO: evt aus net nehmen
     # meta_data = gaslib_dict["framework:information"]
 
-    from lxml import etree
+    from lxml import etree as ET
 
-    gaslib_data_cs_xml = etree.iterparse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
+    # gaslib_data_cs_xml = etree.iterparse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
+    # root = etree.parse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
+    # import xml.etree.ElementTree as ET
 
-    root = etree.fromstring(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
-
-    import xml.etree.ElementTree as ET
-
-    tree = ET.parse()
+    tree = ET.parse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
     gaslib_data_cs_xml = tree.getroot()
 
     return gaslib_data_cs, gaslib_data_cs_xml
