@@ -16,7 +16,8 @@ lxml
 pyrosm
 python-keycloak
 authlib
+rasterio
+
 # via pip
 #pandapower
 #pandapipes
-rasterio

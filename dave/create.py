@@ -20,6 +20,7 @@ from dave.components.power_plants import (
     create_renewable_powerplants,
 )
 from dave.components.transformers import create_transformers
+from dave.datapool.population_request import request_population
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
@@ -37,7 +38,6 @@ from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
-from dave.datapool.population_request import request_population
 
 
 def create_empty_dataset():
@@ -207,7 +207,8 @@ def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use
                 to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
             elif output_format == "gpkg":
                 to_gpkg(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.gpkg")
-                
+
+
 def create_grid(
     postalcode=None,
     town_name=None,
@@ -449,7 +450,7 @@ def create_grid(
         for cen in census:
             # --- request population data
             if cen == "population":
-                request_population(grid_data)
+                request_population(grid_data, output_folder)
         # clean up power and gas grid data
         clean_up_data(grid_data)
     else:
