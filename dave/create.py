@@ -37,7 +37,7 @@ from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
-from dave.census.population import request_population
+from dave.datapool.population_request import request_population
 
 
 def create_empty_dataset():
@@ -394,7 +394,8 @@ def create_grid(
             # add transformers
             if transformers:
                 create_transformers(grid_data)
-                
+                # save interim status of the informations in user folder
+                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
             # add renewable powerplants
             if renewable_powerplants:
                 create_renewable_powerplants(grid_data)
@@ -446,7 +447,6 @@ def create_grid(
             # save interim status of the informations in user folder
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         for cen in census:
-            print(cen)
             # --- request population data
             if cen == "population":
                 request_population(grid_data)
