@@ -19,3 +19,4 @@ authlib
 # via pip
 #pandapower
 #pandapipes
+rasterio
