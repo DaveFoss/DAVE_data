@@ -51,7 +51,7 @@ class Elements:
         "param",
         "uncertainty",
         "method",
-        "geometry",
+        # "geometry",
         "dave_name",
     )  # attributes of dave to be ignored
 

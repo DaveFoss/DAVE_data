@@ -295,6 +295,13 @@ def create_mynts(grid_data, basefilepath, idx_ref="dave_name"):
         bar_format=dave_settings()["bar_format"],
     )
 
+    # seperate geocoordinates from geometry parameter into lat and long
+    grid_data.hp_data.hp_junctions["long"] = grid_data.hp_data.hp_junctions.geometry.apply(
+        lambda x: x.x
+    )
+    grid_data.hp_data.hp_junctions["lat"] = grid_data.hp_data.hp_junctions.geometry.apply(
+        lambda x: x.y
+    )
     # init data
     myntsconv = Converter(grid_data, basefilepath=basefilepath)  # default file names
     # update progress
