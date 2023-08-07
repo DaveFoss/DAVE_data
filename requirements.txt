@@ -17,6 +17,7 @@ pyrosm
 python-keycloak
 authlib
 rasterio
+tqdm
 
 # via pip
 #pandapower
