@@ -76,3 +76,16 @@ class Db_up_param(BaseModel):
     collection: str
     data: str
     # meta_data ?
+
+
+# create request body for drop a collection from db
+class Db_drop_col(BaseModel):
+    auth_token: dict
+    database: str
+    collection: str
+
+
+# create request body for create a database in db
+class Db_create_database(BaseModel):
+    auth_token: dict
+    database_names: []
