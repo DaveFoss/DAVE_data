@@ -88,4 +88,4 @@ class Db_drop_col(BaseModel):
 # create request body for create a database in db
 class Db_create_database(BaseModel):
     auth_token: dict
-    database_names: []
+    database_names: list
