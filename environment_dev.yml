@@ -28,5 +28,5 @@ dependencies:
   - tqdm
   - pip
   - pip:
-      - pandapower  # maybe get from conda
+      - pandapower
       - pandapipes

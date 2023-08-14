@@ -1,4 +1,4 @@
-name: dave
+name: base
 channels:
   - conda-forge
 dependencies:
@@ -25,6 +25,7 @@ dependencies:
   - rasterio
   - tqdm
   - pip
-  #- pip:
-  #  - pandapower  # maybe get from conda
-  #  - pandapipes
+  - pip:
+    - pandapower
+    - pandapipes
+    #- -e /dave
