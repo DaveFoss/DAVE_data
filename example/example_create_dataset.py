@@ -47,11 +47,11 @@ For testing you can use the pre defined variables on the top or own ones.
 
 grid_data = create_grid(
     # grid area parameters (select on of the following five options)
-    postalcode=None,
+    postalcode=_postalcode_1,
     town_name=None,
     federal_state=None,
     nuts_region=None,
-    own_area=_own_area,
+    own_area=None,
     # grid level parameters
     power_levels=[],
     gas_levels=[],
@@ -60,7 +60,7 @@ grid_data = create_grid(
     opt_model=False,
     combine_areas=[],
     # geographical parameters
-    geodata=["roads", "railways"],
+    geodata=[],
     # converting parameters
     convert_power=[],  # if True a second return variable must be defined
     convert_gas=[],  # if True a second return variable must be defined
@@ -73,6 +73,8 @@ grid_data = create_grid(
     compressors=False,
     sinks=False,
     sources=False,
+    # census data
+    census = ['population'],
     # output settings
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",

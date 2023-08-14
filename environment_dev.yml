@@ -1,0 +1,32 @@
+name: dave
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11.3
+  - shapely
+  - geopandas
+  - matplotlib
+  - geopy
+  - contextily  # schauen ob man das raus bekommt
+  - fastapi
+  - uvicorn
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - pre-commit
+  - black
+  - isort
+  - pymongo
+  - openpyxl
+  - xmlschema
+  - lxml
+  - pyrosm
+  - python-keycloak
+  - authlib
+  - pytables
+  - rasterio
+  - tqdm
+  - pip
+  - pip:
+      - pandapower
+      - pandapipes

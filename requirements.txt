@@ -16,7 +16,8 @@ lxml
 pyrosm
 python-keycloak
 authlib
-numba
+rasterio
+tqdm
 # via pip
 #pandapower
 #pandapipes
