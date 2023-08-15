@@ -41,6 +41,7 @@ class Dataset_param(BaseModel):
     sources: Optional[bool] = True
     storages_gas: Optional[bool] = True
     valves: Optional[bool] = True
+    census: Optional[list] = []
 
 
 # create request body for the datapool request
