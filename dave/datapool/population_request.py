@@ -1,14 +1,12 @@
+import geopandas as gpd
+import pandas as pd
 import rasterio
 import rasterio.mask
-import pandas as pd
-import geopandas as gpd
 
-from dave.toolbox import get_data_path
-from dave.toolbox import intersection_with_area
+from dave.toolbox import get_data_path, intersection_with_area
 
 
-def request_population(grid_data, output_folder):
-    
+def request_population(grid_data, output_folder, api_use):
     ### get population in raster format
     # get the boundary of area of interest
     boundary = grid_data.area.geometry.unary_union
@@ -29,30 +27,20 @@ def request_population(grid_data, output_folder):
     )
 
     # save the cliped population raster
-    _selected_population_raster = output_folder + "\\" + "population_raster.tif"
-    with rasterio.open(_selected_population_raster, "w", **out_meta) as dest:
-        dest.write(out_image)
-        
-    ######
-    
+    if not api_use:
+        _selected_population_raster = output_folder + "\\" + "population_raster.tif"
+        with rasterio.open(_selected_population_raster, "w", **out_meta) as dest:
+            dest.write(out_image)
+
     #### get population in the grid_data
 
     # read the population hdf file
     _population_path = get_data_path("population.hdf5", "data")
     df = pd.read_hdf(_population_path)
 
-    gdf = gpd.GeoDataFrame(df, 
-    geometry = gpd.points_from_xy(df['x_mp_100m'], df['y_mp_100m']), 
-    crs = 'EPSG:3035')
+    gdf = gpd.GeoDataFrame(
+        df, geometry=gpd.points_from_xy(df["x_mp_100m"], df["y_mp_100m"]), crs="EPSG:3035"
+    )
     gdf_proj = gdf.to_crs(4326)
-    
+
     grid_data.census_data.population = intersection_with_area(gdf_proj, grid_data.area)
-    
-
-
-  
-    
-    
-    
-    
-    

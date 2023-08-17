@@ -132,8 +132,8 @@ def create_empty_dataset():
             "census_data": davestructure(
                 {
                     "population": gpd.GeoDataFrame([]),
-                    }
-                ),
+                }
+            ),
             # auxillary
             "dave_version": __version__,
             "meta_data": {},
@@ -453,10 +453,11 @@ def create_grid(
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
             # save interim status of the informations in user folder
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+        # create demongraphical data
         for cen in census:
             # --- request population data
             if cen == "population":
-                request_population(grid_data)
+                request_population(grid_data, output_folder, api_use)
                 # save interim status of the informations in user folder
                 save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         # clean up power and gas grid data

@@ -68,7 +68,7 @@ def voronoi(points):
     """
     # define points for voronoi centroids
     points = points.reset_index(drop=True)  # don't use inplace
-    voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.iteritems()]
+    voronoi_centroids = [[point.x, point.y] for i, point in points.geometry.items()]
     voronoi_points = array(voronoi_centroids)
     # maximum points of the considered area define, which limit the voronoi polygons
     bound_points = MultiPoint(points.geometry).convex_hull.buffer(1).bounds
@@ -175,7 +175,9 @@ def intersection_with_area(gdf, area, remove_columns=True):
             ]
             # check for values in the target area
             gdf_over_geom = gpd.overlay(gdf, area.loc[area_geom_idx], how="intersection")
-            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+            gdf_over = pd.concat(
+                [gdf_over, gdf_over_geom], ignore_index=True
+            )  # TODO: Problem ist das es hier Population_1 und _2 gibt, daher wirft er einen Fehler
     else:
         gdf_over = gpd.overlay(gdf, area, how="intersection")
     # remove parameters from area

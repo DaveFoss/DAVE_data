@@ -268,7 +268,7 @@ def create_database(database_names):
     for name in database_names:
         database = client[name]
         collection = database["init"]
-        data = {"database_name": name, "description": f"This database staores {name} informations"}
+        data = {"database_name": name, "description": f"This database stores {name} informations"}
         collection.insert_one(data)
 
 
