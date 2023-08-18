@@ -220,3 +220,15 @@ def dave_settings():
         "min_number_nodes": 4,
     }
     return settings
+
+
+def db_restriction():
+    """
+    This function returns a dictonary with database collection restrictions for specific users and
+    the user role they need to access it
+    """
+    restriction = {
+        # restrictions for the tu berlin gas grid data
+        # "postalcodes": "transhyde",  # example
+    }
+    return restriction

@@ -1,5 +1,8 @@
 # set the basic image 
-FROM continuumio/miniconda3:latest
+FROM mambaorg/micromamba:latest
+
+# set default environment to be activate
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 # add all files in current folder
 ADD . /dave
@@ -7,28 +10,16 @@ ADD . /dave
 # set working directory
 WORKDIR /dave
 
-# update existing packages
-RUN apt-get update && apt-get install -y git
-RUN conda update conda
+# set user to root to avoid permission denied
+USER root
 
-# update python version
-RUN conda install python==3.10.9
-
-# install packages via conda forge
-RUN conda config --add channels conda-forge
-RUN conda config --set channel_priority flexible
-RUN conda config --remove channels defaults
-RUN conda install --file requirements.txt
-
-# install some packages via pip because they not availible in conda
-RUN pip install -U pip
-RUN pip install pandapower
-RUN pip install pandapipes
-
+# creating the environment
+RUN micromamba install -y -n base -f environment_docker.yml && \
+    micromamba clean --all --yes
+    
 # install dave
-RUN conda update pyopenssl
 RUN python setup.py install && \
     python setup.py clean --all
 
 # Clean up
-RUN apt-get clean && conda clean -a && pip cache purge && rm -rf .git/
+RUN micromamba clean -a && pip cache purge

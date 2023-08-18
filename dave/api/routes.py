@@ -16,6 +16,8 @@ from dave.api.request_bodys import (
     Auth_param,
     Datapool_param,
     Dataset_param,
+    Db_create_database,
+    Db_drop_col,
     Db_param,
     Db_up_param,
     Info_param,
@@ -24,7 +26,15 @@ from dave.api.request_bodys import (
 from dave.create import create_grid
 from dave.datapool.db_update import update_database
 from dave.datapool.read_data import read_postal
-from dave.io.database_io import db_availability, denied_databases, from_mongo, info_mongo, to_mongo
+from dave.io.database_io import (
+    create_database,
+    db_availability,
+    db_denied,
+    drop_collection,
+    from_mongo,
+    info_mongo,
+    to_mongo,
+)
 from dave.io.file_io import to_json
 from dave.settings import dave_settings
 
@@ -100,6 +110,7 @@ class DaveRequest:
                 sources=parameters.sources,
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
+                census=parameters.census,
             )
             # convert dave dataset to JSON string
             return json.dumps(
@@ -134,6 +145,7 @@ class DaveRequest:
                 sources=parameters.sources,
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
+                census=parameters.census,
             )
             # convert dave dataset to JSON string
             return json.dumps({"grid_data": to_json(grid_data), "net_power": pp.to_json(net_power)})
@@ -162,6 +174,7 @@ class DaveRequest:
                 sources=parameters.sources,
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
+                census=parameters.census,
             )
             # convert dave dataset to JSON string
             return json.dumps({"grid_data": to_json(grid_data), "net_gas": ppi.to_json(net_gas)})
@@ -190,6 +203,7 @@ class DaveRequest:
                 sources=parameters.sources,
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
+                census=parameters.census,
             )
             # convert dave dataset to JSON string
             return to_json(grid_data)
@@ -262,22 +276,27 @@ def db_update(parameters: Update_param):
 
 class DbRequest:
     def db_request(self, parameters, roles):
+        # request database restrictions for the current user
+        denied_databases, denied_collections = db_denied(roles)
         # read data from mongo db
-        if db_availability(collection_name=parameters.collection, roles=roles):
-            if parameters.database not in denied_databases(roles):
-                data = from_mongo(
-                    database=parameters.database,
-                    collection=parameters.collection,
-                    filter_method=parameters.filter_method,
-                    filter_param=parameters.filter_param,
-                    filter_value=parameters.filter_value,
-                )
-                # convert postalcodes to JSON string
-                return data.to_json()
+        if parameters.database not in denied_databases:
+            if parameters.collection not in denied_collections:
+                if db_availability(collection_name=parameters.collection, roles=roles):
+                    data = from_mongo(
+                        database=parameters.database,
+                        collection=parameters.collection,
+                        filter_method=parameters.filter_method,
+                        filter_param=parameters.filter_param,
+                        filter_value=parameters.filter_value,
+                    )
+                    # convert data to JSON string
+                    return data.to_json()
+                else:
+                    return "The requested collection is not available"
             else:
-                return "You don't have access to this database"
+                return "You don't have access to this collection"
         else:
-            return "Database collection is not available"
+            return "You don't have access to this database"
 
 
 # get method for database request
@@ -314,12 +333,57 @@ def post_db(parameters: Db_up_param, db: DbPost = Depends(DbPost)):
     active_status, roles = auth_token(token=parameters.auth_token, roles=True)
     if active_status:
         if "developer" in roles:
-            databases = info_mongo().keys()
+            databases = info_mongo(roles).keys()
             if parameters.database in databases:
                 db.db_post(parameters)
             else:
                 return f"The choosen database is not existing. Please choose on of these: {list(databases)}"
         else:
             return "You need developer rights to upload data to the database"
+    else:
+        return "Token expired or invalid"
+
+
+class Dbdrop:
+    def db_drop(self, parameters):
+        # drop collection from database
+        database = parameters.database
+        collection = parameters.collection
+        drop_collection(database, collection)
+        return f'The collection "{collection}" was successfully droped'
+
+
+# get method to drop collection from database
+@router.get("/drop_collection_db")
+def drop_collection_db(parameters: Db_drop_col, drop: Dbdrop = Depends(Dbdrop)):
+    # authenticate user
+    active_status, roles = auth_token(token=parameters.auth_token, roles=True)
+    if active_status:
+        if "db_admin" in roles:
+            return drop.db_drop(parameters)
+        else:
+            return "You need db_admin rights to drop a collections from database"
+    else:
+        return "Token expired or invalid"
+
+
+class Dbcreate:
+    def db_create(self, parameters):
+        # create a database in db
+        database_names = parameters.database_names
+        create_database(database_names)
+        return f'The database "{database_names}" was successfully created'
+
+
+# get method to a databse in db
+@router.get("/create_database_db")
+def create_database_db(parameters: Db_create_database, create: Dbcreate = Depends(Dbcreate)):
+    # authenticate user
+    active_status, roles = auth_token(token=parameters.auth_token, roles=True)
+    if active_status:
+        if "db_admin" in roles:
+            return create.db_create(parameters)
+        else:
+            return "You need db_admin rights to create a new database"
     else:
         return "Token expired or invalid"

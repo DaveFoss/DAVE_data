@@ -73,6 +73,8 @@ grid_data = create_grid(
     compressors=False,
     sinks=False,
     sources=False,
+    # census data
+    census=["population"],
     # --- optional parameters
     plot=True,
     opt_model=False,

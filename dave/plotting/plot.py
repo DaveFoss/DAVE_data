@@ -382,27 +382,86 @@ def plot_landuse(grid_data, api_use, output_folder):
         **landuse plot** (svg file) - plot as vektor graphic
     """
     if not grid_data.landuse.empty:
+        landuse_basin = grid_data.landuse[grid_data.landuse.landuse == "basin"]
+        landuse_farmland = grid_data.landuse[grid_data.landuse.landuse == "farmland"]
+        landuse_farmyard = grid_data.landuse[grid_data.landuse.landuse == "farmyard"]
+        landuse_forest = grid_data.landuse[grid_data.landuse.landuse == "forest"]
+        landuse_grass = grid_data.landuse[grid_data.landuse.landuse == "grass"]
+        landuse_landfill = grid_data.landuse[grid_data.landuse.landuse == "landfill"]
+        landuse_meadow = grid_data.landuse[grid_data.landuse.landuse == "meadow"]
+        landuse_orchad = grid_data.landuse[grid_data.landuse.landuse == "orchad"]
         landuse_residential = grid_data.landuse[grid_data.landuse.landuse == "residential"]
         landuse_industrial = grid_data.landuse[grid_data.landuse.landuse == "industrial"]
-        landuse_commercial = grid_data.landuse[
-            grid_data.landuse.landuse.isin(["commercial", "retail"])
-        ]
+        landuse_commercial = grid_data.landuse[grid_data.landuse.landuse == "commercial"]
+        landuse_retail = grid_data.landuse[grid_data.landuse.landuse == "retail"]
+        leisure_garden = grid_data.landuse[grid_data.landuse.leisure == "garden"]
+        natural_scrub = grid_data.landuse[grid_data.landuse.natural == "scrub"]
+        natural_wood = grid_data.landuse[grid_data.landuse.natural == "wood"]
         # plot target area
         ax = plot_land(grid_data["area"])
         # plot landuses
         plot_patch = []
+        if not landuse_basin.empty:
+            landuse_basin.plot(ax=ax, color="aqua")
+            aqua_patch = Patch(color="aqua", label="Basin")
+            plot_patch.append(aqua_patch)
+        if not landuse_farmland.empty:
+            landuse_farmland.plot(ax=ax, color="goldenrod")
+            goldenrod_patch = Patch(color="goldenrod", label="Farmland")
+            plot_patch.append(goldenrod_patch)
+        if not landuse_farmyard.empty:
+            landuse_farmyard.plot(ax=ax, color="wheat")
+            wheat_patch = Patch(color="wheat", label="Farmyard")
+            plot_patch.append(wheat_patch)
+        if not landuse_forest.empty:
+            landuse_forest.plot(ax=ax, color="seagreen")
+            seagreen_patch = Patch(color="seagreen", label="Forest")
+            plot_patch.append(seagreen_patch)
+        if not landuse_grass.empty:
+            landuse_grass.plot(ax=ax, color="lightgreen")
+            lightgreen_patch = Patch(color="lightgreen", label="Grass")
+            plot_patch.append(lightgreen_patch)
+        if not landuse_landfill.empty:
+            landuse_landfill.plot(ax=ax, color="tan")
+            tan_patch = Patch(color="tan", label="Landfill")
+            plot_patch.append(tan_patch)
+        if not landuse_meadow.empty:
+            landuse_meadow.plot(ax=ax, color="lime")
+            lime_patch = Patch(color="lime", label="Meadow")
+            plot_patch.append(lime_patch)
+        if not landuse_orchad.empty:
+            landuse_orchad.plot(ax=ax, color="gold")
+            gold_patch = Patch(color="gold", label="Meadow")
+            plot_patch.append(gold_patch)
         if not landuse_residential.empty:
-            landuse_residential.plot(ax=ax, color="b")
-            blue_patch = Patch(color="b", label="Residential")
-            plot_patch.append(blue_patch)
+            landuse_residential.plot(ax=ax, color="blueviolet")
+            blueviolet_patch = Patch(color="blueviolet", label="Residential")
+            plot_patch.append(blueviolet_patch)
         if not landuse_industrial.empty:
-            landuse_industrial.plot(ax=ax, color="r", label="Industrial")
+            landuse_industrial.plot(ax=ax, color="r")
             red_patch = Patch(color="r", label="Industrial")
             plot_patch.append(red_patch)
         if not landuse_commercial.empty:
-            landuse_commercial.plot(ax=ax, color="g", label="Commercial")
-            green_patch = Patch(color="g", label="Commercial")
-            plot_patch.append(green_patch)
+            landuse_commercial.plot(ax=ax, color="silver")
+            silver_patch = Patch(color="silver", label="Commercial")
+            plot_patch.append(silver_patch)
+        if not landuse_retail.empty:
+            landuse_retail.plot(ax=ax, color="pink")
+            pink_patch = Patch(color="pink", label="Retail")
+            plot_patch.append(pink_patch)
+        if not leisure_garden.empty:
+            leisure_garden.plot(ax=ax, color="darkolivegreen")
+            darkolivegreen_patch = Patch(color="darkolivegreen", label="Garden")
+            plot_patch.append(darkolivegreen_patch)
+
+        if not natural_scrub.empty:
+            natural_scrub.plot(ax=ax, color="darkkhaki")
+            darkkhaki_patch = Patch(color="darkkhaki", label="Scrub")
+            plot_patch.append(darkkhaki_patch)
+        if not natural_wood.empty:
+            natural_wood.plot(ax=ax, color="saddlebrown")
+            saddlebrown_patch = Patch(color="saddlebrown", label="Wood")
+            plot_patch.append(saddlebrown_patch)
         # legende
         plt.legend(handles=plot_patch)
         # titel

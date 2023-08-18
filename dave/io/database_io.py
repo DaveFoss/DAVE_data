@@ -10,12 +10,12 @@ from shapely.geometry import mapping, shape
 from shapely.wkt import loads
 
 from dave.io.convert_format import wkb_to_wkt
-from dave.settings import dave_settings
+from dave.settings import dave_settings, db_restriction
 
 
-def denied_databases(roles=[]):
+def db_denied(roles=[]):
     """
-    This function define all databases that the current user does not have access to
+    This function define all databases and collections that the current user does not have access to
 
     """
     # define denied databases
@@ -23,11 +23,14 @@ def denied_databases(roles=[]):
         "admin",
         "config",
         "local",
-    ]  # !!! evt roles optional machen und die als default??
-    # check confidential databases
-    if "transhyde" not in roles:
-        denied_databases += ["transhyde"]
-    return denied_databases
+    ]  # !!! evt roles optional machen und die als default?? und evt das noch in settings packen
+    # check confidential collections
+    confidential_collections = db_restriction()
+    denied_collections = []
+    for key in confidential_collections:
+        if confidential_collections[key] not in roles:
+            denied_collections += [key]
+    return denied_databases, denied_collections
 
 
 def info_mongo(roles=[]):
@@ -40,13 +43,16 @@ def info_mongo(roles=[]):
     """
     info_mongo = {}
     client = db_client()
+    # request database restrictions for the current user
+    denied_databases, denied_collections = db_denied(roles)
     # wirte databases
     for db in list(client.list_databases()):
-        if db["name"] not in denied_databases(roles):
+        if db["name"] not in denied_databases:
             db_name = client[db["name"]]
             collections = []
             for collection in list(db_name.list_collections()):
-                collections.append(collection["name"])
+                if collection["name"] not in denied_collections:
+                    collections.append(collection["name"])
             db["collections"] = collections
             info_mongo[db["name"]] = db
     return info_mongo
@@ -262,7 +268,7 @@ def create_database(database_names):
     for name in database_names:
         database = client[name]
         collection = database["init"]
-        data = {"database_name": name, "description": f"This database staores {name} informations"}
+        data = {"database_name": name, "description": f"This database stores {name} informations"}
         collection.insert_one(data)
 
 
