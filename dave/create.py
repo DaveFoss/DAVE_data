@@ -37,7 +37,7 @@ from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
-from dave.census.building_height import request_building_height
+from dave.datapool.building_height_request import request_building_height
 
 def create_empty_dataset():
     """
@@ -445,7 +445,6 @@ def create_grid(
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         # add population height 
         if building_height==True:
-            print('give me building height')
             request_building_height(grid_data)
 
         # clean up power and gas grid data
