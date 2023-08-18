@@ -127,6 +127,8 @@ def create_empty_dataset():
                     "valves": gpd.GeoDataFrame([]),
                 }
             ),
+            # building height data
+            "building_height": gpd.GeoDataFrame([]),
             # auxillary
             "dave_version": __version__,
             "meta_data": {},
@@ -445,7 +447,7 @@ def create_grid(
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         # add population height 
         if building_height==True:
-            request_building_height(grid_data)
+            request_building_height(grid_data, output_folder )
 
         # clean up power and gas grid data
         clean_up_data(grid_data)
