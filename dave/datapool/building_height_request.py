@@ -26,10 +26,8 @@ def request_building_height(grid_data, output_folder):
     out.write(img.read())
     out.close()
     
-    # Convert the raster to point
-    building_height_gdf = raster_to_point(_selected_building_height)
-    # Assign the retrieved point to the result grid data 
-    grid_data.building_height = building_height_gdf
+    # Convert the raster to point and ssign the retrieved point to the result grid data 
+    grid_data.building_height = raster_to_point(_selected_building_height)
     
 # This fuction convert the raster to point
 def raster_to_point(raster):

@@ -10,7 +10,6 @@ from dave.settings import dave_settings
 """
 This is a example file for testing dave
 """
-
 ########## Examples for grid area definition #########################
 # test target by plz
 _postalcode_1 = ["12169"]  # Baunatal
