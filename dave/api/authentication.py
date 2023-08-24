@@ -15,7 +15,7 @@ def auth_token(token, roles=False):
 
     INPUT:
 
-        **token** (string) - jwt for authentification
+        **token** (dict) - jwt information from keycloak for authentification
 
     OPTIONAL:
         **role** (boolean, default False) - option to return also the roles for the user
