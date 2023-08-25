@@ -42,7 +42,7 @@ from dave.topology.medium_voltage import create_mv_topology
 
 def create_empty_dataset():
     """
-    This function initializes the dave datastructure.
+    This function initializes the dave datastructure and create all possible data categories
 
     OUTPUT:
         **grid_data** (attrdict) - dave attrdict with empty tables
@@ -201,7 +201,19 @@ def save_dataset_to_archiv(grid_data):
 
 def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use):
     """
-    This function saves the DAVE dataset to the output folder
+    This function saves the DAVE dataset to an output folder.
+    
+    Input:
+        **grid_data** (attrdict) - dave attrdict with empty tables
+        **output_format** (string, default 'json') - this parameter defines the output format. \
+            Available formats are currently: 'json', 'hdf' and 'gpkg' \n
+        **output_folder** (string, default user desktop) - absolute path to the folder where the \
+            generated data should be saved. if for this path no folder exists, dave will be \
+                create one \n
+        **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
+            local folder
+    OUTPUT:
+        **grid_data** (attrdict) - grid_data as a attrdict in dave structure \n
     """
     if not api_use:
         with warnings.catch_warnings():
@@ -306,7 +318,7 @@ def create_grid(
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one \n
         **output_format** (string, default 'json') - this parameter defines the output format. \
-            Available formats are currently: 'json' and 'hdf' \n
+            Available formats are currently: 'json', 'hdf' and 'gpkg' \n
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
