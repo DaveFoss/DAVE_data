@@ -73,7 +73,7 @@ grid_data = create_grid(
     sinks=False,
     sources=False,
     # other information
-    building_height=True,
+    building_height=False,
     # output settings
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",
