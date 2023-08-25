@@ -18,9 +18,9 @@ class Converter:
     """
     Converter class
         defines:
-                strategy		the strategy interface
-                basefilepath	# basic file path for output files
-                infilename		# input json file with DaVe structure data
+                strategy        the strategy interface
+                basefilepath    # basic file path for output files
+                infilename        # input json file with DaVe structure data
         Example Usage:
                 Converter(infilename="myDaveFile.json", basefilepath="/tmp")
     """
@@ -62,22 +62,35 @@ class Converter:
         self.pipedata = self.grid_data.hp_data.hp_pipes  # pipes
         self.valvedata = self.grid_data.components_gas.valves
         self.compressordata = self.grid_data.components_gas.compressors  #
+        self.sinkdata = self.grid_data.components_gas.sinks  #
+        self.sourcedata = self.grid_data.components_gas.sources  #
         self.nvalves = len(self.valvedata.index)
         self.npipes = len(self.pipedata.index)
         self.nnodes = len(self.nodedata.index)
         self.ncompressors = len(self.compressordata.index)
+        self.nsinks = len(self.sinkdata.index)
+        self.nsources = len(self.sourcedata.index)
         # print("Read ", self.nnodes, " nodes", self.npipes, " pipes", self.nvalves, "valves")
         # self.nodeElements = iter(self.nodedata)
+
+        print("\n")
+        print(str(self.nnodes) + " nodes extracted from DaVe")
+        print(str(self.nsinks) + " sinks extracted from DaVe")
+        print(str(self.nsources) + " sources extracted from DaVe")
+        print(str(self.npipes) + " pipes extracted from DaVe")
+        print(str(self.nvalves) + " valves extracted from DaVe")
+        print(str(self.ncompressors) + " compressors extracted from DaVe")
 
     def getAllData(self):
         all_data = self.nodedata
         all_data.append(self.pipedata)
         all_data.append(self.valvedata)
         all_data.append(self.compressordata)
+        all_data.append(self.sinkdata)
+        all_data.append(self.sourcedata)
         return all_data
 
 
 class Default(Strategy):
     def execute(self, element_types=None) -> str:
         return "Default"
-

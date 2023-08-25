@@ -20,7 +20,7 @@ class Element:
 
     def __init__(self, element_type="None", name=""):
         self.attributes = {}
-        self.type = element_type  # n, p, v, c, None
+        self.type = element_type  # n, p, v, c, r, None
         self.name = name
 
     # add an attribute to the element
@@ -58,7 +58,7 @@ class Elements:
     def __init__(self, element_type=None, data=None):
         self.eleList = None
         self.elements = {}  #
-        self.type = "None"  # n, p, v, d, None
+        self.type = "None"  # n, p, v, c, r, None
         # self.name = ""
         self.eleIndex = 0
         self.n_ele = 0
@@ -97,7 +97,7 @@ class Elements:
         self.type = element_type
         self.n_ele = len(data.index)
         # create dave names in case there are none
-        type_names = {"p": "pipe", "v": "valve", "n": "node", "c": "compressor"}
+        type_names = {"p": "pipe", "v": "valve", "n": "node", "c": "compressor", "r": "regulator"}
         if not "dave_name" in data.keys():
             data.insert(
                 0,

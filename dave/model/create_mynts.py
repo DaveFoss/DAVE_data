@@ -17,11 +17,17 @@ MyntsTextProps = {
     "long": "X",
     "from_junction": "node1",
     "to_junction": "node2",
+    "country_code": "Des",
+    "scigrid_name": "Bez",
+    "junction": "node",
 }
 
 MyntsNumProps = {
     "diameter_mm": "D",
     "length_km": "L",
+    "height_m": "H",
+    "roughness": "k",
+    "max_pressure_bar": "POMAX",
 }
 
 MyntsReqNodeProps = [
@@ -51,6 +57,7 @@ MyntsReqNodeProps = [
     "Teilnetz",
     "Messort",
 ]
+
 
 MyntsReqPipeProps = [
     "node1",
@@ -121,16 +128,36 @@ MyntsReqCompressorProps = [
     "Update",
 ]
 
+MyntsReqDriveProps = [
+    "node",
+    "kind",
+    "NurPlan",
+    "Bez",
+    "Des",
+    "Autom",
+    "Eig",
+    "NEPID",
+    "NEPID18",
+    "UmstJ",
+    "ModVar",
+    "IJahr",
+    "UmstSchr",
+    "Update",
+]
+
 MyntsReqProps = {
     "n": MyntsReqNodeProps,
     "p": MyntsReqPipeProps,
     "v": MyntsReqValveProps,
     "c": MyntsReqCompressorProps,
+    "d": MyntsReqDriveProps,
 }
 
 
-# convert prop value to Mynts internal unit				# !!! todo complete list
+# convert prop value to Mynts internal unit                # !!! todo complete list
 def convertPropValue2Mynts(prop, value) -> str:
+    #    if prop=="roughness":
+    #        print("roughness ="+str(value))
     if value == "":
         return "-1"
     fvalue = float(value)
@@ -214,9 +241,19 @@ class MyntsWriter:  # Output file strategy class for Mynts
                 if convertPropValue2Mynts(dave_prop, newValue) == "-1":
                     continue
                 newValue = convertPropValue2Mynts(dave_prop, newValue)
+            if element.name.startswith("sink") and dave_prop == "lat":
+                newValue = str(element.get(dave_prop) - 0.01)
+            if element.name.startswith("source") and dave_prop == "lat":
+                newValue = str(element.get(dave_prop) + 0.01)
             line = line + ', "' + prop + '":"' + newValue + '"'
         line = line + "}\n"
         self.file.write(line)
+        if element.name.startswith("sink") or element.name.startswith("source"):
+            line = ',"s_' + element.name + '":{"obj_type":"s"'
+            line = line + ', "node1":"' + element.get("junction") + '"'
+            line = line + ', "node2":"' + element.name + '"'
+            line = line + "}\n"
+            self.file.write(line)
 
     # write an element in scen format
     def writeScenElement(self, element):
@@ -309,10 +346,13 @@ def create_mynts(grid_data, basefilepath, idx_ref="dave_name"):
     print()
 
     # extract the data from DaVe
+    nodes = Elements("n", myntsconv.nodedata)
+    sinks = Elements("n", myntsconv.sinkdata)
+    sources = Elements("n", myntsconv.sourcedata)
     pipes = Elements("p", myntsconv.pipedata)  # stores all pipe elements
     valves = Elements("v", myntsconv.valvedata)
-    nodes = Elements("n", myntsconv.nodedata)
     compressors = Elements("c", myntsconv.compressordata)
+    ###drives = Elements("d", myntsconv.compressordata)
     # update progress
     pbar.update(25)
 
@@ -321,7 +361,8 @@ def create_mynts(grid_data, basefilepath, idx_ref="dave_name"):
     myntsconv.setStrategy(DaVe2Mynts(basefilepath))  # define Strategy
 
     # fixed order to write the elements
-    all_elements = [nodes, compressors, pipes, valves]
+    ###all_elements = [nodes, sinks, sources, pipes, valves, compressors, drives]
+    all_elements = [nodes, sinks, sources, pipes, valves, compressors]
 
     text = myntsconv.executeStrategy(all_elements)
     # print(text, ": ", ele_type.type, " written to Mynts Geom")
