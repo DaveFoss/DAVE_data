@@ -10,7 +10,6 @@ from dave.settings import dave_settings
 """
 This is a example file for testing dave
 """
-
 ########## Examples for grid area definition #########################
 # test target by plz
 _postalcode_1 = ["34225"]  # Baunatal
@@ -73,8 +72,10 @@ grid_data = create_grid(
     compressors=False,
     sinks=False,
     sources=False,
+    # other information
+    building_height=False,
     # census data
-    census = ['population'],
+    census=["population"],
     # output settings
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",

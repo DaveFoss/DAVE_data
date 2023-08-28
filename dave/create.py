@@ -20,6 +20,7 @@ from dave.components.power_plants import (
     create_renewable_powerplants,
 )
 from dave.components.transformers import create_transformers
+from dave.datapool.building_height_request import request_building_height
 from dave.datapool.population_request import request_population
 from dave.dave_structure import davestructure
 from dave.geography import target_area
@@ -128,7 +129,9 @@ def create_empty_dataset():
                     "valves": gpd.GeoDataFrame([]),
                 }
             ),
-            # cansus data
+            # building height data
+            "building_height": gpd.GeoDataFrame([]),
+            # census data
             "census_data": davestructure(
                 {
                     "population": gpd.GeoDataFrame([]),
@@ -250,6 +253,7 @@ def create_grid(
     sources=True,
     storages_gas=True,
     valves=True,
+    building_height=False,
     census=[],
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",
@@ -311,6 +315,7 @@ def create_grid(
         **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
             model \n
         **valves** (boolean, default True) - if true, gas valves are added to the grid model \n
+        **building_height** (boolean, default False) - if true, bulding heights will added \n
         **census**  (list, default []) - this parameter defines which census data should be considered.\
             options: 'population', []. \
                 there could be choose: one/multiple geoobjects or 'ALL' \n
@@ -464,6 +469,10 @@ def create_grid(
         if gas_levels:
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
             # save interim status of the informations in user folder
+            save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+        # add population height
+        if building_height == True:
+            request_building_height(grid_data, output_folder)
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         # create demongraphical data
         for cen in census:
