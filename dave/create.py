@@ -20,6 +20,7 @@ from dave.components.power_plants import (
     create_renewable_powerplants,
 )
 from dave.components.transformers import create_transformers
+from dave.datapool.building_height_request import request_building_height
 from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
@@ -37,7 +38,7 @@ from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
-from dave.datapool.building_height_request import request_building_height
+
 
 def create_empty_dataset():
     """
@@ -129,6 +130,12 @@ def create_empty_dataset():
             ),
             # building height data
             "building_height": gpd.GeoDataFrame([]),
+            # census data
+            "census_data": davestructure(
+                {
+                    "population": gpd.GeoDataFrame([]),
+                }
+            ),
             # auxillary
             "dave_version": __version__,
             "meta_data": {},
@@ -233,7 +240,8 @@ def create_grid(
     sources=True,
     storages_gas=True,
     valves=True,
-    building_height= True,
+    building_height=False,
+    census=[],
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",
     api_use=True,
@@ -445,9 +453,16 @@ def create_grid(
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
             # save interim status of the informations in user folder
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-        # add population height 
-        if building_height==True:
-            request_building_height(grid_data, output_folder )
+        # add population height
+        if building_height == True:
+            request_building_height(grid_data, output_folder)
+        # create demongraphical data
+        for cen in census:
+            # --- request population data
+            if cen == "population":
+                request_population(grid_data, output_folder, api_use)
+                # save interim status of the informations in user folder
+                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
 
         # clean up power and gas grid data
         clean_up_data(grid_data)
