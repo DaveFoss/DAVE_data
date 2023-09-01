@@ -21,6 +21,7 @@ python-keycloak
 authlib
 rasterio
 tqdm
+owslib
 # via pip
 #pandapower
 #pandapipes

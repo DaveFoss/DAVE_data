@@ -26,6 +26,7 @@ dependencies:
   - pytables
   - rasterio
   - tqdm
+  - owslib
   - pip
   - pip:
       - pandapower

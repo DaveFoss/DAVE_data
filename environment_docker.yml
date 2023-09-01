@@ -24,6 +24,7 @@ dependencies:
   - pyopenssl
   - rasterio
   - tqdm
+  - owslib
   - pip
   - pip:
     - pandapower
