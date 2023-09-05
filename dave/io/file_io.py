@@ -188,6 +188,17 @@ def to_hdf(grid_data, dataset_path):
     file.close()
 
 
+def df_lists_to_str(df):
+    """
+    This function checks dataframes if there are any lists included and in the case convert them
+    to strings. This is necessary for converting into geopackage format.
+    """
+    for col in df.columns:
+        if any(isinstance(val, list) for val in df[col]):
+            df[col] = df[col].apply(lambda x: str(x))
+    return df
+
+
 # --- geopackage (GPKG)
 def to_gpkg(grid_data, dataset_path):
     """
@@ -197,30 +208,35 @@ def to_gpkg(grid_data, dataset_path):
     for key in grid_data.keys():
         if isinstance(grid_data[key], davestructure):
             for key_sec in grid_data[key].keys():
+                # case davestructure
                 if isinstance(grid_data[key][key_sec], davestructure):
                     for key_trd in grid_data[key][key_sec].keys():
                         if (
                             isinstance(grid_data[key][key_sec][key_trd], gpd.GeoDataFrame)
                             and not grid_data[key][key_sec][key_trd].empty
                         ):
-                            grid_data[key][key_sec][key_trd].to_file(
+                            data = df_lists_to_str(grid_data[key][key_sec][key_trd])
+                            data.to_file(
                                 dataset_path, layer=f"{key}/{key_sec}/{key_trd}", driver="GPKG"
                             )
+                # case GeoDataFrame
                 elif (
                     isinstance(grid_data[key][key_sec], gpd.GeoDataFrame)
                     and not grid_data[key][key_sec].empty
                 ):
-                    grid_data[key][key_sec].to_file(
-                        dataset_path, layer=f"{key}/{key_sec}", driver="GPKG"
-                    )
+                    data = df_lists_to_str(grid_data[key][key_sec])
+                    data.to_file(dataset_path, layer=f"{key}/{key_sec}", driver="GPKG")
+                # case GeoSeries
                 elif (
                     isinstance(grid_data[key][key_sec], gpd.GeoSeries)
                     and not grid_data[key][key_sec].empty
                 ):
                     data = gpd.GeoDataFrame({"geometry": grid_data[key][key_sec]})
+                    data = df_lists_to_str(data)
                     data.to_file(dataset_path, layer=f"{key}/{key_sec}", driver="GPKG")
         elif isinstance(grid_data[key], gpd.GeoDataFrame) and not grid_data[key].empty:
-            grid_data[key].to_file(dataset_path, layer=f"{key}", driver="GPKG")
+            data = df_lists_to_str(grid_data[key])
+            data.to_file(dataset_path, layer=f"{key}", driver="GPKG")
 
 
 # --- Archiv
