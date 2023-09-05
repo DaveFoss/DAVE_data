@@ -110,6 +110,7 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
+                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return json.dumps(
@@ -144,6 +145,7 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
+                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return json.dumps({"grid_data": to_json(grid_data), "net_power": pp.to_json(net_power)})
@@ -172,6 +174,7 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
+                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return json.dumps({"grid_data": to_json(grid_data), "net_gas": ppi.to_json(net_gas)})
@@ -200,6 +203,7 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
+                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return to_json(grid_data)

@@ -41,6 +41,7 @@ class Dataset_param(BaseModel):
     storages_gas: Optional[bool] = True
     valves: Optional[bool] = True
     census: Optional[list] = []
+    building_height: Optional[bool] = False
 
 
 # create request body for the datapool request
