@@ -275,7 +275,7 @@ def create_grid(
         **nuts_region** (tuple(List of strings, string)) - this tuple includes first a list of the \
             target nuts regions codes (independent from nuts level). It could also be choose ['ALL'] \
             for all nuts regions in europe. The second tuple parameter defines the nuts \
-            year as string.\n
+            year as string. The year options are 2013, 2016 and 2021. \n
         **own_area** (string / Polygon) - First Option for this parameter is to hand over a string \
             which could be the absolute path to a shape file which includes own target area \
             (e.g. "C:/Users/name/test/test.shp") or a JSON string with the area information. The \
