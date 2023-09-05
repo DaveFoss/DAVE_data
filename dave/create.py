@@ -26,6 +26,7 @@ from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
 from dave.model.create_gaslib import create_gaslib
+from dave.model.create_mynts import create_mynts
 from dave.model.create_pandapipes import create_pandapipes
 from dave.model.create_pandapower import create_pandapower
 from dave.model.model_utils import clean_up_data
@@ -295,7 +296,8 @@ def create_grid(
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
-            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib' \n
+            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib', \
+            'mynts' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations. Currently a experimental feature \
                 and only available for pandapower \n
@@ -523,10 +525,16 @@ def create_grid(
             create_gaslib(
                 grid_data, api_use=api_use, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
+        if "mynts" in convert_gas:
+            create_mynts(grid_data, basefilepath=output_folder)
 
-    # return runtime
-    _stop_time = timeit.default_timer()
-    print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
+    # show general informations from the generating process
+    if not api_use:
+        # print output folder
+        print(f"\nSave DaVe output data at the following path: {output_folder}")
+        # return runtime
+        _stop_time = timeit.default_timer()
+        print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
 
     # return data
     if net_power and net_gas:
