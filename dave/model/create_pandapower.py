@@ -515,7 +515,9 @@ def power_processing(
     if "impedance_values_close_to_zero" in diagnostic.keys():
         lines = diagnostic["impedance_values_close_to_zero"][0]["line"]
         for line_index in lines:
-            pp.create_replacement_switch_for_branch(net, element="line", idx=line_index)
+            pp.create_replacement_switch_for_branch(
+                net, element_type="line", element_index=line_index
+            )
             # update progress
             pbar.update(10 / len(lines))
         pp.drop_lines(net, lines=lines)
@@ -536,7 +538,9 @@ def power_processing(
             drop_lines = []
             for line in diagnostic["invalid_values"]["line"]:
                 if (line[1] == "length_km") and (line[2] == 0):
-                    pp.create_replacement_switch_for_branch(net, element="line", idx=line[0])
+                    pp.create_replacement_switch_for_branch(
+                        net, element_type="line", element_index=line[0]
+                    )
                     drop_lines.append(line[0])
             pp.drop_lines(net, lines=drop_lines)
         # update progress
