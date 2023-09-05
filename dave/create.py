@@ -240,7 +240,6 @@ def create_grid(
     geodata=[],
     power_levels=[],
     gas_levels=[],
-    plot=True,
     convert_power=[],
     convert_gas=[],
     opt_model=True,
@@ -291,8 +290,6 @@ def create_grid(
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
             considered. options: 'hp','mp','lp', []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
-        **plot** (boolean, default True) - if this value is true dave creates plottings \
-            automaticly \n
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
@@ -499,14 +496,6 @@ def create_grid(
     if not api_use:
         print(f"\nSave DAVE output data at the following path: {output_folder}")
         save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-
-    # plot informations
-    if not api_use and plot:
-        if bool(geodata):
-            plot_geographical_data(grid_data, api_use, output_folder)
-        if any(power_levels + gas_levels):
-            plot_grid_data(grid_data, api_use, output_folder)
-        # plot_landuse(grid_data, api_use, output_folder)
 
     # convert power model
     net_power = None
