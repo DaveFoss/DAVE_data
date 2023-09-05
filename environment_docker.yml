@@ -14,7 +14,7 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - pymongo
-  #openpyxl
+  - openpyxl
   - xmlschema
   - lxml
   - pyrosm
@@ -25,6 +25,7 @@ dependencies:
   - rasterio
   - tqdm
   - owslib
+  - numba
   - pip
   - pip:
     - pandapower
