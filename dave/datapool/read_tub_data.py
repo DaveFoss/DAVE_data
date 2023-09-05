@@ -160,6 +160,11 @@ def read_simone(filepath, crs="epsg:4326"):  # !!! noch ersetzen gegen filepath
         "valve": data_valve,
         # 'joint': data_elements[data_elements.type == 'joint'],
     }
+    # projecting geodata to epsg 4326 if neccessary
+    if crs != "epsg:4326":
+        data["node"] = data["node"].to_crs(crs="epsg:4326")
+        data["pipe"] = data["pipe"].to_crs(crs="epsg:4326")
+
     return data
 
 
