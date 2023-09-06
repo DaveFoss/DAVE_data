@@ -24,7 +24,7 @@ dependencies:
   - pyopenssl
   - rasterio
   - tqdm
-  - numba
+  - numba == 0.56.4
   - pip
   - pip:
     - pandapower
