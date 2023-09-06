@@ -487,7 +487,7 @@ def create_grid(
 
     # convert power model
     net_power = None
-    if convert_power and power_levels:
+    if convert_power:
         if "pandapower" in convert_power:
             net_power = create_pandapower(
                 grid_data, opt_model=opt_model, api_use=api_use, output_folder=output_folder
@@ -495,7 +495,7 @@ def create_grid(
 
     # convert gas model
     net_gas = None
-    if convert_gas and gas_levels:
+    if convert_gas:
         if "pandapipes" in convert_gas:
             net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
         if "gaslib" in convert_gas:
