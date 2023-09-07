@@ -102,8 +102,9 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         net.junction["source_id"] = all_junctions["source_id"]
         net.junction["source"] = all_junctions["source"]
         net.junction["geometry"] = all_junctions["geometry"]
-    map_junctions_simone_id_to_pandapipes_id = dict(zip(net.junction.source_id.values,
-                                                        net.junction.index))
+    map_junctions_simone_id_to_pandapipes_id = dict(
+        zip(net.junction.source_id.values, net.junction.index)
+    )
     # update progress
     pbar.update(25)
 
@@ -266,12 +267,7 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
             in_service=True,
             type="source",
         )
-        net.source = sources
-        # check necessary parameters and add pandapipes standard if needed
-        net.source["mdot_kg_per_s"] = float(0.1)  # !!! dummy value has to change
-        net.source["scaling"] = float(1)
-        net.source["in_service"] = True
-        net.source["type"] = "source"
+
     # update progress
     pbar.update(10)
 
@@ -281,9 +277,11 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
     compressors["from_junction_simone_id"] = compressors["from_junction"]
     compressors["to_junction_simone_id"] = compressors["to_junction"]
     compressors["from_junction"] = compressors["from_junction_simone_id"].map(
-        map_junctions_simone_id_to_pandapipes_id)
+        map_junctions_simone_id_to_pandapipes_id
+    )
     compressors["to_junction"] = compressors["to_junction_simone_id"].map(
-        map_junctions_simone_id_to_pandapipes_id)
+        map_junctions_simone_id_to_pandapipes_id
+    )
     if not compressors.empty:
         # write compressor data into pandapipes structure
         # if "compressor" in net.keys():
@@ -291,13 +289,15 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         # else:
         #     net.compressor = compressors
         for _, c in compressors.iterrows():
-            _ = ppi.create_compressor(net,
-                                      c["from_junction"],
-                                      c["to_junction"],
-                                      pressure_ratio=c.get("pressure_ratio", 1),
-                                      **c.drop(["from_junction", "to_junction", "pressure_ratio"],
-                                               errors="ignore") # ignore if pressure_ratio is not found
-                                      )
+            _ = ppi.create_compressor(
+                net,
+                c["from_junction"],
+                c["to_junction"],
+                pressure_ratio=c.get("pressure_ratio", 1),
+                **c.drop(
+                    ["from_junction", "to_junction", "pressure_ratio"], errors="ignore"
+                ),  # ignore if pressure_ratio is not found
+            )
         # check necessary parameters and add pandapipes standard if needed
         # net.compressor["pressure_ratio"] = float(1)
         # net.compressor["in_service"] = True
@@ -311,10 +311,12 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         #     if all(net.compressor.in_service.isna())
         #     else net.compressor.in_service.apply(lambda x: bool(True) if pd.isna(x) else x)
         # )
-        assert net.compressor.from_junction.isin(net.junction.index).all(), \
-            "some compressors are connected to non-existing junctions!"
-        assert net.compressor.to_junction.isin(net.junction.index).all(), \
-            "some compressors are connected to non-existing junctions!"
+        assert net.compressor.from_junction.isin(
+            net.junction.index
+        ).all(), "some compressors are connected to non-existing junctions!"
+        assert net.compressor.to_junction.isin(
+            net.junction.index
+        ).all(), "some compressors are connected to non-existing junctions!"
     # update progress
     pbar.update(10)
 
@@ -324,9 +326,11 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
     valves["from_junction_simone_id"] = valves["from_junction"]
     valves["to_junction_simone_id"] = valves["to_junction"]
     valves["from_junction"] = valves["from_junction_simone_id"].map(
-                                map_junctions_simone_id_to_pandapipes_id)
+        map_junctions_simone_id_to_pandapipes_id
+    )
     valves["to_junction"] = valves["to_junction_simone_id"].map(
-                                map_junctions_simone_id_to_pandapipes_id)
+        map_junctions_simone_id_to_pandapipes_id
+    )
     # valves["opened"] = valves["opened"].astype(bool)
     # write valve data into pandapipes structure
     if not valves.empty:
@@ -344,20 +348,23 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         #     )
         valves["diameter_m"] = valves.diameter_mm.apply(lambda x: x / 1000)
         valves.drop(columns=["diameter_mm"], inplace=True)
-        _ = ppi.create_valves(net,
-                              from_junctions=valves["from_junction"],
-                              to_junctions=valves["to_junction"],
-                              diameter_m=valves["diameter_m"],
-                              **valves.drop(["from_junction", "to_junction", "diameter_m"], axis=1)
-                              )
+        _ = ppi.create_valves(
+            net,
+            from_junctions=valves["from_junction"],
+            to_junctions=valves["to_junction"],
+            diameter_m=valves["diameter_m"],
+            **valves.drop(["from_junction", "to_junction", "diameter_m"], axis=1),
+        )
         # net.valve = valves
         # check necessary parameters and add pandapipes standard if needed
         # net.valve["loss_coefficient"] = float(0)
         # net.valve["type"] = "valve"
-        assert net.valve.from_junction.isin(net.junction.index).all(), \
-            "some valves are connected to non-existing junctions!"
-        assert net.valve.to_junction.isin(net.junction.index).all(), \
-            "some valves are connected to non-existing junctions!"
+        assert net.valve.from_junction.isin(
+            net.junction.index
+        ).all(), "some valves are connected to non-existing junctions!"
+        assert net.valve.to_junction.isin(
+            net.junction.index
+        ).all(), "some valves are connected to non-existing junctions!"
     # update progress
     pbar.update(10)
 
