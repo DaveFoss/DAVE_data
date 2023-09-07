@@ -463,10 +463,21 @@ def create_pandapower(grid_data, opt_model, api_use, output_folder):
             )
             # additional Informations
             net.ext_grid.at[ext_id, "voltage_level"] = 6
+
+    # --- add geodata as aditional informations
+    net["buildings"] = pd.concat(
+        [grid_data.buildings.residential, grid_data.buildings.commercial, grid_data.buildings.other]
+    )
+    net["roads"] = grid_data.roads.roads
+    net["railways"] = grid_data.railways
+    net["waterways"] = grid_data.waterways
+    net["landuse"] = grid_data.landuse
+
     # close progress bar
     pbar.close()
     # run pandapower model processing
-    net = power_processing(net, opt_model=opt_model)
+    if not net.bus.empty:
+        net = power_processing(net, opt_model=opt_model)
     # save pandapower model in the dave output folder
     if not api_use:
         file_path = output_folder + "\\dave_pandapower.json"
