@@ -119,21 +119,6 @@ def adress_to_coords(adress, geolocator):
         return (location.longitude, location.latitude)
 
 
-def multiline_coords(line_geometry):
-    """
-    This function extracts the coordinates from a MultiLineString
-    """
-    merged_line = linemerge(line_geometry)
-    # sometimes line merge can not merge the lines correctly
-    line_coords = []
-    if isinstance(merged_line, MultiLineString):
-        for line in list(merged_line.geoms):
-            line_coords += line.coords[:]
-    else:
-        line_coords += merged_line.coords[:]
-    return line_coords
-
-
 def get_data_path(filename=None, dirname=None):
     """
     This function returns the full os path for a given directory (and filename)
