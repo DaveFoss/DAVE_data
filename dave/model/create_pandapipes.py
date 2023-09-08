@@ -109,7 +109,6 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
     pbar.update(25)
 
     # --- create pipes
-    # collect junction informations and aggregate them
     all_pipes = pd.concat(
         [
             grid_data.hp_data.hp_pipes,
@@ -118,7 +117,6 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
         ],
         ignore_index=True,
     )
-
     if not all_pipes.empty:
         # change from/to junction names to ids
         if "from_junction" in all_pipes.keys():
@@ -136,6 +134,22 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
             all_pipes.insert(
                 0, "name", pd.Series(list(map(lambda x: f"pipe_{x}", all_pipes.index)))
             )
+        # check for circle pipes and drop them
+        cp = all_pipes.loc[all_pipes["from_junction"] == all_pipes["to_junction"]]
+        if not cp.empty:
+            print(
+                f"\nWarning: pipes {cp.name.values} have the same from and to junctions and "
+                f"are being dropped automatically.\n"
+            )
+            all_pipes.drop(index=cp.index, inplace=True)
+        # check for zero length pipes and drop them
+        zl = all_pipes.loc[all_pipes["length_km"] == 0]
+        if not zl.empty:
+            print(
+                f"\nWarning: pipes {zl.name.values} have a length of 0.0 km and are being "
+                f"dropped automatically.\n"
+            )
+            all_pipes.drop(index=zl.index, inplace=True)
         # conver diameter from mm to m
         all_pipes["diameter_m"] = all_pipes.diameter_mm.apply(lambda x: x / 1000)
         all_pipes.drop(columns=["diameter_mm"])
@@ -238,6 +252,7 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
             name=sinks["name"],
             in_service=True,
             type="sink",
+            **sinks,
         )
     # update progress
     pbar.update(10)
@@ -256,7 +271,6 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
             sources.rename(columns={"dave_name": "name"}, inplace=True)
         else:
             sources.insert(0, "name", pd.Series(list(map(lambda x: f"source_{x}", sources.index))))
-
         # create sinks
         ppi.create_sources(
             net,
@@ -266,8 +280,8 @@ def create_pandapipes(grid_data, api_use, output_folder, fluid=None, idx_ref="da
             name=sources["name"],
             in_service=True,
             type="source",
+            **sources,
         )
-
     # update progress
     pbar.update(10)
 
