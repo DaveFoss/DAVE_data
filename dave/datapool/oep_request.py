@@ -8,7 +8,7 @@ import requests
 from shapely.geometry import Point
 from shapely.wkb import loads
 
-from dave.io.database_io import db_availability, from_mongo, search_database
+from dave.database_io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
 
 # oep_url = "http://oep.iks.cs.ovgu.de/"

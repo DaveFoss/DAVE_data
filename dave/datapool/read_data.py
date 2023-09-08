@@ -8,7 +8,7 @@ from shapely.geometry import LineString
 from shapely.wkb import loads
 from xmlschema import XMLSchema
 
-from dave.io.database_io import db_availability, from_mongo
+from dave.database_io import db_availability, from_mongo
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 

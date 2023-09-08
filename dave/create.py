@@ -9,6 +9,11 @@ import warnings
 os.environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
 import geopandas as gpd
 import pandas as pd
+from dave_client.converter.create_gaslib import create_gaslib
+from dave_client.converter.create_mynts import create_mynts
+from dave_client.converter.create_pandapipes import create_pandapipes
+from dave_client.converter.create_pandapower import create_pandapower
+from dave_client.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
 
 # imports from dave
 from dave import __version__
@@ -24,12 +29,7 @@ from dave.datapool.building_height_request import request_building_height
 from dave.datapool.population_request import request_population
 from dave.dave_structure import davestructure
 from dave.geography import target_area
-from dave.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
-from dave.model.create_gaslib import create_gaslib
-from dave.model.create_mynts import create_mynts
-from dave.model.create_pandapipes import create_pandapipes
-from dave.model.create_pandapower import create_pandapower
-from dave.model.model_utils import clean_up_data
+from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
 from dave.topology.extra_high_voltage import create_ehv_topology
