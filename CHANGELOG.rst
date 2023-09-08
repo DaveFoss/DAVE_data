@@ -4,6 +4,7 @@ Change Log
 
 [1.2.0] - (2023--) 
 ----------------------
+- [MOVED]   model module to DAVE client
 - [MOVED]   io module to DAVE client
 - [CHANGED] archiv i/o function in seperated file 
 - [MOVED]   plotting module to DAVE client
