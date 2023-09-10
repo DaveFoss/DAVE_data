@@ -4,6 +4,8 @@ Change Log
 
 [1.2.0] - (2023--) 
 ----------------------
+- [MOVED]   read simone function to DAVE client
+- [MOVED]   read gaslib function to DAVE client
 - [MOVED]   model module to DAVE client
 - [MOVED]   io module to DAVE client
 - [CHANGED] archiv i/o function in seperated file 
