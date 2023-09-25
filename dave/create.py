@@ -306,7 +306,7 @@ def create_grid(
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one \n
         **output_format** (string, default 'json') - this parameter defines the output format. \
-            Available formats are currently: 'json' and 'hdf' \n
+            Available formats are currently: 'json', 'hdf' and 'gpkg' \n
         **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
             local folder
 
