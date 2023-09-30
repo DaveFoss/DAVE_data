@@ -55,7 +55,6 @@ grid_data = create_grid(
     power_levels=[],
     gas_levels=[],
     # --- optional parameters
-    plot=False,
     opt_model=False,
     combine_areas=[],
     # geographical parameters

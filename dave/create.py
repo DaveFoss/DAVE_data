@@ -13,10 +13,11 @@ from dave_client.converter.create_gaslib import create_gaslib
 from dave_client.converter.create_mynts import create_mynts
 from dave_client.converter.create_pandapipes import create_pandapipes
 from dave_client.converter.create_pandapower import create_pandapower
-from dave_client.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
+from dave_client.io.file_io import to_gpkg, to_hdf, to_json
 
 # imports from dave
 from dave import __version__
+from dave.archiv_io import from_archiv, to_archiv
 from dave.components.gas_components import gas_components
 from dave.components.loads import create_loads
 from dave.components.power_plants import (
