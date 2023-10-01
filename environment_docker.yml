@@ -25,9 +25,9 @@ dependencies:
   - rasterio
   - tqdm
   - owslib
-  - numba
+  - numba == 0.56.4
   - pip
   - pip:
     - pandapower
     - pandapipes
-    #- -e /dave
+    - dave_client-0.0.0-py3-none-any.whl

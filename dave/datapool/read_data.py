@@ -8,7 +8,7 @@ from shapely.geometry import LineString
 from shapely.wkb import loads
 from xmlschema import XMLSchema
 
-from dave.io.database_io import db_availability, from_mongo
+from dave.database_io import db_availability, from_mongo
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 
@@ -724,24 +724,3 @@ def read_gaslib():
     # read meta data
     meta_data = gaslib_dict["framework:information"]
     return gaslib_data, meta_data
-
-
-def read_gaslib_cs():
-    # read data from datapool
-    schema = XMLSchema(get_data_path("gaslib/CompressorStations.xsd", "data"))
-    gaslib_dict_cs = schema.to_dict(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
-    # create data dictionary
-    gaslib_data_cs = {"compressor_station": gaslib_dict_cs["framework:compressorStation"]}
-    # read meta data  # TODO: evt aus net nehmen
-    # meta_data = gaslib_dict["framework:information"]
-
-    from lxml import etree as ET
-
-    # gaslib_data_cs_xml = etree.iterparse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
-    # root = etree.parse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
-    # import xml.etree.ElementTree as ET
-
-    tree = ET.parse(get_data_path("gaslib/GasLib-582-v2.cs", "data"))
-    gaslib_data_cs_xml = tree.getroot()
-
-    return gaslib_data_cs, gaslib_data_cs_xml

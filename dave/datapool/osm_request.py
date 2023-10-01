@@ -13,8 +13,8 @@ import pandas as pd
 from shapely.geometry import LineString, Point
 from six import string_types
 
+from dave.database_io import db_availability, from_mongo, search_database
 from dave.datapool.read_data import get_data_path
-from dave.io.database_io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
 
 

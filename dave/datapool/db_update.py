@@ -8,8 +8,7 @@ from pyrosm import OSM, get_data
 from pyrosm.data import sources
 from tqdm import tqdm
 
-from dave.datapool.oep_request import oep_request
-from dave.io.database_io import (
+from dave.database_io import (
     create_database,
     db_availability,
     drop_collection,
@@ -17,6 +16,7 @@ from dave.io.database_io import (
     info_mongo,
     to_mongo,
 )
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 

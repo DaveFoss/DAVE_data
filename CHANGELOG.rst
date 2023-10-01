@@ -4,6 +4,13 @@ Change Log
 
 [1.2.0] - (2023--) 
 ----------------------
+- [MOVED]   dave structure functions to DAVE client
+- [MOVED]   read simone function to DAVE client
+- [MOVED]   read gaslib function to DAVE client
+- [MOVED]   model module to DAVE client
+- [MOVED]   io module to DAVE client
+- [CHANGED] archiv i/o function in seperated file 
+- [MOVED]   plotting module to DAVE client
 - [ADDED]   building height based on raster data
 - [ADDED]   extend api with functions for database managment
 - [ADDED]   environment files for the possibility to install DAVE via mamba
