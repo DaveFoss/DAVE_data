@@ -4,6 +4,7 @@ Change Log
 
 [1.2.0] - (2023--) 
 ----------------------
+- [MOVED]   dave structure functions to DAVE client
 - [MOVED]   read simone function to DAVE client
 - [MOVED]   read gaslib function to DAVE client
 - [MOVED]   model module to DAVE client

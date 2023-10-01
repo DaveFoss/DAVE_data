@@ -13,6 +13,7 @@ from dave_client.converter.create_gaslib import create_gaslib
 from dave_client.converter.create_mynts import create_mynts
 from dave_client.converter.create_pandapipes import create_pandapipes
 from dave_client.converter.create_pandapower import create_pandapower
+from dave_client.dave_structure import create_empty_dataset
 from dave_client.io.file_io import to_gpkg, to_hdf, to_json
 
 # imports from dave
@@ -28,7 +29,6 @@ from dave.components.power_plants import (
 from dave.components.transformers import create_transformers
 from dave.datapool.building_height_request import request_building_height
 from dave.datapool.population_request import request_population
-from dave.dave_structure import davestructure
 from dave.geography import target_area
 from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
@@ -40,110 +40,6 @@ from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
-
-
-def create_empty_dataset():
-    """
-    This function initializes the dave datastructure and create all possible data categories
-
-    OUTPUT:
-        **grid_data** (attrdict) - dave attrdict with empty tables
-
-    EXAMPLE:
-        grid_data = create_empty_dataset()
-
-    """
-    # define dave structure
-    grid_data = davestructure(
-        {
-            # target data
-            "area": gpd.GeoDataFrame([]),
-            "target_input": pd.DataFrame(),
-            "buildings": davestructure(
-                {
-                    "commercial": gpd.GeoDataFrame([]),
-                    "residential": gpd.GeoDataFrame([]),
-                    "other": gpd.GeoDataFrame([]),
-                }
-            ),
-            "roads": davestructure(
-                {
-                    "roads": gpd.GeoDataFrame([]),
-                    "roads_plot": gpd.GeoDataFrame([]),
-                    "road_junctions": gpd.GeoSeries([]),
-                }
-            ),
-            "landuse": gpd.GeoDataFrame([]),
-            "railways": gpd.GeoDataFrame([]),
-            "waterways": gpd.GeoDataFrame([]),
-            # power grid data
-            "ehv_data": davestructure(
-                {"ehv_nodes": gpd.GeoDataFrame([]), "ehv_lines": gpd.GeoDataFrame([])}
-            ),
-            "hv_data": davestructure(
-                {"hv_nodes": gpd.GeoDataFrame([]), "hv_lines": gpd.GeoDataFrame([])}
-            ),
-            "mv_data": davestructure(
-                {"mv_nodes": gpd.GeoDataFrame([]), "mv_lines": gpd.GeoDataFrame([])}
-            ),
-            "lv_data": davestructure(
-                {"lv_nodes": gpd.GeoDataFrame([]), "lv_lines": gpd.GeoDataFrame([])}
-            ),
-            "components_power": davestructure(
-                {
-                    "loads": gpd.GeoDataFrame([]),
-                    "renewable_powerplants": gpd.GeoDataFrame([]),
-                    "conventional_powerplants": gpd.GeoDataFrame([]),
-                    "transformers": davestructure(
-                        {
-                            "ehv_ehv": gpd.GeoDataFrame([]),
-                            "ehv_hv": gpd.GeoDataFrame([]),
-                            "hv_mv": gpd.GeoDataFrame([]),
-                            "mv_lv": gpd.GeoDataFrame([]),
-                        }
-                    ),
-                    "substations": davestructure(
-                        {
-                            "ehv_hv": gpd.GeoDataFrame([]),
-                            "hv_mv": gpd.GeoDataFrame([]),
-                            "mv_lv": gpd.GeoDataFrame([]),
-                        }
-                    ),
-                }
-            ),
-            # gas grid data
-            "hp_data": davestructure(
-                {"hp_junctions": gpd.GeoDataFrame([]), "hp_pipes": gpd.GeoDataFrame([])}
-            ),
-            "mp_data": davestructure(
-                {"mp_junctions": gpd.GeoDataFrame([]), "mp_pipes": gpd.GeoDataFrame([])}
-            ),
-            "lp_data": davestructure(
-                {"lp_junctions": gpd.GeoDataFrame([]), "lp_pipes": gpd.GeoDataFrame([])}
-            ),
-            "components_gas": davestructure(
-                {
-                    "compressors": gpd.GeoDataFrame([]),
-                    "sinks": gpd.GeoDataFrame([]),
-                    "sources": gpd.GeoDataFrame([]),
-                    "storages_gas": gpd.GeoDataFrame([]),
-                    "valves": gpd.GeoDataFrame([]),
-                }
-            ),
-            # building height data
-            "building_height": gpd.GeoDataFrame([]),
-            # census data
-            "census_data": davestructure(
-                {
-                    "population": gpd.GeoDataFrame([]),
-                }
-            ),
-            # auxillary
-            "dave_version": __version__,
-            "meta_data": {},
-        }
-    )
-    return grid_data
 
 
 def format_input_levels(power_levels, gas_levels):
