@@ -389,9 +389,7 @@ def create_grid(
         pass
 
     # save informations in user folder
-    if not api_use:
-        print(f"\nSave DAVE output data at the following path: {output_folder}")
-        save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+    save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
 
     # convert power model
     net_power = None
