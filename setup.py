@@ -38,7 +38,6 @@ setup(
         "pymongo",
         "xmlschema",
         "lxml",
-        "pyrosm",
         "python-keycloak",
         "authlib",
         "tables",

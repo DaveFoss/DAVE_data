@@ -16,7 +16,6 @@ pymongo
 openpyxl
 xmlschema
 lxml
-pyrosm
 python-keycloak
 authlib
 rasterio

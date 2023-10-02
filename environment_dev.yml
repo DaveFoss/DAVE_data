@@ -2,7 +2,7 @@ name: dave
 channels:
   - conda-forge
 dependencies:
-  - python=3.10.9
+  - python=3.11.5
   - shapely
   - geopandas
   - matplotlib
@@ -20,13 +20,13 @@ dependencies:
   - openpyxl
   - xmlschema
   - lxml
-  - pyrosm
   - python-keycloak
   - authlib
   - pytables
   - rasterio
   - tqdm
   - owslib
+  - spyder
   - pip
   - pip:
       - pandapower
