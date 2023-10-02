@@ -1,9 +1,9 @@
 import geopandas as gpd
 import numpy as np
 import rasterio
-import tqdm
 from owslib.wms import WebMapService
 from shapely.geometry import Point
+from tqdm import tqdm
 
 from dave.settings import dave_settings
 

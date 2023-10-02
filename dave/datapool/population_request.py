@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 import rasterio.mask
-import tqdm
+from tqdm import tqdm
 
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path, intersection_with_area
