@@ -210,11 +210,14 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
                                 allowed to create a new database. Please use existing names or
                                 contact the db admin
     OPTIONAL:
-        **collection** (string) - name of the collection where the data should added. For DataFrames
-                                  it is necessary
-        **data_df** ((Geo)DataFrame) - the data which should uploaded as DataFrame or GeoDataFrame
-        **filepath** (string) - absolute path to data if this is not in DataFrame format
-        **merge** (boolean) - If True the uploaded data will be merged into an existing collection
+        **collection** (string, None) - name of the collection where the data \
+            should added. For DataFrames it is necessary
+        **data_df** ((Geo)DataFrame, None) - the data which should uploaded as \
+            DataFrame or GeoDataFrame
+        **filepath** (string, None) - absolute path to data if this is not in \
+            DataFrame format
+        **merge** (boolean, False) - If True the uploaded data will be merged \
+            into an existing collection
     """
     # --- convert diffrent data formats
     # convert GeoDataFrame into DataFrame
@@ -223,7 +226,7 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
             df_to_mongo_merge(database, collection, data_df)
         else:
             df_to_mongo(database, collection, data_df)
-    elif filepath.split(".")[-1] == "csv":
+    elif filepath.split(".")[-1] == "csv":  # TODO: move file possibilities to dave client
         pass
     elif filepath.split(".")[-1] == "xlsx":
         pass

@@ -314,8 +314,6 @@ def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
 class DbPost:
     def db_post(self, parameters):
         # convert string to geodataframe
-        database = parameters.database
-        collection = parameters.collection
         data = json.loads(parameters.data)
         # check if data from type geodataframe or dataframe
         if ("type" in data.keys()) and (data["type"] == "FeatureCollection"):
@@ -323,7 +321,12 @@ class DbPost:
         else:
             data_df = pd.DataFrame(data)
         # upload data into database
-        to_mongo(database, collection, data_df)
+        to_mongo(
+            database=parameters.database,
+            collection=parameters.collection,
+            data_df=data_df,
+            merge=parameters.merge,
+        )
 
 
 # post method to upload data to database
