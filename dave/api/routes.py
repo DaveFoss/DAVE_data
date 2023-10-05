@@ -8,10 +8,10 @@ import geopandas as gpd
 import pandapipes as ppi
 import pandapower as pp
 import pandas as pd
-from dave_client.io.file_io import to_json
 from fastapi import APIRouter, Depends, Request
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
+from dave import __version__
 from dave.api.authentication import auth_token
 from dave.api.request_bodys import (
     Auth_param,
@@ -25,7 +25,9 @@ from dave.api.request_bodys import (
     Update_param,
 )
 from dave.create import create_grid
-from dave.database_io import (
+from dave.datapool.db_update import update_database
+from dave.datapool.read_data import read_postal
+from dave.io.database_io import (
     create_database,
     db_availability,
     db_denied,
@@ -34,8 +36,7 @@ from dave.database_io import (
     info_mongo,
     to_mongo,
 )
-from dave.datapool.db_update import update_database
-from dave.datapool.read_data import read_postal
+from dave.io.file_io import to_json
 from dave.settings import dave_settings
 
 router = APIRouter(
@@ -83,6 +84,12 @@ def login(parameters: Auth_param, auth: Login = Depends(Login)):
 # -------------------------------
 #  DaVe routes
 # -------------------------------
+# get method for dave version
+@router.get("/version")
+def version(request: Request):
+    return __version__
+
+
 class DaveRequest:
     def create_dataset(self, parameters):
         if parameters.convert_power and parameters.convert_gas:
@@ -96,6 +103,7 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -110,7 +118,6 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
-                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return json.dumps(
@@ -131,6 +138,7 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -145,7 +153,6 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
-                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return json.dumps({"grid_data": to_json(grid_data), "net_power": pp.to_json(net_power)})
@@ -160,6 +167,7 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -174,7 +182,6 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
-                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return json.dumps({"grid_data": to_json(grid_data), "net_gas": ppi.to_json(net_gas)})
@@ -189,6 +196,7 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
+                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -203,7 +211,6 @@ class DaveRequest:
                 storages_gas=parameters.storages_gas,
                 valves=parameters.valves,
                 census=parameters.census,
-                building_height=parameters.building_height,
             )
             # convert dave dataset to JSON string
             return to_json(grid_data)
@@ -314,8 +321,6 @@ def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
 class DbPost:
     def db_post(self, parameters):
         # convert string to geodataframe
-        database = parameters.database
-        collection = parameters.collection
         data = json.loads(parameters.data)
         # check if data from type geodataframe or dataframe
         if ("type" in data.keys()) and (data["type"] == "FeatureCollection"):
@@ -323,7 +328,12 @@ class DbPost:
         else:
             data_df = pd.DataFrame(data)
         # upload data into database
-        to_mongo(database, collection, data_df)
+        to_mongo(
+            database=parameters.database,
+            collection=parameters.collection,
+            data_df=data_df,
+            merge=parameters.merge,
+        )
 
 
 # post method to upload data to database
