@@ -122,9 +122,9 @@ def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use
             if output_format == "json":
                 to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
             elif output_format == "hdf":
-                to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
+                to_hdf(grid_data, file_path=output_folder + "\\" + "dave_dataset.h5")
             elif output_format == "gpkg":
-                to_gpkg(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.gpkg")
+                to_gpkg(grid_data, file_path=output_folder + "\\" + "dave_dataset.gpkg")
 
 
 def create_grid(
@@ -396,17 +396,17 @@ def create_grid(
     if convert_power:
         if "pandapower" in convert_power:
             net_power = create_pandapower(
-                grid_data, opt_model=opt_model, api_use=api_use, output_folder=output_folder
+                grid_data, opt_model=opt_model, output_folder=output_folder
             )
 
     # convert gas model
     net_gas = None
     if convert_gas:
         if "pandapipes" in convert_gas:
-            net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
+            net_gas = create_pandapipes(grid_data, output_folder=output_folder)
         if "gaslib" in convert_gas:
             create_gaslib(
-                grid_data, api_use=api_use, output_folder=output_folder
+                grid_data, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
         if "mynts" in convert_gas:
             create_mynts(grid_data, basefilepath=output_folder)
