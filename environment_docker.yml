@@ -2,7 +2,7 @@ name: base
 channels:
   - conda-forge
 dependencies:
-  - python=3.11.5
+  - python=3.11.6
   - shapely
   - geopandas
   - matplotlib
@@ -24,7 +24,7 @@ dependencies:
   - rasterio
   - tqdm
   - owslib
-  - numba == 0.56.4
+  - numba == 0.57.1
   - pip
   - pip:
     - pandapower
