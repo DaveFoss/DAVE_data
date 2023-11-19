@@ -21,6 +21,7 @@ authlib
 rasterio
 tqdm
 owslib
+tables
 # via pip
 #pandapower
 #pandapipes
