@@ -2,7 +2,7 @@ Change Log
 =============
 
 
-[1.2.0] - (2023--) 
+[1.2.0] - (2023-11-20) 
 ----------------------
 - [MOVED]   dave structure functions to DAVE client
 - [MOVED]   read simone function to DAVE client
