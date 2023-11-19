@@ -2,15 +2,11 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-from copy import deepcopy
-from os import path
+import os
 
-import geopandas as gpd
 import pandas as pd
-from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
+from dave_client.io.file_io import from_hdf, to_hdf
 
-import dave.create as create
-from dave.dave_structure import davestructure
 from dave.toolbox import get_data_path
 
 
@@ -26,7 +22,7 @@ def archiv_inventory(grid_data, read_only=False):
     postalcode = target_input.data if target_input.typ == "postalcode" else "None"
     town_name = target_input.data if target_input.typ == "town name" else "None"
     federal_state = target_input.data if target_input.typ == "federal state" else "None"
-    if path.isfile(inventory_path):
+    if os.path.isfile(inventory_path):
         # read inventory file
         inventory_list = pd.read_csv(inventory_path)
         # create dataset file
@@ -93,50 +89,31 @@ def archiv_inventory(grid_data, read_only=False):
         return False, file_name
 
 
-def isinstance_partial(obj, cls):
-    if isinstance(obj, davestructure):
-        return False
-    return isinstance(obj, cls)
+def from_archiv(dataset_name):
+    """
+    This functions reads a dave dataset from the dave internal archiv
+    """
+    # check if file exist
+    files_in_archiv = os.listdir(get_data_path(dirname="dave_archiv"))
+    if dataset_name in files_in_archiv:
+        grid_data = from_hdf(get_data_path(dataset_name, "dave_archiv"))
+        return grid_data
+    else:
+        print("The requested file is not found in the dave archiv")
 
 
-class FromSerializableRegistryDaVe(FromSerializableRegistry):
-    from_serializable = deepcopy(FromSerializableRegistry.from_serializable)
-    class_name = ""
-    module_name = ""
-
-    @from_serializable.register(class_name="davestructure", module_name="dave.dave_structure")
-    def davestructure(self):
-        if isinstance(self.obj, str):  # backwards compatibility
-            from dave.io.file_io import from_json_string
-
-            return from_json_string(self.obj)
-        else:
-            dave_dataset = create.create_empty_dataset()
-            dataset = None
-            for key in dave_dataset.keys():
-                if (not isinstance(dave_dataset[key], str)) and (
-                    next(iter(self.obj)) in dave_dataset[key].keys()
-                ):
-                    dataset = dave_dataset[key]
-                elif isinstance(dave_dataset[key], davestructure):
-                    for key_sec in dave_dataset[key].keys():
-                        if next(iter(self.obj)) in dave_dataset[key][key_sec].keys():
-                            dataset = dave_dataset[key][key_sec]
-            if dataset is None:
-                dataset = dave_dataset
-            dataset.update(self.obj)
-            return dataset
-
-
-@to_serializable.register(davestructure)
-def json_dave(obj):
-    net_dict = {k: item for k, item in obj.items() if not k.startswith("_")}
-    data = with_signature(obj, net_dict)
-    return data
-
-
-@to_serializable.register(gpd.GeoSeries)
-def json_series(obj):
-    data = with_signature(obj, obj.to_json())
-    data.update({"dtype": str(obj.dtypes), "typ": "geoseries", "crs": obj.crs})
-    return data
+def to_archiv(grid_data):
+    """
+    This functions stores a dave dataset in the dave internal archiv
+    """
+    # check if file already exists and create file name for archiv
+    file_exists, file_name = archiv_inventory(grid_data)
+    # create archive file if the dataset does not exists in the archiv
+    if not file_exists:
+        to_hdf(grid_data, get_data_path(f"{file_name}.h5", "dave_archiv"))
+    else:
+        print(
+            "The dataset you tried to save already exist in the DaVe archiv"
+            f' with the name "{file_name}"'
+        )
+    return file_name

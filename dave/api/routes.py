@@ -8,9 +8,11 @@ import geopandas as gpd
 import pandapipes as ppi
 import pandapower as pp
 import pandas as pd
+from dave_client.io.file_io import to_json
 from fastapi import APIRouter, Depends, Request
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
+from dave import __version__
 from dave.api.authentication import auth_token
 from dave.api.request_bodys import (
     Auth_param,
@@ -24,9 +26,7 @@ from dave.api.request_bodys import (
     Update_param,
 )
 from dave.create import create_grid
-from dave.datapool.db_update import update_database
-from dave.datapool.read_data import read_postal
-from dave.io.database_io import (
+from dave.database_io import (
     create_database,
     db_availability,
     db_denied,
@@ -35,7 +35,8 @@ from dave.io.database_io import (
     info_mongo,
     to_mongo,
 )
-from dave.io.file_io import to_json
+from dave.datapool.db_update import update_database
+from dave.datapool.read_data import read_postal
 from dave.settings import dave_settings
 
 router = APIRouter(
@@ -83,6 +84,12 @@ def login(parameters: Auth_param, auth: Login = Depends(Login)):
 # -------------------------------
 #  DaVe routes
 # -------------------------------
+# get method for dave version
+@router.get("/version")
+def version(request: Request):
+    return __version__
+
+
 class DaveRequest:
     def create_dataset(self, parameters):
         if parameters.convert_power and parameters.convert_gas:
@@ -96,7 +103,6 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
-                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -131,7 +137,6 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
-                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -160,7 +165,6 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
-                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,
@@ -189,7 +193,6 @@ class DaveRequest:
                 geodata=parameters.geodata,
                 power_levels=parameters.power_levels,
                 gas_levels=parameters.gas_levels,
-                plot=parameters.plot,
                 convert_power=parameters.convert_power,
                 convert_gas=parameters.convert_gas,
                 opt_model=parameters.opt_model,

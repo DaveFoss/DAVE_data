@@ -27,7 +27,6 @@ class Dataset_param(BaseModel):
     geodata: Optional[list] = []
     power_levels: Optional[list] = []
     gas_levels: Optional[list] = []
-    plot: Optional[bool] = True
     convert_power: Optional[list] = []
     convert_gas: Optional[list] = []
     opt_model: Optional[bool] = True
@@ -42,6 +41,7 @@ class Dataset_param(BaseModel):
     storages_gas: Optional[bool] = True
     valves: Optional[bool] = True
     census: Optional[list] = []
+    building_height: Optional[bool] = False
 
 
 # create request body for the datapool request

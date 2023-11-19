@@ -61,7 +61,7 @@ def voronoi(points):
     This function calculates the voronoi diagram for given points
 
     INPUT:
-        **voronoi_points** (GeoDataFrame) - all nodes for voronoi analysis
+        **voronoi_points** (GeoDataFrame) - all nodes for voronoi analysis (centroids)
 
     OUTPUT:
         **voronoi polygons** (GeoDataFrame) - all voronoi areas for the given points
@@ -119,21 +119,6 @@ def adress_to_coords(adress, geolocator):
         return (location.longitude, location.latitude)
 
 
-def multiline_coords(line_geometry):
-    """
-    This function extracts the coordinates from a MultiLineString
-    """
-    merged_line = linemerge(line_geometry)
-    # sometimes line merge can not merge the lines correctly
-    line_coords = []
-    if isinstance(merged_line, MultiLineString):
-        for line in list(merged_line.geoms):
-            line_coords += line.coords[:]
-    else:
-        line_coords += merged_line.coords[:]
-    return line_coords
-
-
 def get_data_path(filename=None, dirname=None):
     """
     This function returns the full os path for a given directory (and filename)
@@ -150,6 +135,14 @@ def intersection_with_area(gdf, area, remove_columns=True):
     """
     This function intersects a given geodataframe with an area in consideration of mixed geometry
     types at both input variables
+    INPUT:
+        **gdf** (GeoDataFrame) - Data which should reduced to an area \n
+        **area** (GeoDataFrame) - Information about the considered area \n
+        **remove_columns** (bool, default True) - If True the original parameters from area will \
+            not include in the resulting Data \n
+
+    OUTPUT:
+        **gdf_over** (GeoDataFrame) - Data which intersetcs with considered area
     """
     # check if geodataframe has mixed geometries
     geom_types_gdf = set(map(type, gdf.geometry))

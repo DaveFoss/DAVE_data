@@ -4,12 +4,11 @@
 
 import timeit
 
-from pyrosm import OSM, get_data
-from pyrosm.data import sources
+# from pyrosm import OSM, get_data
+# from pyrosm.data import sources
 from tqdm import tqdm
 
-from dave.datapool.oep_request import oep_request
-from dave.io.database_io import (
+from dave.database_io import (
     create_database,
     db_availability,
     drop_collection,
@@ -17,6 +16,7 @@ from dave.io.database_io import (
     info_mongo,
     to_mongo,
 )
+from dave.datapool.oep_request import oep_request
 from dave.settings import dave_settings
 from dave.toolbox import get_data_path
 
@@ -99,76 +99,77 @@ def oep_update():
     pbar.close()
 
 
-def osm_update():
-    """
-    This function updates the relevant data from the OpenStreetMap
-    """
-    # set progress bar
-    pbar = tqdm(
-        total=100,
-        desc="update data from OSM: ",
-        position=0,
-        bar_format=dave_settings()["bar_format"],
-    )
-    # considerd area
-    osm_area = dave_settings()["osm_area"]
-    # in the case of considering germany the data has to be considered in supregions because otherwise there could be an memory error
-    if osm_area == "germany":
-        sub_regions = [
-            "baden_wuerttemberg",
-            "bayern",
-            "brandenburg",
-            "bremen",
-            "hamburg",
-            "hessen",
-            "mecklenburg_vorpommern",
-            "niedersachsen",
-            "nordrhein_westfalen",
-            "rheinland_pfalz",
-            "saarland",
-            "sachsen",
-            "sachsen_anhalt",
-            "schleswig_holstein",
-            "thueringen",
-        ]  # hint: The dataset "brandenburg" at geofabrik contains berlin
+# Function for downloading osm data is commented out because the used package pyrosm is not available for python 3.11
+# def osm_update():
+#     """
+#     This function updates the relevant data from the OpenStreetMap
+#     """
+#     # set progress bar
+#     pbar = tqdm(
+#         total=100,
+#         desc="update data from OSM: ",
+#         position=0,
+#         bar_format=dave_settings()["bar_format"],
+#     )
+#     # considerd area
+#     osm_area = dave_settings()["osm_area"]
+#     # in the case of considering germany the data has to be considered in supregions because otherwise there could be an memory error
+#     if osm_area == "germany":
+#         sub_regions = [
+#             "baden_wuerttemberg",
+#             "bayern",
+#             "brandenburg",
+#             "bremen",
+#             "hamburg",
+#             "hessen",
+#             "mecklenburg_vorpommern",
+#             "niedersachsen",
+#             "nordrhein_westfalen",
+#             "rheinland_pfalz",
+#             "saarland",
+#             "sachsen",
+#             "sachsen_anhalt",
+#             "schleswig_holstein",
+#             "thueringen",
+#         ]  # hint: The dataset "brandenburg" at geofabrik contains berlin
 
-    for idx, region in enumerate(sub_regions):
-        # download data from osm
-        filepath = get_data(
-            region, directory=dave_settings()["dave_dir"] + "\\datapool\\data\\osm", update=True
-        )
-        # Initialize the OSM object
-        osm = OSM(filepath)
-        pbar.update(10 / len(sub_regions))
-        # filter data from local osm file and write to database
-        for data_type in dave_settings()["osm_tags"].keys():
-            print(f"{region}_{data_type}")  # !!! only for testing
-            # create collection name
-            collection = f"osm_{data_type}_{osm_area}"
-            # get data parameter
-            data_param = dave_settings()["osm_tags"][data_type]
-            # filter data_type
-            dataset = osm.get_data_by_custom_criteria(
-                custom_filter={data_param[0]: data_param[1]},
-                # Keep data matching the criteria above
-                filter_type="keep",
-                keep_nodes=True if "node" in data_param[2] else False,
-                keep_ways=True if "way" in data_param[2] else False,
-                keep_relations=True if "relation" in data_param[2] else False,
-            )
-            if idx == 0:
-                if db_availability(collection_name=collection):
-                    # drop existing collection
-                    drop_collection(database="geo", collection=collection)
-                # Write dataset to database
-                to_mongo(database="geo", collection=collection, data_df=dataset)
-            else:
-                # Write dataset to database in existing collection
-                to_mongo(database="geo", collection=collection, data_df=dataset, merge=True)
-            # update progress
-            pbar.update(90 / (len(sub_regions) * len(dave_settings()["osm_tags"].keys())))
-    # close progress bar
-    pbar.close()
+#     for idx, region in enumerate(sub_regions):
+#         # download data from osm
+#         filepath = get_data(
+#             region, directory=dave_settings()["dave_dir"] + "\\datapool\\data\\osm", update=True
+#         )
+#         # Initialize the OSM object
+#         osm = OSM(filepath)
+#         pbar.update(10 / len(sub_regions))
+#         # filter data from local osm file and write to database
+#         for data_type in dave_settings()["osm_tags"].keys():
+#             print(f"{region}_{data_type}")  # !!! only for testing
+#             # create collection name
+#             collection = f"osm_{data_type}_{osm_area}"
+#             # get data parameter
+#             data_param = dave_settings()["osm_tags"][data_type]
+#             # filter data_type
+#             dataset = osm.get_data_by_custom_criteria(
+#                 custom_filter={data_param[0]: data_param[1]},
+#                 # Keep data matching the criteria above
+#                 filter_type="keep",
+#                 keep_nodes=True if "node" in data_param[2] else False,
+#                 keep_ways=True if "way" in data_param[2] else False,
+#                 keep_relations=True if "relation" in data_param[2] else False,
+#             )
+#             if idx == 0:
+#                 if db_availability(collection_name=collection):
+#                     # drop existing collection
+#                     drop_collection(database="geo", collection=collection)
+#                 # Write dataset to database
+#                 to_mongo(database="geo", collection=collection, data_df=dataset)
+#             else:
+#                 # Write dataset to database in existing collection
+#                 to_mongo(database="geo", collection=collection, data_df=dataset, merge=True)
+#             # update progress
+#             pbar.update(90 / (len(sub_regions) * len(dave_settings()["osm_tags"].keys())))
+#     # close progress bar
+#     pbar.close()
 
 
 def local_data_update():
@@ -241,7 +242,7 @@ def update_database():
         oep_update()
 
         # update osm data
-        # osm_update()  # !!! memory error
+        # osm_update()  # !!! memory error and also pyrosm can not use with python 3.11
 
     else:
         print("Database is not available")

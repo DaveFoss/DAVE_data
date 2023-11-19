@@ -155,7 +155,7 @@ def dave_settings():
                     "drain",
                 ],
                 ["way"],
-                ["name", "waterway", "geometry", "depth", "id"],
+                ["name", "waterway", "geometry", "depth", "width", "id"],
             ),
         },
         # osm categories

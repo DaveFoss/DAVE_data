@@ -2,7 +2,7 @@ name: base
 channels:
   - conda-forge
 dependencies:
-  - python=3.10.9
+  - python=3.11.6
   - shapely
   - geopandas
   - matplotlib
@@ -17,16 +17,16 @@ dependencies:
   - openpyxl
   - xmlschema
   - lxml
-  - pyrosm
   - python-keycloak
   - authlib
   - pytables
   - pyopenssl
   - rasterio
   - tqdm
-  - numba == 0.56.4
+  - owslib
+  - numba == 0.57.1
   - pip
   - pip:
     - pandapower
     - pandapipes
-    #- -e /dave
+    - dave_client-0.0.0-py3-none-any.whl

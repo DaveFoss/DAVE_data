@@ -1,4 +1,4 @@
-# Copyright (c) 2022 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
@@ -10,7 +10,6 @@ from dave.settings import dave_settings
 """
 This is a example file for testing dave
 """
-
 ########## Examples for grid area definition #########################
 # test target by plz
 _postalcode_1 = ["34225"]  # Baunatal
@@ -47,20 +46,19 @@ For testing you can use the pre defined variables on the top or own ones.
 
 grid_data = create_grid(
     # grid area parameters (select on of the following five options)
-    postalcode=_postalcode_1,
+    postalcode=None,
     town_name=None,
     federal_state=None,
     nuts_region=None,
-    own_area=None,
+    own_area=_own_area,
     # grid level parameters
     power_levels=[],
     gas_levels=[],
     # --- optional parameters
-    plot=False,
     opt_model=False,
     combine_areas=[],
     # geographical parameters
-    geodata=[],
+    geodata=["roads", "railways"],
     # converting parameters
     convert_power=[],  # if True a second return variable must be defined
     convert_gas=[],  # if True a second return variable must be defined
@@ -73,8 +71,10 @@ grid_data = create_grid(
     compressors=False,
     sinks=False,
     sources=False,
+    # other information
+    building_height=False,
     # census data
-    census = ['population'],
+    census=["population"],
     # output settings
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",

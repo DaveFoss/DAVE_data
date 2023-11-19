@@ -5,11 +5,11 @@
 import geopandas as gpd
 import pandas as pd
 import requests
+from dave_client.io.convert_format import wkb_to_wkt
 from pymongo import GEOSPHERE, MongoClient
 from shapely.geometry import mapping, shape
 from shapely.wkt import loads
 
-from dave.io.convert_format import wkb_to_wkt
 from dave.settings import dave_settings, db_restriction
 
 

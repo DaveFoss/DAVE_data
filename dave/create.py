@@ -9,9 +9,16 @@ import warnings
 os.environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
 import geopandas as gpd
 import pandas as pd
+from dave_client.converter.create_gaslib import create_gaslib
+from dave_client.converter.create_mynts import create_mynts
+from dave_client.converter.create_pandapipes import create_pandapipes
+from dave_client.converter.create_pandapower import create_pandapower
+from dave_client.dave_structure import create_empty_dataset
+from dave_client.io.file_io import to_gpkg, to_hdf, to_json
 
 # imports from dave
 from dave import __version__
+from dave.archiv_io import from_archiv, to_archiv
 from dave.components.gas_components import gas_components
 from dave.components.loads import create_loads
 from dave.components.power_plants import (
@@ -20,15 +27,10 @@ from dave.components.power_plants import (
     create_renewable_powerplants,
 )
 from dave.components.transformers import create_transformers
+from dave.datapool.building_height_request import request_building_height
 from dave.datapool.population_request import request_population
-from dave.dave_structure import davestructure
 from dave.geography import target_area
-from dave.io.file_io import from_archiv, to_archiv, to_gpkg, to_hdf, to_json
-from dave.model.create_gaslib import create_gaslib
-from dave.model.create_pandapipes import create_pandapipes
-from dave.model.create_pandapower import create_pandapower
-from dave.model.model_utils import clean_up_data
-from dave.plotting.plot import plot_geographical_data, plot_grid_data, plot_landuse
+from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
 from dave.topology.extra_high_voltage import create_ehv_topology
@@ -38,108 +40,6 @@ from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
-
-
-def create_empty_dataset():
-    """
-    This function initializes the dave datastructure.
-
-    OUTPUT:
-        **grid_data** (attrdict) - dave attrdict with empty tables
-
-    EXAMPLE:
-        grid_data = create_empty_dataset()
-
-    """
-    # define dave structure
-    grid_data = davestructure(
-        {
-            # target data
-            "area": gpd.GeoDataFrame([]),
-            "target_input": pd.DataFrame(),
-            "buildings": davestructure(
-                {
-                    "commercial": gpd.GeoDataFrame([]),
-                    "residential": gpd.GeoDataFrame([]),
-                    "other": gpd.GeoDataFrame([]),
-                }
-            ),
-            "roads": davestructure(
-                {
-                    "roads": gpd.GeoDataFrame([]),
-                    "roads_plot": gpd.GeoDataFrame([]),
-                    "road_junctions": gpd.GeoSeries([]),
-                }
-            ),
-            "landuse": gpd.GeoDataFrame([]),
-            "railways": gpd.GeoDataFrame([]),
-            "waterways": gpd.GeoDataFrame([]),
-            # power grid data
-            "ehv_data": davestructure(
-                {"ehv_nodes": gpd.GeoDataFrame([]), "ehv_lines": gpd.GeoDataFrame([])}
-            ),
-            "hv_data": davestructure(
-                {"hv_nodes": gpd.GeoDataFrame([]), "hv_lines": gpd.GeoDataFrame([])}
-            ),
-            "mv_data": davestructure(
-                {"mv_nodes": gpd.GeoDataFrame([]), "mv_lines": gpd.GeoDataFrame([])}
-            ),
-            "lv_data": davestructure(
-                {"lv_nodes": gpd.GeoDataFrame([]), "lv_lines": gpd.GeoDataFrame([])}
-            ),
-            "components_power": davestructure(
-                {
-                    "loads": gpd.GeoDataFrame([]),
-                    "renewable_powerplants": gpd.GeoDataFrame([]),
-                    "conventional_powerplants": gpd.GeoDataFrame([]),
-                    "transformers": davestructure(
-                        {
-                            "ehv_ehv": gpd.GeoDataFrame([]),
-                            "ehv_hv": gpd.GeoDataFrame([]),
-                            "hv_mv": gpd.GeoDataFrame([]),
-                            "mv_lv": gpd.GeoDataFrame([]),
-                        }
-                    ),
-                    "substations": davestructure(
-                        {
-                            "ehv_hv": gpd.GeoDataFrame([]),
-                            "hv_mv": gpd.GeoDataFrame([]),
-                            "mv_lv": gpd.GeoDataFrame([]),
-                        }
-                    ),
-                }
-            ),
-            # gas grid data
-            "hp_data": davestructure(
-                {"hp_junctions": gpd.GeoDataFrame([]), "hp_pipes": gpd.GeoDataFrame([])}
-            ),
-            "mp_data": davestructure(
-                {"mp_junctions": gpd.GeoDataFrame([]), "mp_pipes": gpd.GeoDataFrame([])}
-            ),
-            "lp_data": davestructure(
-                {"lp_junctions": gpd.GeoDataFrame([]), "lp_pipes": gpd.GeoDataFrame([])}
-            ),
-            "components_gas": davestructure(
-                {
-                    "compressors": gpd.GeoDataFrame([]),
-                    "sinks": gpd.GeoDataFrame([]),
-                    "sources": gpd.GeoDataFrame([]),
-                    "storages_gas": gpd.GeoDataFrame([]),
-                    "valves": gpd.GeoDataFrame([]),
-                }
-            ),
-            # cansus data
-            "census_data": davestructure(
-                {
-                    "population": gpd.GeoDataFrame([]),
-                }
-            ),
-            # auxillary
-            "dave_version": __version__,
-            "meta_data": {},
-        }
-    )
-    return grid_data
 
 
 def format_input_levels(power_levels, gas_levels):
@@ -201,7 +101,19 @@ def save_dataset_to_archiv(grid_data):
 
 def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use):
     """
-    This function saves the DAVE dataset to the output folder
+    This function saves the DAVE dataset to an output folder.
+    
+    Input:
+        **grid_data** (attrdict) - dave attrdict with empty tables
+        **output_format** (string, default 'json') - this parameter defines the output format. \
+            Available formats are currently: 'json', 'hdf' and 'gpkg' \n
+        **output_folder** (string, default user desktop) - absolute path to the folder where the \
+            generated data should be saved. if for this path no folder exists, dave will be \
+                create one \n
+        **api_use** (boolean, default True) - if true, the resulting data will not stored in a \
+            local folder
+    OUTPUT:
+        **grid_data** (attrdict) - grid_data as a attrdict in dave structure \n
     """
     if not api_use:
         with warnings.catch_warnings():
@@ -210,9 +122,9 @@ def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use
             if output_format == "json":
                 to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
             elif output_format == "hdf":
-                to_hdf(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.h5")
+                to_hdf(grid_data, file_path=output_folder + "\\" + "dave_dataset.h5")
             elif output_format == "gpkg":
-                to_gpkg(grid_data, dataset_path=output_folder + "\\" + "dave_dataset.gpkg")
+                to_gpkg(grid_data, file_path=output_folder + "\\" + "dave_dataset.gpkg")
 
 
 def create_grid(
@@ -224,7 +136,6 @@ def create_grid(
     geodata=[],
     power_levels=[],
     gas_levels=[],
-    plot=True,
     convert_power=[],
     convert_gas=[],
     opt_model=True,
@@ -238,6 +149,7 @@ def create_grid(
     sources=True,
     storages_gas=True,
     valves=True,
+    building_height=False,
     census=[],
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",
@@ -258,7 +170,7 @@ def create_grid(
         **nuts_region** (tuple(List of strings, string)) - this tuple includes first a list of the \
             target nuts regions codes (independent from nuts level). It could also be choose ['ALL'] \
             for all nuts regions in europe. The second tuple parameter defines the nuts \
-            year as string.\n
+            year as string. The year options are 2013, 2016 and 2021. \n
         **own_area** (string / Polygon) - First Option for this parameter is to hand over a string \
             which could be the absolute path to a shape file which includes own target area \
             (e.g. "C:/Users/name/test/test.shp") or a JSON string with the area information. The \
@@ -274,12 +186,11 @@ def create_grid(
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
             considered. options: 'hp','mp','lp', []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
-        **plot** (boolean, default True) - if this value is true dave creates plottings \
-            automaticly \n
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
         **convert_gas** (list, default []) - this parameter defines in witch formats the gas \
-            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib' \n
+            grid data should be converted. Available formats are currently: 'pandapipes', 'gaslib', \
+            'mynts' \n
         **opt_model** (boolean, default True) - if this value is true dave will be use the optimal \
             power flow calculation to get no boundary violations. Currently a experimental feature \
                 and only available for pandapower \n
@@ -299,6 +210,7 @@ def create_grid(
         **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
             model \n
         **valves** (boolean, default True) - if true, gas valves are added to the grid model \n
+        **building_height** (boolean, default False) - if true, bulding heights will added \n
         **census**  (list, default []) - this parameter defines which census data should be considered.\
             options: 'population', []. \
                 there could be choose: one/multiple geoobjects or 'ALL' \n
@@ -453,6 +365,10 @@ def create_grid(
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
             # save interim status of the informations in user folder
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+        # add population height
+        if building_height == True:
+            request_building_height(grid_data, output_folder)
+            save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         # create demongraphical data
         for cen in census:
             # --- request population data
@@ -473,39 +389,35 @@ def create_grid(
         pass
 
     # save informations in user folder
-    if not api_use:
-        print(f"\nSave DAVE output data at the following path: {output_folder}")
-        save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-
-    # plot informations
-    if not api_use and plot:
-        if bool(geodata):
-            plot_geographical_data(grid_data, api_use, output_folder)
-        if any(power_levels + gas_levels):
-            plot_grid_data(grid_data, api_use, output_folder)
-        # plot_landuse(grid_data, api_use, output_folder)
+    save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
 
     # convert power model
     net_power = None
     if convert_power:
         if "pandapower" in convert_power:
             net_power = create_pandapower(
-                grid_data, opt_model=opt_model, api_use=api_use, output_folder=output_folder
+                grid_data, opt_model=opt_model, output_folder=output_folder
             )
 
     # convert gas model
     net_gas = None
     if convert_gas:
         if "pandapipes" in convert_gas:
-            net_gas = create_pandapipes(grid_data, api_use=api_use, output_folder=output_folder)
+            net_gas = create_pandapipes(grid_data, output_folder=output_folder)
         if "gaslib" in convert_gas:
             create_gaslib(
-                grid_data, api_use=api_use, output_folder=output_folder
+                grid_data, output_folder=output_folder
             )  # !!! how to handle net_gas at multiple conversions
+        if "mynts" in convert_gas:
+            create_mynts(grid_data, basefilepath=output_folder)
 
-    # return runtime
-    _stop_time = timeit.default_timer()
-    print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
+    # show general informations from the generating process
+    if not api_use:
+        # print output folder
+        print(f"\nSave DaVe output data at the following path: {output_folder}")
+        # return runtime
+        _stop_time = timeit.default_timer()
+        print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
 
     # return data
     if net_power and net_gas:
