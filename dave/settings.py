@@ -8,7 +8,7 @@ import os
 # develop mode: running dave from ide and keycloak in local docker network
 # local mode: runing dave and keycloak in local docker network
 # production mode: running dave and keycloak on production server docker network
-stage = "production"  # set development modus
+stage = "local"  # set development modus
 if stage == "develop":
     # --- parameter for develop mode
     # keycloak settings
@@ -155,7 +155,7 @@ def dave_settings():
                     "drain",
                 ],
                 ["way"],
-                ["name", "waterway", "geometry", "depth", "id"],
+                ["name", "waterway", "geometry", "depth", "width", "id"],
             ),
         },
         # osm categories
