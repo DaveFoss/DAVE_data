@@ -76,6 +76,7 @@ class Db_up_param(BaseModel):
     database: str
     collection: str
     data: str
+    merge: Optional[bool] = False
     # meta_data ?
 
 

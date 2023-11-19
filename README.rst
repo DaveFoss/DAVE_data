@@ -1,5 +1,5 @@
 ====
-DaVe
+DAVE
 ====
 
 .. image:: https://gitlab.cc-asp.fraunhofer.de/DaVe/DaVe/badges/develop/pipeline.svg
@@ -11,7 +11,7 @@ DaVe
 .. image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
     :target: https://pycqa.github.io/isort/
 
-DaVe is an softwaretool for a automatic generation of region-specific energy grid models. The resulting grid models are based on open data from different sources.
+DAVE is an softwaretool for a automatic generation of region-specific energy grid models. The resulting grid models are based on open data from different sources.
 
 For more informations about DaVe please look at the publications below:
 
