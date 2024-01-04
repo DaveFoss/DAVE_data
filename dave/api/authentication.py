@@ -34,6 +34,9 @@ def auth_token(token, roles=False):
     )
     content = json.loads(result.content.decode())
     if roles:
-        return content["active"], content["realm_access"]["roles"]
+        if content["active"] == True:
+            return content["active"], content["realm_access"]["roles"]
+        else:
+            return "No roles found because Token expired or invalid"
     else:
         return content["active"]
