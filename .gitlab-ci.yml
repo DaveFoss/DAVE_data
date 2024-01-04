@@ -82,7 +82,7 @@ build_release_container:
 deployment_test:
   stage: test
   image: 
-    name: python:3.11.6
+    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest #python:3.11.6
   tags:
     - asprunner
   script:
