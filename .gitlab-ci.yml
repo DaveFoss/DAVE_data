@@ -80,7 +80,7 @@ build_release_container:
 #       when: manual
 
 deployment_test:
-  stage: deploy
+  stage: test
   image: 
     name: python=3.11.6
   tags:
