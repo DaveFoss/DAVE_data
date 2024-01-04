@@ -63,18 +63,41 @@ build_release_container:
     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
 
 # --- testing deployment conditions 
+# deployment_test:
+#   stage: deploy
+#   image: 
+#     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
+#     entrypoint: [""]
+#   tags:
+#     - asprunner
+#   script:
+#     - pytest dave/tests/deployment --disable-warnings --cov-config=.coveragerc --cov=dave  --cov-report=html
+#   rules:
+#     # master or develop branch and no schedule piplines
+#     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+#     # develop branch 
+#     - if: $CI_COMMIT_BRANCH == "develop"
+#       when: manual
+
 deployment_test:
   stage: deploy
   image: 
-    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
-    entrypoint: [""]
+    name: python=3.11.6
   tags:
     - asprunner
   script:
-    - pytest dave/tests/deployment --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
+    - pip install pytest pytest-cov
+    - python -m pytest --disable-warnings --cov-report=html --cov=dave .
+  artifacts:
+    paths:
+      - coverage
+    expire_in: 1 day
   rules:
     # master or develop branch and no schedule piplines
     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+    # develop branch 
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: manual
 
 
 # deploy new docker image release to server and reastart system
