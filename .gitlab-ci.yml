@@ -9,25 +9,6 @@ stages:
 #before_script:
     # add something
 
-# testing changes 
-# !!! temporary set to manual because of an issue at pytest
-# test:
-#   stage: test
-#   image: 
-#     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
-#     entrypoint: [""]
-#   tags:
-#     - asprunner
-#   script:
-#     - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
-#   # artifacts:
-#   #   paths:
-#   #     - coverage
-#   #  expire_in: 30 days
-#   rules:
-#     # master or develop branch and no schedule piplines
-#     - if: ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop") && $CI_PIPELINE_SOURCE != "schedule"
-
 # --- build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
   stage: build
@@ -67,11 +48,11 @@ build_release_container:
 unit_test:
   stage: test
   image: 
-    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest #python:3.11.6
+    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest
   tags:
     - asprunner
   script:
-    - python -m pytest --disable-warnings --cov-report=html --cov=dave .
+    - python -m pytest --cov-report=html --cov=dave .
   artifacts:
     paths:
       - coverage
