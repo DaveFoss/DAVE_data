@@ -82,7 +82,7 @@ build_release_container:
 deployment_test:
   stage: test
   image: 
-    name: python=3.11.6
+    name: python:3.11.6
   tags:
     - asprunner
   script:
