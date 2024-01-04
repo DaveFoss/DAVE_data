@@ -1,7 +1,7 @@
 # define stages
 stages:
     - test
-    - docker
+    - build
     #- lint  # create stage to check codestyle with pylint? also run black and isort overall
     - deploy
     
@@ -30,7 +30,7 @@ stages:
 
 # --- build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
-  stage: docker
+  stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -47,7 +47,7 @@ build_develop_container:
 
 # --- build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
-  stage: docker
+  stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -63,30 +63,14 @@ build_release_container:
     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
 
 # --- testing deployment conditions 
-# deployment_test:
-#   stage: deploy
-#   image: 
-#     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
-#     entrypoint: [""]
-#   tags:
-#     - asprunner
-#   script:
-#     - pytest dave/tests/deployment --disable-warnings --cov-config=.coveragerc --cov=dave  --cov-report=html
-#   rules:
-#     # master or develop branch and no schedule piplines
-#     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
-#     # develop branch 
-#     - if: $CI_COMMIT_BRANCH == "develop"
-#       when: manual
 
-deployment_test:
+unit_test:
   stage: test
   image: 
     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest #python:3.11.6
   tags:
     - asprunner
   script:
-    - pip install pytest pytest-cov
     - python -m pytest --disable-warnings --cov-report=html --cov=dave .
   artifacts:
     paths:
