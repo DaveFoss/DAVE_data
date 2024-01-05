@@ -250,6 +250,7 @@ def create_grid(
     combine_areas = list(map(str.lower, combine_areas))
 
     # create geographical informations
+    geodata = list(map(str.lower, geodata))
     roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(power_levels, gas_levels, loads)
     file_exists, file_name = target_area(
         grid_data,
