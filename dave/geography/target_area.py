@@ -29,12 +29,7 @@ def _target_by_postalcode(grid_data, postalcode):
         # in this case all postalcode areas will be choosen
         target = postal
     else:
-        for i, plz in enumerate(postalcode):
-            target = (
-                postal[postal.postalcode == plz]
-                if i == 0
-                else pd.concat([target, postal[postal.postalcode == plz]], ignore_index=True)
-            )
+        target = postal[postal.postalcode.isin(postalcode)].reset_index(drop=True)
         # sort postalcodes
         postalcode.sort()
     return target
