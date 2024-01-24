@@ -65,7 +65,7 @@ def create_loads(grid_data):
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
-    if "lv" in power_levels:
+    if "lv" in power_levels and not grid_data.lv_data.lv_nodes.empty:
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
             grid_data.lv_data.lv_nodes.node_type == "building_connection"
@@ -292,7 +292,11 @@ def create_loads(grid_data):
             # update progress
             pbar.update(19.8 / len(commercial_buildings))
     # create loads for non grid level 7
-    elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])):
+    elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])) and not (
+        grid_data.components_power.transformers.ehv_hv.empty
+        and grid_data.components_power.transformers.hv_mv.empty
+        and grid_data.components_power.transformers.mv_lv.empty
+    ):
         # create loads on grid level 6 (MV/LV)
         if "mv" in power_levels:
             # In this case the loads are assigned to the nearest mv/lv-transformer
@@ -379,12 +383,13 @@ def create_loads(grid_data):
             # update progress
             pbar.update(79.8 / len(trafo_names))
     # add dave name
-    grid_data.components_power.loads.insert(
-        0,
-        "dave_name",
-        grid_data.components_power.loads.apply(
-            lambda x: f"load_{x.voltage_level}_{x.index}", axis=1
-        ),
-    )
+    if not grid_data.components_power.loads.empty:
+        grid_data.components_power.loads.insert(
+            0,
+            "dave_name",
+            grid_data.components_power.loads.apply(
+                lambda x: f"load_{x.voltage_level}_{x.index}", axis=1
+            ),
+        )
     # close progress bar
     pbar.close()

@@ -7,8 +7,6 @@ import timeit
 import warnings
 
 os.environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
-import geopandas as gpd
-import pandas as pd
 from dave_client.converter.create_gaslib import create_gaslib
 from dave_client.converter.create_mynts import create_mynts
 from dave_client.converter.create_pandapipes import create_pandapipes
@@ -17,7 +15,6 @@ from dave_client.dave_structure import create_empty_dataset
 from dave_client.io.file_io import to_gpkg, to_hdf, to_json
 
 # imports from dave
-from dave import __version__
 from dave.archiv_io import from_archiv, to_archiv
 from dave.components.gas_components import gas_components
 from dave.components.loads import create_loads
@@ -28,8 +25,8 @@ from dave.components.power_plants import (
 )
 from dave.components.transformers import create_transformers
 from dave.datapool.building_height_request import request_building_height
-from dave.datapool.population_request import request_population
 from dave.datapool.heat_demand_request import request_heat_demand
+from dave.datapool.population_request import request_population
 from dave.geography import target_area
 from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
@@ -152,7 +149,7 @@ def create_grid(
     valves=True,
     building_height=False,
     census=[],
-    heat= [],
+    heat=[],
     output_folder=dave_settings()["dave_output_dir"],
     output_format="json",
     api_use=True,
@@ -385,7 +382,7 @@ def create_grid(
                 request_heat_demand(grid_data, output_folder, api_use)
                 # save interim status of the informations in user folder
                 save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-                
+
         # clean up power and gas grid data
         clean_up_data(grid_data)
     else:

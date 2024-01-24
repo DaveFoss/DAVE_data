@@ -31,7 +31,10 @@ def create_transformers(grid_data):
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # --- create ehv/ehv and ehv/hv trafos
-    if any(map(lambda x: x in power_levels, ["ehv", "hv"])):
+    # check if power levels are requested and not all nodes are ampty
+    if any(map(lambda x: x in power_levels, ["ehv", "hv"])) and not (
+        grid_data.ehv_data.ehv_nodes.empty and grid_data.hv_data.hv_nodes.empty
+    ):
         # read transformator data from OEP, filter current exsist ones and rename paramter names
         hv_trafos, meta_data = oep_request(table="ego_pf_hv_transformer")
         # add meta data
@@ -176,7 +179,7 @@ def create_transformers(grid_data):
                 ehv_ehv_trafos["substation_name"] = None
                 ehv_ehv_trafos["tso_name"] = None
                 ehv_ehv_trafos.reset_index(drop=True, inplace=True)
-                for i, trafo in ehv_ehv_trafos.iterrows():
+                for i, trafo in ehv_ehv_trafos.iterrows():  # TODO: ersetzen durch apply functions
                     ehv_ehv_trafos.at[trafo.name, "dave_name"] = f"trafo_1_{i}"
                     # search for bus dave name and replace ego id
                     bus0 = ehv_buses[ehv_buses.ego_bus_id == trafo.bus0].iloc[0]
@@ -230,7 +233,10 @@ def create_transformers(grid_data):
         pbar.update(30)
 
     # --- create hv/mv trafos
-    if any(map(lambda x: x in power_levels, ["hv", "mv"])):
+    # check if power levels are requested and not all nodes are ampty
+    if any(map(lambda x: x in power_levels, ["hv", "mv"])) and not (
+        grid_data.hv_data.hv_nodes.empty and grid_data.mv_data.mv_nodes.empty
+    ):
         if grid_data.components_power.substations.hv_mv.empty:
             # read transformator data from OEP, filter relevant parameters and rename paramter names
             substations, meta_data = oep_request(
@@ -427,7 +433,10 @@ def create_transformers(grid_data):
         pbar.update(30)
 
     # --- create mv/lv trafos
-    if any(map(lambda x: x in power_levels, ["mv", "lv"])):
+    # check if power levels are requested and not all nodes are ampty
+    if any(map(lambda x: x in power_levels, ["mv", "lv"])) and not (
+        grid_data.mv_data.mv_nodes.empty and grid_data.lv_data.lv_nodes.empty
+    ):
         if grid_data.components_power.substations.mv_lv.empty:
             # get transformator data from OEP
             substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
