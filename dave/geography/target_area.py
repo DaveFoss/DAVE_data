@@ -85,20 +85,15 @@ def _target_by_town_name(grid_data, town_name):
         # in this case all city names will be choosen (same case as all postalcode areas)
         target = postal
     else:
-        names_right = []
-        for i, town in enumerate(town_name):
-            town_name = town.capitalize()
-            target = (
-                postal[postal.town == town_name]
-                if i == 0
-                else target.append(postal[postal.town == town_name])
-            )
-            names_right.append(town_name)
-            if target.empty:
-                raise ValueError("town name wasn`t found. Please check your input")
+        # bring town names in right format and filter data
+        town_name = [
+            "-".join(list(map(lambda x: x.capitalize(), town.split("-")))) for town in town_name
+        ]
+        target = postal[postal.town.isin(town_name)].reset_index(drop=True)
+        if len(target.town.unique()) != len(town_name):
+            raise ValueError("town name wasn`t found. Please check your input")
         # sort town names
-        names_right.sort()
-        town_name = names_right
+        town_name.sort()
     return target, town_name
 
 
@@ -115,24 +110,16 @@ def _target_by_federal_state(grid_data, federal_state):
         # in this case all federal states will be choosen
         target = states
     else:
-        names_right = []
-        for state in federal_state:
-            # bring name in right format
-            state_name = state.split("-")
-            if len(state_name) == 1:
-                state_name = state_name[0].capitalize()
-            else:
-                state_name = state_name[0].capitalize() + "-" + state_name[1].capitalize()
-            names_right.append(state_name)
-            if federal_state[0] == state:
-                target = states[states["name"] == state_name]
-            else:
-                target = concat([target, states[states["name"] == state_name]], ignore_index=True)
-            if target.empty:
-                raise ValueError("federal state name wasn`t found. Please check your input")
+        # bring federal state names in right format and filter data
+        federal_state = [
+            "-".join(list(map(lambda x: x.capitalize(), state.split("-"))))
+            for state in federal_state
+        ]
+        target = states[states["name"].isin(federal_state)].reset_index(drop=True)
+        if len(target) != len(federal_state):
+            raise ValueError("federal state name wasn`t found. Please check your input")
         # sort federal state names
-        names_right.sort()
-        federal_state = names_right
+        federal_state.sort()
     # convert federal states into postal code areas for target_input
     postal, meta_data = read_postal()
     # add meta data
@@ -162,15 +149,19 @@ def _target_by_nuts_region(grid_data, nuts_region):
         # in this case all nuts_regions will be choosen
         target = nuts_3
     else:
-        for i, region in enumerate(nuts_region[0]):
-            # bring NUTS ID in right format
-            region_letters = list(region)
-            region_renamed = "".join(
-                [letter.upper() if letter.isalpha() else letter for letter in region_letters]
+        # bring NUTS ID in right format
+        nuts_regions = list(
+            map(
+                lambda x: "".join(
+                    [letter.upper() if letter.isalpha() else letter for letter in list(x)]
+                ),
+                nuts_region[0],
             )
-            nuts_region[0][i] = region_renamed
+        )
+        nuts_region = (nuts_regions, nuts_region[1])
+        for i, region in enumerate(nuts_region[0]):
             # get area for nuts region
-            nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region_renamed)]
+            nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region)]
             target = nuts_contains if i == 0 else concat([target, nuts_contains], ignore_index=True)
             if nuts_contains.empty:
                 raise ValueError("nuts region name wasn`t found. Please check your input")
