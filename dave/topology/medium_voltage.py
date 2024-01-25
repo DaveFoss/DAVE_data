@@ -197,7 +197,7 @@ def create_mv_topology(grid_data):
                     # search for multilines and split them
                     new_line = list(
                         map(
-                            lambda x: list(map(lambda y: y, x))
+                            lambda x: list(map(lambda y: y, x.geoms))
                             if isinstance(x, MultiLineString)
                             else [x],
                             lines_list,
