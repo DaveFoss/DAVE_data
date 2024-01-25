@@ -1,9 +1,9 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
+
+from pandas import Series, concat
 from tqdm import tqdm
 
 from dave.datapool.read_data import read_gaslib, read_hp_data, read_scigridgas_iggielgn
@@ -130,7 +130,7 @@ def create_hp_topology(grid_data):
         ]
         # check for junction from/to nodes which are outside of the grid area and define these as
         # im- and export nodes
-        junctions_extern = pd.concat(
+        junctions_extern = concat(
             [
                 hp_pipes[~hp_pipes.from_junction.isin(hp_junctions_ids)].from_junction,
                 hp_pipes[~hp_pipes.to_junction.isin(hp_junctions_ids)].to_junction,
@@ -141,7 +141,7 @@ def create_hp_topology(grid_data):
         hp_junctions_ext["is_import"] = True
         hp_junctions_ext["external"] = True
         # add external junctions to hp_junctions
-        hp_junctions = pd.concat(
+        hp_junctions = concat(
             [hp_junctions, hp_junctions_ext],
             ignore_index=True,
         )
@@ -172,10 +172,10 @@ def create_hp_topology(grid_data):
         # add junctions to grid data
         hp_junctions.reset_index(drop=True, inplace=True)
         hp_junctions.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
+            0, "dave_name", Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
         )
         hp_junctions.set_crs(dave_settings()["crs_main"], inplace=True)
-        grid_data.hp_data.hp_junctions = pd.concat(
+        grid_data.hp_data.hp_junctions = concat(
             [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True
         )
         # change pipeline junction names from scigrid id to dave name
@@ -197,11 +197,9 @@ def create_hp_topology(grid_data):
         )
         # add pipes to grid data
         hp_pipes.reset_index(drop=True, inplace=True)
-        hp_pipes.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index)))
-        )
+        hp_pipes.insert(0, "dave_name", Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index))))
         hp_pipes.set_crs(dave_settings()["crs_main"], inplace=True)
-        grid_data.hp_data.hp_pipes = pd.concat(
+        grid_data.hp_data.hp_pipes = concat(
             [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True
         )
         # update progress
@@ -277,10 +275,10 @@ def create_lkd_eu(grid_data):
         # add dave name
         hp_junctions.reset_index(drop=True, inplace=True)
         hp_junctions.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
+            0, "dave_name", Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
         )
         # add hp junctions to grid data
-        grid_data.hp_data.hp_junctions = pd.concat(
+        grid_data.hp_data.hp_junctions = concat(
             [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True
         )
         # --- create hp pipes
@@ -324,10 +322,8 @@ def create_lkd_eu(grid_data):
         )
         # add dave name
         hp_pipes.reset_index(drop=True, inplace=True)
-        hp_pipes.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index)))
-        )
+        hp_pipes.insert(0, "dave_name", Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index))))
         # add hd lines to grid data
-        grid_data.hp_data.hp_pipes = pd.concat(
+        grid_data.hp_data.hp_pipes = concat(
             [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True
         )

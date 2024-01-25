@@ -1,9 +1,9 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoDataFrame
+from pandas import Series, concat
 from shapely import wkb
 from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points
@@ -111,7 +111,7 @@ def create_transformers(grid_data):
                         if grid_data.hv_data.hv_nodes.empty:
                             hv_bus0["voltage_level"] = 3
                             hv_bus0["source"] = "OEP"
-                            grid_data.hv_data.hv_nodes = pd.concat(
+                            grid_data.hv_data.hv_nodes = concat(
                                 [grid_data.hv_data.hv_nodes, hv_bus0], ignore_index=True
                             )
                         elif grid_data.hv_data.hv_nodes[
@@ -119,7 +119,7 @@ def create_transformers(grid_data):
                         ].empty:
                             hv_bus0["voltage_level"] = 3
                             hv_bus0["source"] = "OEP"
-                            grid_data.hv_data.hv_nodes = pd.concat(
+                            grid_data.hv_data.hv_nodes = concat(
                                 [grid_data.hv_data.hv_nodes, hv_bus0], ignore_index=True
                             )
             if "hv" in power_levels:
@@ -141,7 +141,7 @@ def create_transformers(grid_data):
                         if grid_data.ehv_data.ehv_nodes.empty:
                             ehv_bus1["voltage_level"] = 1
                             ehv_bus1["source"] = "OEP"
-                            grid_data.ehv_data.ehv_nodes = pd.concat(
+                            grid_data.ehv_data.ehv_nodes = concat(
                                 [grid_data.ehv_data.ehv_nodes, ehv_bus1], ignore_index=True
                             )
                         elif grid_data.ehv_data.ehv_nodes[
@@ -149,7 +149,7 @@ def create_transformers(grid_data):
                         ].empty:
                             ehv_bus1["voltage_level"] = 1
                             ehv_bus1["source"] = "OEP"
-                            grid_data.ehv_data.ehv_nodes = pd.concat(
+                            grid_data.ehv_data.ehv_nodes = concat(
                                 [grid_data.ehv_data.ehv_nodes, ehv_bus1], ignore_index=True
                             )
             # update progress
@@ -157,12 +157,12 @@ def create_transformers(grid_data):
         # add dave name for nodes which are created for the transformers
         if "dave_name" not in grid_data.hv_data.hv_nodes.keys():
             grid_data.hv_data.hv_nodes.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_3_{x}", grid_data.hv_data.hv_nodes.index)))
+            name = Series(list(map(lambda x: f"node_3_{x}", grid_data.hv_data.hv_nodes.index)))
             grid_data.hv_data.hv_nodes.insert(0, "dave_name", name)
             grid_data.hv_data.hv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
         if "dave_name" not in grid_data.ehv_data.ehv_nodes.keys():
             grid_data.ehv_data.ehv_nodes.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_1_{x}", grid_data.ehv_data.ehv_nodes.index)))
+            name = Series(list(map(lambda x: f"node_1_{x}", grid_data.ehv_data.ehv_nodes.index)))
             grid_data.ehv_data.ehv_nodes.insert(0, "dave_name", name)
             grid_data.ehv_data.ehv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
         # write transformator data in grid data and decied the grid level depending on voltage level
@@ -194,7 +194,7 @@ def create_transformers(grid_data):
                 # set crs
                 ehv_ehv_trafos.set_crs(dave_settings()["crs_main"], inplace=True)
                 # add ehv/ehv trafos to grid data
-                grid_data.components_power.transformers.ehv_ehv = pd.concat(
+                grid_data.components_power.transformers.ehv_ehv = concat(
                     [grid_data.components_power.transformers.ehv_ehv, ehv_ehv_trafos],
                     ignore_index=True,
                 )
@@ -223,7 +223,7 @@ def create_transformers(grid_data):
             # set crs
             ehv_hv_trafos.set_crs(dave_settings()["crs_main"], inplace=True)
             # add ehv/ehv trafos to grid data
-            grid_data.components_power.transformers.ehv_hv = pd.concat(
+            grid_data.components_power.transformers.ehv_hv = concat(
                 [grid_data.components_power.transformers.ehv_hv, ehv_hv_trafos], ignore_index=True
             )
         # update progress
@@ -324,12 +324,12 @@ def create_transformers(grid_data):
             hv_nodes = intersection_with_area(hv_nodes, substations_reduced, remove_columns=False)
             # add dave name
             hv_nodes.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_3_{x}", hv_nodes.index)), dtype=str)
+            name = Series(list(map(lambda x: f"node_3_{x}", hv_nodes.index)), dtype=str)
             hv_nodes.insert(0, "dave_name", name)
             # set crs
             hv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
             # add mv nodes to grid data
-            grid_data.hv_data.hv_nodes = pd.concat(
+            grid_data.hv_data.hv_nodes = concat(
                 [grid_data.hv_data.hv_nodes, hv_nodes], ignore_index=True
             )
         else:
@@ -355,12 +355,12 @@ def create_transformers(grid_data):
             mv_nodes["source"] = "OEP"
             # add dave name
             mv_nodes.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_5_{x}", mv_nodes.index)), dtype=str)
+            name = Series(list(map(lambda x: f"node_5_{x}", mv_nodes.index)), dtype=str)
             mv_nodes.insert(0, "dave_name", name)
             # set crs
             mv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
             # add mv nodes to grid data
-            grid_data.mv_data.mv_nodes = pd.concat(
+            grid_data.mv_data.mv_nodes = concat(
                 [grid_data.mv_data.mv_nodes, mv_nodes], ignore_index=True
             )
         else:
@@ -397,7 +397,7 @@ def create_transformers(grid_data):
                         bus_lv = node.dave_name
                         break
             # create transformer
-            trafo_df = gpd.GeoDataFrame(
+            trafo_df = GeoDataFrame(
                 {
                     "bus_hv": bus_hv,
                     "bus_lv": bus_lv,
@@ -415,13 +415,13 @@ def create_transformers(grid_data):
                 },
                 crs=dave_settings()["crs_main"],
             )
-            grid_data.components_power.transformers.hv_mv = pd.concat(
+            grid_data.components_power.transformers.hv_mv = concat(
                 [grid_data.components_power.transformers.hv_mv, trafo_df], ignore_index=True
             )
             # update progress
             pbar.update(9.98 / len(substations))
         # add dave name
-        name = pd.Series(
+        name = Series(
             list(
                 map(lambda x: f"trafo_4_{x}", grid_data.components_power.transformers.hv_mv.index)
             ),
@@ -474,12 +474,12 @@ def create_transformers(grid_data):
             mv_buses["source"] = "OEP"
             # add dave name
             mv_buses.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_5_{x}", mv_buses.index)), dtype=str)
+            name = Series(list(map(lambda x: f"node_5_{x}", mv_buses.index)), dtype=str)
             mv_buses.insert(0, "dave_name", name)
             # set crs
             mv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
             # add mv nodes to grid data
-            grid_data.mv_data.mv_nodes = pd.concat(
+            grid_data.mv_data.mv_nodes = concat(
                 [grid_data.mv_data.mv_nodes, mv_buses], ignore_index=True
             )
         else:
@@ -500,12 +500,12 @@ def create_transformers(grid_data):
             lv_buses["source"] = "OEP"
             # add dave name
             lv_buses.reset_index(drop=True, inplace=True)
-            name = pd.Series(list(map(lambda x: f"node_7_{x}", lv_buses.index)), dtype=str)
+            name = Series(list(map(lambda x: f"node_7_{x}", lv_buses.index)), dtype=str)
             lv_buses.insert(0, "dave_name", name)
             # set crs
             lv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
             # add mv nodes to grid data
-            grid_data.lv_data.lv_nodes = pd.concat(
+            grid_data.lv_data.lv_nodes = concat(
                 [grid_data.lv_data.lv_nodes, lv_buses], ignore_index=True
             )
         else:
@@ -539,7 +539,7 @@ def create_transformers(grid_data):
                 nearest_point = nearest_points(sub.geometry, multipoints_lv)[1]
                 bus_lv = lv_buses[lv_buses.geometry == nearest_point].iloc[0].dave_name
             # create transformer
-            trafo_df = gpd.GeoDataFrame(
+            trafo_df = GeoDataFrame(
                 {
                     "bus_hv": bus_hv,
                     "bus_lv": bus_lv,
@@ -552,7 +552,7 @@ def create_transformers(grid_data):
                 },
                 crs=dave_settings()["crs_main"],
             )
-            grid_data.components_power.transformers.mv_lv = pd.concat(
+            grid_data.components_power.transformers.mv_lv = concat(
                 [grid_data.components_power.transformers.mv_lv, trafo_df], ignore_index=True
             )
         # add a synthetic tranformer on the first grid node if necessary
@@ -563,7 +563,7 @@ def create_transformers(grid_data):
                 if grid_data.mv_data.mv_nodes.empty:
                     # if there are no mv nodes, create a new one from data of the first lv bus
                     dave_name = "node_5_0"
-                    mv_bus_df = gpd.GeoDataFrame(
+                    mv_bus_df = GeoDataFrame(
                         {
                             "dave_name": dave_name,
                             "voltage_kv": [dave_settings()["mv_voltage"]],
@@ -573,13 +573,13 @@ def create_transformers(grid_data):
                         },
                         crs=dave_settings()["crs_main"],
                     )
-                    grid_data.mv_data.mv_nodes = pd.concat(
+                    grid_data.mv_data.mv_nodes = concat(
                         [grid_data.mv_data.mv_nodes, mv_bus_df], ignore_index=True
                     )
                     bus_hv = dave_name
                 bus_lv = first_bus.dave_name
                 # create transformer
-                trafo_df = gpd.GeoDataFrame(
+                trafo_df = GeoDataFrame(
                     {
                         "bus_hv": bus_hv,
                         "bus_lv": bus_lv,
@@ -590,7 +590,7 @@ def create_transformers(grid_data):
                     },
                     crs=dave_settings()["crs_main"],
                 )
-                grid_data.components_power.transformers.mv_lv = pd.concat(
+                grid_data.components_power.transformers.mv_lv = concat(
                     [grid_data.components_power.transformers.mv_lv, trafo_df], ignore_index=True
                 )
             elif "lv" not in power_levels:
@@ -598,7 +598,7 @@ def create_transformers(grid_data):
                 # noch definieren
 
         # add dave name
-        name = pd.Series(
+        name = Series(
             list(
                 map(lambda x: f"trafo_6_{x}", grid_data.components_power.transformers.mv_lv.index)
             ),

@@ -1,13 +1,13 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
+
 from math import acos, sin
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoDataFrame
 from numpy import array, random
+from pandas import concat
 from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
@@ -208,7 +208,7 @@ def create_loads(grid_data):
                         if centroid_distance.min() < 1e-04:
                             lv_node = building_nodes.loc[centroid_distance.idxmin()]
                     # create residential load
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": lv_node.dave_name,
                             "p_mw": p_mw,
@@ -218,7 +218,7 @@ def create_loads(grid_data):
                             "geometry": lv_node.geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
@@ -241,7 +241,7 @@ def create_loads(grid_data):
             ]
             if not building_point.empty:
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": industrial_load_full
@@ -252,7 +252,7 @@ def create_loads(grid_data):
                             "geometry": building_point.iloc[0].geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
@@ -275,7 +275,7 @@ def create_loads(grid_data):
             ]
             if not building_point.empty:
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": commercial_load_full
@@ -286,7 +286,7 @@ def create_loads(grid_data):
                             "geometry": building_point.iloc[0].geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
@@ -365,7 +365,7 @@ def create_loads(grid_data):
                     p_mw = commercial_load * area
                     q_mvar = p_mw * sin(acos(cos_phi_commercial)) / cos_phi_commercial
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": trafo.bus_lv,
                             "p_mw": p_mw,
@@ -377,7 +377,7 @@ def create_loads(grid_data):
                             "geometry": trafo.geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress

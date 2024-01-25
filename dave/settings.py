@@ -1,8 +1,8 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
+from os import path
 
 # --- switch develop stage
 # develop mode: running dave from ide and keycloak in local docker network
@@ -38,8 +38,8 @@ def dave_settings():
     """
     settings = {
         # main definitions
-        "dave_dir": os.path.dirname(os.path.realpath(__file__)),
-        "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
+        "dave_dir": path.dirname(path.realpath(__file__)),
+        "dave_output_dir": path.expanduser(r"~\Desktop\DaVe_output"),
         "stage": stage,
         # database definitions (mongo db)
         "db_user": "dave_db_admin",

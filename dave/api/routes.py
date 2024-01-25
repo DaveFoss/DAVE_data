@@ -1,16 +1,16 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import json
+from json import dumps, loads
 
-import geopandas as gpd
 import pandapipes as ppi
 import pandapower as pp
-import pandas as pd
 from dave_client.io.file_io import to_json
 from fastapi import APIRouter, Depends, Request
+from geopandas import GeoDataFrame
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
+from pandas import DataFrame
 
 from dave import __version__
 from dave.api.authentication import auth_token
@@ -119,7 +119,7 @@ class DaveRequest:
                 census=parameters.census,
             )
             # convert dave dataset to JSON string
-            return json.dumps(
+            return dumps(
                 {
                     "grid_data": to_json(grid_data),
                     "net_power": pp.to_json(net_power),
@@ -153,7 +153,7 @@ class DaveRequest:
                 census=parameters.census,
             )
             # convert dave dataset to JSON string
-            return json.dumps({"grid_data": to_json(grid_data), "net_power": pp.to_json(net_power)})
+            return dumps({"grid_data": to_json(grid_data), "net_power": pp.to_json(net_power)})
         elif parameters.convert_gas:
             # run DaVe main function to create a dataset
             grid_data, net_gas = create_grid(
@@ -181,7 +181,7 @@ class DaveRequest:
                 census=parameters.census,
             )
             # convert dave dataset to JSON string
-            return json.dumps({"grid_data": to_json(grid_data), "net_gas": ppi.to_json(net_gas)})
+            return dumps({"grid_data": to_json(grid_data), "net_gas": ppi.to_json(net_gas)})
         else:
             # run DaVe main function to create a dataset
             grid_data = create_grid(
@@ -317,12 +317,12 @@ def request_db(parameters: Db_param, db: DbRequest = Depends(DbRequest)):
 class DbPost:
     def db_post(self, parameters):
         # convert string to geodataframe
-        data = json.loads(parameters.data)
+        data = loads(parameters.data)
         # check if data from type geodataframe or dataframe
         if ("type" in data.keys()) and (data["type"] == "FeatureCollection"):
-            data_df = gpd.GeoDataFrame.from_features(data)
+            data_df = GeoDataFrame.from_features(data)
         else:
-            data_df = pd.DataFrame(data)
+            data_df = DataFrame(data)
         # upload data into database
         to_mongo(
             database=parameters.database,

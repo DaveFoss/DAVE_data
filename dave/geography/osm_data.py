@@ -1,9 +1,9 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoSeries
+from pandas import concat
 from shapely.geometry import LineString, Point, Polygon
 
 from dave.datapool.osm_request import osm_request
@@ -69,13 +69,13 @@ def from_osm(
     # search relevant road informations in the target area
     if roads:
         roads = get_osm_data(grid_data, "road", border, target_geom)
-        grid_data.roads.roads = pd.concat([grid_data.roads.roads, roads], ignore_index=True)
+        grid_data.roads.roads = concat([grid_data.roads.roads, roads], ignore_index=True)
         # update progress
         pbar.update(progress_step / objects_con)
     # search irrelevant road informations in the target area for a better overview
     if roads_plot:
         roads_plot = get_osm_data(grid_data, "road_plot", border, target_geom)
-        grid_data.roads.roads_plot = pd.concat(
+        grid_data.roads.roads_plot = concat(
             [grid_data.roads.roads_plot, roads_plot], ignore_index=True
         )
         # update progress
@@ -92,7 +92,7 @@ def from_osm(
         )  # !!! Fehler landuse attribute
         # natural parameter in landuse umbenennen und zu landuse hinzufügen?
         # hier noch concat von den dreien
-        landuse = pd.concat([landuse, leisure, natural], ignore_index=True)
+        landuse = concat([landuse, leisure, natural], ignore_index=True)
         # check if there are data for landuse
         if not landuse.empty:
             # convert geometry to polygon
@@ -116,7 +116,7 @@ def from_osm(
             landuse_3035 = landuse.to_crs(dave_settings()["crs_meter"])
             landuse["area_km2"] = landuse_3035.area / 1e06
             # write landuse into grid_data
-            grid_data.landuse = pd.concat([grid_data.landuse, landuse], ignore_index=True)
+            grid_data.landuse = concat([grid_data.landuse, landuse], ignore_index=True)
             grid_data.landuse.set_crs(dave_settings()["crs_main"], inplace=True)
 
         # !!! abfrage von natural und bei landuse hinzufügen
@@ -152,21 +152,21 @@ def from_osm(
                         ):
                             buildings.at[i, "building"] = "commercial"
             # write buildings into grid_data
-            grid_data.buildings.residential = pd.concat(
+            grid_data.buildings.residential = concat(
                 [
                     grid_data.buildings.residential,
                     buildings[buildings.building.isin(residential)],
                 ],
                 ignore_index=True,
             )
-            grid_data.buildings.commercial = pd.concat(
+            grid_data.buildings.commercial = concat(
                 [
                     grid_data.buildings.commercial,
                     buildings[buildings.building.isin(commercial)],
                 ],
                 ignore_index=True,
             )
-            grid_data.buildings.other = pd.concat(
+            grid_data.buildings.other = concat(
                 [
                     grid_data.buildings.other,
                     buildings[~buildings.building.isin(residential + commercial)],
@@ -178,13 +178,13 @@ def from_osm(
     # search railway informations in the target area
     if railways:
         railways = get_osm_data(grid_data, "railway", border, target_geom)
-        grid_data.railways = pd.concat([grid_data.railways, railways], ignore_index=True)
+        grid_data.railways = concat([grid_data.railways, railways], ignore_index=True)
         # update progress
         pbar.update(progress_step / objects_con)
     # search waterway informations in the target area
     if waterways:
         waterways = get_osm_data(grid_data, "waterway", border, target_geom)
-        grid_data.waterways = pd.concat([grid_data.waterways, waterways], ignore_index=True)
+        grid_data.waterways = concat([grid_data.waterways, waterways], ignore_index=True)
         # update progress
         pbar.update(progress_step / objects_con)
 
@@ -214,7 +214,7 @@ def road_junctions(grid_data):
             roads.drop([0], inplace=True)
             roads.reset_index(drop=True, inplace=True)
         # delet duplicates
-        junctions = gpd.GeoSeries(junction_points).drop_duplicates()
+        junctions = GeoSeries(junction_points).drop_duplicates()
         # write road junctions into grid_data
         junctions.set_crs(dave_settings()["crs_main"], inplace=True)
         grid_data.roads.road_junctions = junctions.rename("geometry")

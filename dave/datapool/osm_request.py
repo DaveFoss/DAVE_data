@@ -1,15 +1,15 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import time
 from collections import namedtuple
+from time import sleep
 from urllib.parse import urlencode
 from urllib.request import urlopen
 from xml.etree.ElementTree import fromstring
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoDataFrame
+from pandas import DataFrame, concat, read_excel, to_datetime
 from shapely.geometry import LineString, Point
 from six import string_types
 
@@ -34,7 +34,7 @@ def osm_request(data_type, area):
             filter_value=f"{where.split('=')[1]}",
         )  # !!! noch umändern zu geometrical filtering based on area (intersect?)
     else:
-        request_data = gpd.GeoDataFrame([])
+        request_data = GeoDataFrame([])
         for osm_type in data_param[2]:
             # create tags
             tags = (
@@ -44,7 +44,7 @@ def osm_request(data_type, area):
             )
             # get data from OSM directly via API query
             data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
-            request_data = pd.concat([request_data, data], ignore_index=True)
+            request_data = concat([request_data, data], ignore_index=True)
     return request_data, meta_data
 
     # !!! hier function hin schreiben die entscheidet ob aus Dataenbank (is available) oder direct von OSM
@@ -164,7 +164,7 @@ def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kw
     # TODO: Raise on non-200 (or 400-599)
     # with urlopen(url) as response:
     #     content = response.read()
-    while True:
+    while 1:
         try:
             with urlopen(url) as response:
                 content = response.read()
@@ -173,10 +173,10 @@ def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kw
         except Exception as inst:
             print(f'\n Retry OSM query because of "{inst}"')
             # add time delay
-            time.sleep(time_delay)
+            sleep(time_delay)
 
     # get meta informations
-    meta_data = pd.read_excel(get_data_path("osm_meta.xlsx", "data"), sheet_name=None)
+    meta_data = read_excel(get_data_path("osm_meta.xlsx", "data"), sheet_name=None)
 
     if raw:
         return content, meta_data
@@ -217,10 +217,7 @@ def _build_url(typ, bbox=None, recurse=None, tags="", meta=False):
             " ".join("{c[1]} {c[0]}".format(c=c) for c in bbox.exterior.coords)
         )
 
-    if meta:
-        metastr = "meta"
-    else:
-        metastr = ""
+    metastr = "meta" if meta else ""
 
     query = "({typ}{bbox}{queries};{recurse};);out {meta};".format(
         typ=typ, bbox=bboxstr, queries=queries, recurse=recursestr, meta=metastr
@@ -280,9 +277,9 @@ def _element_to_dict(element):
 
 
 def _dict_to_dataframe(d):
-    df = pd.DataFrame.from_dict(d)
+    df = DataFrame.from_dict(d)
     if "timestamp" in df:
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df["timestamp"] = to_datetime(df["timestamp"])
 
     return df
 
@@ -372,7 +369,7 @@ def render_to_gdf(osmdata, drop_untagged=True):
                 ways.at[i, "landuse"] = osm_reltag.landuse
 
     if ways is not None:
-        nodes = pd.concat([nodes, ways], ignore_index=True)
+        nodes = concat([nodes, ways], ignore_index=True)
         nodes = nodes.set_geometry("geometry", crs=_crs)
 
     return nodes

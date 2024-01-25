@@ -1,7 +1,11 @@
-import geopandas as gpd
-import numpy as np
-import rasterio
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
+from geopandas import GeoDataFrame
+from numpy import where
 from owslib.wms import WebMapService
+from rasterio import open as rasterio_open
 from shapely.geometry import Point
 from tqdm import tqdm
 
@@ -10,24 +14,23 @@ from dave.settings import dave_settings
 
 # This fuction convert the raster to point
 def raster_to_point(raster):
-    with rasterio.open(raster) as src:
+    with rasterio_open(raster) as src:
         data = src.read(1)  # Read the raster data
         transform = src.transform  # Get the transformation information
 
     # Get the coordinates and values of non-null pixels
-    rows, cols = np.where(data != src.nodata)
+    rows, cols = where(data != src.nodata)
     values = data[rows, cols]
     coords = [transform * (col, row) for row, col in zip(rows, cols)]
 
     # Create a GeoDataFrame with point geometries
-    geometry = [Point(coord) for coord in coords]
-    data = {"Value": values}
-    gdf = gpd.GeoDataFrame(data, geometry=geometry, crs=src.crs)
+    gdf = GeoDataFrame(
+        data={"Value": values}, geometry=[Point(coord) for coord in coords], crs=src.crs
+    )
 
     # In the raster file pixels with no building height is set to 65535. so we remove them fro mthe list of points
     condition = gdf["Value"] == 65535
-    new_gdf = gdf[~condition]
-    return new_gdf
+    return gdf[~condition]
 
 
 # Request wms of building height from copernicus urban atlas

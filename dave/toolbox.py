@@ -1,18 +1,18 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
-import time
+from os import path
+from time import sleep
 
-import geopandas as gpd
-import pandas as pd
-import requests
+from geopandas import GeoDataFrame, overlay
 from geopy.geocoders import ArcGIS
 from numpy import append, array
+from pandas import concat
+from requests import ConnectionError, get
 from scipy.spatial import Voronoi
-from shapely.geometry import LineString, MultiLineString, MultiPoint
-from shapely.ops import cascaded_union, linemerge, polygonize
+from shapely.geometry import LineString, MultiPoint
+from shapely.ops import cascaded_union, polygonize
 
 from dave.settings import dave_settings
 
@@ -49,8 +49,8 @@ def create_interim_area(areas):
                 difference = convex_hull.difference(geom1)
                 difference = difference.difference(geom2)
                 # add difference area to areas
-                areas = pd.concat(
-                    [areas, gpd.GeoDataFrame({"name": "interim area", "geometry": [difference]})],
+                areas = concat(
+                    [areas, GeoDataFrame({"name": "interim area", "geometry": [difference]})],
                     ignore_index=True,
                 )
     return areas
@@ -87,7 +87,7 @@ def voronoi(points):
     # create polygons from the lines
     polygons = array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
-    voronoi_polygons = gpd.GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
+    voronoi_polygons = GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
     # search voronoi centroids and dave name
     voronoi_polygons["centroid"] = None
     voronoi_polygons["dave_name"] = None
@@ -123,12 +123,12 @@ def get_data_path(filename=None, dirname=None):
     """
     This function returns the full os path for a given directory (and filename)
     """
-    path = (
-        os.path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+    data_path = (
+        path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
         if filename
-        else os.path.join(dave_settings()["dave_dir"], "datapool", dirname)
+        else path.join(dave_settings()["dave_dir"], "datapool", dirname)
     )
-    return path
+    return data_path
 
 
 def intersection_with_area(gdf, area, remove_columns=True):
@@ -150,29 +150,29 @@ def intersection_with_area(gdf, area, remove_columns=True):
     if len(geom_types_gdf) > 1:
         # in this case the geodataframe has mixed geometrie information. A seperated consideration
         # of overlay is necessary because the function can not handle mixed geometries
-        gdf_over = gpd.GeoDataFrame([])
+        gdf_over = GeoDataFrame([])
         for geom_type in geom_types_gdf:
             gdf_geom_idx = [
                 row.name for i, row in gdf.iterrows() if isinstance(row.geometry, (geom_type))
             ]
             # check for values in the target area
-            gdf_over_geom = gpd.overlay(gdf.loc[gdf_geom_idx], area, how="intersection")
-            gdf_over = pd.concat([gdf_over, gdf_over_geom], ignore_index=True)
+            gdf_over_geom = overlay(gdf.loc[gdf_geom_idx], area, how="intersection")
+            gdf_over = concat([gdf_over, gdf_over_geom], ignore_index=True)
     elif len(geom_types_area) > 1:
         # in this case the geodataframe has mixed geometrie information. A seperated consideration
         # of overlay is necessary because the function can not handle mixed geometries
-        gdf_over = gpd.GeoDataFrame([])
+        gdf_over = GeoDataFrame([])
         for geom_type in geom_types_area:
             area_geom_idx = [
                 row.name for i, row in area.iterrows() if isinstance(row.geometry, (geom_type))
             ]
             # check for values in the target area
-            gdf_over_geom = gpd.overlay(gdf, area.loc[area_geom_idx], how="intersection")
-            gdf_over = pd.concat(
+            gdf_over_geom = overlay(gdf, area.loc[area_geom_idx], how="intersection")
+            gdf_over = concat(
                 [gdf_over, gdf_over_geom], ignore_index=True
             )  # TODO: Problem ist das es hier Population_1 und _2 gibt, daher wirft er einen Fehler
     else:
-        gdf_over = gpd.overlay(gdf, area, how="intersection")
+        gdf_over = overlay(gdf, area, how="intersection")
     # remove parameters from area
     if (not gdf_over.empty) and (remove_columns):
         remove_columns = area.keys().tolist()
@@ -211,12 +211,12 @@ def auth_available():
     available = False
     while not available:
         try:
-            request = requests.get(dave_settings()["keycloak_server_url"])
+            request = get(dave_settings()["keycloak_server_url"])
             if request.status_code == 200:
                 available = True
             elif request.status_code == 404:
                 print("DAVE auth server is not ready, retry in 10 seconds")
-                time.sleep(10)
-        except requests.ConnectionError:
+                sleep(10)
+        except ConnectionError:
             print("DAVE auth server is not available, retry in 10 seconds")
-            time.sleep(10)
+            sleep(10)

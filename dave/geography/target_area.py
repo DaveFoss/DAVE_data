@@ -1,10 +1,10 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
 from dave_client.io.file_io import from_json_string
+from geopandas import GeoDataFrame, read_file
+from pandas import DataFrame, concat
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 from tqdm import tqdm
@@ -42,14 +42,14 @@ def _target_by_own_area(grid_data, own_area):
     """
     if isinstance(own_area, str):
         if own_area[-3:] == "shp":
-            target = gpd.read_file(own_area)
+            target = read_file(own_area)
         else:
             target = from_json_string(own_area)
         # check if the given shape file is empty
         if target.empty:
             print("The given shapefile includes no data")
     elif isinstance(own_area, Polygon):
-        target = gpd.GeoDataFrame(
+        target = GeoDataFrame(
             {"name": ["own area"], "geometry": [own_area]}, crs=dave_settings()["crs_main"]
         )
     else:
@@ -127,9 +127,7 @@ def _target_by_federal_state(grid_data, federal_state):
             if federal_state[0] == state:
                 target = states[states["name"] == state_name]
             else:
-                target = pd.concat(
-                    [target, states[states["name"] == state_name]], ignore_index=True
-                )
+                target = concat([target, states[states["name"] == state_name]], ignore_index=True)
             if target.empty:
                 raise ValueError("federal state name wasn`t found. Please check your input")
         # sort federal state names
@@ -173,9 +171,7 @@ def _target_by_nuts_region(grid_data, nuts_region):
             nuts_region[0][i] = region_renamed
             # get area for nuts region
             nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region_renamed)]
-            target = (
-                nuts_contains if i == 0 else pd.concat([target, nuts_contains], ignore_index=True)
-            )
+            target = nuts_contains if i == 0 else concat([target, nuts_contains], ignore_index=True)
             if nuts_contains.empty:
                 raise ValueError("nuts region name wasn`t found. Please check your input")
     # filter duplicates
@@ -269,7 +265,7 @@ def target_area(
             grid_data,
             postalcode,
         )
-        target_input = pd.DataFrame(
+        target_input = DataFrame(
             {
                 "typ": "postalcode",
                 "data": [postalcode],
@@ -280,7 +276,7 @@ def target_area(
         grid_data.target_input = target_input
     elif town_name:
         target, town_name = _target_by_town_name(grid_data, town_name)
-        target_input = pd.DataFrame(
+        target_input = DataFrame(
             {
                 "typ": "town name",
                 "data": [town_name],
@@ -293,7 +289,7 @@ def target_area(
         target, federal_state, federal_state_postal = _target_by_federal_state(
             grid_data, federal_state
         )
-        target_input = pd.DataFrame(
+        target_input = DataFrame(
             {
                 "typ": "federal state",
                 "federal_states": [federal_state],
@@ -305,7 +301,7 @@ def target_area(
         grid_data.target_input = target_input
     elif nuts_region:
         target, nuts_region_postal = _target_by_nuts_region(grid_data, nuts_region)
-        target_input = pd.DataFrame(
+        target_input = DataFrame(
             {
                 "typ": "nuts region",
                 "nuts_regions": [nuts_region],
@@ -317,7 +313,7 @@ def target_area(
         grid_data.target_input = target_input
     elif own_area:
         target, own_postal = _target_by_own_area(grid_data, own_area)
-        target_input = pd.DataFrame(
+        target_input = DataFrame(
             {
                 "typ": "own area",
                 "data": [own_postal],
@@ -329,7 +325,7 @@ def target_area(
     else:
         raise SyntaxError("target area wasn`t defined")
     # write area informations into grid_data
-    grid_data.area = pd.concat([grid_data.area, target], ignore_index=True)
+    grid_data.area = concat([grid_data.area, target], ignore_index=True)
     if grid_data.area.crs is None:
         grid_data.area.set_crs(dave_settings()["crs_main"], inplace=True)
     elif grid_data.area.crs != dave_settings()["crs_main"]:
