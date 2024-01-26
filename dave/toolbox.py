@@ -61,7 +61,7 @@ def voronoi(points):
     This function calculates the voronoi diagram for given points
 
     INPUT:
-        **voronoi_points** (GeoDataFrame) - all nodes for voronoi analysis (centroids)
+        **points** (GeoDataFrame) - all nodes for voronoi analysis (centroids)
 
     OUTPUT:
         **voronoi polygons** (GeoDataFrame) - all voronoi areas for the given points

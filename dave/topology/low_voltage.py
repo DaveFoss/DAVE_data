@@ -38,6 +38,33 @@ def nearest_road(building_centroids, roads):
     return building_connections
 
 
+def connect_grid_nodes(road_course, road_points, start_node, end_node):
+    """
+    This function builds lines to connect grid nodes with each other along road courses
+    """
+    # get considered grid node pair
+    start_point = Point(start_node)
+    end_point = Point(end_node)
+    # find nearest points to them
+    start_nearest = nearest_points(start_point, road_points)[1]
+    end_nearest = nearest_points(end_point, road_points)[1]
+    # find road index
+    start_index = road_course.index((start_nearest.x, start_nearest.y))
+    end_index = road_course.index((end_nearest.x, end_nearest.y))
+    # check if start_nearest between start and end point
+    if abs(end_point.distance(start_nearest)) > abs(end_point.distance(start_point)):
+        start_index += 1
+    # check if end_nearest is between start and end point
+    if abs(start_point.distance(end_nearest)) > abs(start_point.distance(end_point)):
+        end_index -= 1
+    # add points [start_point, points to follow the road course, end point]
+    line_points = (
+        [start_node] + [road_course[k] for k in range(start_index, end_index + 1)] + [end_node]
+    )
+    # create a lineString and return them
+    return LineString(line_points)
+
+
 def line_connections(grid_data):
     """
     This function creates the line connections between the building lines (Points on the roads)
@@ -73,30 +100,15 @@ def line_connections(grid_data):
                 grid_nodes_sort.append(next_node.coords[:][0])
                 node_index = grid_nodes.index(next_node.coords[:][0])
             # build lines to connect the all grid nodes with each other
-            for j in range(0, len(grid_nodes_sort) - 1):
-                # get considered grid node pair
-                start_point = Point(grid_nodes_sort[j])
-                end_point = Point(grid_nodes_sort[j + 1])
-                # find nearest points to them
-                start_nearest = nearest_points(start_point, road_points)[1]
-                end_nearest = nearest_points(end_point, road_points)[1]
-                # find road index
-                start_index = road_course.index((start_nearest.x, start_nearest.y))
-                end_index = road_course.index((end_nearest.x, end_nearest.y))
-                # check if start_nearest between start and end point
-                if abs(end_point.distance(start_nearest)) > abs(end_point.distance(start_point)):
-                    start_index += 1
-                # check if end_nearest is between start and end point
-                if abs(start_point.distance(end_nearest)) > abs(start_point.distance(end_point)):
-                    end_index -= 1
-                # add points [start_point, points to follow the road course, end point]
-                line_points = (
-                    [grid_nodes_sort[j]]
-                    + [road_course[k] for k in range(start_index, end_index + 1)]
-                    + [grid_nodes_sort[j + 1]]
+            line_connect += [
+                connect_grid_nodes(
+                    road_course,
+                    road_points,
+                    start_node=grid_nodes_sort[j],
+                    end_node=grid_nodes_sort[j + 1],
                 )
-                # create a lineString and add them to the line connection list
-                line_connect.append(LineString(line_points))
+                for j in range(0, len(grid_nodes_sort) - 1)
+            ]
     line_connect = GeoSeries(line_connect, crs=dave_settings()["crs_main"])
     # calculate line length
     line_connections_3035 = line_connect.to_crs(dave_settings()["crs_meter"])
