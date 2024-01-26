@@ -14,26 +14,11 @@ from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 
 
-def create_mv_topology(grid_data):
+def create_hv_mv_substations(grid_data):
     """
-    This function creates a dictonary with all relevant parameters for the
-    medium voltage level
-
-    INPUT:
-        **grid_data** (dict) - all Informations about the target area
-
-    OUTPUT:
-        Writes data in the DaVe dataset
+    This function requests data for the hv/mv substations if there not already
+    included in grid data
     """
-    # set progress bar
-    pbar = tqdm(
-        total=100,
-        desc="create medium voltage topology:    ",
-        position=0,
-        bar_format=dave_settings()["bar_format"],
-    )
-    # --- create substations
-    # create hv/mv substations
     if grid_data.components_power.substations.hv_mv.empty:
         hvmv_substations, meta_data = oep_request(
             table="ego_dp_hvmv_substation"
@@ -72,9 +57,14 @@ def create_mv_topology(grid_data):
             )
     else:
         hvmv_substations = grid_data.components_power.substations.hv_mv.copy()
-    # update progress
-    pbar.update(5)
-    # create mv/lv substations
+    return hvmv_substations
+
+
+def create_mv_lv_substations(grid_data):
+    """
+    This function requests data for the mv/lv substations if there not already
+    included in grid data
+    """
     mvlv_substations, meta_data = oep_request(table="ego_dp_mvlv_substation")
     # add meta data
     if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
@@ -88,8 +78,7 @@ def create_mv_topology(grid_data):
 
     # filter trafos which are within the grid area
     mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
-    # copy data for mv node creation
-    mvlv_buses = mvlv_substations.copy()
+
     if grid_data.components_power.substations.mv_lv.empty and not mvlv_substations.empty:
         mvlv_substations["voltage_level"] = 6
         # add dave name
@@ -105,40 +94,97 @@ def create_mv_topology(grid_data):
         )
     else:
         mvlv_substations = grid_data.components_power.substations.mv_lv.copy()
+    return mvlv_substations
+
+
+def search_connection_line(bus, mv_buses):
+    """
+    Search connection line
+    """
+    nearest_bus_idx = (
+        mv_buses.drop([bus.name]).geometry.apply(lambda x: bus.geometry.distance(x)).idxmin()
+    )
+    return LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
+
+
+def create_mv_topology(grid_data):
+    """
+    This function creates a dictonary with all relevant parameters for the
+    medium voltage level
+
+    INPUT:
+        **grid_data** (dict) - all Informations about the target area
+
+    OUTPUT:
+        Writes data in the DaVe dataset
+    """
+    # set progress bar
+    pbar = tqdm(
+        total=100,
+        desc="create medium voltage topology:    ",
+        position=0,
+        bar_format=dave_settings()["bar_format"],
+    )
+    # --- create substations
+    # create hv/mv substations
+    hvmv_substations = create_hv_mv_substations(grid_data)
+    # update progress
+    pbar.update(5)
+    # create mv/lv substations
+    mvlv_substations = create_mv_lv_substations(grid_data)
     # update progress
     pbar.update(10)
     # --- create mv nodes
+    # copy data for mv node creation
+    mvlv_buses = mvlv_substations.copy()
     # nodes for mv/lv traofs hv side
-    mvlv_buses.drop(columns=(["la_id", "geom", "subst_id", "is_dummy", "subst_cnt"]), inplace=True)
+    mvlv_buses.drop(
+        columns=(
+            ["dave_name", "la_id", "subst_id", "geom", "is_dummy", "subst_cnt", "voltage_level"]
+        ),
+        inplace=True,
+    )
     mvlv_buses["node_type"] = "mvlv_substation"
     # update progress
     pbar.update(5)
     # nodes for hv/mv trafos us side
-    hvmv_buses, meta_data = oep_request(table="ego_dp_hvmv_substation")
+    hvmv_buses = hvmv_substations.copy()
+    hvmv_buses.drop(
+        columns=(
+            [
+                "dave_name",
+                "lon",
+                "lat",
+                "polygon",
+                "voltage_kv",
+                "power_type",
+                "substation",
+                "osm_id",
+                "osm_www",
+                "frequency",
+                "subst_name",
+                "ref",
+                "operator",
+                "dbahn",
+                "status",
+                "otg_id",
+                "Gemeindeschluessel",
+                "geom",
+                "geometry",
+                "voltage_level",
+            ]
+        ),
+        inplace=True,
+    )
+    hvmv_buses["node_type"] = "hvmv_substation"
     # change geometry to point
     hvmv_buses["geometry"] = hvmv_buses.point.apply(lambda x: loads(x, hex=True))
-    # add meta data
-    if bool(meta_data) and f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    hvmv_buses = hvmv_buses.rename(columns={"version": "ego_version", "subst_id": "ego_subst_id"})
     # filter trafos which are within the grid area
     hvmv_buses = intersection_with_area(hvmv_buses, grid_data.area)
     hvmv_buses.drop(
         columns=(
             [
-                "lon",
-                "lat",
                 "point",
-                "polygon",
-                "power_type",
-                "substation",
-                "frequency",
-                "ref",
-                "dbahn",
-                "status",
-                "ags_0",
-                "geom",
-                "voltage",
             ]
         ),
         inplace=True,
@@ -152,7 +198,9 @@ def create_mv_topology(grid_data):
         # search for the substations dave name
         substations_rel = concat([hvmv_substations, mvlv_substations])
         mv_buses["subs_dave_name"] = mv_buses.ego_subst_id.apply(
-            lambda x: substations_rel[substations_rel.ego_subst_id == x].iloc[0].dave_name
+            lambda x: substations_rel[substations_rel.ego_subst_id == x]
+            .iloc[0]
+            .dave_name  # TODO: Problem single positional indexer is out of bounce
         )
         mv_buses["voltage_level"] = 5
         mv_buses["voltage_kv"] = dave_settings()["mv_voltage"]
@@ -169,14 +217,12 @@ def create_mv_topology(grid_data):
         )
         # --- create mv lines
         # lines to connect node with the nearest node
+        # mv_line = mv_buses.apply(lambda x: search_connection_line(x, mv_buses), axis=1)
+        # mv_line.drop_duplicates(inplace=True)
+        # list(map(lambda x: search_connection_line(x, mv_buses), mv_buses))
         mv_lines = GeoSeries([])
         for i, bus in mv_buses.iterrows():
-            nearest_bus_idx = (
-                mv_buses.drop([bus.name])
-                .geometry.apply(lambda x: bus.geometry.distance(x))
-                .idxmin()
-            )
-            mv_line = LineString([bus.geometry, mv_buses.loc[nearest_bus_idx].geometry])
+            mv_line = search_connection_line(bus, mv_buses)
             # check if line already exists
             if not mv_lines.geom_equals(mv_line).any():
                 mv_lines[i] = mv_line
@@ -213,7 +259,7 @@ def create_mv_topology(grid_data):
             if len(mv_lines_rel) == 1:
                 break
             # create lines for connecting line segments
-            for i, line in mv_lines_rel.iteritems():
+            for i, line in enumerate(mv_lines_rel.to_list()):  # TODO: ds
                 # find nearest line to considered one
                 nearest_line_idx = mv_lines_rel.drop([i]).geometry.distance(line).idxmin()
                 # get line coordinates
