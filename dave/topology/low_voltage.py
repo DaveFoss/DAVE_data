@@ -65,6 +65,40 @@ def connect_grid_nodes(road_course, road_points, start_node, end_node):
     return LineString(line_points)
 
 
+def search_line_connections(road_geometry, all_nodes):
+    road_course = road_geometry.coords[:]
+    # change road direction to become a uniformly road style
+    if road_course[0] > road_course[len(road_course) - 1]:
+        road_course = road_course[::-1]
+    road_points = MultiPoint(road_course)
+    # find nodes on the considered road and sort them by their longitude to find start point
+    grid_nodes = sorted(
+        [node.coords[:][0] for node in all_nodes if road_geometry.distance(node) < 1e-10]
+    )
+    if grid_nodes:  # check if their are grid nodes on the considered road
+        # sort nodes by their nearest neighbor
+        grid_nodes_sort = [grid_nodes[0]]  # start node
+        node_index = 0
+        while len(grid_nodes) > 1:  # sort nodes by their sequenz along the road
+            start_node = Point(grid_nodes.pop(node_index))
+            grid_nodes_points = MultiPoint(grid_nodes)
+            next_node = nearest_points(start_node, grid_nodes_points)[1]
+            grid_nodes_sort.append(next_node.coords[:][0])
+            node_index = grid_nodes.index(next_node.coords[:][0])
+        # build lines to connect all grid nodes with each other
+        return [
+            connect_grid_nodes(
+                road_course,
+                road_points,
+                start_node=grid_nodes_sort[j],
+                end_node=grid_nodes_sort[j + 1],
+            )
+            for j in range(0, len(grid_nodes_sort) - 1)
+        ]
+    else:
+        return []
+
+
 def line_connections(grid_data):
     """
     This function creates the line connections between the building lines (Points on the roads)
@@ -78,38 +112,15 @@ def line_connections(grid_data):
     )
     all_nodes = concat([nearest_building_point, grid_data.roads.road_junctions]).drop_duplicates()
     # search line connections
-    line_connect = []
-    for _, road in grid_data.roads.roads.iterrows():
-        road_course = road.geometry.coords[:]
-        # change road direction to become a uniformly road style
-        if road_course[0] > road_course[len(road_course) - 1]:
-            road_course = road_course[::-1]
-        road_points = MultiPoint(road_course)
-        # find nodes on the considered road and sort them by their longitude to find start point
-        grid_nodes = sorted(
-            [node.coords[:][0] for node in all_nodes if road.geometry.distance(node) < 1e-10]
-        )
-        if grid_nodes:  # check if their are grid nodes on the considered road
-            # sort nodes by their nearest neighbor
-            grid_nodes_sort = [grid_nodes[0]]  # start node
-            node_index = 0
-            while len(grid_nodes) > 1:  # sort nodes by their sequenz along the road
-                start_node = Point(grid_nodes.pop(node_index))
-                grid_nodes_points = MultiPoint(grid_nodes)
-                next_node = nearest_points(start_node, grid_nodes_points)[1]
-                grid_nodes_sort.append(next_node.coords[:][0])
-                node_index = grid_nodes.index(next_node.coords[:][0])
-            # build lines to connect the all grid nodes with each other
-            line_connect += [
-                connect_grid_nodes(
-                    road_course,
-                    road_points,
-                    start_node=grid_nodes_sort[j],
-                    end_node=grid_nodes_sort[j + 1],
-                )
-                for j in range(0, len(grid_nodes_sort) - 1)
-            ]
-    line_connect = GeoSeries(line_connect, crs=dave_settings()["crs_main"])
+    line_connect = GeoSeries(
+        sum(
+            grid_data.roads.roads.geometry.apply(
+                lambda x: search_line_connections(x, all_nodes)
+            ).to_list(),
+            [],
+        ),
+        crs=dave_settings()["crs_main"],
+    )  # Todo: TypeError: Non geometry data passed to GeoSeries constructor, received data of dtype 'object'
     # calculate line length
     line_connections_3035 = line_connect.to_crs(dave_settings()["crs_meter"])
     lines_gdf = GeoDataFrame(
