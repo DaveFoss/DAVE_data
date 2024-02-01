@@ -26,7 +26,7 @@ def create_transformers(grid_data):
         total=100,
         desc="create transformers:               ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
@@ -159,12 +159,12 @@ def create_transformers(grid_data):
             grid_data.hv_data.hv_nodes.reset_index(drop=True, inplace=True)
             name = Series(list(map(lambda x: f"node_3_{x}", grid_data.hv_data.hv_nodes.index)))
             grid_data.hv_data.hv_nodes.insert(0, "dave_name", name)
-            grid_data.hv_data.hv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
+            grid_data.hv_data.hv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
         if "dave_name" not in grid_data.ehv_data.ehv_nodes.keys():
             grid_data.ehv_data.ehv_nodes.reset_index(drop=True, inplace=True)
             name = Series(list(map(lambda x: f"node_1_{x}", grid_data.ehv_data.ehv_nodes.index)))
             grid_data.ehv_data.ehv_nodes.insert(0, "dave_name", name)
-            grid_data.ehv_data.ehv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
+            grid_data.ehv_data.ehv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
         # write transformator data in grid data and decied the grid level depending on voltage level
         if not hv_trafos.empty:
             ehv_buses = grid_data.ehv_data.ehv_nodes
@@ -192,7 +192,7 @@ def create_transformers(grid_data):
                 # drop columns with ego_id
                 ehv_ehv_trafos.drop(columns=["bus0", "bus1"], inplace=True)
                 # set crs
-                ehv_ehv_trafos.set_crs(dave_settings()["crs_main"], inplace=True)
+                ehv_ehv_trafos.set_crs(dave_settings["crs_main"], inplace=True)
                 # add ehv/ehv trafos to grid data
                 grid_data.components_power.transformers.ehv_ehv = concat(
                     [grid_data.components_power.transformers.ehv_ehv, ehv_ehv_trafos],
@@ -221,7 +221,7 @@ def create_transformers(grid_data):
             # change column name
             ehv_hv_trafos.drop(columns=["bus0", "bus1"], inplace=True)
             # set crs
-            ehv_hv_trafos.set_crs(dave_settings()["crs_main"], inplace=True)
+            ehv_hv_trafos.set_crs(dave_settings["crs_main"], inplace=True)
             # add ehv/ehv trafos to grid data
             grid_data.components_power.transformers.ehv_hv = concat(
                 [grid_data.components_power.transformers.ehv_hv, ehv_hv_trafos], ignore_index=True
@@ -327,7 +327,7 @@ def create_transformers(grid_data):
             name = Series(list(map(lambda x: f"node_3_{x}", hv_nodes.index)), dtype=str)
             hv_nodes.insert(0, "dave_name", name)
             # set crs
-            hv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
+            hv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
             # add mv nodes to grid data
             grid_data.hv_data.hv_nodes = concat(
                 [grid_data.hv_data.hv_nodes, hv_nodes], ignore_index=True
@@ -350,7 +350,7 @@ def create_transformers(grid_data):
             mv_nodes["geometry"] = mv_nodes.point.apply(lambda x: wkb.loads(x, hex=True))
             mv_nodes["node_type"] = "hvmv_substation"
             mv_nodes["voltage_level"] = 5
-            mv_nodes["voltage_kv"] = dave_settings()["mv_voltage"]
+            mv_nodes["voltage_kv"] = dave_settings["mv_voltage"]
             # add oep as source
             mv_nodes["source"] = "OEP"
             # add dave name
@@ -358,7 +358,7 @@ def create_transformers(grid_data):
             name = Series(list(map(lambda x: f"node_5_{x}", mv_nodes.index)), dtype=str)
             mv_nodes.insert(0, "dave_name", name)
             # set crs
-            mv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
+            mv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
             # add mv nodes to grid data
             grid_data.mv_data.mv_nodes = concat(
                 [grid_data.mv_data.mv_nodes, mv_nodes], ignore_index=True
@@ -402,7 +402,7 @@ def create_transformers(grid_data):
                     "bus_hv": bus_hv,
                     "bus_lv": bus_lv,
                     "voltage_kv_hv": [110],
-                    "voltage_kv_lv": [dave_settings()["mv_voltage"]],
+                    "voltage_kv_lv": [dave_settings["mv_voltage"]],
                     "voltage_level": [4],
                     "ego_version": sub.ego_version,
                     "ego_subst_id": sub.ego_subst_id,
@@ -413,7 +413,7 @@ def create_transformers(grid_data):
                     "Gemeindeschluessel": sub.Gemeindeschluessel,
                     "geometry": [sub.geometry.centroid],
                 },
-                crs=dave_settings()["crs_main"],
+                crs=dave_settings["crs_main"],
             )
             grid_data.components_power.transformers.hv_mv = concat(
                 [grid_data.components_power.transformers.hv_mv, trafo_df], ignore_index=True
@@ -469,7 +469,7 @@ def create_transformers(grid_data):
             )
             mv_buses["node_type"] = "mvlv_substation"
             mv_buses["voltage_level"] = 5
-            mv_buses["voltage_kv"] = dave_settings()["mv_voltage"]
+            mv_buses["voltage_kv"] = dave_settings["mv_voltage"]
             # add oep as source
             mv_buses["source"] = "OEP"
             # add dave name
@@ -477,7 +477,7 @@ def create_transformers(grid_data):
             name = Series(list(map(lambda x: f"node_5_{x}", mv_buses.index)), dtype=str)
             mv_buses.insert(0, "dave_name", name)
             # set crs
-            mv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
+            mv_buses.set_crs(dave_settings["crs_main"], inplace=True)
             # add mv nodes to grid data
             grid_data.mv_data.mv_nodes = concat(
                 [grid_data.mv_data.mv_nodes, mv_buses], ignore_index=True
@@ -503,7 +503,7 @@ def create_transformers(grid_data):
             name = Series(list(map(lambda x: f"node_7_{x}", lv_buses.index)), dtype=str)
             lv_buses.insert(0, "dave_name", name)
             # set crs
-            lv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
+            lv_buses.set_crs(dave_settings["crs_main"], inplace=True)
             # add mv nodes to grid data
             grid_data.lv_data.lv_nodes = concat(
                 [grid_data.lv_data.lv_nodes, lv_buses], ignore_index=True
@@ -543,14 +543,14 @@ def create_transformers(grid_data):
                 {
                     "bus_hv": bus_hv,
                     "bus_lv": bus_lv,
-                    "voltage_kv_hv": [dave_settings()["mv_voltage"]],
+                    "voltage_kv_hv": [dave_settings["mv_voltage"]],
                     "voltage_kv_lv": [0.4],
                     "voltage_level": [6],
                     "ego_version": sub.ego_version,
                     "ego_subst_id": sub.ego_subst_id,
                     "geometry": [sub.geometry],
                 },
-                crs=dave_settings()["crs_main"],
+                crs=dave_settings["crs_main"],
             )
             grid_data.components_power.transformers.mv_lv = concat(
                 [grid_data.components_power.transformers.mv_lv, trafo_df], ignore_index=True
@@ -566,12 +566,12 @@ def create_transformers(grid_data):
                     mv_bus_df = GeoDataFrame(
                         {
                             "dave_name": dave_name,
-                            "voltage_kv": [dave_settings()["mv_voltage"]],
+                            "voltage_kv": [dave_settings["mv_voltage"]],
                             "voltage_level": [5],
                             "geometry": [first_bus.geometry],
                             "source": "dave internal",
                         },
-                        crs=dave_settings()["crs_main"],
+                        crs=dave_settings["crs_main"],
                     )
                     grid_data.mv_data.mv_nodes = concat(
                         [grid_data.mv_data.mv_nodes, mv_bus_df], ignore_index=True
@@ -583,12 +583,12 @@ def create_transformers(grid_data):
                     {
                         "bus_hv": bus_hv,
                         "bus_lv": bus_lv,
-                        "voltage_kv_hv": [dave_settings()["mv_voltage"]],
+                        "voltage_kv_hv": [dave_settings["mv_voltage"]],
                         "voltage_kv_lv": [0.4],
                         "voltage_level": [6],
                         "geometry": [first_bus.geometry],
                     },
-                    crs=dave_settings()["crs_main"],
+                    crs=dave_settings["crs_main"],
                 )
                 grid_data.components_power.transformers.mv_lv = concat(
                     [grid_data.components_power.transformers.mv_lv, trafo_df], ignore_index=True

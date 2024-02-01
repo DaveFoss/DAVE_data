@@ -86,7 +86,7 @@ def create_hp_topology(grid_data):
         total=100,
         desc="create high pressure topology:     ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # read high pressure grid data from dave datapool (scigridgas igginl)
     scigrid_data, meta_data = read_scigridgas_iggielgn()
@@ -111,7 +111,7 @@ def create_hp_topology(grid_data):
     scigrid_nodes["is_export"] = False
     scigrid_nodes["is_import"] = False
     # set height
-    scigrid_nodes["height_m"] = dave_settings()["hp_nodes_height_m"]
+    scigrid_nodes["height_m"] = dave_settings["hp_nodes_height_m"]
     # filter junctions which are within the grid area
     hp_junctions = intersection_with_area(scigrid_nodes, grid_data.area)
     # update progress
@@ -174,7 +174,7 @@ def create_hp_topology(grid_data):
         hp_junctions.insert(
             0, "dave_name", Series(list(map(lambda x: f"junction_1_{x}", hp_junctions.index)))
         )
-        hp_junctions.set_crs(dave_settings()["crs_main"], inplace=True)
+        hp_junctions.set_crs(dave_settings["crs_main"], inplace=True)
         grid_data.hp_data.hp_junctions = concat(
             [grid_data.hp_data.hp_junctions, hp_junctions], ignore_index=True
         )
@@ -198,7 +198,7 @@ def create_hp_topology(grid_data):
         # add pipes to grid data
         hp_pipes.reset_index(drop=True, inplace=True)
         hp_pipes.insert(0, "dave_name", Series(list(map(lambda x: f"pipe_1_{x}", hp_pipes.index))))
-        hp_pipes.set_crs(dave_settings()["crs_main"], inplace=True)
+        hp_pipes.set_crs(dave_settings["crs_main"], inplace=True)
         grid_data.hp_data.hp_pipes = concat(
             [grid_data.hp_data.hp_pipes, hp_pipes], ignore_index=True
         )

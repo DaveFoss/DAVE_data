@@ -31,7 +31,7 @@ def create_ehv_topology(grid_data):
         total=100,
         desc="create extra high voltage topology:",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # --- create ehv/ehv and ehv/hv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
@@ -57,7 +57,7 @@ def create_ehv_topology(grid_data):
             Series(list(map(lambda x: f"substation_2_{x}", ehv_substations.index))),
         )
         # set crs
-        ehv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
+        ehv_substations.set_crs(dave_settings["crs_main"], inplace=True)
         # add ehv substations to grid data
         grid_data.components_power.substations.ehv_hv = concat(
             [grid_data.components_power.substations.ehv_hv, ehv_substations], ignore_index=True
@@ -196,7 +196,7 @@ def create_ehv_topology(grid_data):
             0, "dave_name", Series(list(map(lambda x: f"node_1_{x}", ehv_buses.index)))
         )
         # set crs
-        ehv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
+        ehv_buses.set_crs(dave_settings["crs_main"], inplace=True)
         # add ehv nodes to grid data
         grid_data.ehv_data.ehv_nodes = concat(
             [grid_data.ehv_data.ehv_nodes, ehv_buses], ignore_index=True
@@ -292,7 +292,7 @@ def create_ehv_topology(grid_data):
             0, "dave_name", Series(list(map(lambda x: f"line_1_{x}", ehv_lines.index)))
         )
         # set crs
-        ehv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
+        ehv_lines.set_crs(dave_settings["crs_main"], inplace=True)
         # add ehv lines to grid data
         grid_data.ehv_data.ehv_lines = concat(
             [grid_data.ehv_data.ehv_lines, ehv_lines], ignore_index=True

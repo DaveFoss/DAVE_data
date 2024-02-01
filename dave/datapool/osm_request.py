@@ -22,9 +22,9 @@ def osm_request(data_type, area):
     """
     This function requests OSM data from database or OSM directly
     """
-    data_param = dave_settings()["osm_tags"][data_type]
+    data_param = dave_settings["osm_tags"][data_type]
     # create database collection name
-    collection = f"osm_{data_type}_{dave_settings()['osm_area']}"
+    collection = f"osm_{data_type}_{dave_settings['osm_area']}"
     if db_availability(collection_name=collection):
         request_data = from_mongo(
             database=search_database(collection=collection),
@@ -159,7 +159,7 @@ def query_osm(typ, bbox=None, recurse=None, tags="", raw=False, meta=False, **kw
     """
     url = _build_url(typ, bbox, recurse, tags, meta)
     # add time delay because osm doesn't alowed more than 1 request per second.
-    time_delay = dave_settings()["osm_time_delay"]
+    time_delay = dave_settings["osm_time_delay"]
 
     # TODO: Raise on non-200 (or 400-599)
     # with urlopen(url) as response:

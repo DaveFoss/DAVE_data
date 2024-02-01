@@ -25,7 +25,7 @@ def change_oep_version(table, new_version):
     """
     This function changes the version for an oep table to the latest
     """
-    filepath = dave_settings()["dave_dir"] + "\\settings.py"
+    filepath = dave_settings["dave_dir"] + "\\settings.py"
     # read settings file
     with open(filepath) as f:
         lines = f.readlines()
@@ -58,9 +58,9 @@ def oep_update():
         total=100,
         desc="update data from OEP: ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
-    relevant_tables = dave_settings()["oep_tables"]
+    relevant_tables = dave_settings["oep_tables"]
     # check for new versions and update database
     for table in relevant_tables.keys():
         # get dataset from oep
@@ -109,10 +109,10 @@ def oep_update():
 #         total=100,
 #         desc="update data from OSM: ",
 #         position=0,
-#         bar_format=dave_settings()["bar_format"],
+#         bar_format=dave_settings["bar_format"],
 #     )
 #     # considerd area
-#     osm_area = dave_settings()["osm_area"]
+#     osm_area = dave_settings["osm_area"]
 #     # in the case of considering germany the data has to be considered in supregions because otherwise there could be an memory error
 #     if osm_area == "germany":
 #         sub_regions = [
@@ -136,18 +136,18 @@ def oep_update():
 #     for idx, region in enumerate(sub_regions):
 #         # download data from osm
 #         filepath = get_data(
-#             region, directory=dave_settings()["dave_dir"] + "\\datapool\\data\\osm", update=True
+#             region, directory=dave_settings["dave_dir"] + "\\datapool\\data\\osm", update=True
 #         )
 #         # Initialize the OSM object
 #         osm = OSM(filepath)
 #         pbar.update(10 / len(sub_regions))
 #         # filter data from local osm file and write to database
-#         for data_type in dave_settings()["osm_tags"].keys():
+#         for data_type in dave_settings["osm_tags"].keys():
 #             print(f"{region}_{data_type}")  # !!! only for testing
 #             # create collection name
 #             collection = f"osm_{data_type}_{osm_area}"
 #             # get data parameter
-#             data_param = dave_settings()["osm_tags"][data_type]
+#             data_param = dave_settings["osm_tags"][data_type]
 #             # filter data_type
 #             dataset = osm.get_data_by_custom_criteria(
 #                 custom_filter={data_param[0]: data_param[1]},
@@ -167,7 +167,7 @@ def oep_update():
 #                 # Write dataset to database in existing collection
 #                 to_mongo(database="geo", collection=collection, data_df=dataset, merge=True)
 #             # update progress
-#             pbar.update(90 / (len(sub_regions) * len(dave_settings()["osm_tags"].keys())))
+#             pbar.update(90 / (len(sub_regions) * len(dave_settings["osm_tags"].keys())))
 #     # close progress bar
 #     pbar.close()
 
@@ -181,7 +181,7 @@ def local_data_update():
         total=100,
         desc="update data from local datapool: ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # define datasets
     datasets_geo = ["postalcodesger.h5", "federalstatesger.h5", "nuts_regions.h5"]

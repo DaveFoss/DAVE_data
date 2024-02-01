@@ -19,7 +19,7 @@ def create_sources(grid_data, scigrid_productions):
         total=100,
         desc="create sources:                    ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get compressor data
     sources = scigrid_productions.copy()
@@ -56,7 +56,7 @@ def create_sources(grid_data, scigrid_productions):
         sources.reset_index(drop=True, inplace=True)
         sources.insert(0, "dave_name", Series(list(map(lambda x: f"source_1_{x}", sources.index))))
         # set crs
-        sources.set_crs(dave_settings()["crs_main"], inplace=True)
+        sources.set_crs(dave_settings["crs_main"], inplace=True)
         # add hp junctions to grid data
         grid_data.components_gas.sources = concat(
             [grid_data.components_gas.sources, sources], ignore_index=True
@@ -79,7 +79,7 @@ def create_compressors(grid_data, scigrid_compressors):
         total=100,
         desc="create compressors:                ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get compressor data
     compressors = scigrid_compressors.copy()
@@ -115,7 +115,7 @@ def create_compressors(grid_data, scigrid_compressors):
             0, "dave_name", Series(list(map(lambda x: f"compressor_1_{x}", compressors.index)))
         )
         # set crs
-        compressors.set_crs(dave_settings()["crs_main"], inplace=True)
+        compressors.set_crs(dave_settings["crs_main"], inplace=True)
         # add hp junctions to grid data
         grid_data.components_gas.compressors = concat(
             [grid_data.components_gas.compressors, compressors], ignore_index=True
@@ -138,7 +138,7 @@ def create_sinks(grid_data, scigrid_consumers):
         total=100,
         desc="create sinks:                      ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get sink data
     sinks = scigrid_consumers.copy()
@@ -175,7 +175,7 @@ def create_sinks(grid_data, scigrid_consumers):
         sinks.reset_index(drop=True, inplace=True)
         sinks.insert(0, "dave_name", Series(list(map(lambda x: f"sink_1_{x}", sinks.index))))
         # set crs
-        sinks.set_crs(dave_settings()["crs_main"], inplace=True)
+        sinks.set_crs(dave_settings["crs_main"], inplace=True)
         # add hp junctions to grid data
         grid_data.components_gas.sinks = concat(
             [grid_data.components_gas.sinks, sinks], ignore_index=True

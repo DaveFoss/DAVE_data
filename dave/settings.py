@@ -32,7 +32,7 @@ elif stage == "production":
     db_url = "172.20.0.10:27017"
 
 
-def dave_settings():
+def set_dave_settings():
     """
     This function returns a dictonary with the DaVe settings for used data and assumptions
     """
@@ -232,3 +232,6 @@ def db_restriction():
         # "postalcodes": "transhyde",  # example
     }
     return restriction
+
+
+dave_settings = set_dave_settings()

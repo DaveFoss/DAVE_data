@@ -87,7 +87,7 @@ def voronoi(points):
     # create polygons from the lines
     polygons = array(list(polygonize(lines)))
     # create GeoDataFrame with polygons
-    voronoi_polygons = GeoDataFrame(geometry=polygons, crs=dave_settings()["crs_main"])
+    voronoi_polygons = GeoDataFrame(geometry=polygons, crs=dave_settings["crs_main"])
     # search voronoi centroids and dave name
     voronoi_polygons["centroid"] = None
     voronoi_polygons["dave_name"] = None
@@ -124,9 +124,9 @@ def get_data_path(filename=None, dirname=None):
     This function returns the full os path for a given directory (and filename)
     """
     data_path = (
-        path.join(dave_settings()["dave_dir"], "datapool", dirname, filename)
+        path.join(dave_settings["dave_dir"], "datapool", dirname, filename)
         if filename
-        else path.join(dave_settings()["dave_dir"], "datapool", dirname)
+        else path.join(dave_settings["dave_dir"], "datapool", dirname)
     )
     return data_path
 
@@ -211,7 +211,7 @@ def auth_available():
     available = False
     while not available:
         try:
-            request = get(dave_settings()["keycloak_server_url"])
+            request = get(dave_settings["keycloak_server_url"])
             if request.status_code == 200:
                 available = True
             elif request.status_code == 404:

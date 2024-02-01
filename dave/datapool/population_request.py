@@ -18,7 +18,7 @@ def request_population(grid_data, output_folder, api_use):
         total=100,
         desc="create population      :           ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     ### get population in raster format
     # get the boundary of area of interest

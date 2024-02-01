@@ -119,10 +119,10 @@ def line_connections(grid_data):
             ).to_list(),
             [],
         ),
-        crs=dave_settings()["crs_main"],
+        crs=dave_settings["crs_main"],
     )  # Todo: TypeError: Non geometry data passed to GeoSeries constructor, received data of dtype 'object'
     # calculate line length
-    line_connections_3035 = line_connect.to_crs(dave_settings()["crs_meter"])
+    line_connections_3035 = line_connect.to_crs(dave_settings["crs_meter"])
     lines_gdf = GeoDataFrame(
         {
             "geometry": line_connect,
@@ -132,7 +132,7 @@ def line_connections(grid_data):
             "voltage_level": 7,
             "source": "dave internal",
         },
-        crs=dave_settings()["crs_main"],
+        crs=dave_settings["crs_main"],
     )
     grid_data.lv_data.lv_lines = concat([grid_data.lv_data.lv_lines, lines_gdf], ignore_index=True)
 
@@ -153,7 +153,7 @@ def create_lv_topology(grid_data):
         total=100,
         desc="create low voltage topology:       ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # --- create substations
     # create mv/lv substations
@@ -169,7 +169,7 @@ def create_lv_topology(grid_data):
             columns={"version": "ego_version", "mvlv_subst_id": "ego_subst_id"}, inplace=True
         )
         # change wrong crs from oep
-        mvlv_substations.crs = dave_settings()["crs_main"]
+        mvlv_substations.crs = dave_settings["crs_main"]
         # filter trafos which are within the grid area
         mvlv_substations = intersection_with_area(mvlv_substations, grid_data.area)
         if not mvlv_substations.empty:
@@ -194,9 +194,9 @@ def create_lv_topology(grid_data):
     buildings_rel = concat(
         [grid_data.buildings.residential, grid_data.buildings.commercial], ignore_index=True
     )
-    buildings_rel_3035 = buildings_rel.to_crs(dave_settings()["crs_meter"])
+    buildings_rel_3035 = buildings_rel.to_crs(dave_settings["crs_meter"])
     centroids = buildings_rel_3035.reset_index(drop=True).centroid
-    centroids = centroids.to_crs(dave_settings()["crs_main"])
+    centroids = centroids.to_crs(dave_settings["crs_main"])
     building_connections = nearest_road(building_centroids=centroids, roads=grid_data.roads.roads)
     # delet duplicates in nearest road points
     building_nearest = GeoSeries(building_connections.nearest_point)
@@ -242,7 +242,7 @@ def create_lv_topology(grid_data):
     grid_data.lv_data.lv_nodes = concat(
         [grid_data.lv_data.lv_nodes, building_nodes_df], ignore_index=True
     )
-    grid_data.lv_data.lv_nodes.crs = dave_settings()["crs_main"]
+    grid_data.lv_data.lv_nodes.crs = dave_settings["crs_main"]
     # update progress
     pbar.update(5)
     # --- create lines for building connections
@@ -254,11 +254,11 @@ def create_lv_topology(grid_data):
                 building_connections["nearest_point"],
             )
         ),
-        crs=dave_settings()["crs_main"],
+        crs=dave_settings["crs_main"],
     )
     # calculate line length
-    line_buildings = line_buildings.set_crs(dave_settings()["crs_main"])
-    line_buildings_3035 = line_buildings.to_crs(dave_settings()["crs_meter"])
+    line_buildings = line_buildings.set_crs(dave_settings["crs_main"])
+    line_buildings_3035 = line_buildings.to_crs(dave_settings["crs_meter"])
     line_gdf = GeoDataFrame(
         {
             "geometry": line_buildings,
@@ -272,7 +272,7 @@ def create_lv_topology(grid_data):
     # write line informations into grid data
     grid_data.lv_data.lv_lines = concat([grid_data.lv_data.lv_lines, line_gdf], ignore_index=True)
     # set crs
-    grid_data.lv_data.lv_lines.crs = dave_settings()["crs_main"]
+    grid_data.lv_data.lv_lines.crs = dave_settings["crs_main"]
     # create line connections to connect lines for buildings and road junctions with each other
     line_connections(grid_data)
     # add dave name for lv_lines
@@ -379,7 +379,7 @@ def create_lv_topology(grid_data):
             grid_data.lv_data.lv_lines.at[line.name, "to_bus"] = dave_name
         grid_data.lv_data.lv_nodes.reset_index(drop=True, inplace=True)
         # set crs
-        grid_data.lv_data.lv_nodes.set_crs(dave_settings()["crs_main"], inplace=True)
+        grid_data.lv_data.lv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
         # update progress
         pbar.update(80 / len(grid_data.lv_data.lv_lines))
     # close progress bar
