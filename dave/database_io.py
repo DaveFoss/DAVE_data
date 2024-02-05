@@ -61,7 +61,7 @@ def info_mongo(roles=[]):
 def db_availability(collection_name=None, roles=[]):
     # check if the dave database is available
     try:
-        get(f"http://{dave_settings()['db_ip']}/")
+        get(f"http://{dave_settings['db_ip']}/")
         if collection_name:
             db_databases = info_mongo(roles)
             available = False
@@ -79,7 +79,7 @@ def db_availability(collection_name=None, roles=[]):
 def db_client():
     # define data source
     return MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}',
+        f'mongodb://{dave_settings["db_user"]}:{dave_settings["db_pw"]}@{dave_settings["db_ip"]}',
         authSource="admin",
     )
 
@@ -127,9 +127,9 @@ def from_mongo(database, collection, filter_method=None, filter_param=None, filt
                 if "geometry" in row.keys():
                     row["geometry"] = shape(row["geometry"])
             if len(data_list) > 1:
-                df = GeoDataFrame(data_list, crs=dave_settings()["crs_main"])
+                df = GeoDataFrame(data_list, crs=dave_settings["crs_main"])
             elif len(data_list) == 1:
-                df = GeoDataFrame([data_list[0]], crs=dave_settings()["crs_main"])
+                df = GeoDataFrame([data_list[0]], crs=dave_settings["crs_main"])
         else:
             if len(data_list) > 1:
                 df = DataFrame(data_list)
@@ -253,7 +253,7 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
             # read data from file and convert geometry
             data = file.get(key)
             if "geometry" in data.keys() and isinstance(data.iloc[0].geometry, bytes):
-                data = wkb_to_wkt(data, dave_settings()["crs_main"])
+                data = wkb_to_wkt(data, dave_settings["crs_main"])
             # upload tables to mongo db
             df_to_mongo(database, collection_new, data)
         # close file

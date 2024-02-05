@@ -87,7 +87,7 @@ def save_dataset_to_archiv(grid_data):
     print("Save DaVe dataset to archiv")
     print("----------------------------------")
     # check if archiv folder exists otherwise create one
-    archiv_dir = dave_settings()["dave_dir"] + "\\datapool\\dave_archiv\\"
+    archiv_dir = dave_settings["dave_dir"] + "\\datapool\\dave_archiv\\"
     if not path.exists(archiv_dir):
         makedirs(archiv_dir)
     with catch_warnings():
@@ -150,7 +150,7 @@ def create_grid(
     building_height=False,
     census=[],
     heat=[],
-    output_folder=dave_settings()["dave_output_dir"],
+    output_folder=dave_settings["dave_output_dir"],
     output_format="json",
     api_use=True,
 ):

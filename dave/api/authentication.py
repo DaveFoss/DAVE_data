@@ -26,10 +26,10 @@ def auth_token(token, roles=False):
     """
     # authentification
     oauth = OAuth2Session(
-        client_id=dave_settings()["client_id"], client_secret=dave_settings()["client_secret_key"]
+        client_id=dave_settings["client_id"], client_secret=dave_settings["client_secret_key"]
     )
     result = oauth.introspect_token(
-        url=f"{dave_settings()['keycloak_server_url']}realms/dave/protocol/openid-connect/token/introspect",
+        url=f"{dave_settings['keycloak_server_url']}realms/dave/protocol/openid-connect/token/introspect",
         token=token["access_token"],
     )
     content = loads(result.content.decode())

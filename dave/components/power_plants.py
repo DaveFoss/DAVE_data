@@ -141,7 +141,7 @@ def create_power_plant_lines(grid_data):
         total=100,
         desc="create powerplant lines:           ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get all grid nodes
     all_nodes = concat(
@@ -154,7 +154,7 @@ def create_power_plant_lines(grid_data):
     )
     # check if there are nodes available to connect the power plants to the grid
     if not all_nodes.empty:
-        all_nodes_3035 = all_nodes.to_crs(dave_settings()["crs_meter"])
+        all_nodes_3035 = all_nodes.to_crs(dave_settings["crs_meter"])
         # select all power plants
         renewables = grid_data.components_power.renewable_powerplants
         conventionals = grid_data.components_power.conventional_powerplants
@@ -168,8 +168,8 @@ def create_power_plant_lines(grid_data):
                 if "aggregated" in all_plants.keys()
                 else all_plants
             )
-            plants_rel.crs = dave_settings()["crs_main"]
-            plants_rel_3035 = plants_rel.to_crs(dave_settings()["crs_meter"])
+            plants_rel.crs = dave_settings["crs_main"]
+            plants_rel_3035 = plants_rel.to_crs(dave_settings["crs_meter"])
             # considered voltage level
             considered_levels = list(
                 map(
@@ -281,7 +281,7 @@ def create_power_plant_lines(grid_data):
                                     "voltage_level": voltage_level,
                                     "source": "dave internal",
                                 },
-                                crs=dave_settings()["crs_main"],
+                                crs=dave_settings["crs_main"],
                             )
                         elif voltage_level in [5, 7]:  # (MV and LV)
                             # !!! Diese Parameter müssen noch angepasst werden wenn MV/LV Leitungscharakteristiken besser bestimmt werden
@@ -297,7 +297,7 @@ def create_power_plant_lines(grid_data):
                                     "source": "dave internal",
                                     "line_type": "power plant line",
                                 },
-                                crs=dave_settings()["crs_main"],
+                                crs=dave_settings["crs_main"],
                             )
                         line_new = concat([lines, auxillary_line], ignore_index=True)
                         if voltage_level == 1:
@@ -345,7 +345,7 @@ def create_renewable_powerplants(grid_data):
         total=100,
         desc="create renewable powerplants:      ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
@@ -424,7 +424,7 @@ def create_renewable_powerplants(grid_data):
         # convert DataFrame into a GeoDataFrame
         renewables_geo = GeoDataFrame(
             renewables,
-            crs=dave_settings()["crs_main"],
+            crs=dave_settings["crs_main"],
             geometry=points_from_xy(renewables.lon, renewables.lat),
         )
         # intersection of power plants with target_area when target is an own area
@@ -758,7 +758,7 @@ def create_renewable_powerplants(grid_data):
             grid_data.components_power.renewable_powerplants.insert(0, "dave_name", name)
             # set crs
             grid_data.components_power.renewable_powerplants.set_crs(
-                dave_settings()["crs_main"], inplace=True
+                dave_settings["crs_main"], inplace=True
             )
         # update progress
         pbar.update(9.98)
@@ -821,7 +821,7 @@ def create_conventional_powerplants(grid_data):
         total=100,
         desc="create conventional powerplants:   ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
@@ -885,7 +885,7 @@ def create_conventional_powerplants(grid_data):
         # convert DataFrame into a GeoDataFrame
         conventionals_geo = GeoDataFrame(
             conventionals,
-            crs=dave_settings()["crs_main"],
+            crs=dave_settings["crs_main"],
             geometry=points_from_xy(conventionals.lon, conventionals.lat),
         )
         # intersection of power plants with target_area when target is an own area
@@ -1238,7 +1238,7 @@ def create_conventional_powerplants(grid_data):
             grid_data.components_power.conventional_powerplants.insert(0, "dave_name", name)
             # set crs
             grid_data.components_power.conventional_powerplants.set_crs(
-                dave_settings()["crs_main"], inplace=True
+                dave_settings["crs_main"], inplace=True
             )
         # update progress
         pbar.update(10)

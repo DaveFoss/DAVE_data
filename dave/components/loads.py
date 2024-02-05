@@ -31,13 +31,13 @@ def get_household_power(consumption_data, household_size):
     household_consumption = consumption_data["household_consumptions"][
         consumption_data["household_consumptions"]["Personen pro Haushalt"] == household_size
     ]
-    p_mw = (household_consumption.iloc[0]["Durchschnitt  [kwh/a]"] / 1000) / dave_settings()[
+    p_mw = (household_consumption.iloc[0]["Durchschnitt  [kwh/a]"] / 1000) / dave_settings[
         "h_per_a"
     ]
     q_mvar = (
         p_mw
-        * sin(acos(dave_settings()["cos_phi_residential"]))
-        / dave_settings()["cos_phi_residential"]
+        * sin(acos(dave_settings["cos_phi_residential"]))
+        / dave_settings["cos_phi_residential"]
     )
     return p_mw, q_mvar
 
@@ -52,16 +52,16 @@ def create_loads(grid_data):
         total=100,
         desc="create electrical loads:           ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # define avarage load values
-    residential_load = dave_settings()["residential_load"]
-    industrial_load = dave_settings()["industrial_load"]
-    commercial_load = dave_settings()["commercial_load"]
+    residential_load = dave_settings["residential_load"]
+    industrial_load = dave_settings["industrial_load"]
+    commercial_load = dave_settings["commercial_load"]
     # set power factor for loads
-    cos_phi_residential = dave_settings()["cos_phi_residential"]
-    cos_phi_industrial = dave_settings()["cos_phi_industrial"]
-    cos_phi_commercial = dave_settings()["cos_phi_commercial"]
+    cos_phi_residential = dave_settings["cos_phi_residential"]
+    cos_phi_industrial = dave_settings["cos_phi_industrial"]
+    cos_phi_commercial = dave_settings["cos_phi_commercial"]
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
@@ -330,7 +330,7 @@ def create_loads(grid_data):
         )
         intersection.drop(columns=["area_km2"], inplace=True)
         # calculate area from intersected polygons
-        intersection_3035 = intersection.to_crs(dave_settings()["crs_meter"])
+        intersection_3035 = intersection.to_crs(dave_settings["crs_meter"])
         intersection["area_km2"] = intersection_3035.area / 1e06
         # --- calculate consumption for the diffrent landuses in every single voronoi polygon
         # create list of all diffrent connection transformers

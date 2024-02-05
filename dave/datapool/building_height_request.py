@@ -40,7 +40,7 @@ def request_building_height(grid_data, output_folder):
         total=100,
         desc="create building heights:           ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # Create the counding box of the area of interest
     boundary = grid_data.area.geometry.unary_union

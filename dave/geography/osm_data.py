@@ -29,14 +29,14 @@ def get_osm_data(grid_data, key, border, target_geom):
     # check if there are data
     if not data.empty:
         # filter data parameters which are relevant for the grid modeling
-        data = data.filter(dave_settings()["osm_tags"][key][3])
+        data = data.filter(dave_settings["osm_tags"][key][3])
         data.rename(columns={"id": "osm_id"}, inplace=True)
         # consider only data which are linestring elements and within considered area
         data = data[
             (data.geometry.apply(lambda x: isinstance(x, LineString)))
             & (data.geometry.intersects(target_geom))
         ]
-        data.set_crs(dave_settings()["crs_main"], inplace=True)
+        data.set_crs(dave_settings["crs_main"], inplace=True)
     return data
 
 
@@ -113,11 +113,11 @@ def from_osm(
                 landuse, area
             )  # !!! duplicated with intersection before?
             # calculate polygon area in km²
-            landuse_3035 = landuse.to_crs(dave_settings()["crs_meter"])
+            landuse_3035 = landuse.to_crs(dave_settings["crs_meter"])
             landuse["area_km2"] = landuse_3035.area / 1e06
             # write landuse into grid_data
             grid_data.landuse = concat([grid_data.landuse, landuse], ignore_index=True)
-            grid_data.landuse.set_crs(dave_settings()["crs_main"], inplace=True)
+            grid_data.landuse.set_crs(dave_settings["crs_main"], inplace=True)
 
         # !!! abfrage von natural und bei landuse hinzufügen
         # hier wood und evt auch wasser mit rein nehmen
@@ -130,8 +130,8 @@ def from_osm(
         # check if there are data for buildings
         if not buildings.empty:
             # create building categories
-            residential = dave_settings()["buildings_residential"]
-            commercial = dave_settings()["buildings_commercial"]
+            residential = dave_settings["buildings_residential"]
+            commercial = dave_settings["buildings_commercial"]
             # improve building tag with landuse parameter
             if landuse if isinstance(landuse, bool) else not landuse.empty:
                 landuse_retail = landuse[landuse.landuse == "retail"].geometry.unary_union
@@ -216,5 +216,5 @@ def road_junctions(grid_data):
         # delet duplicates
         junctions = GeoSeries(junction_points).drop_duplicates()
         # write road junctions into grid_data
-        junctions.set_crs(dave_settings()["crs_main"], inplace=True)
+        junctions.set_crs(dave_settings["crs_main"], inplace=True)
         grid_data.roads.road_junctions = junctions.rename("geometry")

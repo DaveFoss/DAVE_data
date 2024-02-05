@@ -30,7 +30,7 @@ def create_hv_topology(grid_data):
         total=100,
         desc="create high voltage topology:      ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
 
     # --- create substations
@@ -63,7 +63,7 @@ def create_hv_topology(grid_data):
                 Series(list(map(lambda x: f"substation_2_{x}", ehvhv_substations.index))),
             )
             # set crs
-            ehvhv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
+            ehvhv_substations.set_crs(dave_settings["crs_main"], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.ehv_hv = concat(
                 [grid_data.components_power.substations.ehv_hv, ehvhv_substations],
@@ -112,7 +112,7 @@ def create_hv_topology(grid_data):
                 Series(list(map(lambda x: f"substation_4_{x}", hvmv_substations.index))),
             )
             # set crs
-            hvmv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
+            hvmv_substations.set_crs(dave_settings["crs_main"], inplace=True)
             # add ehv substations to grid data
             grid_data.components_power.substations.hv_mv = concat(
                 [grid_data.components_power.substations.hv_mv, hvmv_substations], ignore_index=True
@@ -201,7 +201,7 @@ def create_hv_topology(grid_data):
         hv_buses.reset_index(drop=True, inplace=True)
         hv_buses.insert(0, "dave_name", Series(list(map(lambda x: f"node_3_{x}", hv_buses.index))))
         # set crs
-        hv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
+        hv_buses.set_crs(dave_settings["crs_main"], inplace=True)
         # add hv nodes to grid data
         grid_data.hv_data.hv_nodes = concat(
             [grid_data.hv_data.hv_nodes, hv_buses], ignore_index=True
@@ -251,7 +251,7 @@ def create_hv_topology(grid_data):
         name = Series(list(map(lambda x: f"line_3_{x}", hv_lines.index)))
         hv_lines.insert(0, "dave_name", name)
         # set crs
-        hv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
+        hv_lines.set_crs(dave_settings["crs_main"], inplace=True)
         # add hv lines to grid data
         grid_data.hv_data.hv_lines = concat(
             [grid_data.hv_data.hv_lines, hv_lines], ignore_index=True

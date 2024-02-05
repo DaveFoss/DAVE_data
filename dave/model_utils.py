@@ -255,7 +255,7 @@ def clean_wrong_lines(grid_data):
             grid_data[f"{level}_data"][f"{level}_lines"].reset_index(drop=True, inplace=True)
 
 
-def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"]):
+def clean_up_data(grid_data, min_number_nodes=dave_settings["min_number_nodes"]):
     """
     This function clean up the DaVe Dataset for diffrent kinds of failures
     """
@@ -264,7 +264,7 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
         total=100,
         desc="clean up dave dataset:             ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # --- clean up power grid data
     if grid_data.target_input.iloc[0].power_levels:

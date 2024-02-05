@@ -60,10 +60,10 @@ class Login:
     def request_token(self, parameters):
         # set keycloak open id client
         keycloak_openid = KeycloakOpenID(
-            server_url=dave_settings()["keycloak_server_url"],
-            client_id=dave_settings()["client_id"],
-            realm_name=dave_settings()["realm_name"],
-            client_secret_key=dave_settings()["client_secret_key"],
+            server_url=dave_settings["keycloak_server_url"],
+            client_id=dave_settings["client_id"],
+            realm_name=dave_settings["realm_name"],
+            client_secret_key=dave_settings["client_secret_key"],
         )
 
         # request token from keycloak server

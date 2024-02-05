@@ -50,14 +50,14 @@ def _target_by_own_area(grid_data, own_area):
             print("The given shapefile includes no data")
     elif isinstance(own_area, Polygon):
         target = GeoDataFrame(
-            {"name": ["own area"], "geometry": [own_area]}, crs=dave_settings()["crs_main"]
+            {"name": ["own area"], "geometry": [own_area]}, crs=dave_settings["crs_main"]
         )
     else:
         print("The given format is unknown")
 
     # check crs and project to the right one if needed
-    if (target.crs) and (target.crs != dave_settings()["crs_main"]):
-        target = target.to_crs(dave_settings()["crs_main"])
+    if (target.crs) and (target.crs != dave_settings["crs_main"]):
+        target = target.to_crs(dave_settings["crs_main"])
     if "id" in target.keys():
         target = target.drop(columns=["id"])
     # convert own area into postal code areas for target_input
@@ -248,7 +248,7 @@ def target_area(
         total=100,
         desc="collect geographical data:         ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # check wich input parameter is given
     if postalcode:
@@ -318,9 +318,9 @@ def target_area(
     # write area informations into grid_data
     grid_data.area = concat([grid_data.area, target], ignore_index=True)
     if grid_data.area.crs is None:
-        grid_data.area.set_crs(dave_settings()["crs_main"], inplace=True)
-    elif grid_data.area.crs != dave_settings()["crs_main"]:
-        grid_data.area.to_crs(dave_settings()["crs_main"], inplace=True)
+        grid_data.area.set_crs(dave_settings["crs_main"], inplace=True)
+    elif grid_data.area.crs != dave_settings["crs_main"]:
+        grid_data.area.to_crs(dave_settings["crs_main"], inplace=True)
     # check if requested model is already in the archiv
     if not grid_data.target_input.iloc[0].typ == "own area":
         file_exists, file_name = archiv_inventory(grid_data, read_only=True)
