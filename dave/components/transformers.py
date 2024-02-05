@@ -159,12 +159,14 @@ def create_transformers(grid_data):
             grid_data.hv_data.hv_nodes.reset_index(drop=True, inplace=True)
             name = Series(list(map(lambda x: f"node_3_{x}", grid_data.hv_data.hv_nodes.index)))
             grid_data.hv_data.hv_nodes.insert(0, "dave_name", name)
-            grid_data.hv_data.hv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
+            if "geometry" in grid_data.hv_data.hv_nodes.keys():
+                grid_data.hv_data.hv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
         if "dave_name" not in grid_data.ehv_data.ehv_nodes.keys():
             grid_data.ehv_data.ehv_nodes.reset_index(drop=True, inplace=True)
             name = Series(list(map(lambda x: f"node_1_{x}", grid_data.ehv_data.ehv_nodes.index)))
             grid_data.ehv_data.ehv_nodes.insert(0, "dave_name", name)
-            grid_data.ehv_data.ehv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
+            if "geometry" in grid_data.ehv_data.ehv_nodes.keys():
+                grid_data.ehv_data.ehv_nodes.set_crs(dave_settings["crs_main"], inplace=True)
         # write transformator data in grid data and decied the grid level depending on voltage level
         if not hv_trafos.empty:
             ehv_buses = grid_data.ehv_data.ehv_nodes
