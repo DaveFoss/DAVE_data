@@ -78,7 +78,7 @@ grid_data = create_grid(
     # heat data
     heat=["demand"],
     # output settings
-    output_folder=dave_settings()["dave_output_dir"],
+    output_folder=dave_settings["dave_output_dir"],
     output_format="json",
     api_use=False,
 )
