@@ -86,10 +86,10 @@ def _target_by_town_name(grid_data, town_name):
         target = postal
     else:
         # bring town names in right format and filter data
-        town_name = [
-            "-".join(list(map(lambda x: x.capitalize(), town.split("-")))) for town in town_name
-        ]
-        target = postal[postal.town.isin(town_name)].reset_index(drop=True)
+        normalized_town_names = [town.lower() for town in town_name]
+        normalized_postal_town = postal.town.str.lower()
+        indexes = normalized_postal_town.isin(normalized_town_names)
+        target = postal[indexes].reset_index(drop=True)
         if len(target.town.unique()) != len(town_name):
             raise ValueError("town name wasn`t found. Please check your input")
         # sort town names
