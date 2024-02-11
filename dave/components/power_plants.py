@@ -4,6 +4,7 @@
 
 from geopandas import GeoDataFrame, points_from_xy, sjoin
 from geopy.geocoders import ArcGIS
+from numpy import nan
 from pandas import DataFrame, concat, to_numeric
 from shapely.geometry import LineString
 from tqdm import tqdm
@@ -409,6 +410,8 @@ def create_renewable_powerplants(grid_data):
             renewables["address"] = (
                 renewables.address + " " + renewables.postcode + " " + renewables.city
             )
+            # replace nan values with None
+            renewables.address.replace({nan: None}, inplace=True)
             address_coords = renewables.apply(
                 lambda x: adress_to_coords(x.address, geolocator)
                 if (x.voltage_level >= 5 and x.address)
@@ -417,8 +420,8 @@ def create_renewable_powerplants(grid_data):
             )
             # !!! zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes
             # behalten, falls keine Adresse bekannt ist. Das aber noch abändern.
-            renewables["lon_v"] = address_coords.apply(lambda x: x[0])
-            renewables["lat_v"] = address_coords.apply(lambda x: x[1])
+            renewables["lon"] = address_coords.apply(lambda x: x[0])
+            renewables["lat"] = address_coords.apply(lambda x: x[1])
         # update progress
         pbar.update(20)
         # convert DataFrame into a GeoDataFrame
