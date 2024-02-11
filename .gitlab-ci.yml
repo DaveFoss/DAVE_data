@@ -1,7 +1,7 @@
 # define stages
 stages:
     - test
-    - docker
+    - build
     #- lint  # create stage to check codestyle with pylint? also run black and isort overall
     - deploy
     
@@ -9,28 +9,9 @@ stages:
 #before_script:
     # add something
 
-# testing changes 
-# !!! temporary set to manual because of an issue at pytest
-# test:
-#   stage: test
-#   image: 
-#     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
-#     entrypoint: [""]
-#   tags:
-#     - asprunner
-#   script:
-#     - pytest dave/tests --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
-#   # artifacts:
-#   #   paths:
-#   #     - coverage
-#   #  expire_in: 30 days
-#   rules:
-#     # master or develop branch and no schedule piplines
-#     - if: ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop") && $CI_PIPELINE_SOURCE != "schedule"
-
 # --- build develop docker image from develop branch (push to git zv container registry)
 build_develop_container:
-  stage: docker
+  stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -47,7 +28,7 @@ build_develop_container:
 
 # --- build release docker image from master branch (incl. push to gwdg server)
 build_release_container:
-  stage: docker
+  stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -63,18 +44,25 @@ build_release_container:
     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
 
 # --- testing deployment conditions 
-deployment_test:
-  stage: deploy
+
+unit_test:
+  stage: test
   image: 
-    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave
-    entrypoint: [""]
+    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest
   tags:
     - asprunner
   script:
-    - pytest dave/tests/deployment --disable-warnings --cov-config=.coveragerc --cov=dave  #--cov-report=html
+    - python -m pytest --cov-report=html --cov=dave .
+  artifacts:
+    paths:
+      - coverage
+    expire_in: 1 day
   rules:
     # master or develop branch and no schedule piplines
     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+    # develop branch 
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: manual
 
 
 # deploy new docker image release to server and reastart system

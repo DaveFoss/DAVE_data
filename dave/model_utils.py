@@ -1,9 +1,9 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import networkx as nx
-import pandas as pd
+from networkx import Graph, connected_components
+from pandas import concat, isnull
 from tqdm import tqdm
 
 from dave.settings import dave_settings
@@ -21,14 +21,14 @@ def disconnected_nodes(nodes, edges, min_number_nodes):
                           number of nodes \n
     """
     # create empty graph
-    graph = nx.Graph()
+    graph = Graph()
     # create nodes
     graph.add_nodes_from(nodes.dave_name.to_list())
     # create edges
     graph.add_edges_from(edges.apply(lambda x: (x["from_node"], x["to_node"]), axis=1).to_list())
     # check for disconnected nodes
     disconnected_nodes = set()
-    connected_elements = list(nx.connected_components(graph))
+    connected_elements = list(connected_components(graph))
     for elements in connected_elements:
         if len(elements) < min_number_nodes:
             for node in elements:
@@ -41,7 +41,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
     This function clean up disconnected elements for the diffrent power grid levels
     """
     # get disconnected nodes
-    nodes_all = pd.concat(
+    nodes_all = concat(
         [
             grid_data.ehv_data.ehv_nodes,
             grid_data.hv_data.hv_nodes,
@@ -50,7 +50,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
         ],
         ignore_index=True,
     )
-    lines_all = pd.concat(
+    lines_all = concat(
         [
             grid_data.ehv_data.ehv_lines,
             grid_data.hv_data.hv_lines,
@@ -60,7 +60,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
         ignore_index=True,
     )
     lines_all.rename(columns={"from_bus": "from_node", "to_bus": "to_node"}, inplace=True)
-    trafos_all = pd.concat(
+    trafos_all = concat(
         [
             grid_data.components_power.transformers.ehv_ehv,
             grid_data.components_power.transformers.ehv_hv,
@@ -74,7 +74,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
         nodes_dis = list(
             disconnected_nodes(
                 nodes=nodes_all,
-                edges=pd.concat(
+                edges=concat(
                     [lines_all, trafos_all],
                     ignore_index=True,
                 ),
@@ -141,7 +141,7 @@ def clean_disconnected_elements_power(grid_data, min_number_nodes):
                             ]
                             # delet needless power components
                             substation_dis = nodes[nodes.dave_name.isin(nodes_dis)].subst_dave_name
-                            if ~pd.isnull(substation_dis).all():
+                            if ~isnull(substation_dis).all():
                                 grid_data.components_power[f"{component_typ}"][
                                     f"{component_subtyp}"
                                 ].drop(
@@ -170,7 +170,7 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
     This function clean up disconnected elements for the diffrent gas grid levels
     """
     # get disconnected junctions
-    junctions_all = pd.concat(
+    junctions_all = concat(
         [
             grid_data.hp_data.hp_junctions,
             grid_data.mp_data.mp_junctions,
@@ -178,7 +178,7 @@ def clean_disconnected_elements_gas(grid_data, min_number_nodes):
         ],
         ignore_index=True,
     )
-    pipelines_all = pd.concat(
+    pipelines_all = concat(
         [grid_data.hp_data.hp_pipes, grid_data.mp_data.mp_pipes, grid_data.lp_data.lp_pipes],
         ignore_index=True,
     )  # !!! Todo: Verbindung der Netzebenen mit einbeziehen z.B. Trafos
@@ -255,7 +255,7 @@ def clean_wrong_lines(grid_data):
             grid_data[f"{level}_data"][f"{level}_lines"].reset_index(drop=True, inplace=True)
 
 
-def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"]):
+def clean_up_data(grid_data, min_number_nodes=dave_settings["min_number_nodes"]):
     """
     This function clean up the DaVe Dataset for diffrent kinds of failures
     """
@@ -264,7 +264,7 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings()["min_number_nodes"
         total=100,
         desc="clean up dave dataset:             ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # --- clean up power grid data
     if grid_data.target_input.iloc[0].power_levels:

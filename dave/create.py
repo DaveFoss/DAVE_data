@@ -1,14 +1,12 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
-import timeit
-import warnings
+from os import environ, makedirs, path
+from timeit import default_timer
+from warnings import catch_warnings, simplefilter
 
-os.environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
-import geopandas as gpd
-import pandas as pd
+environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
 from dave_client.converter.create_gaslib import create_gaslib
 from dave_client.converter.create_mynts import create_mynts
 from dave_client.converter.create_pandapipes import create_pandapipes
@@ -17,7 +15,6 @@ from dave_client.dave_structure import create_empty_dataset
 from dave_client.io.file_io import to_gpkg, to_hdf, to_json
 
 # imports from dave
-from dave import __version__
 from dave.archiv_io import from_archiv, to_archiv
 from dave.components.gas_components import gas_components
 from dave.components.loads import create_loads
@@ -28,6 +25,7 @@ from dave.components.power_plants import (
 )
 from dave.components.transformers import create_transformers
 from dave.datapool.building_height_request import request_building_height
+from dave.datapool.heat_demand_request import request_heat_demand
 from dave.datapool.population_request import request_population
 from dave.geography import target_area
 from dave.model_utils import clean_up_data
@@ -89,12 +87,12 @@ def save_dataset_to_archiv(grid_data):
     print("Save DaVe dataset to archiv")
     print("----------------------------------")
     # check if archiv folder exists otherwise create one
-    archiv_dir = dave_settings()["dave_dir"] + "\\datapool\\dave_archiv\\"
-    if not os.path.exists(archiv_dir):
-        os.makedirs(archiv_dir)
-    with warnings.catch_warnings():
+    archiv_dir = dave_settings["dave_dir"] + "\\datapool\\dave_archiv\\"
+    if not path.exists(archiv_dir):
+        makedirs(archiv_dir)
+    with catch_warnings():
         # filter warnings because of the PerformanceWarning from pytables at the geometry type
-        warnings.simplefilter("ignore")
+        simplefilter("ignore")
         # save dataset to archiv
         to_archiv(grid_data)
 
@@ -116,9 +114,9 @@ def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use
         **grid_data** (attrdict) - grid_data as a attrdict in dave structure \n
     """
     if not api_use:
-        with warnings.catch_warnings():
+        with catch_warnings():
             # filter warnings because of the PerformanceWarning from pytables at the geometry type
-            warnings.simplefilter("ignore")
+            simplefilter("ignore")
             if output_format == "json":
                 to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
             elif output_format == "hdf":
@@ -151,7 +149,8 @@ def create_grid(
     valves=True,
     building_height=False,
     census=[],
-    output_folder=dave_settings()["dave_output_dir"],
+    heat=[],
+    output_folder=dave_settings["dave_output_dir"],
     output_format="json",
     api_use=True,
 ):
@@ -235,12 +234,12 @@ def create_grid(
 
     """
     # start runtime
-    _start_time = timeit.default_timer()
+    _start_time = default_timer()
 
     # create dave output folder for DaVe dataset, plotting and converted model
     if not api_use:
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+        if not path.exists(output_folder):
+            makedirs(output_folder)
 
     # create empty datastructure
     grid_data = create_empty_dataset()
@@ -250,6 +249,7 @@ def create_grid(
     combine_areas = list(map(str.lower, combine_areas))
 
     # create geographical informations
+    geodata = list(map(str.lower, geodata))
     roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(power_levels, gas_levels, loads)
     file_exists, file_name = target_area(
         grid_data,
@@ -376,6 +376,13 @@ def create_grid(
                 request_population(grid_data, output_folder, api_use)
                 # save interim status of the informations in user folder
                 save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+        for h in heat:
+            # --- request heat demand data
+            if h == "demand":
+                request_heat_demand(grid_data, output_folder, api_use)
+                # save interim status of the informations in user folder
+                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+
         # clean up power and gas grid data
         clean_up_data(grid_data)
     else:
@@ -416,7 +423,7 @@ def create_grid(
         # print output folder
         print(f"\nSave DaVe output data at the following path: {output_folder}")
         # return runtime
-        _stop_time = timeit.default_timer()
+        _stop_time = default_timer()
         print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
 
     # return data

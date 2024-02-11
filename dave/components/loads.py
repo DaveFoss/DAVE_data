@@ -1,13 +1,13 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import warnings
+
 from math import acos, sin
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoDataFrame
 from numpy import array, random
+from pandas import concat
 from shapely.geometry import LineString, MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
@@ -31,13 +31,13 @@ def get_household_power(consumption_data, household_size):
     household_consumption = consumption_data["household_consumptions"][
         consumption_data["household_consumptions"]["Personen pro Haushalt"] == household_size
     ]
-    p_mw = (household_consumption.iloc[0]["Durchschnitt  [kwh/a]"] / 1000) / dave_settings()[
+    p_mw = (household_consumption.iloc[0]["Durchschnitt  [kwh/a]"] / 1000) / dave_settings[
         "h_per_a"
     ]
     q_mvar = (
         p_mw
-        * sin(acos(dave_settings()["cos_phi_residential"]))
-        / dave_settings()["cos_phi_residential"]
+        * sin(acos(dave_settings["cos_phi_residential"]))
+        / dave_settings["cos_phi_residential"]
     )
     return p_mw, q_mvar
 
@@ -52,20 +52,20 @@ def create_loads(grid_data):
         total=100,
         desc="create electrical loads:           ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # define avarage load values
-    residential_load = dave_settings()["residential_load"]
-    industrial_load = dave_settings()["industrial_load"]
-    commercial_load = dave_settings()["commercial_load"]
+    residential_load = dave_settings["residential_load"]
+    industrial_load = dave_settings["industrial_load"]
+    commercial_load = dave_settings["commercial_load"]
     # set power factor for loads
-    cos_phi_residential = dave_settings()["cos_phi_residential"]
-    cos_phi_industrial = dave_settings()["cos_phi_industrial"]
-    cos_phi_commercial = dave_settings()["cos_phi_commercial"]
+    cos_phi_residential = dave_settings["cos_phi_residential"]
+    cos_phi_industrial = dave_settings["cos_phi_industrial"]
+    cos_phi_commercial = dave_settings["cos_phi_commercial"]
     # define power_levels
     power_levels = grid_data.target_input.power_levels[0]
     # create loads on grid level 7 (LV)
-    if "lv" in power_levels:
+    if "lv" in power_levels and not grid_data.lv_data.lv_nodes.empty:
         # get lv building nodes
         building_nodes = grid_data.lv_data.lv_nodes[
             grid_data.lv_data.lv_nodes.node_type == "building_connection"
@@ -208,7 +208,7 @@ def create_loads(grid_data):
                         if centroid_distance.min() < 1e-04:
                             lv_node = building_nodes.loc[centroid_distance.idxmin()]
                     # create residential load
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": lv_node.dave_name,
                             "p_mw": p_mw,
@@ -218,7 +218,7 @@ def create_loads(grid_data):
                             "geometry": lv_node.geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
@@ -241,7 +241,7 @@ def create_loads(grid_data):
             ]
             if not building_point.empty:
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": industrial_load_full
@@ -252,7 +252,7 @@ def create_loads(grid_data):
                             "geometry": building_point.iloc[0].geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
@@ -275,7 +275,7 @@ def create_loads(grid_data):
             ]
             if not building_point.empty:
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": building_point.iloc[0].dave_name,
                             "p_mw": commercial_load_full
@@ -286,13 +286,17 @@ def create_loads(grid_data):
                             "geometry": building_point.iloc[0].geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
             pbar.update(19.8 / len(commercial_buildings))
     # create loads for non grid level 7
-    elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])):
+    elif any(map(lambda x: x in power_levels, ["ehv", "hv", "mv"])) and not (
+        grid_data.components_power.transformers.ehv_hv.empty
+        and grid_data.components_power.transformers.hv_mv.empty
+        and grid_data.components_power.transformers.mv_lv.empty
+    ):
         # create loads on grid level 6 (MV/LV)
         if "mv" in power_levels:
             # In this case the loads are assigned to the nearest mv/lv-transformer
@@ -326,7 +330,7 @@ def create_loads(grid_data):
         )
         intersection.drop(columns=["area_km2"], inplace=True)
         # calculate area from intersected polygons
-        intersection_3035 = intersection.to_crs(dave_settings()["crs_meter"])
+        intersection_3035 = intersection.to_crs(dave_settings["crs_meter"])
         intersection["area_km2"] = intersection_3035.area / 1e06
         # --- calculate consumption for the diffrent landuses in every single voronoi polygon
         # create list of all diffrent connection transformers
@@ -361,7 +365,7 @@ def create_loads(grid_data):
                     p_mw = commercial_load * area
                     q_mvar = p_mw * sin(acos(cos_phi_commercial)) / cos_phi_commercial
                 if p_mw != 0:
-                    load_df = gpd.GeoDataFrame(
+                    load_df = GeoDataFrame(
                         {
                             "bus": trafo.bus_lv,
                             "p_mw": p_mw,
@@ -373,18 +377,19 @@ def create_loads(grid_data):
                             "geometry": trafo.geometry,
                         }
                     )
-                    grid_data.components_power.loads = pd.concat(
+                    grid_data.components_power.loads = concat(
                         [grid_data.components_power.loads, load_df], ignore_index=True
                     )
             # update progress
             pbar.update(79.8 / len(trafo_names))
     # add dave name
-    grid_data.components_power.loads.insert(
-        0,
-        "dave_name",
-        grid_data.components_power.loads.apply(
-            lambda x: f"load_{x.voltage_level}_{x.index}", axis=1
-        ),
-    )
+    if not grid_data.components_power.loads.empty:
+        grid_data.components_power.loads.insert(
+            0,
+            "dave_name",
+            grid_data.components_power.loads.apply(
+                lambda x: f"load_{x.voltage_level}_{x.index}", axis=1
+            ),
+        )
     # close progress bar
     pbar.close()

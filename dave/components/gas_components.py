@@ -1,9 +1,9 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import overlay
+from pandas import Series, concat
 from tqdm import tqdm
 
 from dave.datapool.read_data import read_scigridgas_iggielgn
@@ -19,7 +19,7 @@ def create_sources(grid_data, scigrid_productions):
         total=100,
         desc="create sources:                    ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get compressor data
     sources = scigrid_productions.copy()
@@ -27,7 +27,7 @@ def create_sources(grid_data, scigrid_productions):
     sources.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
     sources["source"] = "scigridgas"
     # intersection with target area
-    sources = gpd.overlay(sources, grid_data.area, how="intersection")
+    sources = overlay(sources, grid_data.area, how="intersection")
     keys = grid_data.area.keys().tolist()
     keys.remove("geometry")
     sources = sources.drop(columns=(keys))
@@ -54,13 +54,11 @@ def create_sources(grid_data, scigrid_productions):
         pbar.update(40)
         # add dave name
         sources.reset_index(drop=True, inplace=True)
-        sources.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"source_1_{x}", sources.index)))
-        )
+        sources.insert(0, "dave_name", Series(list(map(lambda x: f"source_1_{x}", sources.index))))
         # set crs
-        sources.set_crs(dave_settings()["crs_main"], inplace=True)
+        sources.set_crs(dave_settings["crs_main"], inplace=True)
         # add hp junctions to grid data
-        grid_data.components_gas.sources = pd.concat(
+        grid_data.components_gas.sources = concat(
             [grid_data.components_gas.sources, sources], ignore_index=True
         )
         # update progress
@@ -81,7 +79,7 @@ def create_compressors(grid_data, scigrid_compressors):
         total=100,
         desc="create compressors:                ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get compressor data
     compressors = scigrid_compressors.copy()
@@ -89,7 +87,7 @@ def create_compressors(grid_data, scigrid_compressors):
     compressors.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
     compressors["source"] = "scigridgas"
     # intersection with target area
-    compressors = gpd.overlay(compressors, grid_data.area, how="intersection")
+    compressors = overlay(compressors, grid_data.area, how="intersection")
     keys = grid_data.area.keys().tolist()
     keys.remove("geometry")
     compressors = compressors.drop(columns=(keys))
@@ -114,12 +112,12 @@ def create_compressors(grid_data, scigrid_compressors):
         # add dave name
         compressors.reset_index(drop=True, inplace=True)
         compressors.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"compressor_1_{x}", compressors.index)))
+            0, "dave_name", Series(list(map(lambda x: f"compressor_1_{x}", compressors.index)))
         )
         # set crs
-        compressors.set_crs(dave_settings()["crs_main"], inplace=True)
+        compressors.set_crs(dave_settings["crs_main"], inplace=True)
         # add hp junctions to grid data
-        grid_data.components_gas.compressors = pd.concat(
+        grid_data.components_gas.compressors = concat(
             [grid_data.components_gas.compressors, compressors], ignore_index=True
         )
         # update progress
@@ -140,7 +138,7 @@ def create_sinks(grid_data, scigrid_consumers):
         total=100,
         desc="create sinks:                      ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # get sink data
     sinks = scigrid_consumers.copy()
@@ -148,7 +146,7 @@ def create_sinks(grid_data, scigrid_consumers):
     sinks.rename(columns={"id": "scigrid_id", "name": "scigrid_name"}, inplace=True)
     sinks["source"] = "scigridgas"
     # intersection with target area
-    sinks = gpd.overlay(sinks, grid_data.area, how="intersection")
+    sinks = overlay(sinks, grid_data.area, how="intersection")
     keys = grid_data.area.keys().tolist()
     keys.remove("geometry")
     sinks = sinks.drop(columns=(keys))
@@ -175,11 +173,11 @@ def create_sinks(grid_data, scigrid_consumers):
         pbar.update(40)
         # add dave name
         sinks.reset_index(drop=True, inplace=True)
-        sinks.insert(0, "dave_name", pd.Series(list(map(lambda x: f"sink_1_{x}", sinks.index))))
+        sinks.insert(0, "dave_name", Series(list(map(lambda x: f"sink_1_{x}", sinks.index))))
         # set crs
-        sinks.set_crs(dave_settings()["crs_main"], inplace=True)
+        sinks.set_crs(dave_settings["crs_main"], inplace=True)
         # add hp junctions to grid data
-        grid_data.components_gas.sinks = pd.concat(
+        grid_data.components_gas.sinks = concat(
             [grid_data.components_gas.sinks, sinks], ignore_index=True
         )
         # update progress
@@ -211,24 +209,26 @@ def gas_components(grid_data, compressor, sink, source, storage_gas, valve):
     """
     This function calls all the functions for creating the gas components in the wright order
     """
-    # read high pressure grid data from dave datapool (scigridgas igginl)
-    if any([compressor, source, sink, storage_gas]):
-        scigrid_data, meta_data = read_scigridgas_iggielgn()
-        # add meta data
-        if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-            grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    # add compressors
-    if compressor:
-        create_compressors(grid_data, scigrid_compressors=scigrid_data["compressors"])
-    # add sinks
-    if sink:
-        create_sinks(grid_data, scigrid_consumers=scigrid_data["consumers"])
-    # add sources
-    if source:
-        create_sources(grid_data, scigrid_productions=scigrid_data["productions"])
-    # add storages
-    if storage_gas:
-        create_storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
-    # add valves
-    if valve:
-        create_valves(grid_data)
+    # check if there are junctions in the considered area
+    if not grid_data.hp_data.hp_junctions.empty:
+        # read high pressure grid data from dave datapool (scigridgas igginl)
+        if any([compressor, source, sink, storage_gas]):
+            scigrid_data, meta_data = read_scigridgas_iggielgn()
+            # add meta data
+            if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+                grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+        # add compressors
+        if compressor:
+            create_compressors(grid_data, scigrid_compressors=scigrid_data["compressors"])
+        # add sinks
+        if sink:
+            create_sinks(grid_data, scigrid_consumers=scigrid_data["consumers"])
+        # add sources
+        if source:
+            create_sources(grid_data, scigrid_productions=scigrid_data["productions"])
+        # add storages
+        if storage_gas:
+            create_storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
+        # add valves
+        if valve:
+            create_valves(grid_data)

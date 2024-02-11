@@ -1,11 +1,11 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 from math import pi
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoDataFrame
+from pandas import Series, concat
 from shapely.geometry import LineString
 from tqdm import tqdm
 
@@ -31,7 +31,7 @@ def create_ehv_topology(grid_data):
         total=100,
         desc="create extra high voltage topology:",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # --- create ehv/ehv and ehv/hv substations
     # read ehv substation data from OpenEnergyPlatform and adapt names
@@ -54,12 +54,12 @@ def create_ehv_topology(grid_data):
         ehv_substations.insert(
             0,
             "dave_name",
-            pd.Series(list(map(lambda x: f"substation_2_{x}", ehv_substations.index))),
+            Series(list(map(lambda x: f"substation_2_{x}", ehv_substations.index))),
         )
         # set crs
-        ehv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
+        ehv_substations.set_crs(dave_settings["crs_main"], inplace=True)
         # add ehv substations to grid data
-        grid_data.components_power.substations.ehv_hv = pd.concat(
+        grid_data.components_power.substations.ehv_hv = concat(
             [grid_data.components_power.substations.ehv_hv, ehv_substations], ignore_index=True
         )
     # update progress
@@ -117,13 +117,13 @@ def create_ehv_topology(grid_data):
             (ehvhv_buses.voltage_kv.isin([380, 220])) & (ehvhv_buses.ego_scn_name == "Status Quo")
         ]
         # filter nodes within the target area by checking their connection to a line
-        line_buses_ids = pd.concat(
+        line_buses_ids = concat(
             [ehvhv_lines.from_bus, ehvhv_lines.to_bus], ignore_index=True
         ).unique()
         ehv_buses = ehv_buses[ehv_buses.ego_bus_id.isin(line_buses_ids)]
     else:
         # create empty DataFrame for the next check
-        ehv_buses = gpd.GeoDataFrame()
+        ehv_buses = GeoDataFrame()
     # update progress
     pbar.update(10)
     # consider data only if there are more than one ehv node in the target area
@@ -179,7 +179,7 @@ def create_ehv_topology(grid_data):
         for _, tso_bus in ehv_buses_tso.iterrows():
             tso_name = tso_bus['name'].replace('_380', '').replace('_220', '')
             if tso_name not in ehv_buses_tso_names:
-                ehv_buses = ehv_buses.append(gpd.GeoDataFrame({'voltage_kv': tso_bus.voltage_kv,
+                ehv_buses = ehv_buses.append(GeoDataFrame({'voltage_kv': tso_bus.voltage_kv,
                                                                'geometry': [tso_bus.geometry],
                                                                'subst_name': tso_bus.name_osm,
                                                                'tso_name': tso_name,
@@ -193,12 +193,12 @@ def create_ehv_topology(grid_data):
         # add dave name
         ehv_buses.reset_index(drop=True, inplace=True)
         ehv_buses.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"node_1_{x}", ehv_buses.index)))
+            0, "dave_name", Series(list(map(lambda x: f"node_1_{x}", ehv_buses.index)))
         )
         # set crs
-        ehv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
+        ehv_buses.set_crs(dave_settings["crs_main"], inplace=True)
         # add ehv nodes to grid data
-        grid_data.ehv_data.ehv_nodes = pd.concat(
+        grid_data.ehv_data.ehv_nodes = concat(
             [grid_data.ehv_data.ehv_nodes, ehv_buses], ignore_index=True
         )
 
@@ -227,7 +227,9 @@ def create_ehv_topology(grid_data):
             from_bus_new.append(ehv_buses[ehv_buses.ego_bus_id == line.from_bus].iloc[0].dave_name)
             to_bus_new.append(ehv_buses[ehv_buses.ego_bus_id == line.to_bus].iloc[0].dave_name)
             # calculate and add r,x,c per km
-            ehv_lines.at[line.name, "r_ohm_per_km"] = float(line.r_ohm) / line.length_km
+            ehv_lines.at[line.name, "r_ohm_per_km"] = (
+                float(line.r_ohm) / line.length_km
+            )  # Todo: Ersetzen durch apply function und aus for loop ziehen
             ehv_lines.at[line.name, "x_ohm_per_km"] = float(line.x_ohm) / line.length_km
             c_nf = float(line.b_s) / (2 * pi * float(line.frequency)) * 1e09
             ehv_lines.at[line.name, "c_nf"] = c_nf
@@ -287,12 +289,12 @@ def create_ehv_topology(grid_data):
         # add dave name
         ehv_lines.reset_index(drop=True, inplace=True)
         ehv_lines.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"line_1_{x}", ehv_lines.index)))
+            0, "dave_name", Series(list(map(lambda x: f"line_1_{x}", ehv_lines.index)))
         )
         # set crs
-        ehv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
+        ehv_lines.set_crs(dave_settings["crs_main"], inplace=True)
         # add ehv lines to grid data
-        grid_data.ehv_data.ehv_lines = pd.concat(
+        grid_data.ehv_data.ehv_lines = concat(
             [grid_data.ehv_data.ehv_lines, ehv_lines], ignore_index=True
         )
         # update progress

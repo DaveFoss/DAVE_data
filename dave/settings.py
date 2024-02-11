@@ -1,8 +1,8 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
+from os import path
 
 # --- switch develop stage
 # develop mode: running dave from ide and keycloak in local docker network
@@ -32,14 +32,14 @@ elif stage == "production":
     db_url = "172.20.0.10:27017"
 
 
-def dave_settings():
+def set_dave_settings():
     """
     This function returns a dictonary with the DaVe settings for used data and assumptions
     """
     settings = {
         # main definitions
-        "dave_dir": os.path.dirname(os.path.realpath(__file__)),
-        "dave_output_dir": os.path.expanduser(r"~\Desktop\DaVe_output"),
+        "dave_dir": path.dirname(path.realpath(__file__)),
+        "dave_output_dir": path.expanduser(r"~\Desktop\DaVe_output"),
         "stage": stage,
         # database definitions (mongo db)
         "db_user": "dave_db_admin",
@@ -232,3 +232,6 @@ def db_restriction():
         # "postalcodes": "transhyde",  # example
     }
     return restriction
+
+
+dave_settings = set_dave_settings()

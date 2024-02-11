@@ -1,10 +1,10 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
-import requests
+from geopandas import GeoDataFrame
+from pandas import DataFrame
+from requests import get
 from shapely.geometry import Point
 from shapely.wkb import loads
 
@@ -22,11 +22,11 @@ def request_to_df(request):
     if request.status_code == 200:  # 200 is the code of a successful request
         # if request is empty their will be an JSONDecodeError
         try:
-            request_data = pd.DataFrame(request.json())
+            request_data = DataFrame(request.json())
         except:
-            request_data = pd.DataFrame()
+            request_data = DataFrame()
     else:
-        request_data = pd.DataFrame()
+        request_data = DataFrame()
     return request_data
 
 
@@ -53,7 +53,7 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
         **requested_data** (DataFrame) - table of the requested data
     """
     if schema is None:
-        schema = dave_settings()["oep_tables"][table][0]
+        schema = dave_settings["oep_tables"][table][0]
     # check dave db and dataset availibility
     if db_availability(collection_name=table) and not db_update:
         # search database name for collection
@@ -71,13 +71,13 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     else:
         # dave db or dataset is not available so request data directly from oep
         if where:
-            request = requests.get(
+            request = get(
                 "".join(
                     [oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/?where=", where]
                 )
             )
-        elif dave_settings()["oep_tables"][table][2] is not None:
-            request = requests.get(
+        elif dave_settings["oep_tables"][table][2] is not None:
+            request = get(
                 "".join(
                     [
                         oep_url,
@@ -86,26 +86,26 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
                         "/tables/",
                         table,
                         "/rows/?where=",
-                        dave_settings()["oep_tables"][table][2],
+                        dave_settings["oep_tables"][table][2],
                     ]
                 )
             )
         else:
-            request = requests.get(
+            request = get(
                 "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/"])
             )
         # convert data to dataframe
         request_data = request_to_df(request)
         # check for geometry parameter
         if geometry is None:
-            geometry = dave_settings()["oep_tables"][table][1]
+            geometry = dave_settings["oep_tables"][table][1]
         if geometry is not None:
             # --- convert into geopandas DataFrame with right crs
             # transform WKB to WKT / Geometry
             request_data["geometry"] = request_data[geometry].apply(lambda x: loads(x, hex=True))
             # create geoDataFrame
-            request_data = gpd.GeoDataFrame(
-                request_data, crs=dave_settings()["crs_main"], geometry=request_data.geometry
+            request_data = GeoDataFrame(
+                request_data, crs=dave_settings["crs_main"], geometry=request_data.geometry
             )
         # fix some mistakes in the oep data
         if table == "ego_pf_hv_transformer":
@@ -115,14 +115,12 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
             )
         if table == "ego_dp_mvlv_substation":
             # change wrong crs from oep
-            request_data.crs = dave_settings()["crs_meter"]
-            request_data = request_data.to_crs(dave_settings()["crs_main"])
+            request_data.crs = dave_settings["crs_meter"]
+            request_data = request_data.to_crs(dave_settings["crs_main"])
 
     # --- request meta informations for a dataset
     # !!! Todo: seperate option for getting data from DB. When there are no meta data in DB then check OEP Url
-    request = requests.get(
-        "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"])
-    )
+    request = get("".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"]))
     # convert data to meta dict  # !!! When getting data from database the meta informations should also came from db
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
@@ -137,7 +135,7 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
             region = None
         # create dict
         meta_data = {
-            "Main": pd.DataFrame(
+            "Main": DataFrame(
                 {
                     "Titel": request_meta["title"],
                     "Description": request_meta["description"],
@@ -148,8 +146,8 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
                 },
                 index=[0],
             ),
-            "Sources": pd.DataFrame(request_meta["sources"]),
-            "Data": pd.DataFrame(request_meta["resources"][0]["schema"]["fields"]),
+            "Sources": DataFrame(request_meta["sources"]),
+            "Data": DataFrame(request_meta["resources"][0]["schema"]["fields"]),
         }
     else:
         meta_data = {}

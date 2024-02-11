@@ -1,11 +1,11 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import os
+from os import listdir, path
 
-import pandas as pd
 from dave_client.io.file_io import from_hdf, to_hdf
+from pandas import DataFrame, read_csv
 
 from dave.toolbox import get_data_path
 
@@ -22,11 +22,11 @@ def archiv_inventory(grid_data, read_only=False):
     postalcode = target_input.data if target_input.typ == "postalcode" else "None"
     town_name = target_input.data if target_input.typ == "town name" else "None"
     federal_state = target_input.data if target_input.typ == "federal state" else "None"
-    if os.path.isfile(inventory_path):
+    if path.isfile(inventory_path):
         # read inventory file
-        inventory_list = pd.read_csv(inventory_path)
+        inventory_list = read_csv(inventory_path)
         # create dataset file
-        dataset_file = pd.DataFrame(
+        dataset_file = DataFrame(
             {
                 "postalcode": str(postalcode),
                 "town_name": str(town_name),
@@ -53,7 +53,7 @@ def archiv_inventory(grid_data, read_only=False):
             file_name = f"dataset_{file_id}"
             if not read_only:
                 # create inventory entry
-                dataset_entry = pd.DataFrame(
+                dataset_entry = DataFrame(
                     {
                         "id": file_id,
                         "postalcode": [postalcode],
@@ -74,7 +74,7 @@ def archiv_inventory(grid_data, read_only=False):
         file_name = f"dataset_{file_id}"
         if not read_only:
             # create inventory file
-            inventory_list = pd.DataFrame(
+            inventory_list = DataFrame(
                 {
                     "id": file_id,
                     "postalcode": [postalcode],
@@ -94,7 +94,7 @@ def from_archiv(dataset_name):
     This functions reads a dave dataset from the dave internal archiv
     """
     # check if file exist
-    files_in_archiv = os.listdir(get_data_path(dirname="dave_archiv"))
+    files_in_archiv = listdir(get_data_path(dirname="dave_archiv"))
     if dataset_name in files_in_archiv:
         grid_data = from_hdf(get_data_path(dataset_name, "dave_archiv"))
         return grid_data

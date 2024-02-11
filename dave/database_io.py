@@ -1,12 +1,12 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-import geopandas as gpd
-import pandas as pd
-import requests
 from dave_client.io.convert_format import wkb_to_wkt
+from geopandas import GeoDataFrame
+from pandas import DataFrame, HDFStore
 from pymongo import GEOSPHERE, MongoClient
+from requests import exceptions, get
 from shapely.geometry import mapping, shape
 from shapely.wkt import loads
 
@@ -61,7 +61,7 @@ def info_mongo(roles=[]):
 def db_availability(collection_name=None, roles=[]):
     # check if the dave database is available
     try:
-        requests.get(f"http://{dave_settings()['db_ip']}/")
+        get(f"http://{dave_settings['db_ip']}/")
         if collection_name:
             db_databases = info_mongo(roles)
             available = False
@@ -71,7 +71,7 @@ def db_availability(collection_name=None, roles=[]):
                     break
         else:
             available = True
-    except requests.exceptions.ConnectionError:
+    except exceptions.ConnectionError:
         available = False
     return available
 
@@ -79,7 +79,7 @@ def db_availability(collection_name=None, roles=[]):
 def db_client():
     # define data source
     return MongoClient(
-        f'mongodb://{dave_settings()["db_user"]}:{dave_settings()["db_pw"]}@{dave_settings()["db_ip"]}',
+        f'mongodb://{dave_settings["db_user"]}:{dave_settings["db_pw"]}@{dave_settings["db_ip"]}',
         authSource="admin",
     )
 
@@ -127,18 +127,18 @@ def from_mongo(database, collection, filter_method=None, filter_param=None, filt
                 if "geometry" in row.keys():
                     row["geometry"] = shape(row["geometry"])
             if len(data_list) > 1:
-                df = gpd.GeoDataFrame(data_list, crs=dave_settings()["crs_main"])
+                df = GeoDataFrame(data_list, crs=dave_settings["crs_main"])
             elif len(data_list) == 1:
-                df = gpd.GeoDataFrame([data_list[0]], crs=dave_settings()["crs_main"])
+                df = GeoDataFrame([data_list[0]], crs=dave_settings["crs_main"])
         else:
             if len(data_list) > 1:
-                df = pd.DataFrame(data_list)
+                df = DataFrame(data_list)
             elif len(data_list) == 1:
-                df = pd.DataFrame([data_list[0]])
+                df = DataFrame([data_list[0]])
         # remove mongo db id object
         df.drop(columns=["_id"], inplace=True)
     else:
-        df = pd.DataFrame([])
+        df = DataFrame([])
     return df
 
 
@@ -152,7 +152,7 @@ def df_to_mongo(database, collection, data_df):
         if database in list(info.keys()):
             db = client[database]
             collection = db[collection]
-            if isinstance(data_df, gpd.GeoDataFrame):
+            if isinstance(data_df, GeoDataFrame):
                 # define that collection includes geometrical data
                 collection.create_index([("geometry", GEOSPHERE)])
                 # convert geometry to geojson
@@ -185,7 +185,7 @@ def df_to_mongo_merge(database, collection, data_df):
         if db_availability(collection_name=collection):
             db = client[database]
             collection = db[collection]
-            if isinstance(data_df, gpd.GeoDataFrame):
+            if isinstance(data_df, GeoDataFrame):
                 # convert geometry to geojson
                 data_df["geometry"] = data_df["geometry"].apply(lambda x: mapping(x))
             # convert df to dict
@@ -232,7 +232,7 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
         pass
     elif filepath.split(".")[-1] == "h5":
         # open hdf file
-        file = pd.HDFStore(filepath)
+        file = HDFStore(filepath)
         for key in file.keys():
             # rename collection in the case of multiple tables
             key_replaced = key.replace("/", "")
@@ -253,7 +253,7 @@ def to_mongo(database, collection=None, data_df=None, filepath=None, merge=False
             # read data from file and convert geometry
             data = file.get(key)
             if "geometry" in data.keys() and isinstance(data.iloc[0].geometry, bytes):
-                data = wkb_to_wkt(data, dave_settings()["crs_main"])
+                data = wkb_to_wkt(data, dave_settings["crs_main"])
             # upload tables to mongo db
             df_to_mongo(database, collection_new, data)
         # close file

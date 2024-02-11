@@ -1,11 +1,11 @@
-# Copyright (c) 2022-2023 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 from math import pi
 
-import geopandas as gpd
-import pandas as pd
+from geopandas import GeoDataFrame
+from pandas import Series, concat
 from shapely.geometry import LineString, Point
 from tqdm import tqdm
 
@@ -30,7 +30,7 @@ def create_hv_topology(grid_data):
         total=100,
         desc="create high voltage topology:      ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
 
     # --- create substations
@@ -49,7 +49,7 @@ def create_hv_topology(grid_data):
         )
         # filter ehv/hv substations
         ehvhv_substations = ehvhv_substations[
-            pd.Series(list(map(lambda x: bool("110000" in x), ehvhv_substations.voltage_kv)))
+            Series(list(map(lambda x: bool("110000" in x), ehvhv_substations.voltage_kv)))
         ]
         # filter substations which are within the grid area
         ehvhv_substations = intersection_with_area(ehvhv_substations, grid_data.area)
@@ -60,12 +60,12 @@ def create_hv_topology(grid_data):
             ehvhv_substations.insert(
                 0,
                 "dave_name",
-                pd.Series(list(map(lambda x: f"substation_2_{x}", ehvhv_substations.index))),
+                Series(list(map(lambda x: f"substation_2_{x}", ehvhv_substations.index))),
             )
             # set crs
-            ehvhv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
+            ehvhv_substations.set_crs(dave_settings["crs_main"], inplace=True)
             # add ehv substations to grid data
-            grid_data.components_power.substations.ehv_hv = pd.concat(
+            grid_data.components_power.substations.ehv_hv = concat(
                 [grid_data.components_power.substations.ehv_hv, ehvhv_substations],
                 ignore_index=True,
             )
@@ -109,12 +109,12 @@ def create_hv_topology(grid_data):
             hvmv_substations.insert(
                 0,
                 "dave_name",
-                pd.Series(list(map(lambda x: f"substation_4_{x}", hvmv_substations.index))),
+                Series(list(map(lambda x: f"substation_4_{x}", hvmv_substations.index))),
             )
             # set crs
-            hvmv_substations.set_crs(dave_settings()["crs_main"], inplace=True)
+            hvmv_substations.set_crs(dave_settings["crs_main"], inplace=True)
             # add ehv substations to grid data
-            grid_data.components_power.substations.hv_mv = pd.concat(
+            grid_data.components_power.substations.hv_mv = concat(
                 [grid_data.components_power.substations.hv_mv, hvmv_substations], ignore_index=True
             )
     else:
@@ -174,13 +174,13 @@ def create_hv_topology(grid_data):
             (ehvhv_buses.voltage_kv == 110) & (ehvhv_buses.ego_scn_name == "Status Quo")
         ]
         # filter nodes within the target area by checking their connection to a line
-        line_buses_ids = pd.concat(
+        line_buses_ids = concat(
             [ehvhv_lines.from_bus, ehvhv_lines.to_bus], ignore_index=True
         ).unique()
         hv_buses = hv_buses[hv_buses.ego_bus_id.isin(line_buses_ids)]
     else:
         # create empty DataFrame for the next check
-        hv_buses = gpd.GeoDataFrame()
+        hv_buses = GeoDataFrame()
     # update progress
     pbar.update(10)
     # consider data only if there are more than one node in the target area
@@ -188,7 +188,7 @@ def create_hv_topology(grid_data):
         hv_buses["voltage_level"] = 3
         hv_buses = hv_buses.drop(columns=(["current_type", "v_mag_pu_min", "v_mag_pu_max", "geom"]))
         # search for the substations where the hv nodes are within
-        substations_rel = pd.concat([ehvhv_substations, hvmv_substations], ignore_index=True)
+        substations_rel = concat([ehvhv_substations, hvmv_substations], ignore_index=True)
         sub_infos = hv_buses.geometry.apply(lambda x: related_sub(x, substations_rel))
         hv_buses.insert(0, "ego_subst_id", sub_infos.apply(lambda x: x[0]))
         hv_buses.insert(1, "subst_dave_name", sub_infos.apply(lambda x: x[1]))
@@ -199,13 +199,11 @@ def create_hv_topology(grid_data):
         hv_buses["source"] = "OEP"
         # add dave name
         hv_buses.reset_index(drop=True, inplace=True)
-        hv_buses.insert(
-            0, "dave_name", pd.Series(list(map(lambda x: f"node_3_{x}", hv_buses.index)))
-        )
+        hv_buses.insert(0, "dave_name", Series(list(map(lambda x: f"node_3_{x}", hv_buses.index))))
         # set crs
-        hv_buses.set_crs(dave_settings()["crs_main"], inplace=True)
+        hv_buses.set_crs(dave_settings["crs_main"], inplace=True)
         # add hv nodes to grid data
-        grid_data.hv_data.hv_nodes = pd.concat(
+        grid_data.hv_data.hv_nodes = concat(
             [grid_data.hv_data.hv_nodes, hv_buses], ignore_index=True
         )
         # update progress
@@ -250,12 +248,12 @@ def create_hv_topology(grid_data):
         pbar.update(10)
         # add dave name
         hv_lines.reset_index(drop=True, inplace=True)
-        name = pd.Series(list(map(lambda x: f"line_3_{x}", hv_lines.index)))
+        name = Series(list(map(lambda x: f"line_3_{x}", hv_lines.index)))
         hv_lines.insert(0, "dave_name", name)
         # set crs
-        hv_lines.set_crs(dave_settings()["crs_main"], inplace=True)
+        hv_lines.set_crs(dave_settings["crs_main"], inplace=True)
         # add hv lines to grid data
-        grid_data.hv_data.hv_lines = pd.concat(
+        grid_data.hv_data.hv_lines = concat(
             [grid_data.hv_data.hv_lines, hv_lines], ignore_index=True
         )
         # update progress
