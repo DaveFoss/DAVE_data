@@ -41,7 +41,7 @@ setup(
         "lxml",
         "python-keycloak",
         "authlib",
-        "pytables",
+        "tables",
         "pyopenssl",
         "rasterio",
         "tqdm",
