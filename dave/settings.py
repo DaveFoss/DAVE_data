@@ -234,4 +234,5 @@ def db_restriction():
     return restriction
 
 
+# load dave settings
 dave_settings = set_dave_settings()
