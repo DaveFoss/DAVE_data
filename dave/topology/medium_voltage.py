@@ -148,48 +148,49 @@ def create_mv_topology(grid_data):
     # update progress
     pbar.update(5)
     # nodes for hv/mv trafos us side
-    hvmv_buses = hvmv_substations.copy()
-    hvmv_buses.drop(
-        columns=(
-            [
-                "dave_name",
-                "lon",
-                "lat",
-                "polygon",
-                "voltage_kv",
-                "power_type",
-                "substation",
-                "osm_id",
-                "osm_www",
-                "frequency",
-                "subst_name",
-                "ref",
-                "operator",
-                "dbahn",
-                "status",
-                "otg_id",
-                "Gemeindeschluessel",
-                "geom",
-                "geometry",
-                "voltage_level",
-            ]
-        ),
-        inplace=True,
-    )
-    hvmv_buses["node_type"] = "hvmv_substation"
-    # change geometry to point
-    hvmv_buses["geometry"] = hvmv_buses.point.apply(lambda x: loads(x, hex=True))
-    # filter trafos which are within the grid area
-    hvmv_buses = intersection_with_area(hvmv_buses, grid_data.area)
-    hvmv_buses.drop(
-        columns=(
-            [
-                "point",
-            ]
-        ),
-        inplace=True,
-    )
-    hvmv_buses["node_type"] = "hvmv_substation"
+    if not hvmv_substations.empty:
+        hvmv_buses = hvmv_substations.copy()
+        hvmv_buses.drop(
+            columns=(
+                [
+                    "dave_name",
+                    "lon",
+                    "lat",
+                    "polygon",
+                    "voltage_kv",
+                    "power_type",
+                    "substation",
+                    "osm_id",
+                    "osm_www",
+                    "frequency",
+                    "subst_name",
+                    "ref",
+                    "operator",
+                    "dbahn",
+                    "status",
+                    "otg_id",
+                    "Gemeindeschluessel",
+                    "geom",
+                    "geometry",
+                    "voltage_level",
+                ]
+            ),
+            inplace=True,
+        )
+        hvmv_buses["node_type"] = "hvmv_substation"
+        # change geometry to point
+        hvmv_buses["geometry"] = hvmv_buses.point.apply(lambda x: loads(x, hex=True))
+        # filter trafos which are within the grid area
+        hvmv_buses = intersection_with_area(hvmv_buses, grid_data.area)
+        hvmv_buses.drop(
+            columns=(
+                [
+                    "point",
+                ]
+            ),
+            inplace=True,
+        )
+        hvmv_buses["node_type"] = "hvmv_substation"
     # update progress
     pbar.update(10)
     # consider data only if there are more than one node in the target area
