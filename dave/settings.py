@@ -9,7 +9,7 @@ from os import path
 # local mode: runing dave and keycloak in local docker network
 # production mode: running dave and keycloak on production server docker network
 stage = "production"  # set development modus
-if stage == "develop":
+if stage == "production":
     # --- parameter for develop mode
     # keycloak settings
     keycloak_server_url = "http://127.0.0.1/auth/"
@@ -234,4 +234,5 @@ def db_restriction():
     return restriction
 
 
+# load dave settings
 dave_settings = set_dave_settings()
