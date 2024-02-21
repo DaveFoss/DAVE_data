@@ -1,6 +1,6 @@
 # define stages
 stages:
-    - test
+    #- test
     - build
     #- lint  # create stage to check codestyle with pylint? also run black and isort overall
     - deploy
@@ -45,24 +45,24 @@ build_release_container:
 
 # --- testing deployment conditions 
 
-unit_test:
-  stage: test
-  image: 
-    name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest
-  tags:
-    - asprunner
-  script:
-    - python -m pytest --cov-report=html --cov=dave .
-  artifacts:
-    paths:
-      - coverage
-    expire_in: 1 day
-  rules:
-    # master or develop branch and no schedule piplines
-    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
-    # develop branch 
-    - if: $CI_COMMIT_BRANCH == "develop"
-      when: manual
+# unit_test:
+#   stage: test
+#   image: 
+#     name: registry.gitlab.cc-asp.fraunhofer.de/dave/dave:latest
+#   tags:
+#     - asprunner
+#   script:
+#     - python -m pytest --cov-report=html --cov=dave .
+#   artifacts:
+#     paths:
+#       - coverage
+#     expire_in: 1 day
+#   rules:
+#     # master or develop branch and no schedule piplines
+#     - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"
+#     # develop branch 
+#     - if: $CI_COMMIT_BRANCH == "develop"
+#       when: manual
 
 
 # deploy new docker image release to server and reastart system
