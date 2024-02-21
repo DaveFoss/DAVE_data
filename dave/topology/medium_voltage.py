@@ -148,8 +148,8 @@ def create_mv_topology(grid_data):
     # update progress
     pbar.update(5)
     # nodes for hv/mv trafos us side
-    if not hvmv_substations.empty:
-        hvmv_buses = hvmv_substations.copy()
+    hvmv_buses = hvmv_substations.copy()
+    if not hvmv_buses.empty:
         hvmv_buses.drop(
             columns=(
                 [
