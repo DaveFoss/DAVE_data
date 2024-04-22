@@ -124,24 +124,14 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     # convert data to meta dict  # !!! When getting data from database the meta informations should also came from db
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
-        # get region
-        if "location" in request_meta["spatial"].keys():
-            region = request_meta["spatial"]["location"]
-        elif "extent" in request_meta["spatial"].keys():
-            region = request_meta["spatial"]["extent"]
-        elif "extend" in request_meta["spatial"].keys():
-            region = request_meta["spatial"]["extend"]
-        else:
-            region = None
         # create dict
         meta_data = {
             "Main": DataFrame(
                 {
                     "Titel": request_meta["title"],
                     "Description": request_meta["description"],
-                    "Region": region,
-                    "Licenses": [license["title"] for license in request_meta["licenses"]],
-                    "Licenses_url": [license["path"] for license in request_meta["licenses"]],
+                    "Spatial": [request_meta["spatial"]],
+                    "Licenses": request_meta["licenses"],
                     "metadata_version": request_meta["metaMetadata"]["metadataVersion"],
                 },
                 index=[0],
