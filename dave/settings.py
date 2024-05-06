@@ -4,33 +4,6 @@
 
 from os import path
 
-# --- switch develop stage
-# develop mode: running dave from ide and keycloak in local docker network
-# local mode: runing dave and keycloak in local docker network
-# production mode: running dave and keycloak on production server docker network
-stage = "production"  # set development modus
-if stage == "develop":
-    # --- parameter for develop mode
-    # keycloak settings
-    keycloak_server_url = "http://127.0.0.1/auth/"
-    client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
-    # mongo db url
-    db_url = "127.0.0.1:27017"
-elif stage == "local":
-    # --- parameter for local porduction mode
-    # keycloak settings
-    keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
-    client_secret_key = "3c5930ec-e5fc-43cb-a3f2-cdeb0811c404"
-    # mongo db url
-    db_url = "172.20.0.10:27017"
-elif stage == "production":
-    # --- parameter for porduction mode
-    # keycloak settings
-    keycloak_server_url = "http://172.20.0.3/auth/"  # traefik ip because kecloak is set PROXY_ADRESS_FORWARDING = True
-    client_secret_key = "lpVjKsFc73HmrAu0FTMF9jq28nktxuvX"
-    # mongo db url
-    db_url = "172.20.0.10:27017"
-
 
 def set_dave_settings():
     """
@@ -40,16 +13,6 @@ def set_dave_settings():
         # main definitions
         "dave_dir": path.dirname(path.realpath(__file__)),
         "dave_output_dir": path.expanduser(r"~\Desktop\DaVe_output"),
-        "stage": stage,
-        # database definitions (mongo db)
-        "db_user": "dave_db_admin",
-        "db_pw": "RxOPwwnahGhIKwLLhPH2",
-        "db_ip": db_url,
-        # authentification definitions
-        "keycloak_server_url": keycloak_server_url,
-        "client_id": "dave_login",
-        "realm_name": "dave",
-        "client_secret_key": client_secret_key,
         # structural definitions:
         "bar_format": "{desc:<10}{percentage:5.0f}%|{bar:30}| completed",  # format progress bar
         # geographical defintions:
@@ -220,18 +183,6 @@ def set_dave_settings():
         "min_number_nodes": 4,
     }
     return settings
-
-
-def db_restriction():
-    """
-    This function returns a dictonary with database collection restrictions for specific users and
-    the user role they need to access it
-    """
-    restriction = {
-        # restrictions for the tu berlin gas grid data
-        # "postalcodes": "transhyde",  # example
-    }
-    return restriction
 
 
 # load dave settings
