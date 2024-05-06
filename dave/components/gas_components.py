@@ -189,23 +189,7 @@ def create_sinks(grid_data, scigrid_consumers):
     pbar.close()
 
 
-def create_storages_gas(grid_data, scigrid_storages):
-    pass
-    # gas storages in germany
-    # read_gas_storage_ugs()
-    # read_scigridgas_iggielgn()
-    # check for duplicated strorages in both datasets
-
-
-def create_valves(grid_data):
-    """
-    This function adds the data for valves between junctions
-    """
-    # At this time there are no data source for valves availible
-    pass
-
-
-def gas_components(grid_data, compressor, sink, source, storage_gas, valve):
+def gas_components(grid_data, compressor, sink, source):
     """
     This function calls all the functions for creating the gas components in the wright order
     """
@@ -226,9 +210,3 @@ def gas_components(grid_data, compressor, sink, source, storage_gas, valve):
         # add sources
         if source:
             create_sources(grid_data, scigrid_productions=scigrid_data["productions"])
-        # add storages
-        if storage_gas:
-            create_storages_gas(grid_data, scigrid_storages=scigrid_data["storages"])
-        # add valves
-        if valve:
-            create_valves(grid_data)

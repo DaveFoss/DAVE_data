@@ -362,7 +362,7 @@ def create_grid(
                 grid_data.area = origin_area
         # create gas grid components
         if gas_levels:
-            gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
+            gas_components(grid_data, compressors, sinks, sources)
             # save interim status of the informations in user folder
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
 
