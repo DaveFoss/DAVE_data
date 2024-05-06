@@ -365,10 +365,6 @@ def create_grid(
             gas_components(grid_data, compressors, sinks, sources, storages_gas, valves)
             # save interim status of the informations in user folder
             save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-        # add population height
-        if building_height == True:
-            request_building_height(grid_data, output_folder)
-            save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
         # create demongraphical data
         for cen in census:
             # --- request population data
