@@ -87,11 +87,7 @@ def from_osm(
         # request some leisure place information which are relevant as landuse area
         leisure = get_osm_data(grid_data, "leisure", border, target_geom)
         # request some natural place information which are relevant as landuse area
-        natural = get_osm_data(
-            grid_data, "natural", border, target_geom
-        )  # !!! Fehler landuse attribute
-        # natural parameter in landuse umbenennen und zu landuse hinzufügen?
-        # hier noch concat von den dreien
+        natural = get_osm_data(grid_data, "natural", border, target_geom)
         landuse = concat([landuse, leisure, natural], ignore_index=True)
         # check if there are data for landuse
         if not landuse.empty:
@@ -109,19 +105,13 @@ def from_osm(
             # intersect landuses with the target area
             area = grid_data.area.rename(columns={"name": "bundesland"})
             # filter landuses which are within the grid area
-            landuse = intersection_with_area(
-                landuse, area
-            )  # !!! duplicated with intersection before?
+            landuse = intersection_with_area(landuse, area)
             # calculate polygon area in km²
             landuse_3035 = landuse.to_crs(dave_settings["crs_meter"])
             landuse["area_km2"] = landuse_3035.area / 1e06
             # write landuse into grid_data
             grid_data.landuse = concat([grid_data.landuse, landuse], ignore_index=True)
             grid_data.landuse.set_crs(dave_settings["crs_main"], inplace=True)
-
-        # !!! abfrage von natural und bei landuse hinzufügen
-        # hier wood und evt auch wasser mit rein nehmen
-
         # update progress
         pbar.update(progress_step / objects_con)
     # search building informations in the target area

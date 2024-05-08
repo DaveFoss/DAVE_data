@@ -6,7 +6,6 @@ from dave_client.io.file_io import from_json_string
 from geopandas import GeoDataFrame, read_file
 from pandas import DataFrame, concat
 from shapely.geometry import Polygon
-from shapely.ops import unary_union
 from tqdm import tqdm
 
 from dave.archiv_io import archiv_inventory
@@ -139,7 +138,7 @@ def _target_by_nuts_region(grid_data, nuts_region):
     # check user input
     if isinstance(nuts_region, list):
         nuts_region = (nuts_region, "2016")  # default year
-    # request nuts-3 areas from oep
+    # read nuts-3 areas
     nuts, meta_data = read_nuts_regions(year=nuts_region[1])
     nuts_3 = nuts[nuts.LEVL_CODE == 3]
     # add meta data
@@ -167,8 +166,6 @@ def _target_by_nuts_region(grid_data, nuts_region):
                 raise ValueError("nuts region name wasn`t found. Please check your input")
     # filter duplicates
     target.drop_duplicates(inplace=True)
-    # merge multipolygons
-    # target['geometry'] = target.geometry.apply(lambda x: unary_union(x))
     # convert nuts regions into postal code areas for target_input
     postal, meta_data = read_postal()
     # add meta data

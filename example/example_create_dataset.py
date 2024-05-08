@@ -71,12 +71,6 @@ grid_data = create_grid(
     compressors=False,
     sinks=False,
     sources=False,
-    # other information
-    building_height=False,
-    # census data
-    census=["population"],
-    # heat data
-    heat=["demand"],
     # output settings
     output_folder=dave_settings["dave_output_dir"],
     output_format="json",

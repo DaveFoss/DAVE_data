@@ -196,7 +196,7 @@ def gas_components(grid_data, compressor, sink, source):
     # check if there are junctions in the considered area
     if not grid_data.hp_data.hp_junctions.empty:
         # read high pressure grid data from dave datapool (scigridgas igginl)
-        if any([compressor, source, sink, storage_gas]):
+        if any([compressor, source, sink]):
             scigrid_data, meta_data = read_scigridgas_iggielgn()
             # add meta data
             if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():

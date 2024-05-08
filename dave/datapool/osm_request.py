@@ -13,7 +13,6 @@ from pandas import DataFrame, concat, read_excel, to_datetime
 from shapely.geometry import LineString, Point
 from six import string_types
 
-from dave.database_io import db_availability, from_mongo, search_database
 from dave.datapool.read_data import get_data_path
 from dave.settings import dave_settings
 
@@ -23,32 +22,18 @@ def osm_request(data_type, area):
     This function requests OSM data from database or OSM directly
     """
     data_param = dave_settings["osm_tags"][data_type]
-    # create database collection name
-    collection = f"osm_{data_type}_{dave_settings['osm_area']}"
-    if db_availability(collection_name=collection):
-        request_data = from_mongo(
-            database=search_database(collection=collection),
-            collection=collection,
-            filter_method="eq",
-            filter_param=f"{where.split('=')[0]}",
-            filter_value=f"{where.split('=')[1]}",
-        )  # !!! noch umändern zu geometrical filtering based on area (intersect?)
-    else:
-        request_data = GeoDataFrame([])
-        for osm_type in data_param[2]:
-            # create tags
-            tags = (
-                f'{data_param[0]}~"{"|".join(data_param[1])}"'
-                if isinstance(data_param[1], list)
-                else f"{data_param[0]}"
-            )
-            # get data from OSM directly via API query
-            data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
-            request_data = concat([request_data, data], ignore_index=True)
+    request_data = GeoDataFrame([])
+    for osm_type in data_param[2]:
+        # create tags
+        tags = (
+            f'{data_param[0]}~"{"|".join(data_param[1])}"'
+            if isinstance(data_param[1], list)
+            else f"{data_param[0]}"
+        )
+        # get data from OSM directly via API query
+        data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
+        request_data = concat([request_data, data], ignore_index=True)
     return request_data, meta_data
-
-    # !!! hier function hin schreiben die entscheidet ob aus Dataenbank (is available) oder direct von OSM
-    # !!! in target area query umschreiben
 
 
 # --- request directly from OSM via Overpass API and geopandas_osm package

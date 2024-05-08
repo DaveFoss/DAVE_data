@@ -24,9 +24,6 @@ from dave.components.power_plants import (
     create_renewable_powerplants,
 )
 from dave.components.transformers import create_transformers
-from dave.datapool.building_height_request import request_building_height
-from dave.datapool.heat_demand_request import request_heat_demand
-from dave.datapool.population_request import request_population
 from dave.geography import target_area
 from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
@@ -34,9 +31,7 @@ from dave.toolbox import create_interim_area
 from dave.topology.extra_high_voltage import create_ehv_topology
 from dave.topology.high_pressure import create_hp_topology
 from dave.topology.high_voltage import create_hv_topology
-from dave.topology.low_pressure import create_lp_topology
 from dave.topology.low_voltage import create_lv_topology
-from dave.topology.medium_pressure import create_mp_topology
 from dave.topology.medium_voltage import create_mv_topology
 
 
@@ -183,7 +178,7 @@ def create_grid(
             considered. options: 'ehv','hv','mv','lv', []. there could be choose: one/multiple \
                 level(s) or 'ALL' \n
         **gas_levels** (list, default []) - this parameter defines which gas levels should be \
-            considered. options: 'hp','mp','lp', []. there could be choose: one/multiple level(s) \
+            considered. options: 'hp' and []. there could be choose: one/multiple level(s) \
             or 'ALL' \n
         **convert_power** (list, default []) - this parameter defines in witch formats the power \
             grid data should be converted. Available formats are currently: 'pandapower' \n
@@ -206,13 +201,6 @@ def create_grid(
             model \n
         **sinks** (boolean, default True) - if true, gas sinks are added to the grid model \n
         **sources** (boolean, default True) - if true, gas sources are added to the grid model \n
-        **storages_gas** (boolean, default True) - if true, gas storages are added to the grid \
-            model \n
-        **valves** (boolean, default True) - if true, gas valves are added to the grid model \n
-        **building_height** (boolean, default False) - if true, bulding heights will added \n
-        **census**  (list, default []) - this parameter defines which census data should be considered.\
-            options: 'population', []. \
-                there could be choose: one/multiple geoobjects or 'ALL' \n
         **output_folder** (string, default user desktop) - absolute path to the folder where the \
             generated data should be saved. if for this path no folder exists, dave will be \
                 create one \n
@@ -343,14 +331,6 @@ def create_grid(
                 grid_data.area = combined_area
             if level == "hp":
                 create_hp_topology(grid_data)
-                # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-            elif level == "mp":
-                create_mp_topology(grid_data)
-                # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
-            elif level == "lp":
-                create_lp_topology(grid_data)
                 # save interim status of the informations in user folder
                 save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
             else:

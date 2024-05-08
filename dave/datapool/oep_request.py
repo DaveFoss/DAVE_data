@@ -11,7 +11,6 @@ from shapely.wkb import loads
 from dave.database_io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
 
-# oep_url = "http://oep.iks.cs.ovgu.de/"
 oep_url = "https://openenergy-platform.org"
 
 

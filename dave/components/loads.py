@@ -119,7 +119,7 @@ def create_loads(grid_data):
                 # Obtain data from OSM
                 plz_residential, meta_data = query_osm(
                     "way", border, recurse="down", tags=['landuse~"residential"']
-                )  # !!! nicht sowieso in landuse enthalten?
+                )
                 # add meta data
                 if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
                     grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
@@ -130,9 +130,7 @@ def create_loads(grid_data):
                     if not isinstance(obj.geometry, LineString)
                 ]
                 plz_residential.drop(drop_objects, inplace=True)
-                plz_residential = unary_union(
-                    list(polygonize(plz_residential.geometry))
-                )  # !!! replace unary union function
+                plz_residential = unary_union(list(polygonize(plz_residential.geometry)))
                 # calculate plz  residential area for grid area
                 plz_own_landuse = postal_own_landuse[
                     postal_own_landuse.postalcode == postal.postalcode

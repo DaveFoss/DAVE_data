@@ -194,7 +194,7 @@ def create_power_plant_lines(grid_data):
             }
             for _, plant in plants_rel_3035.iterrows():
                 plant_bus = all_nodes_3035[all_nodes_3035.dave_name == plant.bus].iloc[0]
-                distance = plant.geometry.distance(plant_bus.geometry)  # in meter
+                distance = plant.geometry.distance(plant_bus.geometry)
                 if (distance > 50) and (plant_bus.voltage_level in considered_levels):
                     # get plant coordinates in crs 4326
                     plant_geometry = plants_rel.loc[plant.name].geometry
@@ -285,7 +285,6 @@ def create_power_plant_lines(grid_data):
                                 crs=dave_settings["crs_main"],
                             )
                         elif voltage_level in [5, 7]:  # (MV and LV)
-                            # !!! Diese Parameter müssen noch angepasst werden wenn MV/LV Leitungscharakteristiken besser bestimmt werden
                             auxillary_line = GeoDataFrame(
                                 {
                                     "dave_name": f"line_{voltage_level}_{number}",
@@ -418,8 +417,6 @@ def create_renewable_powerplants(grid_data):
                 else (x.lon, x.lat),
                 axis=1,
             )
-            # !!! zu diesem Zeitpunkt erstmal die Geokoordinaten des Rasterpunktes
-            # behalten, falls keine Adresse bekannt ist. Das aber noch abändern.
             renewables["lon"] = address_coords.apply(lambda x: x[0])
             renewables["lat"] = address_coords.apply(lambda x: x[1])
         # update progress

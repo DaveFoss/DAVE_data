@@ -615,8 +615,3 @@ def create_transformers(grid_data):
     # close progress bar
     pbar.update(10)
     pbar.close()
-
-    # lv_nodes find closest node, hierbei wenn distanz mehr als 50 m dann leitung erstellen auf
-    # lv ebene. schauen ob bereits ein Knoten existiert (distance <=10E-05?) da die bei mv ebene
-    # schon erstellt werden, ansonsonsten knoten erstellen an dem trafo und mit dem nächsten
-    # knoten verbinden + Leitung diese zusätzzliche Leitung auch bei hv/mv trafos mit rein

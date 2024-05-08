@@ -294,8 +294,3 @@ def clean_up_data(grid_data, min_number_nodes=dave_settings["min_number_nodes"])
         pbar.update(50)
     # close progress bar
     pbar.close()
-
-
-# !!! Todo's clean up:
-# Leitungen mit Länge 0
-# pandapower diagnostic nochmal genauer anschauen

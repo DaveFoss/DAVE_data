@@ -168,9 +168,7 @@ def intersection_with_area(gdf, area, remove_columns=True):
             ]
             # check for values in the target area
             gdf_over_geom = overlay(gdf, area.loc[area_geom_idx], how="intersection")
-            gdf_over = concat(
-                [gdf_over, gdf_over_geom], ignore_index=True
-            )  # TODO: Problem ist das es hier Population_1 und _2 gibt, daher wirft er einen Fehler
+            gdf_over = concat([gdf_over, gdf_over_geom], ignore_index=True)
     else:
         gdf_over = overlay(gdf, area, how="intersection")
     # remove parameters from area
@@ -200,23 +198,3 @@ def related_sub(bus, substations):
     subst_dave_name = sub_filtered.dave_name.to_list() if not sub_filtered.empty else []
     subst_name = sub_filtered.subst_name.to_list() if not sub_filtered.empty else []
     return ego_subst_id, subst_dave_name, subst_name
-
-
-def auth_available():
-    """
-    This function checks the avalibility of the DAVE authentication and retry the connection until
-    it is ready
-    """
-    # wait until dave api is ready
-    available = False
-    while not available:
-        try:
-            request = get(dave_settings["keycloak_server_url"])
-            if request.status_code == 200:
-                available = True
-            elif request.status_code == 404:
-                print("DAVE auth server is not ready, retry in 10 seconds")
-                sleep(10)
-        except ConnectionError:
-            print("DAVE auth server is not available, retry in 10 seconds")
-            sleep(10)

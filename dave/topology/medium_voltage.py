@@ -199,9 +199,7 @@ def create_mv_topology(grid_data):
         # search for the substations dave name
         substations_rel = concat([hvmv_substations, mvlv_substations])
         mv_buses["subs_dave_name"] = mv_buses.ego_subst_id.apply(
-            lambda x: substations_rel[substations_rel.ego_subst_id == x]
-            .iloc[0]
-            .dave_name  # TODO: Problem single positional indexer is out of bounce
+            lambda x: substations_rel[substations_rel.ego_subst_id == x].iloc[0].dave_name
         )
         mv_buses["voltage_level"] = 5
         mv_buses["voltage_kv"] = dave_settings["mv_voltage"]
@@ -260,7 +258,7 @@ def create_mv_topology(grid_data):
             if len(mv_lines_rel) == 1:
                 break
             # create lines for connecting line segments
-            for i, line in enumerate(mv_lines_rel.to_list()):  # TODO: ds
+            for i, line in enumerate(mv_lines_rel.to_list()):
                 # find nearest line to considered one
                 nearest_line_idx = mv_lines_rel.drop([i]).geometry.distance(line).idxmin()
                 # get line coordinates
