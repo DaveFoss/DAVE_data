@@ -8,7 +8,6 @@ from requests import get
 from shapely.geometry import Point
 from shapely.wkb import loads
 
-from dave.database_io import db_availability, from_mongo, search_database
 from dave.settings import dave_settings
 
 oep_url = "https://openenergy-platform.org"
@@ -53,69 +52,54 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     """
     if schema is None:
         schema = dave_settings["oep_tables"][table][0]
-    # check dave db and dataset availibility
-    if db_availability(collection_name=table) and not db_update:
-        # search database name for collection
-        database = search_database(collection=table)
-        if where and where.split("=")[0] != "version":
-            request_data = from_mongo(
-                database=database,
-                collection=table,
-                filter_method="eq",
-                filter_param=f"{where.split('=')[0]}",
-                filter_value=f"{where.split('=')[1]}",
+    # request data directly from oep
+    if where:
+        request = get(
+            "".join(
+                [oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/?where=", where]
             )
-        else:
-            request_data = from_mongo(database=database, collection=table)
+        )
+    elif dave_settings["oep_tables"][table][2] is not None:
+        request = get(
+            "".join(
+                [
+                    oep_url,
+                    "/api/v0/schema/",
+                    schema,
+                    "/tables/",
+                    table,
+                    "/rows/?where=",
+                    dave_settings["oep_tables"][table][2],
+                ]
+            )
+        )
     else:
-        # dave db or dataset is not available so request data directly from oep
-        if where:
-            request = get(
-                "".join(
-                    [oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/?where=", where]
-                )
-            )
-        elif dave_settings["oep_tables"][table][2] is not None:
-            request = get(
-                "".join(
-                    [
-                        oep_url,
-                        "/api/v0/schema/",
-                        schema,
-                        "/tables/",
-                        table,
-                        "/rows/?where=",
-                        dave_settings["oep_tables"][table][2],
-                    ]
-                )
-            )
-        else:
-            request = get(
-                "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/"])
-            )
-        # convert data to dataframe
-        request_data = request_to_df(request)
-        # check for geometry parameter
-        if geometry is None:
-            geometry = dave_settings["oep_tables"][table][1]
-        if geometry is not None:
-            # --- convert into geopandas DataFrame with right crs
-            # transform WKB to WKT / Geometry
-            request_data["geometry"] = request_data[geometry].apply(lambda x: loads(x, hex=True))
-            # create geoDataFrame
-            request_data = GeoDataFrame(
-                request_data, crs=dave_settings["crs_main"], geometry=request_data.geometry
-            )
-        # fix some mistakes in the oep data
-        if table == "ego_pf_hv_transformer":
-            # change geometry to point because in original data the geometry was lines with length 0
-            request_data["geometry"] = request_data.geometry.apply(
-                lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
-            )
-        if table == "ego_dp_mvlv_substation":
-            # change wrong crs from oep
-            request_data.crs = dave_settings["crs_meter"]
-            request_data = request_data.to_crs(dave_settings["crs_main"])
+        request = get(
+            "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/"])
+        )
+    # convert data to dataframe
+    request_data = request_to_df(request)
+    # check for geometry parameter
+    if geometry is None:
+        geometry = dave_settings["oep_tables"][table][1]
+    if geometry is not None:
+        # --- convert into geopandas DataFrame with right crs
+        # transform WKB to WKT / Geometry
+        request_data["geometry"] = request_data[geometry].apply(lambda x: loads(x, hex=True))
+        # create geoDataFrame
+        request_data = GeoDataFrame(
+            request_data, crs=dave_settings["crs_main"], geometry=request_data.geometry
+        )
+    # fix some mistakes in the oep data
+    if table == "ego_pf_hv_transformer":
+        # change geometry to point because in original data the geometry was lines with length 0
+        request_data["geometry"] = request_data.geometry.apply(
+            lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
+        )
+    if table == "ego_dp_mvlv_substation":
+        # change wrong crs from oep
+        request_data.crs = dave_settings["crs_meter"]
+        request_data = request_data.to_crs(dave_settings["crs_main"])
 
     # --- request meta informations for a dataset
     # !!! Todo: seperate option for getting data from DB. When there are no meta data in DB then check OEP Url

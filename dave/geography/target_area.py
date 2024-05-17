@@ -2,12 +2,13 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-from dave_client.io.file_io import from_json_string
+
 from geopandas import GeoDataFrame, read_file
 from pandas import DataFrame, concat
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
+from dave.io.file_io import from_json_string
 from dave.archiv_io import archiv_inventory
 from dave.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
 from dave.geography.osm_data import from_osm, road_junctions

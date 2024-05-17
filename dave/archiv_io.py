@@ -4,7 +4,7 @@
 
 from os import listdir, path
 
-from dave_client.io.file_io import from_hdf, to_hdf
+from dave.io.file_io import from_hdf, to_hdf
 from pandas import DataFrame, read_csv
 
 from dave.toolbox import get_data_path
