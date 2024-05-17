@@ -7,12 +7,6 @@ from timeit import default_timer
 from warnings import catch_warnings, simplefilter
 
 environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
-from dave_client.converter.create_gaslib import create_gaslib
-from dave_client.converter.create_mynts import create_mynts
-from dave_client.converter.create_pandapipes import create_pandapipes
-from dave_client.converter.create_pandapower import create_pandapower
-from dave_client.dave_structure import create_empty_dataset
-from dave_client.io.file_io import to_gpkg, to_hdf, to_json
 
 # imports from dave
 from dave.archiv_io import from_archiv, to_archiv
@@ -33,6 +27,12 @@ from dave.topology.high_pressure import create_hp_topology
 from dave.topology.high_voltage import create_hv_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_voltage import create_mv_topology
+from dave.dave_structure import create_empty_dataset
+from dave.io.file_io import to_gpkg, to_hdf, to_json
+from dave.converter.create_gaslib import create_gaslib
+from dave.converter.create_mynts import create_mynts
+from dave.converter.create_pandapipes import create_pandapipes
+from dave.converter.create_pandapower import create_pandapower
 
 
 def format_input_levels(power_levels, gas_levels):
