@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from dave.converter.converter import Converter, Strategy
 from dave.converter.elements import Elements
-from dave.settings import client_settings
+from dave.settings import dave_settings
 
 # dictionaries for Mynts text properties and numeric properties;  # !!! todo complete list
 # used to convert dave names to the corresponding Mynts properties
@@ -335,7 +335,7 @@ def create_mynts(grid_data, output_folder, idx_ref="dave_name"):
         total=100,
         desc="create mynts network:              ",
         position=0,
-        bar_format=client_settings["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
 
     # seperate geocoordinates from geometry parameter into lat and long

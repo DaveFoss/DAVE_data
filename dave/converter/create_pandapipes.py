@@ -184,10 +184,10 @@ def create_pandapipes(grid_data, output_folder=None, fluid=None, idx_ref="dave_n
         length_km=all_pipes["length_km"],
         diameter_m=all_pipes["diameter_m"],
         k_mm=(
-            dave_settings()["hp_pipes_k_mm"]
+            dave_settings["hp_pipes_k_mm"]
             if "roughness_mm" not in all_pipes.keys() or all(all_pipes.roughness_mm.isna())
             else all_pipes.roughness_mm.apply(
-                lambda x: dave_settings()["hp_pipes_k_mm"] if isna(x) else x
+                lambda x: dave_settings["hp_pipes_k_mm"] if isna(x) else x
             )
         ),
         loss_coefficient=(

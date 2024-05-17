@@ -6,7 +6,7 @@
 from pandas import Series, concat
 from tqdm import tqdm
 
-from dave.datapool.read_data import read_gaslib, read_hp_data, read_scigridgas_iggielgn
+from dave.datapool.read_data import read_gaslib, read_scigridgas_iggielgn
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 

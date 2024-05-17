@@ -123,8 +123,8 @@ def create_pp_mvlv_lines(net, lines):
         length_km=lines["length_km"],
         std_type=lines.voltage_level.apply(
             lambda x: {
-                5: dave_settings()["mv_line_std_type"],
-                7: dave_settings()["lv_line_std_type"],
+                5: dave_settings["mv_line_std_type"],
+                7: dave_settings["lv_line_std_type"],
             }[x]
         ),
         name=lines["name"],
@@ -171,10 +171,10 @@ def create_pp_trafos(net, grid_data):  # TODO: Umschreiben auf pp.create_lines
         )
         # trafo über parameter. Dafür müssen die Parameter noch berechnet werden
         # aber wie? wenn ich nur r,x,b, gegeben habe
-        trafos_ehvhv["vkr_percent"] = dave_settings()["trafo_vkr_percent"]  # dummy value
-        trafos_ehvhv["vk_percent"] = dave_settings()["trafo_vk_percent"]  # dummy value
-        trafos_ehvhv["pfe_kw"] = dave_settings()["trafo_pfe_kw"]  # dummy value accepted as ideal
-        trafos_ehvhv["i0_percent"] = dave_settings()[
+        trafos_ehvhv["vkr_percent"] = dave_settings["trafo_vkr_percent"]  # dummy value
+        trafos_ehvhv["vk_percent"] = dave_settings["trafo_vk_percent"]  # dummy value
+        trafos_ehvhv["pfe_kw"] = dave_settings["trafo_pfe_kw"]  # dummy value accepted as ideal
+        trafos_ehvhv["i0_percent"] = dave_settings[
             "trafo_i0_percent"
         ]  # dummy value accepted as ideal
         trafos_ehvhv["tap_phase_shifter"] = False  # dummy value accepted as ideal
@@ -201,8 +201,8 @@ def create_pp_trafos(net, grid_data):  # TODO: Umschreiben auf pp.create_lines
         )
         trafos_mvlv["std_type"] = trafos_mvlv.voltage_level.apply(
             lambda x: {
-                4: dave_settings()["hvmv_trafo_std_type"],
-                6: dave_settings()["mvlv_trafo_std_type"],
+                4: dave_settings["hvmv_trafo_std_type"],
+                6: dave_settings["mvlv_trafo_std_type"],
             }[x]
         )
         # add data from standart type
@@ -462,7 +462,7 @@ def create_pandapower(grid_data, opt_model, output_folder):
         total=100,
         desc="create pandapower network:         ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # create empty network
     net = create_empty_network()
@@ -603,7 +603,7 @@ def power_processing(
         total=100,
         desc="run pandapower model processing:   ",
         position=0,
-        bar_format=dave_settings()["bar_format"],
+        bar_format=dave_settings["bar_format"],
     )
     # run network diagnostic
     pp_diagnostic = diagnostic(net, report_style="None")
@@ -682,7 +682,7 @@ def power_processing(
             total=100,
             desc="run power grid optimization:       ",
             position=0,
-            bar_format=dave_settings()["bar_format"],
+            bar_format=dave_settings["bar_format"],
         )
         # run network diagnostic
         pp_diagnostic = diagnostic(net, report_style="None")

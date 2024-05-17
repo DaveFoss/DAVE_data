@@ -2,7 +2,7 @@ from geopandas import GeoDataFrame, GeoSeries
 from pandapower.auxiliary import ADict
 from pandas import DataFrame
 
-from dave_client.settings import client_settings
+from dave.settings import dave_settings
 
 
 class davestructure(ADict):
@@ -142,7 +142,7 @@ def create_empty_dataset():
                 }
             ),
             # auxillary
-            "dave_version": client_settings["dave_version"],
+            "dave_version": dave_settings["dave_version"],
             "meta_data": {},
         }
     )

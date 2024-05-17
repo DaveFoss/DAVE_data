@@ -3,18 +3,37 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 from os import path
-from time import sleep
-
 from geopandas import GeoDataFrame, overlay
 from geopy.geocoders import ArcGIS
 from numpy import append, array
 from pandas import concat
 from requests import ConnectionError, get
 from scipy.spatial import Voronoi
-from shapely.geometry import LineString, MultiPoint
-from shapely.ops import cascaded_union, polygonize
+from shapely.geometry import LineString, MultiPoint, MultiLineString
+from shapely.ops import cascaded_union, polygonize, linemerge
 
 from dave.settings import dave_settings
+
+
+def multiline_coords(line_geometry):
+    """
+    This function extracts the coordinates from a MultiLineString
+
+    INPUT:
+    **line_geometry** (Shapely MultiLinesString) - geometry in MultiLineString format
+
+    OUTPUT:
+        **line_coords** (list) - coordinates of the given MultiLineString
+    """
+    merged_line = linemerge(line_geometry)
+    # sometimes line merge can not merge the lines correctly
+    line_coords = []
+    if isinstance(merged_line, MultiLineString):
+        for line in list(merged_line.geoms):
+            line_coords += line.coords[:]
+    else:
+        line_coords += merged_line.coords[:]
+    return line_coords
 
 
 def create_interim_area(areas):

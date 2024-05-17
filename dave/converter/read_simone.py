@@ -281,7 +281,7 @@ def simone_to_dave(data_simone):
         n_par = data_simone["node_parameter"]
         e_par = data_simone["element_parameter"]
         # create sources
-        factor_mw_to_kb_per_s = dave_settings()["factor_mw_to_kb_per_s"]
+        factor_mw_to_kb_per_s = dave_settings["factor_mw_to_kb_per_s"]
         grid_data.components_gas.sources = n_par[
             (n_par["supply"] == 1)
             & (n_par["parameters"].apply(lambda x: "Q" in x and "PSET" not in x))
