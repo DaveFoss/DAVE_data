@@ -4,12 +4,9 @@ geopandas
 matplotlib
 geopy
 contextily
-fastapi
-uvicorn
 pytest
 pytest-cov
 pytest-xdist
-pymongo
 openpyxl
 xmlschema
 lxml
