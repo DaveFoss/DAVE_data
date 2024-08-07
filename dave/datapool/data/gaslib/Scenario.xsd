@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+
+<xsd:schema elementFormDefault="qualified"
+  targetNamespace="http://gaslib.zib.de/Gas"
+  xmlns:framework="http://gaslib.zib.de/Framework"
+  xmlns:gas="http://gaslib.zib.de/Gas"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- SECTION: IMPORT (mandatory) -->
+  <xsd:import namespace="http://gaslib.zib.de/Framework"
+    schemaLocation="Framework.xsd"/>
+
+  <xsd:annotation>
+    <xsd:documentation xml:lang="EN"> Within this XML Schema, so called scenario XML files are specified.
+      The purpose of a scenario file is to define a nomination. The basic elements of a scenario are nodes
+      with pressure and/or flow bounds, pipes with their soil temperature and compressor stations
+      with their ambient temperature. Only elements with scenario specific data should be stated.
+      Additional information to identify the scenario can be given. Basic types used within this schema are defined in <a href="PhysicalValues_xsd.html">PhysicalValues.xsd</a>.
+      The tag <a href="#id21">boundaryValue</a> must be the root element of each XML document conforming to this schema.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:element name="boundaryValue">
+    <xsd:annotation>
+      <xsd:documentation> Root element of any XML document conforming to this schema.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexType>
+      <xsd:sequence>
+
+        <xsd:element name="scenario">
+          <xsd:annotation>
+            <xsd:documentation> A scenario, specified by its ID, can contain information about its
+              probability, minimal and maximal temperature, the contract date, its own date, whether
+              or not interruptible capacities and municipal utilities are considerd; nodes, pipes
+              and compressor stations in arbitrary quantity. This order must be obeyed, although
+              information can simply be left out. </xsd:documentation>
+          </xsd:annotation>
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="meta" minOccurs="0" maxOccurs="1" type="xsd:string"/>
+              <xsd:element name="scenarioProbability" minOccurs="0" maxOccurs="1"
+                type="gas:scenarioProbabilityType">
+                <xsd:annotation>
+                  <xsd:documentation> States the probability for the occurence of the scenario
+                  </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element name="temperatureMin" minOccurs="0" maxOccurs="1"
+                type="framework:temperatureType">
+                <xsd:annotation>
+                  <xsd:documentation> States the lower bound of the temperature interval containing
+                    the temperature measured at the time when the scenario data was collected.
+                  </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element name="temperatureMax" minOccurs="0" maxOccurs="1"
+                type="framework:temperatureType">
+                <xsd:annotation>
+                  <xsd:documentation> States the upper bound of the temperature interval containing
+                    the temperature measured at the time when the scenario data was collected.
+                  </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element name="contractDate" minOccurs="0" maxOccurs="1"
+                type="gas:contractDateType">
+                <xsd:annotation>
+                  <xsd:documentation> States the date of a possibly underlying contract.
+                  </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element name="dataDate" minOccurs="0" maxOccurs="1" type="gas:dataDateType">
+                <xsd:annotation>
+                  <xsd:documentation> States the date when the scenario data was collected.
+                  </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element name="usesInterruptibleCap" minOccurs="0" maxOccurs="1"
+                type="gas:usesInterruptibleCapType">
+                <xsd:annotation>
+                  <xsd:documentation> States if interruptible capacities are used or not.
+                  </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element name="reducedMunicipalUtility" minOccurs="0" maxOccurs="1"
+                type="gas:reducedMunicipalUtilityType">
+                <xsd:annotation>
+                  <xsd:documentation> States whether the statistical flow values in nodes belonging
+                    to municipal utilities are cut off at certain fixed FZK contract bounds
+                    ('true'), or not ('false'). </xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+
+              <xsd:element name="node" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                  <xsd:documentation> A node of the network, identified by type and ID, with
+                    optional information about up to two pressure and either flow or power bounds,
+                    type of the contract, type of the point, applied contract. </xsd:documentation>
+                </xsd:annotation>
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="pressure" type="gas:pressure_type" minOccurs="0"
+                      maxOccurs="2">
+                      <xsd:annotation>
+                        <xsd:documentation> States a pressure bound at a node, corresponding to a
+                          fixed nomination. Required form is bound (lower, upper or both) - unit -
+                          value. Any pressure value must be greater than or equal to 0 barg.
+                          This pressure is used for the propagation of pressure bounds(TÜV-Rule).
+                          </xsd:documentation>
+                      </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="contractPressureMin" type="framework:pressureType" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation>
+                            <xsd:documentation> States a non-technical lower pressure bound on a node </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="contractPressureMax" type="framework:pressureType" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation>
+                            <xsd:documentation> States a non-technical upper pressure bound on a node.
+                                Since it is a non-technical bound, this implies,that it is not considered
+                                in methods for enforcing the TÜV-Rule on flow-connected components.
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:choice>
+                      <xsd:sequence>
+                        <xsd:element name="flow" type="gas:flow_type" minOccurs="0" maxOccurs="2">
+                          <xsd:annotation>
+                            <xsd:documentation> States a flow bound at a node, corresponding to a
+                              fixed nomination. Required form is bound (lower, upper or both) - unit
+                              - value. </xsd:documentation>
+                          </xsd:annotation>
+                        </xsd:element>
+                      </xsd:sequence>
+                      <xsd:sequence>
+                        <xsd:element name="power" type="gas:power_type" minOccurs="0" maxOccurs="2">
+                          <xsd:annotation>
+                            <xsd:documentation> States a power bound at a node, corresponding to a
+                              fixed nomination. Required form is bound (lower, upper or both) - unit
+                              - value. </xsd:documentation>
+                          </xsd:annotation>
+                        </xsd:element>
+                      </xsd:sequence>
+                    </xsd:choice>
+                    <xsd:sequence minOccurs="0">
+                      <xsd:element minOccurs="0" name="gasTemperature"
+                        type="framework:temperatureType">
+                        <xsd:annotation>
+                          <xsd:documentation> gasTemperature is the gas temperature of the entering gas at the
+                source node in the gas network. Unit is specified by type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="calorificValue"
+                        type="framework:calorificValueType">
+                        <xsd:annotation>
+                          <xsd:documentation> calorificValue is the calorific Value of the entering gas at the
+                source node in the gas network. Unit is specified by type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="normDensity" type="framework:densityType">
+                        <xsd:annotation>
+                          <xsd:documentation> normDensity is the norm density of the entering gas at the source
+                node in the gas network. Unit is specified by type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="coefficient-A-heatCapacity"
+                        type="framework:noType">
+                        <xsd:annotation>
+                          <xsd:documentation> coefficient-A-heatCapacity is one coefficient of the heat capacity
+                of the entering gas at the source node in the gas network. Unit is specified by
+                type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="coefficient-B-heatCapacity"
+                        type="framework:noType">
+                        <xsd:annotation>
+                          <xsd:documentation> coefficient-B-heatCapacity is one coefficient of the heat capacity
+                of the entering gas at the source node in the gas network. Unit is specified by
+                type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="coefficient-C-heatCapacity"
+                        type="framework:noType">
+                        <xsd:annotation>
+                          <xsd:documentation> coefficient-C-heatCapacity is one coefficient of the heat capacity
+                of the entering gas at the source node in the gas network. Unit is specified by
+                type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="molarMass" type="framework:molarMassType">
+                        <xsd:annotation>
+                          <xsd:documentation> molarMass is the molar mass of the entering gas at the source node
+                in the gas network. Unit is specified by type. </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="pseudocriticalPressure"
+                        type="framework:pressureType">
+                        <xsd:annotation>
+                          <xsd:documentation> pseudocriticalPressure is the pseudocritical pressure of the
+                entering gas at the source node in the gas network. Unit is specified by type.
+              </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                      <xsd:element minOccurs="0" name="pseudocriticalTemperature"
+                        type="framework:temperatureType">
+                        <xsd:annotation>
+                          <xsd:documentation> pseudocriticalTemperature is the pseudocritical temperature of the
+                entering gas at the source node in the gas network. Unit is specified by type.
+              </xsd:documentation>
+                        </xsd:annotation>
+                      </xsd:element>
+                    </xsd:sequence>
+                    <xsd:element name="activeContract" type="gas:activeContractType" minOccurs="0"
+                      maxOccurs="unbounded">
+                      <xsd:annotation>
+                        <xsd:documentation> States the contracts selected in this nomination and
+                          their flows or powers at this node. </xsd:documentation>
+                      </xsd:annotation>
+                    </xsd:element>
+                  </xsd:sequence>
+                  <xsd:attribute name="type" type="gas:nodetype" use="required">
+                    <xsd:annotation>
+                      <xsd:documentation> The type of the node. </xsd:documentation>
+                    </xsd:annotation>
+                  </xsd:attribute>
+                  <xsd:attribute name="id" type="xsd:string" use="required">
+                    <xsd:annotation>
+                      <xsd:documentation> The ID of the node. </xsd:documentation>
+                    </xsd:annotation>
+                  </xsd:attribute>
+                </xsd:complexType>
+              </xsd:element>
+
+              <xsd:element name="innode" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                  <xsd:documentation> This is an evil hack to overwrite the technical pressure bounds
+                    from the network, identified by ID.
+                  </xsd:documentation>
+                </xsd:annotation>
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="pressure" type="gas:pressure_type" minOccurs="1"
+                      maxOccurs="2">
+                      <xsd:annotation>
+                        <xsd:documentation> States a pressure bound at a node, corresponding to a
+                          fixed nomination. Required form is bound (lower, upper or both) - unit -
+                          value. Any pressure value must be greater than or equal to 0 barg.</xsd:documentation>
+                      </xsd:annotation>
+                    </xsd:element>
+                  </xsd:sequence>
+                  <xsd:attribute name="id" type="xsd:string" use="required">
+                    <xsd:annotation>
+                      <xsd:documentation> The ID of the node. </xsd:documentation>
+                    </xsd:annotation>
+                  </xsd:attribute>
+                </xsd:complexType>
+              </xsd:element>
+
+              <xsd:element name="pipe" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                  <xsd:documentation> A pipe of the network, identified by ID, with the soil
+                    temperature. </xsd:documentation>
+                </xsd:annotation>
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="contractPressureMax" type="framework:pressureType" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="physicalPressureMax" type="framework:pressureType" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="soilTemperature" type="framework:temperatureType" minOccurs="0" maxOccurs="1">
+                      <xsd:annotation>
+                        <xsd:documentation> States the soil temperature of the pipe, corresponding
+                          to a nomination. Per default in Kelvin. </xsd:documentation>
+                      </xsd:annotation>
+                    </xsd:element>
+                  </xsd:sequence>
+                  <xsd:attribute name="id" type="xsd:string" use="required">
+                    <xsd:annotation>
+                      <xsd:documentation> The ID of the pipe. </xsd:documentation>
+                    </xsd:annotation>
+                  </xsd:attribute>
+                </xsd:complexType>
+              </xsd:element>
+
+              <xsd:element name="controlValve" minOccurs="0" maxOccurs="unbounded">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="pressureSet" type="framework:pressureType">
+                      <xsd:annotation>
+                        <xsd:documentation> pressureSet is used for non-remote pressure regulator to
+                          specify the desired output pressure. Unit is specified by type.
+                        </xsd:documentation>
+                      </xsd:annotation>
+                    </xsd:element>
+		    <xsd:element name="increasedOutputTemperature" minOccurs="0" type="framework:temperatureType">
+		      <xsd:annotation>
+			<xsd:documentation> increasedOutputTemperature is the temperature of the gas at the
+			outflow of the regulator, if a gas preheater exists. This element is optional; it
+			should only be used if the attribute gasPreheaterExisting is 1. Unit is specified by
+			type. </xsd:documentation>
+		      </xsd:annotation>
+		    </xsd:element>
+                  </xsd:sequence>
+                  <xsd:attribute name="id" type="xsd:string" use="required">
+                    <xsd:annotation>
+                      <xsd:documentation> The ID of the pipe. </xsd:documentation>
+                    </xsd:annotation>
+                  </xsd:attribute>
+		  <xsd:attribute name="gasPreheaterExisting" default="0" type="xsd:boolean">
+		    <xsd:annotation>
+		      <xsd:documentation> gasPreheaterExisting is a boolean (0/1) flag to specify if the
+		      pressure regulator has a gas preheater (=1) or not (=0). If this value is 1, then the
+		      increasedOutputTemperature should also be specified. Per default, it is set to 0.
+		      </xsd:documentation>
+		    </xsd:annotation>
+		  </xsd:attribute>
+                </xsd:complexType>
+              </xsd:element>
+
+
+              <xsd:element name="compressorStation" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                  <xsd:documentation> A compressor station of the network, identified by ID, with
+                    the ambient temperature. </xsd:documentation>
+                </xsd:annotation>
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="ambientTemperature" type="framework:temperatureType">
+                      <xsd:annotation>
+                        <xsd:documentation> States the ambient temperature of the compressor
+                          station, corresponding to a nomination. Per default in Kelvin.
+                        </xsd:documentation>
+                      </xsd:annotation>
+                    </xsd:element>
+		    <xsd:element name="cooledOutputTemperature" minOccurs="0" type="framework:temperatureType">
+		      <xsd:annotation>
+			<xsd:documentation> cooledOutputTemperature is the temperature of the gas at the
+			outflow of the compressor, if a gas cooler exists. This element is optional; it
+			should only be used if the attribute gasCoolerExisting is 1. Unit is specified by
+			type. </xsd:documentation>
+		      </xsd:annotation>
+		    </xsd:element>
+                  </xsd:sequence>
+                  <xsd:attribute name="id" type="xsd:string" use="required">
+                    <xsd:annotation>
+                      <xsd:documentation> The ID of the compressor station. </xsd:documentation>
+                    </xsd:annotation>
+                  </xsd:attribute>
+		  <xsd:attribute name="gasCoolerExisting" default="0" type="xsd:boolean">
+		    <xsd:annotation>
+		      <xsd:documentation> gasCoolerExisting is a boolean (0/1) flag to specify if a gas cooler
+		      exists after the gas compression. This attribute is optional; if it is set to 1, then
+		      the cooledOutputTemperature should also be specified. Per default there is no gas
+		      cooler (=0).
+		      </xsd:documentation>
+		    </xsd:annotation>
+		  </xsd:attribute>
+		  <xsd:attribute name="saveBypass" default="0" type="xsd:boolean">
+		    <xsd:annotation>
+		      <xsd:documentation>
+                        is valve separating uncontrolled areas in network
+		      </xsd:documentation>
+		    </xsd:annotation>
+		  </xsd:attribute>
+                </xsd:complexType>
+              </xsd:element>
+
+            </xsd:sequence>
+            <xsd:attribute name="id" type="xsd:string" default="scenario">
+              <xsd:annotation>
+                <xsd:documentation> The ID of the scenario. </xsd:documentation>
+              </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="defaultPowerAndFlowZero" type="framework:boolean" default="0">
+              <xsd:annotation>
+                <xsd:documentation> If the value of this attribute is 1 (true) then the
+                flow and power values of all sources and sinks, which are present in the
+                network but not specified in the scenario are set to 0. Otherwise the
+                flow and power bounds for sources and sinks which are not specified in the
+                scenario are set to the values given in the net file. This attribute is
+                optional with default value 0 (false).
+                </xsd:documentation>
+              </xsd:annotation>              
+            </xsd:attribute>
+          </xsd:complexType>
+        </xsd:element>
+
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+
+  <xsd:complexType name="scenarioProbabilityType">
+    <xsd:annotation>
+      <xsd:documentation> Type for the probability of a scenario. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="value" type="gas:probability" use="required">
+      <xsd:annotation>
+        <xsd:documentation>The probability of the scenario given as value in [0,1]</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="probability">
+    <xsd:annotation>
+      <xsd:documentation> Value in the intervall [0,1]. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:double">
+      <xsd:minInclusive value="0.0"/>
+      <xsd:maxInclusive value="1.0"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="contractDateType">
+    <xsd:annotation>
+      <xsd:documentation> Type for a contract date. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="value" type="xsd:date" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Date of the underlying contract</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="dataDateType">
+    <xsd:annotation>
+      <xsd:documentation> Type for a data date. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="value" type="xsd:date" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Date of scenario data</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="usesInterruptibleCapType">
+    <xsd:annotation>
+      <xsd:documentation> Type for a boolean value: Are interruptible capacities used?
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="value" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Indicates whether interruptible capacities are used</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="reducedMunicipalUtilityType">
+    <xsd:annotation>
+      <xsd:documentation> Type for a boolean value: Are municipal utilities involved?
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="value" type="xsd:boolean" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Indicates whether municipal utilities are involved</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="pressure_type">
+    <xsd:annotation>
+      <xsd:documentation> Type for pressure bounds, consisting of bound ('lower', 'upper' or
+        'both'), unit ('bar', 'barg', 'Pa'), and double value. Default unit is barg.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="bound" type="gas:resbound" use="required">
+      <xsd:annotation>
+        <xsd:documentation> Indicates what type of bound is given (lower, upper or both)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unit" type="framework:pressureUnit" default="barg">
+      <xsd:annotation>
+        <xsd:documentation> Unit of the given pressure value</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="value" type="xsd:double" use="required">
+      <xsd:annotation>
+        <xsd:documentation> Pressure value of the bound</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="flow_type">
+    <xsd:annotation>
+      <xsd:documentation> Type for flow bound, consisting of bound ('lower', 'upper' or 'both'),
+        unit ('m_cube_per_s', 'm_cube_per_hour', '1000m_cube_per_hour'), and double value. Default
+        unit is m_cube_per_s.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="bound" type="gas:resbound" use="required">
+      <xsd:annotation>
+        <xsd:documentation> Indicates what type of bound is given (lower, upper or both)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unit" type="framework:flowUnit" default="m_cube_per_s">
+      <xsd:annotation>
+        <xsd:documentation> Unit of the given flow value</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="value" type="xsd:double" use="required">
+      <xsd:annotation>
+        <xsd:documentation> Flow value of the bound</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="power_type">
+    <xsd:annotation>
+      <xsd:documentation> Type for power bound, consisting of bound ('lower', 'upper' or 'both'),
+        unit ('W', 'kW', 'MW', 'mW'), and double value. Default unit is kW. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="bound" type="gas:resbound" use="required">
+      <xsd:annotation>
+        <xsd:documentation> Indicates what type of bound is given (lower, upper or both)</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="unit" type="framework:powerUnit" default="kW">
+      <xsd:annotation>
+        <xsd:documentation> Unit of the given power value</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="value" type="xsd:double" use="required">
+      <xsd:annotation>
+        <xsd:documentation> Power value of the bound</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="resbound">
+    <xsd:annotation>
+      <xsd:documentation> Type for bound direction ('lower', 'upper', 'both'). </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="lower"/>
+      <xsd:enumeration value="upper"/>
+      <xsd:enumeration value="both"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="nodetype">
+    <xsd:annotation>
+      <xsd:documentation> Type for nodes ('exit', 'entry'). </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="exit"/>
+      <xsd:enumeration value="entry"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="activeContractType">
+    <xsd:annotation>
+      <xsd:documentation> Type for active contracts, mandatory identified by ID and type, with
+        either a flow or a power value. </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice>
+      <xsd:sequence>
+        <xsd:element name="flow" type="gas:flow_type" minOccurs="0" maxOccurs="1"/>
+      </xsd:sequence>
+      <xsd:sequence>
+        <xsd:element name="power" type="gas:power_type" minOccurs="0" maxOccurs="1"/>
+      </xsd:sequence>
+    </xsd:choice>
+    <xsd:attribute name="id" use="required" type="framework:ambiguousIdentifier">
+      <xsd:annotation>
+        <xsd:documentation> Identifier of the contract</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="type" use="required" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation> Type of contract</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+
+</xsd:schema>
