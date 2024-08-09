@@ -34,7 +34,7 @@ _nuts_3 = ["DEF", "DE60"]  # example for diffrent nuts level combined(1 and 2)
 
 # test own shape
 # Hertingshausen is a part from the Town Baunatal. (ca. 500 relevant Buildings)
-_own_area = os.path.dirname(os.path.realpath(__file__)) + "\\hertingshausen\\hertingshausen.shp"
+_own_area = os.path.dirname(os.path.realpath(__file__)) + "\\hertingshausen.geojson"
 
 
 ##################### test main function ##########################
