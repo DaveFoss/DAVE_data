@@ -1,6 +1,16 @@
-[html]
-directory = coverage
+[paths]
+source =
+   src
+   */site-packages
+
+[run]
+branch = true
+source =
+    dave_data
+    tests
+parallel = true
 
 [report]
-exclude_lines =
-    if __name__ == .__main__.:
+show_missing = true
+precision = 2
+omit = *migrations*
