@@ -15,7 +15,7 @@ Overview
       - |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
 
 .. |docs| image:: https://readthedocs.org/projects/dave_data/badge/?version=latest
-    :target: https://dave_data.readthedocs.io/en/latest/?badge=latest
+    :target: https://dave-data.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. |github-actions| image:: https://github.com/DaveFoss/DAVE_data/actions/workflows/github-actions.yml/badge.svg
@@ -58,7 +58,7 @@ Documentation
 =============
 
 
-https://dave_data.readthedocs.io
+https://dave-data.readthedocs.io
 
 
 Development
