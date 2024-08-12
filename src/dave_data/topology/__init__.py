@@ -6,7 +6,7 @@
 from dave.topology.extra_high_voltage import *
 
 # pressure levels for gas grid
-from dave.topology.high_pressure import *
-from dave.topology.high_voltage import *
+from src.dave_data.topology.high_pressure import *
+from src.dave_data.topology.high_voltage import *
 from dave.topology.low_voltage import *
 from dave.topology.medium_voltage import *
