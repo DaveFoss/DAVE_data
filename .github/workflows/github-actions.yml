@@ -69,14 +69,22 @@ jobs:
         TOXPYTHON: '${{ matrix.toxpython }}'
       run: >
         tox -e ${{ matrix.tox_env }} -v
+    - name: Coveralls Parallel
+      uses: coverallsapp/github-action@v2
+      with:
+        flag-name: run-${{ join(matrix.*, '-') }}
+        parallel: true
+
   finish:
     needs: test
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-    - uses: coverallsapp/github-action@v2
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@v2
       with:
         parallel-finished: true
+        carryforward: "run-1,run-2"
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
