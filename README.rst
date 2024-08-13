@@ -40,6 +40,16 @@ Overview
 
 Short Discription
 
+DAVE is an softwaretool for a automatic generation of region-specific energy grid models. The resulting grid models are based on open data from different sources.
+
+
+This code ist based on and explained in the following publicationat :
+
+- `Banze, T., Kneiske, T.M. Open data for energy networks: introducing DAVE—a data fusion tool for automated network generation. Sci Rep 14, 1938 (2024). <https://doi.org/10.1038/s41598-024-52199-w>`_
+
+More on DAVE is published on the webside http://databulter.energy
+
+
 * Free software: MIT license
 
 Installation

@@ -1,0 +1,22 @@
+# via conda forge
+Shapely
+geopandas 
+matplotlib
+geopy
+contextily
+pytest
+pytest-cov
+pytest-xdist
+openpyxl
+xmlschema
+lxml
+python-keycloak
+authlib
+rasterio
+tqdm
+owslib
+tables
+# via pip
+#pandapower
+#pandapipes
+
