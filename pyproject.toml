@@ -58,3 +58,7 @@ quote-style = "double"
 [tool.black]
 line-length = 79
 target-version = ["py311"]
+
+[tool.isort]
+forced-separate = ["conftest"]
+force-single-line = true
