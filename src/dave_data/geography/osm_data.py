@@ -6,9 +6,9 @@ from geopandas import GeoSeries
 from pandas import concat
 from shapely.geometry import LineString, Point, Polygon
 
-from dave.datapool.osm_request import osm_request
-from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave_data.datapool.osm_request import osm_request
+from dave_data.settings import dave_settings
+from dave_data.toolbox import intersection_with_area
 
 
 def get_osm_data(grid_data, key, border, target_geom):

@@ -7,8 +7,8 @@ from copy import copy
 from lxml import etree
 from tqdm import tqdm
 
-from dave.converter.read_gaslib import read_gaslib_cs
-from dave.settings import dave_settings
+from dave_data.converter.read_gaslib import read_gaslib_cs
+from dave_data.settings import dave_settings
 
 
 def create_gaslib(grid_data, output_folder):

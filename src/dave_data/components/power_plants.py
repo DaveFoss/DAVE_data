@@ -9,9 +9,9 @@ from pandas import DataFrame, concat, to_numeric
 from shapely.geometry import LineString
 from tqdm import tqdm
 
-from dave.datapool.oep_request import oep_request
-from dave.settings import dave_settings
-from dave.toolbox import adress_to_coords, intersection_with_area, voronoi
+from dave_data.datapool.oep_request import oep_request
+from dave_data.settings import dave_settings
+from dave_data.toolbox import adress_to_coords, intersection_with_area, voronoi
 
 
 def aggregate_plants_ren(grid_data, plants_aggr, aggregate_name=None):

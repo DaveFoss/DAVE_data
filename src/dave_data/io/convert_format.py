@@ -8,7 +8,7 @@ from geopandas import GeoDataFrame, GeoSeries
 from pandas import DataFrame, Series
 from shapely.wkb import dumps, loads
 
-from dave.dave_structure import davestructure
+from dave_data.dave_structure import davestructure
 
 
 def wkb_to_wkt(data_df, crs):
@@ -54,7 +54,7 @@ def wkt_to_wkb_dataset(grid_data):
     """
     This function converts all geometry data from WKT (geometric object) to WKB (hexadecimal string)
     format for a given DaVe dataset
-    
+
     INPUT:
         **grid_data** (attr Dict) - DAVE Dataset with Data that contains geometry data as shapely \
             objects

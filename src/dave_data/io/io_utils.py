@@ -5,9 +5,8 @@
 from copy import deepcopy
 
 from geopandas import GeoSeries
-from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
 
-from dave.dave_structure import create_empty_dataset, davestructure
+from dave_data.dave_structure import create_empty_dataset, davestructure
 
 
 def isinstance_partial(obj, cls):
@@ -16,8 +15,7 @@ def isinstance_partial(obj, cls):
     return isinstance(obj, cls)
 
 
-class FromSerializableRegistryDaVe(FromSerializableRegistry):
-    from_serializable = deepcopy(FromSerializableRegistry.from_serializable)
+class FromSerializableRegistryDaVe():
     class_name = ""
     module_name = ""
 

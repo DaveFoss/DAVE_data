@@ -8,12 +8,12 @@ from pandas import DataFrame, concat
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
-from dave.io.file_io import from_json_string
-from dave.archiv_io import archiv_inventory
+from dave_data.io.file_io import from_json_string
+from dave_data.archiv_io import archiv_inventory
 from src.dave_data.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
-from dave.geography.osm_data import from_osm, road_junctions
-from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave_data.geography.osm_data import from_osm, road_junctions
+from dave_data.settings import dave_settings
+from dave_data.toolbox import intersection_with_area
 
 
 def _target_by_postalcode(grid_data, postalcode):
@@ -238,7 +238,7 @@ def target_area(
     OUTPUT:
 
     EXAMPLE:
-            from dave.topology import target_area
+            from dave_data.topology import target_area
             target_area(town_name = ['Kassel'], buffer=0)
     """
     # set progress bar

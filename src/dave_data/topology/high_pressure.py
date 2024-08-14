@@ -7,8 +7,8 @@ from pandas import Series, concat
 from tqdm import tqdm
 
 from src.dave_data.datapool.read_data import read_gaslib, read_scigridgas_iggielgn
-from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area
+from dave_data.settings import dave_settings
+from dave_data.toolbox import intersection_with_area
 
 
 def gaslib_pipe_clustering():

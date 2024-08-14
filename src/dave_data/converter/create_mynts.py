@@ -4,9 +4,9 @@
 
 from tqdm import tqdm
 
-from dave.converter.converter import Converter, Strategy
+from dave_data.converter.converter import Converter, Strategy
 from src.dave_data.converter.elements import Elements
-from dave.settings import dave_settings
+from dave_data.settings import dave_settings
 
 # dictionaries for Mynts text properties and numeric properties;  # !!! todo complete list
 # used to convert dave names to the corresponding Mynts properties

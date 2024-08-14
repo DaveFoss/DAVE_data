@@ -4,10 +4,10 @@
 
 from os import listdir, path
 
-from dave.io.file_io import from_hdf, to_hdf
+from dave_data.io.file_io import from_hdf, to_hdf
 from pandas import DataFrame, read_csv
 
-from dave.toolbox import get_data_path
+from dave_data.toolbox import get_data_path
 
 
 def archiv_inventory(grid_data, read_only=False):

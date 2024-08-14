@@ -8,9 +8,9 @@ from shapely.geometry import LineString, MultiPoint, Point
 from shapely.ops import nearest_points
 from tqdm import tqdm
 
-from dave.datapool.oep_request import oep_request
-from dave.settings import dave_settings
-from dave.toolbox import intersection_with_area, related_sub
+from dave_data.datapool.oep_request import oep_request
+from dave_data.settings import dave_settings
+from dave_data.toolbox import intersection_with_area, related_sub
 
 
 def nearest_road(building_centroids, roads):

@@ -8,8 +8,8 @@ from shapely.geometry import LineString
 from shapely.wkb import loads
 from xmlschema import XMLSchema
 
-from dave.settings import dave_settings
-from dave.toolbox import get_data_path
+from dave_data.settings import dave_settings
+from dave_data.toolbox import get_data_path
 
 
 def read_postal():
@@ -21,7 +21,7 @@ def read_postal():
          **postal areas** (GeodataFrame) - all german postalcode areas
 
     EXAMPLE:
-         import dave.datapool as data
+         import dave_data.datapool as data
 
          postal = data.read_postal()
     """
@@ -44,7 +44,7 @@ def read_federal_states():
          **federal_statess** (GeodataFrame) - all german federal states
 
     EXAMPLE:
-         import dave.datapool as data
+         import dave_data.datapool as data
 
          federal = data.read_federal_states()
     """
@@ -64,7 +64,7 @@ def read_nuts_regions(year):
          **nuts_regions** (GeodataFrame) - nuts regions of the years 2013, 2016 and 2021
 
     EXAMPLE:
-         import dave.datapool as data
+         import dave_data.datapool as data
 
          nuts = data.read_nuts_regions()
     """
@@ -94,7 +94,7 @@ def read_household_consumption():
          **houshold consumption data** (dict) - Informations for the german high pressure gas grid
 
     EXAMPLE:
-         import dave.datapool as data
+         import dave_data.datapool as data
 
          household_consumption = data.read_household_consumption()
     """
@@ -127,7 +127,7 @@ def read_scigridgas_iggielgn():
          **scigridgas iggielgn data** (dict) - Informations for the europe gas grid
 
     EXAMPLE:
-         import dave.datapool as data
+         import dave_data.datapool as data
 
          scigridgas_iggielgn = data.read_scigridgas_iggielgn()
     """

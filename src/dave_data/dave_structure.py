@@ -1,11 +1,10 @@
 from geopandas import GeoDataFrame, GeoSeries
-from pandapower.auxiliary import ADict
 from pandas import DataFrame
 
-from dave.settings import dave_settings
+from dave_data.settings import dave_settings
 
 
-class davestructure(ADict):
+class davestructure():
     """
     This class is for the davestracture as attributed dictionary and to makes it possible to \
     showing a overview of the DAVE dataset in the python console

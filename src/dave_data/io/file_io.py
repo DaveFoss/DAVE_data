@@ -8,32 +8,22 @@ from json import loads as json_loads
 from os.path import exists, isfile
 
 from geopandas import GeoDataFrame, GeoSeries
-from pandapipes.io.file_io import from_json as from_json_ppi
-from pandapipes.io.file_io import to_json as to_json_ppi
-from pandapower.file_io import from_json as from_json_pp
-from pandapower.file_io import to_json as to_json_pp
-from pandapower.io_utils import (
-    PPJSONDecoder,
-    PPJSONEncoder,
-    decrypt_string,
-    encrypt_string,
-    pp_hook,
-)
+
 from pandas import DataFrame, HDFStore
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.wkb import dumps, loads
 
-from dave.dave_structure import create_empty_dataset, davestructure
-from dave.io.convert_format import change_empty_gpd, wkb_to_wkt, wkt_to_wkb
-from dave.io.io_utils import FromSerializableRegistryDaVe, isinstance_partial
-from dave.settings import dave_settings
+from dave_data.dave_structure import create_empty_dataset, davestructure
+from dave_data.io.convert_format import change_empty_gpd, wkb_to_wkt, wkt_to_wkb
+from dave_data.io.io_utils import FromSerializableRegistryDaVe, isinstance_partial
+from dave_data.settings import dave_settings
 
 
 # --- JSON
 def from_json(file_path, encryption_key=None):
     """
     Load a dave dataset from a JSON file.
-    
+
     INPUT:
         **file_path** (str ) - absoulut path where the JSON file will be stored. If None is given \
             the function returns only a JSON string
@@ -67,7 +57,7 @@ def from_json(file_path, encryption_key=None):
 def from_json_string(json_string, encryption_key=None):
     """
     Load a dave dataset from a JSON string.
-    
+
     INPUT:
         **json_string** (str ) - json string
         **encrytion_key** (string, None) - If given, the DAVE dataset is stored as an encrypted \
@@ -89,9 +79,9 @@ def from_json_string(json_string, encryption_key=None):
 def to_json(grid_data, file_path=None, encryption_key=None):
     """
     This function saves a DAVE dataset in JSON format.
-    
+
     INPUT:
-        **grid_data** (attr Dict) - DAVE Dataset 
+        **grid_data** (attr Dict) - DAVE Dataset
         **file_path** (str , None) - absoulut path where the JSON file will be stored. If None is \
             given the function returns only a JSON string
         **encrytion_key** (string, None) - If given, the DaVe dataset is stored as an encrypted \
@@ -283,7 +273,7 @@ def pp_to_json(net, file_path):
     """
     This functions converts a pandapower model into a json file in consideration of converting \
     geometry objects to strings
-    
+
     INPUT:
         **net** (attr Dict) - pandapower network
         **file_path** (str) - absoulut path where the pandapower file will be stored in json format
@@ -313,10 +303,10 @@ def json_to_pp(file_path):
     """
     This functions converts a json file into a pandapower model in consideration of converting \
     geometry as strings to geometry objects
-    
+
     INPUT:
         **file_path** (str) - absoulut path where the pandapower file is stored in json format
-    
+
     OUTPUT:
         **net** (attr Dict) - pandapower network
     """
@@ -341,7 +331,7 @@ def ppi_to_json(net, file_path=None):
     """
     This functions converts a pandapipes model into a json file in consideration of converting \
     geometry objects to strings
-    
+
     INPUT:
         **net** (attr Dict) - pandapipes network
         **file_path** (str) - absoulut path where the pandapipes file will be stored in json format
@@ -367,10 +357,10 @@ def json_to_ppi(file_path):
     """
     This functions converts a json file into a pandapipes model in consideration of converting \
     geometry as strings to geometry objects
-    
+
     INPUT:
         **file_path** (str) - absoulut path where the pandapipes file is stored in json format
-    
+
     OUTPUT:
         **net** (attr Dict) - pandapipes network
     """

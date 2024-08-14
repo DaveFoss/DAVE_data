@@ -1,22 +1,4 @@
 # via conda forge
-Shapely
-geopandas 
-matplotlib
-geopy
-contextily
-pytest
-pytest-cov
-pytest-xdist
-openpyxl
-xmlschema
-lxml
-python-keycloak
-authlib
-rasterio
-tqdm
-owslib
-tables
-# via pip
-#pandapower
-#pandapipes
-
+Shapely~=2.0.5
+geopandas~=1.0.1
+pandas

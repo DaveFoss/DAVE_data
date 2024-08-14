@@ -8,7 +8,7 @@ from requests import get
 from shapely.geometry import Point
 from shapely.wkb import loads
 
-from dave.settings import dave_settings
+from dave_data.settings import dave_settings
 
 oep_url = "https://openenergy-platform.org"
 

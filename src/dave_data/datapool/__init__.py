@@ -2,6 +2,6 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-from dave.datapool.oep_request import *
-from dave.datapool.osm_request import *
+from dave_data.datapool.oep_request import *
+from dave_data.datapool.osm_request import *
 from src.dave_data.datapool.read_data import *

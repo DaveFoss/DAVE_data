@@ -7,7 +7,7 @@ from pandas import Series, concat
 from tqdm import tqdm
 
 from src.dave_data.datapool.read_data import read_scigridgas_iggielgn
-from dave.settings import dave_settings
+from dave_data.settings import dave_settings
 
 
 def create_sources(grid_data, scigrid_productions):

@@ -6,7 +6,7 @@ from networkx import Graph, connected_components
 from pandas import concat, isnull
 from tqdm import tqdm
 
-from dave.settings import dave_settings
+from dave_data.settings import dave_settings
 
 
 def disconnected_nodes(nodes, edges, min_number_nodes):

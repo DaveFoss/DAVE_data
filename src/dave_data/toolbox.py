@@ -12,7 +12,7 @@ from scipy.spatial import Voronoi
 from shapely.geometry import LineString, MultiPoint, MultiLineString
 from shapely.ops import cascaded_union, polygonize, linemerge
 
-from dave.settings import dave_settings
+from dave_data.settings import dave_settings
 
 
 def multiline_coords(line_geometry):

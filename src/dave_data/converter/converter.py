@@ -4,7 +4,7 @@
 
 from abc import ABC, abstractmethod
 
-from dave.io.file_io import from_json
+from dave_data.io.file_io import from_json
 
 
 # Strategy interface; used to define different output strategies dave2mynts, dave2...
