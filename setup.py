@@ -67,7 +67,8 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "pandas"
+        "pandas",
+        "geopandas"
     ],
     extras_require={
         # eg:

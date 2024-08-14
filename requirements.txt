@@ -1,9 +1,9 @@
 # via conda forge
-Shapely
-geopandas
-matplotlib
-geopy
-contextily
+Shapely~=2.0.5
+geopandas~=1.0.1
+matplotlib~=3.9.2
+geopy~=2.4.1
+contextily~=1.6.1
 pytest
 pytest-cov
 pytest-xdist
@@ -19,3 +19,9 @@ tables
 # via pip
 #pandapower
 #pandapipes
+
+pandas~=2.2.2
+six~=1.16.0
+setuptools~=70.0.0
+requests~=2.32.3
+numpy~=2.0.1
