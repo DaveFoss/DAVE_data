@@ -4,8 +4,8 @@
 
 import os
 
-from dave.create import create_grid
-from dave.settings import dave_settings
+from dave_data.create import create_grid
+from dave_data.settings import dave_settings
 
 """
 This is a example file for testing dave
