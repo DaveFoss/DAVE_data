@@ -1,6 +1,6 @@
 # via conda forge
 Shapely
-geopandas 
+geopandas
 matplotlib
 geopy
 contextily
@@ -19,4 +19,3 @@ tables
 # via pip
 #pandapower
 #pandapipes
-

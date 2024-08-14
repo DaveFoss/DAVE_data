@@ -379,7 +379,7 @@
                 scenario are set to the values given in the net file. This attribute is
                 optional with default value 0 (false).
                 </xsd:documentation>
-              </xsd:annotation>              
+              </xsd:annotation>
             </xsd:attribute>
           </xsd:complexType>
         </xsd:element>

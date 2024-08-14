@@ -1,8 +1,8 @@
-from geopandas import GeoDataFrame, GeoSeries
+from dave.settings import dave_settings
+from geopandas import GeoDataFrame
+from geopandas import GeoSeries
 from pandapower.auxiliary import ADict
 from pandas import DataFrame
-
-from dave.settings import dave_settings
 
 
 class davestructure(ADict):
@@ -27,11 +27,12 @@ class davestructure(ADict):
             if isinstance(self[key], davestructure):
                 titel += f"\n   - {key}:"
                 for key2 in list(self[key].keys()):
-                    if isinstance(self[key][key2], DataFrame) and not self[key][key2].empty:
+                    if (
+                        isinstance(self[key][key2], DataFrame)
+                        and not self[key][key2].empty
+                    ):
                         length = len(self[key][key2])
-                        titel += (
-                            f'\n\t   - {key2} ({length} {"elements" if length > 1 else "element"})'
-                        )
+                        titel += f'\n\t   - {key2} ({length} {"elements" if length > 1 else "element"})'
                     if isinstance(self[key][key2], davestructure):
                         titel += f"\n\t   - {key2}:"
                         for key3 in list(self[key][key2].keys()):
@@ -81,9 +82,15 @@ def create_empty_dataset():
             "ehv_data": davestructure(
                 {"ehv_nodes": GeoDataFrame([]), "ehv_lines": GeoDataFrame([])}
             ),
-            "hv_data": davestructure({"hv_nodes": GeoDataFrame([]), "hv_lines": GeoDataFrame([])}),
-            "mv_data": davestructure({"mv_nodes": GeoDataFrame([]), "mv_lines": GeoDataFrame([])}),
-            "lv_data": davestructure({"lv_nodes": GeoDataFrame([]), "lv_lines": GeoDataFrame([])}),
+            "hv_data": davestructure(
+                {"hv_nodes": GeoDataFrame([]), "hv_lines": GeoDataFrame([])}
+            ),
+            "mv_data": davestructure(
+                {"mv_nodes": GeoDataFrame([]), "mv_lines": GeoDataFrame([])}
+            ),
+            "lv_data": davestructure(
+                {"lv_nodes": GeoDataFrame([]), "lv_lines": GeoDataFrame([])}
+            ),
             "components_power": davestructure(
                 {
                     "loads": GeoDataFrame([]),
@@ -108,13 +115,22 @@ def create_empty_dataset():
             ),
             # gas grid data
             "hp_data": davestructure(
-                {"hp_junctions": GeoDataFrame([]), "hp_pipes": GeoDataFrame([])}
+                {
+                    "hp_junctions": GeoDataFrame([]),
+                    "hp_pipes": GeoDataFrame([]),
+                }
             ),
             "mp_data": davestructure(
-                {"mp_junctions": GeoDataFrame([]), "mp_pipes": GeoDataFrame([])}
+                {
+                    "mp_junctions": GeoDataFrame([]),
+                    "mp_pipes": GeoDataFrame([]),
+                }
             ),
             "lp_data": davestructure(
-                {"lp_junctions": GeoDataFrame([]), "lp_pipes": GeoDataFrame([])}
+                {
+                    "lp_junctions": GeoDataFrame([]),
+                    "lp_pipes": GeoDataFrame([]),
+                }
             ),
             "components_gas": davestructure(
                 {

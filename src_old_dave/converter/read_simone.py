@@ -4,16 +4,20 @@
 
 from xml.etree.ElementTree import parse
 
-from geopandas import GeoDataFrame
-from pandas import DataFrame, read_json, Series
-from shapely.geometry import LineString, Point
-
 from dave.client.dave_request import from_database
 from dave.dave_structure import create_empty_dataset
 from dave.settings import dave_settings
+from geopandas import GeoDataFrame
+from pandas import DataFrame
+from pandas import Series
+from pandas import read_json
+from shapely.geometry import LineString
+from shapely.geometry import Point
 
 
-def read_simone_file(topology_path, scenario_path=None, result_path=None, crs="epsg:4326"):
+def read_simone_file(
+    topology_path, scenario_path=None, result_path=None, crs="epsg:4326"
+):
     """
     This function reads given simone files in xml format
 
@@ -40,8 +44,12 @@ def read_simone_file(topology_path, scenario_path=None, result_path=None, crs="e
             for elm in child:
                 data_nodes[elm.attrib["id"]] = {
                     "source_name": elm.attrib["name"],
-                    "type": elm.attrib["alias"] if len(elm.attrib["alias"]) > 0 else float("nan"),
-                    "geometry": Point(float(elm.attrib["x"]), float(elm.attrib["y"])),
+                    "type": elm.attrib["alias"]
+                    if len(elm.attrib["alias"]) > 0
+                    else float("nan"),
+                    "geometry": Point(
+                        float(elm.attrib["x"]), float(elm.attrib["y"])
+                    ),
                     "height_m": float(elm.attrib["height"]),
                     "source_id": elm.attrib[
                         "id"
@@ -173,8 +181,12 @@ def read_simone_file(topology_path, scenario_path=None, result_path=None, crs="e
     data_compressor = DataFrame(data_compressor).T
     data_valve = DataFrame(data_valve).T
     data = {
-        "node": GeoDataFrame(data_nodes, geometry=data_nodes["geometry"], crs=crs),
-        "pipe": GeoDataFrame(data_pipes, geometry=data_pipes.geometry, crs=crs),
+        "node": GeoDataFrame(
+            data_nodes, geometry=data_nodes["geometry"], crs=crs
+        ),
+        "pipe": GeoDataFrame(
+            data_pipes, geometry=data_pipes.geometry, crs=crs
+        ),
         "compressor station": data_compressor,
         "valve": data_valve,
         # 'joint': data_elements[data_elements.type == 'joint'],
@@ -186,7 +198,9 @@ def read_simone_file(topology_path, scenario_path=None, result_path=None, crs="e
 
     # read scenario data from file
     if scenario_path:
-        data["node_parameter"], data["element_parameter"] = read_json(scenario_path)
+        data["node_parameter"], data["element_parameter"] = read_json(
+            scenario_path
+        )
 
     # read result data from file
     if result_path:
@@ -210,9 +224,15 @@ def read_simone_db(network, scenario=None):
     """
     # request topology from database for given network
     data = {}
-    data["node"] = from_database(database="tub", collection=f"{network}_net_node")
-    data["pipe"] = from_database(database="tub", collection=f"{network}_net_pipe")
-    data["valve"] = from_database(database="tub", collection=f"{network}_net_valve")
+    data["node"] = from_database(
+        database="tub", collection=f"{network}_net_node"
+    )
+    data["pipe"] = from_database(
+        database="tub", collection=f"{network}_net_pipe"
+    )
+    data["valve"] = from_database(
+        database="tub", collection=f"{network}_net_valve"
+    )
     data["compressor station"] = from_database(
         database="tub", collection=f"{network}_net_compressor station"
     )
@@ -222,7 +242,8 @@ def read_simone_db(network, scenario=None):
             database="tub", collection=f"{network}_{scenario}_parameters_nodes"
         )
         data["element_parameter"] = from_database(
-            database="tub", collection=f"{network}_{scenario}_parameters_elements"
+            database="tub",
+            collection=f"{network}_{scenario}_parameters_elements",
         )
         data["node_results"] = from_database(
             database="tub", collection=f"{network}_{scenario}_results_nodes"
@@ -260,23 +281,41 @@ def simone_to_dave(data_simone):
     grid_data.components_gas.valves = data_simone["valve"]
 
     # add dave name
-    grid_data.hp_data.hp_junctions = grid_data.hp_data.hp_junctions.reset_index(drop=True)
+    grid_data.hp_data.hp_junctions = (
+        grid_data.hp_data.hp_junctions.reset_index(drop=True)
+    )
     grid_data.hp_data.hp_junctions.insert(
         0,
         "dave_name",
-        Series(list(map(lambda x: f"junction_1_{x}", grid_data.hp_data.hp_junctions.index))),
+        Series(
+            list(
+                map(
+                    lambda x: f"junction_1_{x}",
+                    grid_data.hp_data.hp_junctions.index,
+                )
+            )
+        ),
     )
-    grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.reset_index(drop=True)
+    grid_data.hp_data.hp_pipes = grid_data.hp_data.hp_pipes.reset_index(
+        drop=True
+    )
     grid_data.hp_data.hp_pipes.insert(
         0,
         "dave_name",
-        Series(list(map(lambda x: f"pipe_1_{x}", grid_data.hp_data.hp_pipes.index))),
+        Series(
+            list(
+                map(lambda x: f"pipe_1_{x}", grid_data.hp_data.hp_pipes.index)
+            )
+        ),
     )
     # TODO: ids ins dave namen ändern
     # auch noch dave name für valve und cs
 
     # write scenario data into dave dataset
-    if "node_parameter" in data_simone.keys() and "element_parameter" in data_simone.keys():
+    if (
+        "node_parameter" in data_simone.keys()
+        and "element_parameter" in data_simone.keys()
+    ):
         # filter scenario data
         n_par = data_simone["node_parameter"]
         e_par = data_simone["element_parameter"]
@@ -284,47 +323,65 @@ def simone_to_dave(data_simone):
         factor_mw_to_kb_per_s = dave_settings["factor_mw_to_kb_per_s"]
         grid_data.components_gas.sources = n_par[
             (n_par["supply"] == 1)
-            & (n_par["parameters"].apply(lambda x: "Q" in x and "PSET" not in x))
+            & (
+                n_par["parameters"].apply(
+                    lambda x: "Q" in x and "PSET" not in x
+                )
+            )
         ]
-        grid_data.components_gas.sources["mdot_kg_per_s"] = grid_data.components_gas.sources[
-            "values"
-        ].apply(lambda x: x[0] * factor_mw_to_kb_per_s)
-        grid_data.components_gas.sources.rename(columns={"name": "source_name"}, inplace=True)
-        grid_data.components_gas.sources["junction"] = grid_data.components_gas.sources[
-            "source_name"
-        ].apply(
-            lambda x: grid_data.hp_data.hp_junctions[
-                grid_data.hp_data.hp_junctions.source_name == x
-            ]
-            .iloc[0]
-            .source_id
+        grid_data.components_gas.sources["mdot_kg_per_s"] = (
+            grid_data.components_gas.sources[
+                "values"
+            ].apply(lambda x: x[0] * factor_mw_to_kb_per_s)
+        )
+        grid_data.components_gas.sources.rename(
+            columns={"name": "source_name"}, inplace=True
+        )
+        grid_data.components_gas.sources["junction"] = (
+            grid_data.components_gas.sources[
+                "source_name"
+            ].apply(
+                lambda x: grid_data.hp_data.hp_junctions[
+                    grid_data.hp_data.hp_junctions.source_name == x
+                ]
+                .iloc[0]
+                .source_id
+            )
         )
 
         # create sinks
         grid_data.components_gas.sinks = n_par[
-            (n_par["supply"] == 0) & (n_par["parameters"].apply(lambda x: "Q" in x))
+            (n_par["supply"] == 0)
+            & (n_par["parameters"].apply(lambda x: "Q" in x))
         ]
-        grid_data.components_gas.sinks["mdot_kg_per_s"] = grid_data.components_gas.sinks[
-            "values"
-        ].apply(lambda x: x[0] * factor_mw_to_kb_per_s)
-        grid_data.components_gas.sinks.rename(columns={"name": "source_name"}, inplace=True)
-        grid_data.components_gas.sinks["junction"] = grid_data.components_gas.sinks[
-            "source_name"
-        ].apply(
-            lambda x: grid_data.hp_data.hp_junctions[
-                grid_data.hp_data.hp_junctions.source_name == x
-            ]
-            .iloc[0]
-            .source_id
+        grid_data.components_gas.sinks["mdot_kg_per_s"] = (
+            grid_data.components_gas.sinks[
+                "values"
+            ].apply(lambda x: x[0] * factor_mw_to_kb_per_s)
+        )
+        grid_data.components_gas.sinks.rename(
+            columns={"name": "source_name"}, inplace=True
+        )
+        grid_data.components_gas.sinks["junction"] = (
+            grid_data.components_gas.sinks[
+                "source_name"
+            ].apply(
+                lambda x: grid_data.hp_data.hp_junctions[
+                    grid_data.hp_data.hp_junctions.source_name == x
+                ]
+                .iloc[0]
+                .source_id
+            )
         )
 
         # adjust valve data
-        grid_data.components_gas.valves[
-            "opened"
-        ] = grid_data.components_gas.valves.source_name.apply(
-            lambda x: True
-            if e_par[e_par["name"] == x].iloc[0]["values"][0] in ["BP", "ON"]
-            else False
+        grid_data.components_gas.valves["opened"] = (
+            grid_data.components_gas.valves.source_name.apply(
+                lambda x: True
+                if e_par[e_par["name"] == x].iloc[0]["values"][0]
+                in ["BP", "ON"]
+                else False
+            )
         )
 
         # adjust compressor stations
@@ -332,7 +389,8 @@ def simone_to_dave(data_simone):
 
         # adjust junction data for external grid junctions
         ext_grid = n_par[
-            (n_par["supply"] == 1) & (n_par["parameters"].apply(lambda x: "PSET" in x))
+            (n_par["supply"] == 1)
+            & (n_par["parameters"].apply(lambda x: "PSET" in x))
         ]
         for _, junc in ext_grid.iterrows():
             junction_idx = grid_data.hp_data.hp_junctions[
@@ -343,37 +401,40 @@ def simone_to_dave(data_simone):
             ] = junc["values"][1]
 
     # write result data into dave dataset
-    if "node_results" in data_simone.keys() and "element_results" in data_simone.keys():
+    if (
+        "node_results" in data_simone.keys()
+        and "element_results" in data_simone.keys()
+    ):
         # filter scenario data
         n_res = data_simone["node_results"]
         e_res = data_simone["element_results"]
 
         # add junction result data
-        grid_data.hp_data.hp_junctions[
-            "res_simone_p_barg"
-        ] = grid_data.hp_data.hp_junctions.source_name.apply(
-            lambda x: n_res[n_res["name"] == x].iloc[0]["values"][1]
-            if not n_res[n_res["name"] == x].empty
-            else "nan"
+        grid_data.hp_data.hp_junctions["res_simone_p_barg"] = (
+            grid_data.hp_data.hp_junctions.source_name.apply(
+                lambda x: n_res[n_res["name"] == x].iloc[0]["values"][1]
+                if not n_res[n_res["name"] == x].empty
+                else "nan"
+            )
         )
-        grid_data.hp_data.hp_junctions[
-            "res_simone_q_eff_mw"
-        ] = grid_data.hp_data.hp_junctions.source_name.apply(
-            lambda x: n_res[n_res["name"] == x].iloc[0]["values"][0]
-            if not n_res[n_res["name"] == x].empty
-            else "nan"
+        grid_data.hp_data.hp_junctions["res_simone_q_eff_mw"] = (
+            grid_data.hp_data.hp_junctions.source_name.apply(
+                lambda x: n_res[n_res["name"] == x].iloc[0]["values"][0]
+                if not n_res[n_res["name"] == x].empty
+                else "nan"
+            )
         )
         # add pipe result data
         pipe_res = e_res[e_res.type == "pipe"]
-        grid_data.hp_data.hp_pipes[
-            "res_simone_p_barg"
-        ] = grid_data.hp_data.hp_pipes.source_name.apply(
-            lambda x: pipe_res[pipe_res["name"] == x].iloc[0]["values"][2]
+        grid_data.hp_data.hp_pipes["res_simone_p_barg"] = (
+            grid_data.hp_data.hp_pipes.source_name.apply(
+                lambda x: pipe_res[pipe_res["name"] == x].iloc[0]["values"][2]
+            )
         )
-        grid_data.hp_data.hp_pipes[
-            "res_simone_v_m/s"
-        ] = grid_data.hp_data.hp_pipes.source_name.apply(
-            lambda x: pipe_res[pipe_res["name"] == x].iloc[0]["values"][1]
+        grid_data.hp_data.hp_pipes["res_simone_v_m/s"] = (
+            grid_data.hp_data.hp_pipes.source_name.apply(
+                lambda x: pipe_res[pipe_res["name"] == x].iloc[0]["values"][1]
+            )
         )
 
     return grid_data

@@ -12,7 +12,7 @@
       This file constitutes a specification for XML files defining a gas network.
       Basic properties of generic network elements are inherited from the
       XML-Schema <a href="Framework_xsd.html">Framework.xsd</a>. Other basic types used within this schema are
-      defined in <a href="Topology_xsd.html">Topology.xsd</a>. The tag <a href="#id84">network</a> must be the root 
+      defined in <a href="Topology_xsd.html">Topology.xsd</a>. The tag <a href="#id84">network</a> must be the root
       element of each XML document conforming to this schema.
     </xsd:documentation>
   </xsd:annotation>
@@ -365,7 +365,7 @@
                 station, a valve, etc. Note that the flow value is signed, where a positive sign
                 (value greater than 0) means a flow in direction of the connection, and a negative
                 sign (value lower than 0) means a flow in the opposite direction of the connection.
-                Note that norm volume flow does not depend on gas pressure or density. 
+                Note that norm volume flow does not depend on gas pressure or density.
                 Its unit is specified by type.</xsd:documentation>
             </xsd:annotation>
           </xsd:element>
@@ -382,22 +382,22 @@
           </xsd:element>
           <xsd:element name="operatingVolumeFlowMin" type="framework:flowType" minOccurs="0">
             <xsd:annotation>
-              <xsd:documentation> operatingVolumeFlowMin is the minimal directed operating volume 
-                gas flow on the corresponding  abstract connection, i.e., an arc in the network, 
-                which can be, e.g., a pipe, a compressor station, a valve, etc. Note that the flow value 
-                is signed, where a positive sign (value greater than 0) means a flow in direction of 
-                the connection, and a negative sign (value lower than 0) means a flow in the opposite 
-                direction of the connection. Note that operating volume flow depends on gas pressure 
+              <xsd:documentation> operatingVolumeFlowMin is the minimal directed operating volume
+                gas flow on the corresponding  abstract connection, i.e., an arc in the network,
+                which can be, e.g., a pipe, a compressor station, a valve, etc. Note that the flow value
+                is signed, where a positive sign (value greater than 0) means a flow in direction of
+                the connection, and a negative sign (value lower than 0) means a flow in the opposite
+                direction of the connection. Note that operating volume flow depends on gas pressure
                 and density. Its unit is specified by type. </xsd:documentation>
             </xsd:annotation>
           </xsd:element>
           <xsd:element name="operatingVolumeFlowMax" type="framework:flowType" minOccurs="0">
             <xsd:annotation>
-              <xsd:documentation> operatingVolumeFlowMax is the maximal directed operating volume 
-                gas flow on the corresponding abstract connection, i.e., an arc in the network, 
-                which can be, e.g., a pipe, a compressor station, a valve, etc. Note that the flow 
-                value is signed, where a positive sign (value greater than 0) means a flow in 
-                direction of the connection. Note that operating volume flow depends on gas pressure 
+              <xsd:documentation> operatingVolumeFlowMax is the maximal directed operating volume
+                gas flow on the corresponding abstract connection, i.e., an arc in the network,
+                which can be, e.g., a pipe, a compressor station, a valve, etc. Note that the flow
+                value is signed, where a positive sign (value greater than 0) means a flow in
+                direction of the connection. Note that operating volume flow depends on gas pressure
                 and density. Its unit is specified by type. </xsd:documentation>
             </xsd:annotation>
           </xsd:element>
@@ -944,4 +944,3 @@
   </xsd:complexType>
 
 </xsd:schema>
-

@@ -2,13 +2,12 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+from dave.settings import dave_settings
 from geopandas import GeoDataFrame
 from pandas import DataFrame
 from requests import get
 from shapely.geometry import Point
 from shapely.wkb import loads
-
-from dave.settings import dave_settings
 
 oep_url = "https://openenergy-platform.org"
 
@@ -28,7 +27,9 @@ def request_to_df(request):
     return request_data
 
 
-def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
+def oep_request(
+    table, schema=None, where=None, geometry=None, db_update=False
+):
     """
     This function is to requesting data from the open energy platform.
     The available data is to find on https://openenergy-platform.org/dataedit/schemas
@@ -56,7 +57,15 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     if where:
         request = get(
             "".join(
-                [oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/?where=", where]
+                [
+                    oep_url,
+                    "/api/v0/schema/",
+                    schema,
+                    "/tables/",
+                    table,
+                    "/rows/?where=",
+                    where,
+                ]
             )
         )
     elif dave_settings["oep_tables"][table][2] is not None:
@@ -75,7 +84,16 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
         )
     else:
         request = get(
-            "".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/rows/"])
+            "".join(
+                [
+                    oep_url,
+                    "/api/v0/schema/",
+                    schema,
+                    "/tables/",
+                    table,
+                    "/rows/",
+                ]
+            )
         )
     # convert data to dataframe
     request_data = request_to_df(request)
@@ -85,16 +103,22 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
     if geometry is not None:
         # --- convert into geopandas DataFrame with right crs
         # transform WKB to WKT / Geometry
-        request_data["geometry"] = request_data[geometry].apply(lambda x: loads(x, hex=True))
+        request_data["geometry"] = request_data[geometry].apply(
+            lambda x: loads(x, hex=True)
+        )
         # create geoDataFrame
         request_data = GeoDataFrame(
-            request_data, crs=dave_settings["crs_main"], geometry=request_data.geometry
+            request_data,
+            crs=dave_settings["crs_main"],
+            geometry=request_data.geometry,
         )
     # fix some mistakes in the oep data
     if table == "ego_pf_hv_transformer":
         # change geometry to point because in original data the geometry was lines with length 0
         request_data["geometry"] = request_data.geometry.apply(
-            lambda x: Point(x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1])
+            lambda x: Point(
+                x.geoms[0].coords[:][0][0], x.geoms[0].coords[:][0][1]
+            )
         )
     if table == "ego_dp_mvlv_substation":
         # change wrong crs from oep
@@ -103,7 +127,11 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
 
     # --- request meta informations for a dataset
     # !!! Todo: seperate option for getting data from DB. When there are no meta data in DB then check OEP Url
-    request = get("".join([oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"]))
+    request = get(
+        "".join(
+            [oep_url, "/api/v0/schema/", schema, "/tables/", table, "/meta/"]
+        )
+    )
     # convert data to meta dict  # !!! When getting data from database the meta informations should also came from db
     if request.status_code == 200:  # 200 is the code of a successful request
         request_meta = request.json()
@@ -115,12 +143,16 @@ def oep_request(table, schema=None, where=None, geometry=None, db_update=False):
                     "Description": request_meta["description"],
                     "Spatial": [request_meta["spatial"]],
                     "Licenses": request_meta["licenses"],
-                    "metadata_version": request_meta["metaMetadata"]["metadataVersion"],
+                    "metadata_version": request_meta["metaMetadata"][
+                        "metadataVersion"
+                    ],
                 },
                 index=[0],
             ),
             "Sources": DataFrame(request_meta["sources"]),
-            "Data": DataFrame(request_meta["resources"][0]["schema"]["fields"]),
+            "Data": DataFrame(
+                request_meta["resources"][0]["schema"]["fields"]
+            ),
         }
     else:
         meta_data = {}

@@ -2,13 +2,14 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-from geopandas import GeoSeries
-from pandas import concat
-from shapely.geometry import LineString, Point, Polygon
-
 from dave.datapool.osm_request import osm_request
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
+from geopandas import GeoSeries
+from pandas import concat
+from shapely.geometry import LineString
+from shapely.geometry import Point
+from shapely.geometry import Polygon
 
 
 def get_osm_data(grid_data, key, border, target_geom):
@@ -69,7 +70,9 @@ def from_osm(
     # search relevant road informations in the target area
     if roads:
         roads = get_osm_data(grid_data, "road", border, target_geom)
-        grid_data.roads.roads = concat([grid_data.roads.roads, roads], ignore_index=True)
+        grid_data.roads.roads = concat(
+            [grid_data.roads.roads, roads], ignore_index=True
+        )
         # update progress
         pbar.update(progress_step / objects_con)
     # search irrelevant road informations in the target area for a better overview
@@ -96,7 +99,9 @@ def from_osm(
                 if isinstance(land.geometry, LineString):
                     # A LinearRing must have at least 3 coordinate tuples
                     if len(land.geometry.coords[:]) >= 3:
-                        landuse.at[land.name, "geometry"] = Polygon(land.geometry)
+                        landuse.at[land.name, "geometry"] = Polygon(
+                            land.geometry
+                        )
                     else:
                         landuse.drop([land.name], inplace=True)
                 elif isinstance(land.geometry, Point):
@@ -110,7 +115,9 @@ def from_osm(
             landuse_3035 = landuse.to_crs(dave_settings["crs_meter"])
             landuse["area_km2"] = landuse_3035.area / 1e06
             # write landuse into grid_data
-            grid_data.landuse = concat([grid_data.landuse, landuse], ignore_index=True)
+            grid_data.landuse = concat(
+                [grid_data.landuse, landuse], ignore_index=True
+            )
             grid_data.landuse.set_crs(dave_settings["crs_main"], inplace=True)
         # update progress
         pbar.update(progress_step / objects_con)
@@ -124,21 +131,34 @@ def from_osm(
             commercial = dave_settings["buildings_commercial"]
             # improve building tag with landuse parameter
             if landuse if isinstance(landuse, bool) else not landuse.empty:
-                landuse_retail = landuse[landuse.landuse == "retail"].geometry.unary_union
-                landuse_industrial = landuse[landuse.landuse == "industrial"].geometry.unary_union
-                landuse_commercial = landuse[landuse.landuse == "commercial"].geometry.unary_union
+                landuse_retail = landuse[
+                    landuse.landuse == "retail"
+                ].geometry.unary_union
+                landuse_industrial = landuse[
+                    landuse.landuse == "industrial"
+                ].geometry.unary_union
+                landuse_commercial = landuse[
+                    landuse.landuse == "commercial"
+                ].geometry.unary_union
                 for i, building in buildings.iterrows():
                     if building.building not in commercial:
-                        if not landuse_retail is None and building.geometry.intersects(
-                            landuse_retail
+                        if (
+                            landuse_retail is not None
+                            and building.geometry.intersects(landuse_retail)
                         ):
                             buildings.at[i, "building"] = "retail"
-                        elif not landuse_industrial is None and building.geometry.intersects(
-                            landuse_industrial
+                        elif (
+                            landuse_industrial is not None
+                            and building.geometry.intersects(
+                                landuse_industrial
+                            )
                         ):
                             buildings.at[i, "building"] = "industrial"
-                        elif not landuse_commercial is None and building.geometry.intersects(
-                            landuse_commercial
+                        elif (
+                            landuse_commercial is not None
+                            and building.geometry.intersects(
+                                landuse_commercial
+                            )
                         ):
                             buildings.at[i, "building"] = "commercial"
             # write buildings into grid_data
@@ -159,7 +179,9 @@ def from_osm(
             grid_data.buildings.other = concat(
                 [
                     grid_data.buildings.other,
-                    buildings[~buildings.building.isin(residential + commercial)],
+                    buildings[
+                        ~buildings.building.isin(residential + commercial)
+                    ],
                 ],
                 ignore_index=True,
             )
@@ -168,13 +190,17 @@ def from_osm(
     # search railway informations in the target area
     if railways:
         railways = get_osm_data(grid_data, "railway", border, target_geom)
-        grid_data.railways = concat([grid_data.railways, railways], ignore_index=True)
+        grid_data.railways = concat(
+            [grid_data.railways, railways], ignore_index=True
+        )
         # update progress
         pbar.update(progress_step / objects_con)
     # search waterway informations in the target area
     if waterways:
         waterways = get_osm_data(grid_data, "waterway", border, target_geom)
-        grid_data.waterways = concat([grid_data.waterways, waterways], ignore_index=True)
+        grid_data.waterways = concat(
+            [grid_data.waterways, waterways], ignore_index=True
+        )
         # update progress
         pbar.update(progress_step / objects_con)
 
@@ -190,7 +216,9 @@ def road_junctions(grid_data):
             # considered line
             line_geometry = roads.iloc[0].geometry
             # check considered line surrounding for possible intersectionpoints with other lines
-            lines_cross = roads[roads.geometry.crosses(line_geometry.buffer(1e-04))]
+            lines_cross = roads[
+                roads.geometry.crosses(line_geometry.buffer(1e-04))
+            ]
             if not lines_cross.empty:
                 other_lines = lines_cross.geometry.unary_union
                 # find line intersections between considered line and other lines

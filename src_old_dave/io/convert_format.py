@@ -4,11 +4,13 @@
 
 from copy import deepcopy
 
-from geopandas import GeoDataFrame, GeoSeries
-from pandas import DataFrame, Series
-from shapely.wkb import dumps, loads
-
 from dave.dave_structure import davestructure
+from geopandas import GeoDataFrame
+from geopandas import GeoSeries
+from pandas import DataFrame
+from pandas import Series
+from shapely.wkb import dumps
+from shapely.wkb import loads
 
 
 def wkb_to_wkt(data_df, crs):
@@ -54,7 +56,7 @@ def wkt_to_wkb_dataset(grid_data):
     """
     This function converts all geometry data from WKT (geometric object) to WKB (hexadecimal string)
     format for a given DaVe dataset
-    
+
     INPUT:
         **grid_data** (attr Dict) - DAVE Dataset with Data that contains geometry data as shapely \
             objects
@@ -68,7 +70,9 @@ def wkt_to_wkb_dataset(grid_data):
             for key_sec in dataset[key].keys():
                 if isinstance(dataset[key][key_sec], davestructure):
                     for key_trd in dataset[key][key_sec].keys():
-                        if isinstance(dataset[key][key_sec][key_trd], GeoDataFrame):
+                        if isinstance(
+                            dataset[key][key_sec][key_trd], GeoDataFrame
+                        ):
                             dataset[key][key_sec][key_trd] = wkt_to_wkb(
                                 dataset[key][key_sec][key_trd]
                             )
@@ -95,12 +99,18 @@ def change_empty_gpd(grid_data):
             for key_sec in dataset[key].keys():
                 if isinstance(dataset[key][key_sec], davestructure):
                     for key_trd in dataset[key][key_sec].keys():
-                        if isinstance(dataset[key][key_sec][key_trd], GeoDataFrame):
+                        if isinstance(
+                            dataset[key][key_sec][key_trd], GeoDataFrame
+                        ):
                             if dataset[key][key_sec][key_trd].empty:
                                 dataset[key][key_sec][key_trd] = DataFrame([])
-                        elif isinstance(dataset[key][key_sec][key_trd], GeoSeries):
+                        elif isinstance(
+                            dataset[key][key_sec][key_trd], GeoSeries
+                        ):
                             if dataset[key][key_sec][key_trd].empty:
-                                dataset[key][key_sec][key_trd] = Series([], dtype="object")
+                                dataset[key][key_sec][key_trd] = Series(
+                                    [], dtype="object"
+                                )
                 elif isinstance(dataset[key][key_sec], GeoDataFrame):
                     if dataset[key][key_sec].empty:
                         dataset[key][key_sec] = DataFrame([])

@@ -12,7 +12,7 @@
       connections-tag encloses the defintion of the arcs of the network. Nodes and arcs have to be
       given together with an unique ID. </xsd:documentation>
   </xsd:annotation>
-  
+
   <xsd:element name="network" type="framework:networkType">
     <xsd:annotation>
       <xsd:documentation> Root element of any XML document conforming to this schema.  </xsd:documentation>
@@ -25,16 +25,16 @@
       <xsd:selector xpath="framework:connections/framework/connection"/>
       <xsd:field xpath="@head"/>
     </xsd:keyref>
-    <xsd:key name="nodeID"> 
+    <xsd:key name="nodeID">
       <xsd:selector xpath="framework:nodes/framework:node"/>
       <xsd:field xpath="@id"/>
-    </xsd:key> 
-    <xsd:key name="arcID"> 
+    </xsd:key>
+    <xsd:key name="arcID">
       <xsd:selector xpath="framework:connections/framework:connection"/>
       <xsd:field xpath="@id"/>
-    </xsd:key> 
+    </xsd:key>
   </xsd:element>
-  
+
   <xsd:complexType name="networkType">
     <xsd:annotation>
       <xsd:documentation> A network must contain exactly one information-, nodes- and
@@ -58,7 +58,7 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  
+
   <xsd:complexType name="informationType">
     <xsd:annotation>
       <xsd:documentation> Meta information about a network consists of an unique
@@ -94,7 +94,7 @@
       </xsd:element>
     </xsd:sequence>
   </xsd:complexType>
-  
+
   <xsd:complexType name="nodesType">
     <xsd:annotation>
       <xsd:documentation> Abstract type of a network node. </xsd:documentation>
@@ -103,7 +103,7 @@
       <xsd:element minOccurs="1" maxOccurs="unbounded" ref="framework:node"/>
     </xsd:sequence>
   </xsd:complexType>
-  
+
   <xsd:complexType name="connectionsType">
     <xsd:annotation>
       <xsd:documentation> Abstract type of a network arc. </xsd:documentation>
@@ -201,7 +201,7 @@
       <xsd:pattern value="[a-zA-Z]{1}[a-zA-Z0-9_]*"/>
     </xsd:restriction>
   </xsd:simpleType>
-  
+
   <xsd:simpleType name="ambiguousIdentifier">
     <xsd:annotation>
       <xsd:documentation> An identifier must start with a letter and
@@ -214,5 +214,5 @@
       <xsd:pattern value="[a-zA-Z]{1}[a-zA-Z0-9_]*"/>
     </xsd:restriction>
   </xsd:simpleType>
-  
+
 </xsd:schema>

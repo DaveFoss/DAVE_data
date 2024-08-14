@@ -4,10 +4,12 @@
 
 from copy import deepcopy
 
+from dave.dave_structure import create_empty_dataset
+from dave.dave_structure import davestructure
 from geopandas import GeoSeries
-from pandapower.io_utils import FromSerializableRegistry, to_serializable, with_signature
-
-from dave.dave_structure import create_empty_dataset, davestructure
+from pandapower.io_utils import FromSerializableRegistry
+from pandapower.io_utils import to_serializable
+from pandapower.io_utils import with_signature
 
 
 def isinstance_partial(obj, cls):
@@ -21,7 +23,9 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
     class_name = ""
     module_name = ""
 
-    @from_serializable.register(class_name="davestructure", module_name="dave.dave_structure")
+    @from_serializable.register(
+        class_name="davestructure", module_name="dave.dave_structure"
+    )
     def davestructure(self):
         if isinstance(self.obj, str):  # backwards compatibility
             from dave_client.io.file_io import from_json_string
@@ -37,7 +41,10 @@ class FromSerializableRegistryDaVe(FromSerializableRegistry):
                     dataset = dave_dataset[key]
                 elif isinstance(dave_dataset[key], davestructure):
                     for key_sec in dave_dataset[key].keys():
-                        if next(iter(self.obj)) in dave_dataset[key][key_sec].keys():
+                        if (
+                            next(iter(self.obj))
+                            in dave_dataset[key][key_sec].keys()
+                        ):
                             dataset = dave_dataset[key][key_sec]
             if dataset is None:
                 dataset = dave_dataset

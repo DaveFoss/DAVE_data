@@ -68,13 +68,29 @@ def set_dave_settings():
                 "leisure",
                 ["golf_course", "garden", "park"],
                 ["way", "relation"],
-                ["leisure", "landuse", "natural", "name", "geometry", "id", "surface"],
+                [
+                    "leisure",
+                    "landuse",
+                    "natural",
+                    "name",
+                    "geometry",
+                    "id",
+                    "surface",
+                ],
             ),
             "natural": (
                 "natural",
                 ["scrub", "grassland", "water", "wood"],
                 ["way", "relation"],
-                ["natural", "landuse", "leisure", "name", "geometry", "id", "surface"],
+                [
+                    "natural",
+                    "landuse",
+                    "leisure",
+                    "name",
+                    "geometry",
+                    "id",
+                    "surface",
+                ],
             ),
             "building": (
                 "building",
@@ -105,7 +121,16 @@ def set_dave_settings():
                     "tram",
                 ],
                 ["way"],
-                ["name", "railway", "geometry", "tram", "train", "usage", "voltage", "id"],
+                [
+                    "name",
+                    "railway",
+                    "geometry",
+                    "tram",
+                    "train",
+                    "usage",
+                    "voltage",
+                    "id",
+                ],
             ),
             "waterway": (
                 "waterway",
@@ -177,7 +202,7 @@ def set_dave_settings():
         # --- assumptions at gas grid generating:
         # hp level
         "hp_nodes_height_m": 1,  # dummy value, must be changed
-        "hp_pipes_k_mm": float(0.1),  # value based on shutterwald data, must be changed
+        "hp_pipes_k_mm": 0.1,  # value based on shutterwald data, must be changed
         "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
         # --- assumptions at model utils:
         "min_number_nodes": 4,

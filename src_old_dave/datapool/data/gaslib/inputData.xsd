@@ -9,9 +9,9 @@
         <xsd:documentation> This XML-Schema has the single purpose to include all other XML-Schemas
             which constitute a specification of the validation of a nomination on a gas network.
             For the specification of XML-files defining a gas network together with its compressor stations
-            have a look into the specification of <a href="Gas_xsd.html">Gas.xsd</a> and into <a href="CompressorStations_xsd.html">CompressorStations.xsd</a>. The file format for 
+            have a look into the specification of <a href="Gas_xsd.html">Gas.xsd</a> and into <a href="CompressorStations_xsd.html">CompressorStations.xsd</a>. The file format for
             the definition of a nomination is given in <a href="Scenario_xsd.html">Scenario.xsd</a>. To learn how combined decisions are passed
-            to a solver please read the specification of <a href="CombinedDecisions_xsd.html">CombinedDecisions.xsd</a>. 
+            to a solver please read the specification of <a href="CombinedDecisions_xsd.html">CombinedDecisions.xsd</a>.
         </xsd:documentation>
     </xsd:annotation>
 

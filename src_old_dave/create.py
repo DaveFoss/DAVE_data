@@ -2,23 +2,33 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-from os import environ, makedirs, path
+from os import environ
+from os import makedirs
+from os import path
 from timeit import default_timer
-from warnings import catch_warnings, simplefilter
+from warnings import catch_warnings
+from warnings import simplefilter
 
 environ["USE_PYGEOS"] = "0"  # use shapely 2.0 instead of pygeos at geopandas
 
 # imports from dave
-from dave.archiv_io import from_archiv, to_archiv
+from dave.archiv_io import from_archiv
+from dave.archiv_io import to_archiv
 from dave.components.gas_components import gas_components
 from dave.components.loads import create_loads
-from dave.components.power_plants import (
-    create_conventional_powerplants,
-    create_power_plant_lines,
-    create_renewable_powerplants,
-)
+from dave.components.power_plants import create_conventional_powerplants
+from dave.components.power_plants import create_power_plant_lines
+from dave.components.power_plants import create_renewable_powerplants
 from dave.components.transformers import create_transformers
+from dave.converter.create_gaslib import create_gaslib
+from dave.converter.create_mynts import create_mynts
+from dave.converter.create_pandapipes import create_pandapipes
+from dave.converter.create_pandapower import create_pandapower
+from dave.dave_structure import create_empty_dataset
 from dave.geography import target_area
+from dave.io.file_io import to_gpkg
+from dave.io.file_io import to_hdf
+from dave.io.file_io import to_json
 from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
@@ -27,12 +37,6 @@ from dave.topology.high_pressure import create_hp_topology
 from dave.topology.high_voltage import create_hv_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_voltage import create_mv_topology
-from dave.dave_structure import create_empty_dataset
-from dave.io.file_io import to_gpkg, to_hdf, to_json
-from dave.converter.create_gaslib import create_gaslib
-from dave.converter.create_mynts import create_mynts
-from dave.converter.create_pandapipes import create_pandapipes
-from dave.converter.create_pandapower import create_pandapower
 
 
 def format_input_levels(power_levels, gas_levels):
@@ -70,7 +74,9 @@ def geo_info_needs(power_levels, gas_levels, loads):
         landuse = bool(loads)  # landuse is needed for load calculation
     else:  # for ehv, hv and hp
         roads, roads_plot, buildings = False, False, False
-        landuse = bool(loads and power_levels)  # landuse is needed for load calculation
+        landuse = bool(
+            loads and power_levels
+        )  # landuse is needed for load calculation
     return roads, roads_plot, buildings, landuse
 
 
@@ -92,10 +98,12 @@ def save_dataset_to_archiv(grid_data):
         to_archiv(grid_data)
 
 
-def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use):
+def save_dataset_to_user_folder(
+    grid_data, output_format, output_folder, api_use
+):
     """
     This function saves the DAVE dataset to an output folder.
-    
+
     Input:
         **grid_data** (attrdict) - dave attrdict with empty tables
         **output_format** (string, default 'json') - this parameter defines the output format. \
@@ -113,11 +121,20 @@ def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use
             # filter warnings because of the PerformanceWarning from pytables at the geometry type
             simplefilter("ignore")
             if output_format == "json":
-                to_json(grid_data, file_path=output_folder + "\\" + "dave_dataset.json")
+                to_json(
+                    grid_data,
+                    file_path=output_folder + "\\" + "dave_dataset.json",
+                )
             elif output_format == "hdf":
-                to_hdf(grid_data, file_path=output_folder + "\\" + "dave_dataset.h5")
+                to_hdf(
+                    grid_data,
+                    file_path=output_folder + "\\" + "dave_dataset.h5",
+                )
             elif output_format == "gpkg":
-                to_gpkg(grid_data, file_path=output_folder + "\\" + "dave_dataset.gpkg")
+                to_gpkg(
+                    grid_data,
+                    file_path=output_folder + "\\" + "dave_dataset.gpkg",
+                )
 
 
 def create_grid(
@@ -238,7 +255,9 @@ def create_grid(
 
     # create geographical informations
     geodata = list(map(str.lower, geodata))
-    roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(power_levels, gas_levels, loads)
+    roads_l, roads_plot_l, buildings_l, landuse_l = geo_info_needs(
+        power_levels, gas_levels, loads
+    )
     file_exists, file_name = target_area(
         grid_data,
         power_levels=power_levels,
@@ -250,14 +269,20 @@ def create_grid(
         own_area=own_area,
         buffer=0,
         roads=bool("roads" in geodata or "ALL" in geodata or roads_l),
-        roads_plot=bool("roads_plot" in geodata or "ALL" in geodata or roads_plot_l),
-        buildings=bool("buildings" in geodata or "ALL" in geodata or buildings_l),
+        roads_plot=bool(
+            "roads_plot" in geodata or "ALL" in geodata or roads_plot_l
+        ),
+        buildings=bool(
+            "buildings" in geodata or "ALL" in geodata or buildings_l
+        ),
         landuse=bool("landuse" in geodata or "ALL" in geodata or landuse_l),
         railways=bool("railways" in geodata or "ALL" in geodata),
         waterways=bool("waterways" in geodata or "ALL" in geodata),
     )
     # save interim status of the informations in user folder
-    save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+    save_dataset_to_user_folder(
+        grid_data, output_format, output_folder, api_use
+    )
 
     # --- collect data for the requested dataset
     if not file_exists:
@@ -276,21 +301,31 @@ def create_grid(
             if level == "ehv":
                 create_ehv_topology(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             elif level == "hv":
                 create_hv_topology(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             elif level == "mv":
                 create_mv_topology(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             elif level == "lv":
                 create_lv_topology(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             else:
-                print("no voltage level was choosen or their is a failure in the input value.")
+                print(
+                    "no voltage level was choosen or their is a failure in the input value."
+                )
                 print(f"the input for the power levels was: {power_levels}")
                 print("---------------------------------------------------")
             # replace grid area with the origin one for further steps
@@ -302,27 +337,37 @@ def create_grid(
             if transformers:
                 create_transformers(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             # add renewable powerplants
             if renewable_powerplants:
                 create_renewable_powerplants(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             # add conventional powerplants
             if conventional_powerplants:
                 create_conventional_powerplants(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             # create lines for power plants with a grid node far away
             if renewable_powerplants or conventional_powerplants:
                 create_power_plant_lines(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             # add loads
             if loads:
                 create_loads(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
         # --- create desired gas grid levels
         for level in gas_levels:
             # temporary extend grid area to combine not connected areas
@@ -332,9 +377,13 @@ def create_grid(
             if level == "hp":
                 create_hp_topology(grid_data)
                 # save interim status of the informations in user folder
-                save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+                save_dataset_to_user_folder(
+                    grid_data, output_format, output_folder, api_use
+                )
             else:
-                print("no gas level was choosen or their is a failure in the input value.")
+                print(
+                    "no gas level was choosen or their is a failure in the input value."
+                )
                 print(f"the input for the gas levels was: {gas_levels}")
                 print("-----------------------------------------------")
             # replace grid area with the origin one for further steps
@@ -344,7 +393,9 @@ def create_grid(
         if gas_levels:
             gas_components(grid_data, compressors, sinks, sources)
             # save interim status of the informations in user folder
-            save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+            save_dataset_to_user_folder(
+                grid_data, output_format, output_folder, api_use
+            )
 
         # clean up power and gas grid data
         clean_up_data(grid_data)
@@ -359,7 +410,9 @@ def create_grid(
         pass
 
     # save informations in user folder
-    save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use)
+    save_dataset_to_user_folder(
+        grid_data, output_format, output_folder, api_use
+    )
 
     # convert power model
     net_power = None
@@ -384,10 +437,16 @@ def create_grid(
     # show general informations from the generating process
     if not api_use:
         # print output folder
-        print(f"\nSave DaVe output data at the following path: {output_folder}")
+        print(
+            f"\nSave DaVe output data at the following path: {output_folder}"
+        )
         # return runtime
         _stop_time = default_timer()
-        print("runtime = " + str(round((_stop_time - _start_time) / 60, 2)) + " min")
+        print(
+            "runtime = "
+            + str(round((_stop_time - _start_time) / 60, 2))
+            + " min"
+        )
 
     # return data
     if net_power and net_gas:

@@ -3,17 +3,21 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 
-from geopandas import GeoDataFrame, read_file
-from pandas import DataFrame, concat
-from shapely.geometry import Polygon
-from tqdm import tqdm
-
-from dave.io.file_io import from_json_string
 from dave.archiv_io import archiv_inventory
-from dave.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
-from dave.geography.osm_data import from_osm, road_junctions
+from dave.datapool.read_data import read_federal_states
+from dave.datapool.read_data import read_nuts_regions
+from dave.datapool.read_data import read_postal
+from dave.geography.osm_data import from_osm
+from dave.geography.osm_data import road_junctions
+from dave.io.file_io import from_json_string
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
+from geopandas import GeoDataFrame
+from geopandas import read_file
+from pandas import DataFrame
+from pandas import concat
+from shapely.geometry import Polygon
+from tqdm import tqdm
 
 
 def _target_by_postalcode(grid_data, postalcode):
@@ -29,7 +33,9 @@ def _target_by_postalcode(grid_data, postalcode):
         # in this case all postalcode areas will be choosen
         target = postal
     else:
-        target = postal[postal.postalcode.isin(postalcode)].reset_index(drop=True)
+        target = postal[postal.postalcode.isin(postalcode)].reset_index(
+            drop=True
+        )
         # sort postalcodes
         postalcode.sort()
     return target
@@ -50,7 +56,8 @@ def _target_by_own_area(grid_data, own_area):
             print("The given shapefile includes no data")
     elif isinstance(own_area, Polygon):
         target = GeoDataFrame(
-            {"name": ["own area"], "geometry": [own_area]}, crs=dave_settings["crs_main"]
+            {"name": ["own area"], "geometry": [own_area]},
+            crs=dave_settings["crs_main"],
         )
     else:
         print("The given format is unknown")
@@ -66,7 +73,9 @@ def _target_by_own_area(grid_data, own_area):
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(postal, target, remove_columns=False)
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
     # filter duplicated postal codes
     own_postal = postal_intersection["postalcode"].unique().tolist()
     return target, own_postal
@@ -115,9 +124,13 @@ def _target_by_federal_state(grid_data, federal_state):
             "-".join(list(map(lambda x: x.capitalize(), state.split("-"))))
             for state in federal_state
         ]
-        target = states[states["name"].isin(federal_state)].reset_index(drop=True)
+        target = states[states["name"].isin(federal_state)].reset_index(
+            drop=True
+        )
         if len(target) != len(federal_state):
-            raise ValueError("federal state name wasn`t found. Please check your input")
+            raise ValueError(
+                "federal state name wasn`t found. Please check your input"
+            )
         # sort federal state names
         federal_state.sort()
     # convert federal states into postal code areas for target_input
@@ -126,7 +139,9 @@ def _target_by_federal_state(grid_data, federal_state):
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(postal, target, remove_columns=False)
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
     # filter duplicated postal codes
     federal_state_postal = postal_intersection["postalcode"].unique().tolist()
     return target, federal_state, federal_state_postal
@@ -153,7 +168,10 @@ def _target_by_nuts_region(grid_data, nuts_region):
         nuts_regions = list(
             map(
                 lambda x: "".join(
-                    [letter.upper() if letter.isalpha() else letter for letter in list(x)]
+                    [
+                        letter.upper() if letter.isalpha() else letter
+                        for letter in list(x)
+                    ]
                 ),
                 nuts_region[0],
             )
@@ -162,9 +180,15 @@ def _target_by_nuts_region(grid_data, nuts_region):
         for i, region in enumerate(nuts_region[0]):
             # get area for nuts region
             nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region)]
-            target = nuts_contains if i == 0 else concat([target, nuts_contains], ignore_index=True)
+            target = (
+                nuts_contains
+                if i == 0
+                else concat([target, nuts_contains], ignore_index=True)
+            )
             if nuts_contains.empty:
-                raise ValueError("nuts region name wasn`t found. Please check your input")
+                raise ValueError(
+                    "nuts region name wasn`t found. Please check your input"
+                )
     # filter duplicates
     target.drop_duplicates(inplace=True)
     # convert nuts regions into postal code areas for target_input
@@ -173,7 +197,9 @@ def _target_by_nuts_region(grid_data, nuts_region):
     if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
         grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(postal, target, remove_columns=False)
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
     # filter duplicated postal codes
     nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
     return target, nuts_region_postal
@@ -289,7 +315,9 @@ def target_area(
         )
         grid_data.target_input = target_input
     elif nuts_region:
-        target, nuts_region_postal = _target_by_nuts_region(grid_data, nuts_region)
+        target, nuts_region_postal = _target_by_nuts_region(
+            grid_data, nuts_region
+        )
         target_input = DataFrame(
             {
                 "typ": "nuts region",
@@ -334,7 +362,11 @@ def target_area(
             progress_step = 80 / len(diff_targets)
             for diff_target in diff_targets:
                 town = target[target.town == diff_target]
-                target_geom = town.geometry.unary_union if len(town) > 1 else town.iloc[0].geometry
+                target_geom = (
+                    town.geometry.unary_union
+                    if len(town) > 1
+                    else town.iloc[0].geometry
+                )
                 # Obtain data from OSM
                 from_osm(
                     grid_data,
@@ -349,7 +381,7 @@ def target_area(
                     progress_step=progress_step,
                 )
         else:
-            for i in range(0, len(target)):
+            for i in range(len(target)):
                 # define progress step
                 progress_step = 80 / len(target)
                 target_geom = target.geometry.iloc[i]

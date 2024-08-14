@@ -3,7 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 import matplotlib.pyplot as plt
-from contextily import add_basemap, providers
+from contextily import add_basemap
+from contextily import providers
 from geopandas import GeoSeries
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
@@ -16,7 +17,7 @@ def plot_land(area, only_area=False):
 
     INPUT:
     **area** (GeoDataFrame) - polygon of the target area
-    
+
     OPTIONAL:
     **only_area** (boolean, False) - If this parameter is True only the polygon fopr the area will \
         be plotted
@@ -58,7 +59,9 @@ def plot_geographical_data(grid_data, save_image=False, output_folder=None):
     buildings_residential = grid_data.buildings.residential
     buildings_commercial = grid_data.buildings.commercial
     buildings_other = grid_data.buildings.other
-    buildings_all = concat([buildings_residential, buildings_commercial, buildings_other])
+    buildings_all = concat(
+        [buildings_residential, buildings_commercial, buildings_other]
+    )
     landuse = grid_data.landuse
     railways = grid_data.railways
     if not buildings_all.empty:
@@ -89,7 +92,9 @@ def plot_geographical_data(grid_data, save_image=False, output_folder=None):
         if not landuse.empty:
             landuse_residential = landuse[landuse.landuse == "residential"]
             landuse_industrial = landuse[landuse.landuse == "industrial"]
-            landuse_commercial = landuse[landuse.landuse.isin(["commercial", "retail"])]
+            landuse_commercial = landuse[
+                landuse.landuse.isin(["commercial", "retail"])
+            ]
             if not landuse_residential.empty:
                 landuse_residential.plot(ax=ax, color="b", alpha=0.1)
                 legend_elements.append(Patch(color="b", label="Residential"))
@@ -102,31 +107,47 @@ def plot_geographical_data(grid_data, save_image=False, output_folder=None):
         # plot road informations
         if not roads.empty:
             roads.plot(ax=ax, color="k")
-            legend_elements.append(Line2D([0], [0], color="k", lw=2, label="Roads"))
+            legend_elements.append(
+                Line2D([0], [0], color="k", lw=2, label="Roads")
+            )
         if not road_junctions.empty:
             road_junctions.plot(ax=ax, color="r")
-            legend_elements.append(Line2D([0], [0], color="r", marker="o", label="Road junctions"))
+            legend_elements.append(
+                Line2D([0], [0], color="r", marker="o", label="Road junctions")
+            )
         # plot buildings
         if not buildings_residential.empty:
             buildings_residential.plot(ax=ax, color="g")
-            legend_elements.append(Line2D([0], [0], color="g", lw=2, label="Residential Buildings"))
+            legend_elements.append(
+                Line2D(
+                    [0], [0], color="g", lw=2, label="Residential Buildings"
+                )
+            )
         if not buildings_commercial.empty:
             buildings_commercial.plot(ax=ax, color="b")
-            legend_elements.append(Line2D([0], [0], color="b", lw=2, label="Commercial Buildings"))
+            legend_elements.append(
+                Line2D([0], [0], color="b", lw=2, label="Commercial Buildings")
+            )
         if not buildings_other.empty:
             buildings_other.plot(ax=ax, color="gray")
-            legend_elements.append(Line2D([0], [0], color="gray", lw=2, label="Other Buildings"))
+            legend_elements.append(
+                Line2D([0], [0], color="gray", lw=2, label="Other Buildings")
+            )
         # plot building centroids
         if not building_centroids.empty:
             building_centroids.plot(ax=ax, color="m", markersize=1)
             legend_elements.append(
-                Line2D([0], [0], color="m", marker="o", label="Building Centroids")
+                Line2D(
+                    [0], [0], color="m", marker="o", label="Building Centroids"
+                )
             )
         # plot railways
         if not railways.empty:
             railways.plot(ax=ax, color="k", linestyle="--")
             legend_elements.append(
-                Line2D([0], [0], color="k", linestyle="--", lw=2, label="Railways")
+                Line2D(
+                    [0], [0], color="k", linestyle="--", lw=2, label="Railways"
+                )
             )
         # legende
         plt.legend(handles=legend_elements)
@@ -227,19 +248,27 @@ def plot_grid_data(grid_data, save_image=False, output_folder=None):
             mv_lines.plot(ax=ax, color="m", label="MV Lines")
         # plot electrical components
         if not renewable_plants.empty:
-            renewable_plants.plot(ax=ax, color="g", label="renewable power plants")
+            renewable_plants.plot(
+                ax=ax, color="g", label="renewable power plants"
+            )
         if not conventional_plants.empty:
-            conventional_plants.plot(ax=ax, color="m", label="conventional power plants")
+            conventional_plants.plot(
+                ax=ax, color="m", label="conventional power plants"
+            )
         # plot ehv topology
         if not ehv_nodes.empty:
             ehv_nodes.plot(ax=ax, color="k", markersize=6, label="EHV Nodes")
         if not ehv_lines.empty:
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
-                ehv_lines_380.plot(ax=ax, color="r", zorder=3, label="380 kV Lines")
+                ehv_lines_380.plot(
+                    ax=ax, color="r", zorder=3, label="380 kV Lines"
+                )
             ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
             if not ehv_lines_220.empty:
-                ehv_lines_220.plot(ax=ax, color="b", zorder=2, label="220 kV Lines")
+                ehv_lines_220.plot(
+                    ax=ax, color="b", zorder=2, label="220 kV Lines"
+                )
         # plot hv topology
         if not hv_nodes.empty:
             hv_nodes.plot(ax=ax, color="g", markersize=6, label="HV Nodes")
@@ -247,7 +276,9 @@ def plot_grid_data(grid_data, save_image=False, output_folder=None):
             hv_lines.plot(ax=ax, color="g", markersize=6, label="HV Lines")
         # plot hp topology
         if not hp_junctions.empty:
-            hp_junctions.plot(ax=ax, color="k", markersize=6, label="HP Junctions")
+            hp_junctions.plot(
+                ax=ax, color="k", markersize=6, label="HP Junctions"
+            )
         if not hp_pipes.empty:
             hp_pipes.plot(ax=ax, color="k", zorder=1, label="HP Pipes")
         # plot substations
@@ -334,11 +365,15 @@ def plot_grid_data_osm(grid_data, save_image=False, output_folder=None):
             ehv_lines_380 = ehv_lines[ehv_lines.voltage_kv == 380]
             if not ehv_lines_380.empty:
                 ehv_lines_380 = ehv_lines_380.to_crs(epsg=3857)
-                ehv_lines_380.plot(ax=ax, color="red", zorder=3, label="380 kV lines")
+                ehv_lines_380.plot(
+                    ax=ax, color="red", zorder=3, label="380 kV lines"
+                )
             ehv_lines_220 = ehv_lines[ehv_lines.voltage_kv == 220]
             if not ehv_lines_220.empty:
                 ehv_lines_220 = ehv_lines_220.to_crs(epsg=3857)
-                ehv_lines_220.plot(ax=ax, color="blue", zorder=2, label="220 kV lines")
+                ehv_lines_220.plot(
+                    ax=ax, color="blue", zorder=2, label="220 kV lines"
+                )
         # plot hv topology
         if not hv_nodes.empty:
             hv_nodes = hv_nodes.to_crs(epsg=3857)
@@ -377,18 +412,40 @@ def plot_landuse(grid_data, save_image=False, output_folder=None):
     """
     if not grid_data.landuse.empty:
         landuse_basin = grid_data.landuse[grid_data.landuse.landuse == "basin"]
-        landuse_farmland = grid_data.landuse[grid_data.landuse.landuse == "farmland"]
-        landuse_farmyard = grid_data.landuse[grid_data.landuse.landuse == "farmyard"]
-        landuse_forest = grid_data.landuse[grid_data.landuse.landuse == "forest"]
+        landuse_farmland = grid_data.landuse[
+            grid_data.landuse.landuse == "farmland"
+        ]
+        landuse_farmyard = grid_data.landuse[
+            grid_data.landuse.landuse == "farmyard"
+        ]
+        landuse_forest = grid_data.landuse[
+            grid_data.landuse.landuse == "forest"
+        ]
         landuse_grass = grid_data.landuse[grid_data.landuse.landuse == "grass"]
-        landuse_landfill = grid_data.landuse[grid_data.landuse.landuse == "landfill"]
-        landuse_meadow = grid_data.landuse[grid_data.landuse.landuse == "meadow"]
-        landuse_orchad = grid_data.landuse[grid_data.landuse.landuse == "orchad"]
-        landuse_residential = grid_data.landuse[grid_data.landuse.landuse == "residential"]
-        landuse_industrial = grid_data.landuse[grid_data.landuse.landuse == "industrial"]
-        landuse_commercial = grid_data.landuse[grid_data.landuse.landuse == "commercial"]
-        landuse_retail = grid_data.landuse[grid_data.landuse.landuse == "retail"]
-        leisure_garden = grid_data.landuse[grid_data.landuse.leisure == "garden"]
+        landuse_landfill = grid_data.landuse[
+            grid_data.landuse.landuse == "landfill"
+        ]
+        landuse_meadow = grid_data.landuse[
+            grid_data.landuse.landuse == "meadow"
+        ]
+        landuse_orchad = grid_data.landuse[
+            grid_data.landuse.landuse == "orchad"
+        ]
+        landuse_residential = grid_data.landuse[
+            grid_data.landuse.landuse == "residential"
+        ]
+        landuse_industrial = grid_data.landuse[
+            grid_data.landuse.landuse == "industrial"
+        ]
+        landuse_commercial = grid_data.landuse[
+            grid_data.landuse.landuse == "commercial"
+        ]
+        landuse_retail = grid_data.landuse[
+            grid_data.landuse.landuse == "retail"
+        ]
+        leisure_garden = grid_data.landuse[
+            grid_data.landuse.leisure == "garden"
+        ]
         natural_scrub = grid_data.landuse[grid_data.landuse.natural == "scrub"]
         natural_wood = grid_data.landuse[grid_data.landuse.natural == "wood"]
         # plot target area
@@ -445,7 +502,9 @@ def plot_landuse(grid_data, save_image=False, output_folder=None):
             plot_patch.append(pink_patch)
         if not leisure_garden.empty:
             leisure_garden.plot(ax=ax, color="darkolivegreen")
-            darkolivegreen_patch = Patch(color="darkolivegreen", label="Garden")
+            darkolivegreen_patch = Patch(
+                color="darkolivegreen", label="Garden"
+            )
             plot_patch.append(darkolivegreen_patch)
 
         if not natural_scrub.empty:
@@ -477,4 +536,3 @@ def plot_generator():
     """
     # hier eine Plotting funktion die nur die Erzeuger im Zielgebiet aufzeigt und
     # verschiedene Farben für die verschiedenen Energieträger
-    pass

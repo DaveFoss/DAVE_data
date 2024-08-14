@@ -2,14 +2,17 @@
 # Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-from geopandas import GeoDataFrame, points_from_xy
-from pandas import HDFStore, Series, read_excel, read_hdf
+from dave.settings import dave_settings
+from dave.toolbox import get_data_path
+from geopandas import GeoDataFrame
+from geopandas import points_from_xy
+from pandas import HDFStore
+from pandas import Series
+from pandas import read_excel
+from pandas import read_hdf
 from shapely.geometry import LineString
 from shapely.wkb import loads
 from xmlschema import XMLSchema
-
-from dave.settings import dave_settings
-from dave.toolbox import get_data_path
 
 
 def read_postal():
@@ -31,7 +34,9 @@ def read_postal():
     postalger["geometry"] = postalger.geometry.apply(loads)
     postalger = GeoDataFrame(postalger, crs=dave_settings["crs_main"])
     # read meta data
-    meta_data = read_excel(get_data_path("postalcodesger_meta.xlsx", "data"), sheet_name=None)
+    meta_data = read_excel(
+        get_data_path("postalcodesger_meta.xlsx", "data"), sheet_name=None
+    )
     return postalger, meta_data
 
 
@@ -50,9 +55,13 @@ def read_federal_states():
     """
     federalstatesger = read_hdf(get_data_path("federalstatesger.h5", "data"))
     federalstatesger["geometry"] = federalstatesger.geometry.apply(loads)
-    federalstatesger = GeoDataFrame(federalstatesger, crs=dave_settings["crs_main"])
+    federalstatesger = GeoDataFrame(
+        federalstatesger, crs=dave_settings["crs_main"]
+    )
     # read meta data
-    meta_data = read_excel(get_data_path("federalstatesger_meta.xlsx", "data"), sheet_name=None)
+    meta_data = read_excel(
+        get_data_path("federalstatesger_meta.xlsx", "data"), sheet_name=None
+    )
     return federalstatesger, meta_data
 
 
@@ -69,19 +78,33 @@ def read_nuts_regions(year):
          nuts = data.read_nuts_regions()
     """
     if year == "2013":
-        nuts_regions = read_hdf(get_data_path("nuts_regions.h5", "data"), key="/nuts_2013")
+        nuts_regions = read_hdf(
+            get_data_path("nuts_regions.h5", "data"), key="/nuts_2013"
+        )
         nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(nuts_regions, crs=dave_settings["crs_main"])
+        nuts_regions = GeoDataFrame(
+            nuts_regions, crs=dave_settings["crs_main"]
+        )
     elif year == "2016":
-        nuts_regions = read_hdf(get_data_path("nuts_regions.h5", "data"), key="/nuts_2016")
+        nuts_regions = read_hdf(
+            get_data_path("nuts_regions.h5", "data"), key="/nuts_2016"
+        )
         nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(nuts_regions, crs=dave_settings["crs_main"])
+        nuts_regions = GeoDataFrame(
+            nuts_regions, crs=dave_settings["crs_main"]
+        )
     elif year == "2021":
-        nuts_regions = read_hdf(get_data_path("nuts_regions.h5", "data"), key="/nuts_2021")
+        nuts_regions = read_hdf(
+            get_data_path("nuts_regions.h5", "data"), key="/nuts_2021"
+        )
         nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(nuts_regions, crs=dave_settings["crs_main"])
+        nuts_regions = GeoDataFrame(
+            nuts_regions, crs=dave_settings["crs_main"]
+        )
     # read meta data
-    meta_data = read_excel(get_data_path("nuts_regions_meta.xlsx", "data"), sheet_name=None)
+    meta_data = read_excel(
+        get_data_path("nuts_regions_meta.xlsx", "data"), sheet_name=None
+    )
     return nuts_regions, meta_data
 
 
@@ -100,7 +123,9 @@ def read_household_consumption():
     """
     # --- get data from datapool
     # read data
-    consumption_data = HDFStore(get_data_path("household_power_consumption.h5", "data"))
+    consumption_data = HDFStore(
+        get_data_path("household_power_consumption.h5", "data")
+    )
     # consumption avarage
     household_consumptions = consumption_data.get("/household_consumptions")
     household_sizes = consumption_data.get("/household_sizes")
@@ -113,7 +138,8 @@ def read_household_consumption():
     }
     # read meta data
     meta_data = read_excel(
-        get_data_path("household_power_consumption_meta.xlsx", "data"), sheet_name=None
+        get_data_path("household_power_consumption_meta.xlsx", "data"),
+        sheet_name=None,
     )
     return consumption_data, meta_data
 
@@ -158,7 +184,9 @@ def read_scigridgas_iggielgn():
     # lngss
     lngs = iggielgn_data.get("/scigridgas_iggielgn_lngs")
     lngs = GeoDataFrame(
-        lngs, geometry=points_from_xy(lngs.long, lngs.lat), crs=dave_settings["crs_main"]
+        lngs,
+        geometry=points_from_xy(lngs.long, lngs.lat),
+        crs=dave_settings["crs_main"],
     )
     # nodes
     nodes = iggielgn_data.get("/scigridgas_iggielgn_nodes")
@@ -171,7 +199,10 @@ def read_scigridgas_iggielgn():
     pipe_segments = iggielgn_data.get("/scigridgas_iggielgn_pipe_segments")
     pipe_segments.lat = pipe_segments.lat.apply(eval)
     pipe_segments.long = pipe_segments.long.apply(eval)
-    geometry = [LineString(list(zip(pipe.long, pipe.lat))) for i, pipe in pipe_segments.iterrows()]
+    geometry = [
+        LineString(list(zip(pipe.long, pipe.lat)))
+        for i, pipe in pipe_segments.iterrows()
+    ]
     pipe_segments = GeoDataFrame(
         pipe_segments, geometry=Series(geometry), crs=dave_settings["crs_main"]
     )
@@ -203,14 +234,18 @@ def read_scigridgas_iggielgn():
         "storages": storages,
     }
     # read meta data
-    meta_data = read_excel(get_data_path("scigridgas_iggielgn_meta.xlsx", "data"), sheet_name=None)
+    meta_data = read_excel(
+        get_data_path("scigridgas_iggielgn_meta.xlsx", "data"), sheet_name=None
+    )
     return storage_data, meta_data
 
 
 def read_gaslib():
     # read data from datapool
     schema = XMLSchema(get_data_path("gaslib/Gas.xsd", "data"))
-    gaslib_dict = schema.to_dict(get_data_path("gaslib/GasLib-582-v2.net", "data"))
+    gaslib_dict = schema.to_dict(
+        get_data_path("gaslib/GasLib-582-v2.net", "data")
+    )
     # create data dictionary
     gaslib_data = {
         "nodes": gaslib_dict["framework:nodes"],

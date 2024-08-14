@@ -97,13 +97,25 @@ class Elements:
         self.type = element_type
         self.n_ele = len(data.index)
         # create dave names in case there are none
-        type_names = {"p": "pipe", "v": "valve", "n": "node", "c": "compressor", "r": "regulator"}
-        if not "dave_name" in data.keys():
+        type_names = {
+            "p": "pipe",
+            "v": "valve",
+            "n": "node",
+            "c": "compressor",
+            "r": "regulator",
+        }
+        if "dave_name" not in data.keys():
             data.insert(
                 0,
                 "dave_name",
                 Series(
-                    list(map(lambda x: f"{type_names[element_type]}_{x}", data.index)), data.index
+                    list(
+                        map(
+                            lambda x: f"{type_names[element_type]}_{x}",
+                            data.index,
+                        )
+                    ),
+                    data.index,
                 ),
             )
         for ele in range(self.n_ele):

@@ -4,7 +4,8 @@ requires = [
 ]
 
 [tool.ruff]
-extend-exclude = ["static", "ci", "setup.py"]
+extend-exclude = ["static", "ci", "setup.py", "src_old_dave/"]
+force-exclude = true
 line-length = 79
 src = ["src", "tests"]
 target-version = "py38"
@@ -14,6 +15,7 @@ target-version = "py38"
 
 [tool.ruff.lint]
 ignore = [
+    "PTH118",
     "RUF001", # ruff-specific rules ambiguous-unicode-character-string
     "S101", # flake8-bandit assert
     "S308", # flake8-bandit suspicious-mark-safe-usage

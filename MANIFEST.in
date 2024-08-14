@@ -19,6 +19,17 @@ include CONTRIBUTING.rst
 include LICENSE
 include README.rst
 
+include *.txt
+include *.yml
+recursive-include examples *.geojson
+recursive-include src_old_dave *.cs
+recursive-include src_old_dave *.h5
+recursive-include src_old_dave *.net
+recursive-include src_old_dave *.py
+recursive-include src_old_dave *.xlsx
+src_old_dave/topology/medium_voltage.py
+recursive-include src_old_dave *.xsd
+
 recursive-include examples *.py
 
 global-exclude *.py[cod] __pycache__/* *.so *.dylib
