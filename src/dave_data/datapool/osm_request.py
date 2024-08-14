@@ -6,8 +6,11 @@ from urllib.request import urlopen
 import pandas as pd
 from defusedxml.ElementTree import fromstring
 from geopandas import GeoDataFrame
-from pandas import DataFrame, concat, to_datetime
-from shapely.geometry import LineString, Point
+from pandas import DataFrame
+from pandas import concat
+from pandas import to_datetime
+from shapely.geometry import LineString
+from shapely.geometry import Point
 from six import string_types
 
 
