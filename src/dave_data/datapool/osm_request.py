@@ -355,7 +355,7 @@ def query_osm(
             if not url.startswith(("http:", "https:")):
                 raise ValueError("URL must start with 'http:' or 'https:'")
 
-            with urlopen(url) as response:
+            with urlopen(url) as response:  # noqa: S310
                 content = response.read()
                 if response.getcode() == 200:
                     break
