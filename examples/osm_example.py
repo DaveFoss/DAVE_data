@@ -1,10 +1,8 @@
-from shapely import box
-from matplotlib import pyplot as plt
-
 import contextily as cx
+from matplotlib import pyplot as plt
+from shapely import box
 
 from dave_data.datapool import osm_request as osm
-
 
 streets = osm.osm_request(
     "road",

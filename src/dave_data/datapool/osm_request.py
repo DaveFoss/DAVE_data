@@ -6,11 +6,8 @@ from xml.etree.ElementTree import fromstring
 
 import pandas as pd
 from geopandas import GeoDataFrame
-from pandas import DataFrame
-from pandas import concat
-from pandas import to_datetime
-from shapely.geometry import LineString
-from shapely.geometry import Point
+from pandas import DataFrame, concat, to_datetime
+from shapely.geometry import LineString, Point
 from six import string_types
 
 
@@ -270,9 +267,17 @@ _crs = "epsg:4326"
 
 # Tags to remove so we don't clobber the output. This list comes from
 # osmtogeojson's index.js (https://github.com/tyrasd/osmtogeojson)
-uninteresting_tags = {"source", "source_ref", "source:ref", "history",
-                      "attribution", "created_by", "tiger:county",
-                      "tiger:tlid", "tiger:upload_uuid"}
+uninteresting_tags = {
+    "source",
+    "source_ref",
+    "source:ref",
+    "history",
+    "attribution",
+    "created_by",
+    "tiger:county",
+    "tiger:tlid",
+    "tiger:upload_uuid",
+}
 
 
 # http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
