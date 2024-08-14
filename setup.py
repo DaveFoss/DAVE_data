@@ -68,7 +68,10 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "pandas",
-        "geopandas"
+        "geopandas",
+        "defusedxml",
+        "six",
+        "shapely",
     ],
     extras_require={
         # eg:
