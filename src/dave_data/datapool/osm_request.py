@@ -1,31 +1,227 @@
-# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
-# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
-
 from collections import namedtuple
 from time import sleep
 from urllib.parse import urlencode
 from urllib.request import urlopen
 from xml.etree.ElementTree import fromstring
 
-from dave.datapool.read_data import get_data_path
-from dave.settings import dave_settings
+import pandas as pd
 from geopandas import GeoDataFrame
 from pandas import DataFrame
 from pandas import concat
-from pandas import read_excel
 from pandas import to_datetime
 from shapely.geometry import LineString
 from shapely.geometry import Point
 from six import string_types
 
 
+def osm_settings():
+    """
+    This function returns a dictonary with the DaVe settings for used data and
+    assumptions
+    """
+    settings = {
+        # osm time delay (because osm doesn't alowed more than 1 request per
+        # second)
+        "osm_time_delay": 60,  # in seconds
+        # osm considered area (data for this area will be downloaded and
+        # impplemented in database)
+        "osm_area": "germany",
+        # osm tags: (type: (osm key, osm tags, osm type, parameter))
+        "osm_tags": {
+            "road": (
+                "highway",
+                [
+                    "secondary",
+                    "tertiary",
+                    "unclassified",
+                    "residential",
+                    "living_street",
+                    "footway",
+                    "track",
+                    "path",
+                ],
+                ["way"],
+                ["geometry", "name", "highway", "surface"],
+                "id",
+            ),
+            "road_plot": (
+                "highway",
+                ["motorway", "trunk", "primary"],
+                ["way"],
+                ["geometry", "name", "id", "surface"],
+            ),
+            "landuse": (
+                "landuse",
+                True,
+                ["way", "relation"],
+                ["landuse", "geometry", "name", "id", "surface"],
+            ),
+            "leisure": (
+                "leisure",
+                ["golf_course", "garden", "park"],
+                ["way", "relation"],
+                [
+                    "leisure",
+                    "landuse",
+                    "natural",
+                    "name",
+                    "geometry",
+                    "id",
+                    "surface",
+                ],
+            ),
+            "natural": (
+                "natural",
+                ["scrub", "grassland", "water", "wood"],
+                ["way", "relation"],
+                [
+                    "natural",
+                    "landuse",
+                    "leisure",
+                    "name",
+                    "geometry",
+                    "id",
+                    "surface",
+                ],
+            ),
+            "building": (
+                "building",
+                True,
+                ["way"],
+                [
+                    "addr:housenumber",
+                    "addr:street",
+                    "addr:suburb",
+                    "amenity",
+                    "building",
+                    "building:levels",
+                    "geometry",
+                    "name",
+                    "id",
+                ],
+            ),
+            "railway": (
+                "railway",
+                [
+                    "construction",
+                    "disused",
+                    "light_rail",
+                    "monorail",
+                    "narrow_gauge",
+                    "rail",
+                    "subway",
+                    "tram",
+                ],
+                ["way"],
+                [
+                    "name",
+                    "railway",
+                    "geometry",
+                    "tram",
+                    "train",
+                    "usage",
+                    "voltage",
+                    "id",
+                ],
+            ),
+            "waterway": (
+                "waterway",
+                [
+                    "river",
+                    "stream",
+                    "canal",
+                    "tidal_channel ",
+                    "pressurised",
+                    "drain",
+                ],
+                ["way"],
+                ["name", "waterway", "geometry", "depth", "width", "id"],
+            ),
+        },
+        # osm categories
+        "buildings_residential": [
+            "apartments",
+            "detached",
+            "dormitory",
+            "dwelling_house",
+            "farm",
+            "house",
+            "houseboat",
+            "residential",
+            "semidetached_house",
+            "static_caravan",
+            "terrace",
+            "yes",
+        ],
+        "buildings_commercial": [
+            "commercial",
+            "hall",
+            "industrial",
+            "kindergarten",
+            "kiosk",
+            "office",
+            "retail",
+            "school",
+            "supermarket",
+            "warehouse",
+        ],
+        # --- assumptions at power grid generating:
+        # mv level
+        "mv_voltage": 20,
+        # hours per year
+        "h_per_a": 8760,
+        # power factors for loads
+        "cos_phi_residential": 0.95,  # induktiv
+        "cos_phi_industrial": 0.75,  # induktiv
+        "cos_phi_commercial": 0.75,  # induktiv
+        # avarage load values for ehv, hv, and mv loads
+        "residential_load": 2,  # in MW/km²
+        "industrial_load": 10,  # in MW/km²
+        "commercial_load": 3,  # in MW/km²
+        # --- assumptions at pandapower convert:
+        # lines standard types
+        # dummy value, must be changed
+        "mv_line_std_type": "NA2XS2Y 1x240 RM/25 12/20 kV",
+        "lv_line_std_type": "NAYY 4x150 SE",  # dummy value, must be changed
+        # trafo parameters for ehv/ehv and  ehv/hv. The dummy values are
+        # based on the pandapower
+        # standarttype "160 MVA 380/110 kV" which is the biggest model
+        "trafo_vkr_percent": 0.25,  # dummy value
+        "trafo_vk_percent": 12.2,  # dummy value
+        "trafo_pfe_kw": 60,  # dummy value
+        "trafo_i0_percent": 0.06,  # dummy value
+        # trafo standard types
+        # dummy value, must be changed
+        "hvmv_trafo_std_type": "63 MVA 110/20 kV",
+        # dummy value, must be changed
+        "mvlv_trafo_std_type": "0.63 MVA 20/0.4 kV",
+        # --- assumptions at gas grid generating:
+        # hp level
+        "hp_nodes_height_m": 1,  # dummy value, must be changed
+        # value based on shutterwald data, must be changed
+        "hp_pipes_k_mm": 0.1,
+        "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
+        # --- assumptions at model utils:
+        "min_number_nodes": 4,
+    }
+    return settings
+
+
 def osm_request(data_type, area):
     """
     This function requests OSM data from database or OSM directly
+
+    Examples
+    --------
+    >>> from shapely import box
+    >>> streets = osm_request("road", box(13.409, 52.519, 13.41, 52.52))[0]
+    >>> len(streets) > 0
+    True
+
     """
-    data_param = dave_settings["osm_tags"][data_type]
+    data_param = osm_settings()["osm_tags"][data_type]
     request_data = GeoDataFrame([])
+    meta_data = None
     for osm_type in data_param[2]:
         # create tags
         tags = (
@@ -41,8 +237,8 @@ def osm_request(data_type, area):
 
 # --- request directly from OSM via Overpass API and geopandas_osm package
 
-# This functions are based on the geopandas_osm python package, which was published under the
-# following license:
+# This functions are based on the geopandas_osm python package, which was
+# published under the # following license:
 
 # The MIT License (MIT)
 
@@ -55,8 +251,8 @@ def osm_request(data_type, area):
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -74,19 +270,9 @@ _crs = "epsg:4326"
 
 # Tags to remove so we don't clobber the output. This list comes from
 # osmtogeojson's index.js (https://github.com/tyrasd/osmtogeojson)
-uninteresting_tags = set(
-    [
-        "source",
-        "source_ref",
-        "source:ref",
-        "history",
-        "attribution",
-        "created_by",
-        "tiger:county",
-        "tiger:tlid",
-        "tiger:upload_uuid",
-    ]
-)
+uninteresting_tags = {"source", "source_ref", "source:ref", "history",
+                      "attribution", "created_by", "tiger:county",
+                      "tiger:tlid", "tiger:upload_uuid"}
 
 
 # http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
@@ -131,11 +317,8 @@ def query_osm(
             tags=['highway', 'name~"^Magazine"']
                 Match tags that have 'highway' and where 'name' starts
                 with 'Magazine'
-
     raw : boolean, default False
         Return the raw XML data returned by the request
-    render : boolean, default True
-        Parse the output and return a final GeoDataFrame
     meta : boolean, default False
         Indicates whether to query the metadata with each OSM object. This
         includes the changeset, timestamp, uid, user, and version.
@@ -146,12 +329,15 @@ def query_osm(
     Note that there's probably a bit more filtering required to get the
     exact desired data. For example if you only want ways, you may want
     to grab only the linestrings like:
-        >>> df = df[df.type == 'LineString']
+
+    Examples
+    --------
+    >>> #  df = df[df.type == 'LineString']
 
     """
     url = _build_url(typ, bbox, recurse, tags, meta)
     # add time delay because osm doesn't alowed more than 1 request per second.
-    time_delay = dave_settings["osm_time_delay"]
+    time_delay = osm_settings()["osm_time_delay"]
 
     # TODO: Raise on non-200 (or 400-599)
     # with urlopen(url) as response:
@@ -168,9 +354,7 @@ def query_osm(
             sleep(time_delay)
 
     # get meta informations
-    meta_data = read_excel(
-        get_data_path("osm_meta.xlsx", "data"), sheet_name=None
-    )
+    meta_data = pd.Series({"meta": "coming soon"})
 
     if raw:
         return content, meta_data
@@ -207,8 +391,6 @@ def _build_url(typ, bbox=None, recurse=None, tags="", meta=False):
     if bbox is None:
         bboxstr = ""
     else:
-        # bboxstr = "({})".format(
-        #','.join(str(b) for b in (bbox[1], bbox[0], bbox[3], bbox[2])))
         bboxstr = '(poly:"{}")'.format(
             " ".join(f"{c[1]} {c[0]}" for c in bbox.exterior.coords)
         )
@@ -240,7 +422,8 @@ def read_osm(content, render=True, **kwargs):
     relmembers, reltags = read_relations(doc)
 
     # check if all requested variables are empty
-    # if nodes.empty and waynodes.empty and waytags.empty and relmembers.empty and reltags.empty:
+    # if nodes.empty and waynodes.empty and waytags.empty and relmembers.empty
+    # and reltags.empty:
 
     data = OSMData(nodes, waynodes, waytags, relmembers, reltags)
 
@@ -289,7 +472,8 @@ def read_ways(doc):
     #       <nd ref="61326730"/>
     #       <nd ref="61326036"/>
     #       <nd ref="61321194"/>
-    #       <tag k="attribution" v="Office of Geographic and Environmental Information (MassGIS)"/>
+    #       <tag k="attribution" v="Office of Geographic and Environmental
+    #           Information (MassGIS)"/>
     #       <tag k="condition" v="fair"/>
     #       <tag k="created_by" v="JOSM"/>
     #       <tag k="highway" v="residential"/>
@@ -356,7 +540,8 @@ def render_to_gdf(osmdata, drop_untagged=True):
     nodes = render_nodes(osmdata.nodes, drop_untagged)
     ways = render_ways(osmdata.nodes, osmdata.waynodes, osmdata.waytags)
 
-    # set landuse tag from origin relation at relation members who has no landuse tag
+    # set landuse tag from origin relation at relation members who has no
+    # landuse tag
     if (
         (ways is not None)
         and ("landuse" in ways.keys())
@@ -402,7 +587,6 @@ def render_ways(nodes, waynodes, waytags):
     node_points = nodes[["id", "lon", "lat"]]
 
     def wayline(df):
-        # df = df.sort_index(by='index')[['lon', 'lat']]  # for older pandas version
         df = df.sort_values(by="index")[["lon", "lat"]]
         if len(df) > 1:
             return LineString(df.values)
@@ -418,3 +602,7 @@ def render_ways(nodes, waynodes, waytags):
     ways.reset_index(inplace=True)
 
     return ways
+
+
+if __name__ == "__main__":
+    pass
