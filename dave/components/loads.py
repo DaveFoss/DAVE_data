@@ -13,7 +13,7 @@ from shapely.ops import polygonize, unary_union
 from tqdm import tqdm
 
 from dave.datapool.osm_request import query_osm
-from src.dave_data.datapool.read_data import read_federal_states, read_household_consumption, read_postal
+from dave.datapool.read_data import read_federal_states, read_household_consumption, read_postal
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area, voronoi
 

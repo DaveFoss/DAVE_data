@@ -17,14 +17,14 @@ from dave.components.power_plants import (
     create_power_plant_lines,
     create_renewable_powerplants,
 )
-from src.dave_data.components.transformers import create_transformers
+from dave.components.transformers import create_transformers
 from dave.geography import target_area
-from src.dave_data.model_utils import clean_up_data
+from dave.model_utils import clean_up_data
 from dave.settings import dave_settings
 from dave.toolbox import create_interim_area
 from dave.topology.extra_high_voltage import create_ehv_topology
-from src.dave_data.topology.high_pressure import create_hp_topology
-from src.dave_data.topology.high_voltage import create_hv_topology
+from dave.topology.high_pressure import create_hp_topology
+from dave.topology.high_voltage import create_hv_topology
 from dave.topology.low_voltage import create_lv_topology
 from dave.topology.medium_voltage import create_mv_topology
 from dave.dave_structure import create_empty_dataset
@@ -95,7 +95,7 @@ def save_dataset_to_archiv(grid_data):
 def save_dataset_to_user_folder(grid_data, output_format, output_folder, api_use):
     """
     This function saves the DAVE dataset to an output folder.
-
+    
     Input:
         **grid_data** (attrdict) - dave attrdict with empty tables
         **output_format** (string, default 'json') - this parameter defines the output format. \

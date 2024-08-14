@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from dave.io.file_io import from_json_string
 from dave.archiv_io import archiv_inventory
-from src.dave_data.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
+from dave.datapool.read_data import read_federal_states, read_nuts_regions, read_postal
 from dave.geography.osm_data import from_osm, road_junctions
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area

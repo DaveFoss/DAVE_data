@@ -13,7 +13,7 @@ from pandas import DataFrame, concat, read_excel, to_datetime
 from shapely.geometry import LineString, Point
 from six import string_types
 
-from src.dave_data.datapool.read_data import get_data_path
+from dave.datapool.read_data import get_data_path
 from dave.settings import dave_settings
 
 
