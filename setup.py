@@ -16,7 +16,7 @@ def read(*names, **kwargs):
 
 setup(
     name="dave_data",
-    version="0.0.0",
+    version="0.0.1b3",
     license="MIT",
     description="Short Discription",
     long_description="{}\n{}".format(
@@ -25,6 +25,7 @@ setup(
         ),
         re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", read("CHANGELOG.rst")),
     ),
+    long_description_content_type="text/x-rst",
     author="DAVE_data Developers",
     author_email="EMAIL@IS.MISSING.DE",
     url="https://github.com/DaveFoss/DAVE_data",
@@ -71,10 +72,9 @@ setup(
         "geopandas",
         "defusedxml",
         "six",
-        "shapely",
     ],
     extras_require={
-        # eg:
+        "examples": ["contextily", "shapely", "matplotlib"]
         #   "rst": ["docutils>=0.11"],
         #   ":python_version=='3.8'": ["backports.zoneinfo"],
     },
