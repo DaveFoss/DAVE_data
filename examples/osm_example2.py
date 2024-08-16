@@ -1,11 +1,12 @@
+from tkinter.filedialog import askopenfile
+
 import contextily as cx
+import geopandas as gpd
 from matplotlib import pyplot as plt
 
 from dave_data import osm_request
 
-import geopandas as gpd
-from tkinter.filedialog import askopenfile
-fn = askopenfile(mode ='r', filetypes=[('Geo Files', '*.geojson')])
+fn = askopenfile(mode="r", filetypes=[("Geo Files", "*.geojson")])
 gdf = gpd.read_file(fn)
 
 print(gdf.iloc[0].geometry)

@@ -60,5 +60,5 @@ line-length = 79
 target-version = ["py311"]
 
 [tool.isort]
-forced-separate = ["conftest"]
-force-single-line = true
+forced_separate = ["conftest"]
+force_single_line = true
