@@ -14,6 +14,22 @@ Overview
     * - package
       - |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
 
+.. |version| image:: https://img.shields.io/pypi/v/dave_data.svg
+    :alt: PyPI Package latest release
+    :target: https://pypi.org/project/dave_data
+
+.. |wheel| image:: https://img.shields.io/pypi/wheel/dave_data.svg
+    :alt: PyPI Wheel
+    :target: https://pypi.org/project/dave_data
+
+.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/dave_data.svg
+    :alt: Supported versions
+    :target: https://pypi.org/project/dave_data
+
+.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/dave_data.svg
+    :alt: Supported implementations
+    :target: https://pypi.org/project/dave_data
+
 .. |docs| image:: https://readthedocs.org/projects/dave_data/badge/?version=latest
     :target: https://dave-data.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
@@ -30,10 +46,9 @@ Overview
     :alt: Coverage Status
     :target: https://app.codecov.io/github/DaveFoss/DAVE_data
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/DaveFoss/DAVE_data/v0.0.0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/DaveFoss/DAVE_data/v0.0.1b3.svg
     :alt: Commits since latest release
-    :target: https://github.com/DaveFoss/DAVE_data/compare/v0.0.0...main
-
+    :target: https://github.com/DaveFoss/DAVE_data/compare/v0.0.1b3...main
 
 
 .. end-badges

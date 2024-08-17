@@ -16,7 +16,7 @@ def read(*names, **kwargs):
 
 setup(
     name="dave_data",
-    version="0.0.1b3",
+    version="0.0.1",
     license="MIT",
     description="Short Discription",
     long_description="{}\n{}".format(
@@ -45,8 +45,6 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
