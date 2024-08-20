@@ -1,3 +1,11 @@
+"""
+Module Name: osm_example.py
+Author: Uwe Krien
+Date: 2024-08-20
+Description: This module retrieve the streets from osm and plot them with the osm background.
+License: Refer to LICENCE file.
+"""
+
 import contextily as cx
 from matplotlib import pyplot as plt
 from shapely import box
