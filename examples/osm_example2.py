@@ -11,10 +11,7 @@ gdf = gpd.read_file(fn)
 
 print(gdf.iloc[0].geometry)
 
-streets = osm_request(
-    "road",
-    gdf.iloc[0].geometry,
-)[0]
+streets = osm_request("road", gdf.iloc[0].geometry)[0]
 print(streets)
 print(streets.crs)
 streets_wm = streets.to_crs(epsg=3857)
