@@ -2,4 +2,4 @@
 Authors
 =======
 
-* DAVE_data Developers - WEBSEITE_FEHLT
+* See DAVE_data Contributors - https://github.com/DaveFoss/DAVE_data/graphs/contributors

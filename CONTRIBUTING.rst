@@ -1,25 +1,35 @@
-============
-Contributing
-============
+=========================
+Contributing to DAVE_data
+=========================
 
-Contributions are welcome, and they are greatly appreciated! Every
-little bit helps, and credit will always be given.
+Thank you for considering contributing to DAVE_data! We welcome contributions from everyone.
+Every little bit helps, and credit will always be given. By participating in this project,
+you agree to abide by our guidelines.
+
+How Can You Contribute?
+-----------------------
 
 Bug reports
 ===========
 
-When `reporting a bug <https://github.com/DaveFoss/DAVE_data/issues>`_ please include:
+Before reporting a bug, please ensure that the bug was not already reported by searching on
+GitHub under `Issues <https://github.com/DaveFoss/DAVE_data/issues>`_.
 
-    * Your operating system name and version.
-    * Any details about your local setup that might be helpful in troubleshooting.
-    * Detailed steps to reproduce the bug.
+If you're unable to find an open issue addressing the problem, open a `new one
+<https://github.com/DaveFoss/DAVE_data/issues/new>`_. When reporting a bug please include a
+title and clear description with relevant information such as:
+
+* Your operating system name and version.
+* Any details about your local setup that might be helpful in troubleshooting.
+* Detailed steps to reproduce the bug.
 
 Documentation improvements
 ==========================
 
 DaveFoss could always use more documentation, whether as part of the
 official DaveFoss docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+articles, and such. You can send feedback on what's essential and missing;
+as well as suggesting a correction or a new one yourself.
 
 Feature requests and feedback
 =============================
@@ -28,7 +38,7 @@ The best way to send feedback is to file an issue at https://github.com/DaveFoss
 
 If you are proposing a feature:
 
-* Explain in detail how it would work.
+* Explain clearly and in detail how it would work. You are welcome to describe any alternative solutions you have considered.
 * Keep the scope as narrow as possible, to make it easier to implement.
 * Remember that this is a volunteer-driven project, and that code contributions are welcome :)
 
@@ -49,17 +59,19 @@ To set up `DAVE_data` for local development:
 
    Now you can make your changes locally.
 
-4. When you're done making changes run all the checks and docs builder with one command::
+4. If you have added code that should be tested, add tests.
+
+5. When you're done making changes run all the checks and docs builder with one command::
 
     tox
 
-5. Commit your changes and push your branch to GitHub::
+6. Commit your changes and push your branch to GitHub::
 
     git add .
     git commit -m "Your detailed description of your changes."
     git push origin name-of-your-bugfix-or-feature
 
-6. Submit a pull request through the GitHub website.
+7. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
@@ -71,7 +83,14 @@ For merging, you should:
 1. Include passing tests (run ``tox``).
 2. Update documentation when there's new API, functionality etc.
 3. Add a note to ``CHANGELOG.rst`` about the changes.
-4. Add yourself to ``AUTHORS.rst``.
+
+Guidelines
+----------
+
+- Follow the coding style used in the project.
+- Write clear and meaningful commit messages.
+- Ensure that your changes do not introduce new issues.
+- Be respectful and considerate in your interactions with others.
 
 Tips
 ----
@@ -83,3 +102,4 @@ To run a subset of tests::
 To run all the test environments in *parallel*::
 
     tox -p auto
+
