@@ -2,6 +2,7 @@
 Description: This module retrieve the streets from osm and plot them with the osm background.
 License: MIT License.
 """
+
 import contextily as cx
 from matplotlib import pyplot as plt
 from shapely import box
