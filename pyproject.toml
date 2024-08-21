@@ -62,3 +62,5 @@ target-version = ["py311"]
 [tool.isort]
 forced_separate = ["conftest"]
 force_single_line = true
+profile = "black"
+line_length = 79
