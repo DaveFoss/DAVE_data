@@ -13,6 +13,9 @@ from shapely.geometry import LineString
 from shapely.geometry import Point
 from six import string_types
 
+from dave_data.core import Data
+from dave_data.core import MetaData
+
 
 def osm_settings():
     """
@@ -222,6 +225,7 @@ def osm_request(data_type, area):
     data_param = osm_settings()["osm_tags"][data_type]
     request_data = GeoDataFrame([])
     meta_data = None
+    data = GeoDataFrame
     for osm_type in data_param[2]:
         # create tags
         tags = (
@@ -232,7 +236,11 @@ def osm_request(data_type, area):
         # get data from OSM directly via API query
         data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
         request_data = concat([request_data, data], ignore_index=True)
-    return request_data, meta_data
+    meta = MetaData(
+        source_license="ODBL", source_date=None, organisation="OpenStreetMap"
+    )
+    return Data(name="OSM roads filtered", description="Some description",
+                data=data, meta=meta, polygon=area, tags=["roads", "osm"])
 
 
 # --- request directly from OSM via Overpass API and geopandas_osm package

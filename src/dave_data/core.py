@@ -27,7 +27,7 @@ class MetaData:
         self.source_date = self._convert_date(source_date)
         self.fetch_date = datetime.datetime.now()
         self.source_url = None
-        self.organisation = None
+        self.organisation = organisation
         self.source_meta = None
 
     def _convert_date(self, value):
