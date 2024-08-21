@@ -102,4 +102,3 @@ To run a subset of tests::
 To run all the test environments in *parallel*::
 
     tox -p auto
-
