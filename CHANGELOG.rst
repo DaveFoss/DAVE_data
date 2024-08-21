@@ -1,8 +1,22 @@
+=========================
+What’s New in DAVE_data
+=========================
 
-Changelog
-=========
+These are new features and improvements of note in each release.
 
-0.0.0 (2024-08-08)
-------------------
+0.0.0 (August 08, 2024)
+-----------------------
 
-Rebase code from DAVE_core as a base for the upcoming development
+Event
+===========
+
+* Rebase code from DAVE_core as a base for the upcoming development
+
+
+
+
+
+
+
+
+
