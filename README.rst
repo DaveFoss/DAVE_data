@@ -46,9 +46,9 @@ Overview
     :alt: Coverage Status
     :target: https://app.codecov.io/github/DaveFoss/DAVE_data
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/DaveFoss/DAVE_data/vv0.0.1.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/DaveFoss/DAVE_data/v0.0.1.svg
     :alt: Commits since latest release
-    :target: https://github.com/DaveFoss/DAVE_data/compare/vv0.0.1...main
+    :target: https://github.com/DaveFoss/DAVE_data/compare/v0.0.1...main
 
 
 .. end-badges
