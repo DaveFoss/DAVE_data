@@ -44,7 +44,7 @@ class Data:
     def __init__(
         self,
         name,
-        description = None,
+        description=None,
         data=None,
         meta=None,
         polygon=None,
