@@ -3,10 +3,11 @@ Description: This module retrieve the streets from osm and plot them with the os
 License: MIT License.
 """
 
+import pprint
+
 import contextily as cx
 from matplotlib import pyplot as plt
 from shapely import box
-import pprint
 
 from dave_data import osm_request
 

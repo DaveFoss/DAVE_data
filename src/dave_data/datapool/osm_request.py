@@ -239,8 +239,14 @@ def osm_request(data_type, area):
     meta = MetaData(
         source_license="ODBL", source_date=None, organisation="OpenStreetMap"
     )
-    return Data(name="OSM roads filtered", description="Some description",
-                data=data, meta=meta, polygon=area, tags=["roads", "osm"])
+    return Data(
+        name="OSM roads filtered",
+        description="Some description",
+        data=data,
+        meta=meta,
+        polygon=area,
+        tags=["roads", "osm"],
+    )
 
 
 # --- request directly from OSM via Overpass API and geopandas_osm package
