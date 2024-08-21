@@ -1,4 +1,4 @@
-__version__ = "0.0.1b3"
+__version__ = "v0.0.1"
 
 from .core import compute
 from .core import get_data
