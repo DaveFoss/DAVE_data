@@ -25,7 +25,7 @@ class MetaData:
     def __init__(self, source_license, source_date, organisation=None):
         self.license = source_license
         self.source_date = self._convert_date(source_date)
-        self.fetch_date = datetime.datetime.now()
+        self.fetch_date = datetime.datetime.now(tz=datetime.timezone.utc)
         self.source_url = None
         self.organisation = organisation
         self.source_meta = None
