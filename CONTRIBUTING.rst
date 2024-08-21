@@ -73,7 +73,7 @@ To set up `DAVE_data` for local development:
 
 7. Submit a pull request through the GitHub website.
 
-Pull Request Guidelines
+Pull Request Guideline
 -----------------------
 
 If you need some code review or feedback while you're developing the code just make the pull request.
@@ -83,6 +83,30 @@ For merging, you should:
 1. Include passing tests (run ``tox``).
 2. Update documentation when there's new API, functionality etc.
 3. Add a note to ``CHANGELOG.rst`` about the changes.
+
+Changelog Guideline
+-----------------------
+
+Guiding Principles
+==================
+
+* Changelogs are for humans, not machines.
+* There should be an entry for every single version.
+* The same types of changes should be grouped.
+* Add the link to a git commit if there is one.
+* The latest version comes first.
+* The release date of each version is displayed.
+
+Types of changes
+================
+
+* Added for new features.
+* Changed for changes in existing functionality.
+* Deprecated for soon-to-be removed features.
+* Removed for now removed features.
+* Fixed for any bug fixes.
+* Required for any new requirements
+* Event for an achieved Milestone
 
 Guidelines
 ----------
