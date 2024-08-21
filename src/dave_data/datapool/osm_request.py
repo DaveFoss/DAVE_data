@@ -217,8 +217,8 @@ def osm_request(data_type, area):
     Examples
     --------
     >>> from shapely import box
-    >>> streets = osm_request("road", box(13.409, 52.519, 13.41, 52.52))[0]
-    >>> len(streets) > 0
+    >>> streets = osm_request("road", box(13.409, 52.519, 13.41, 52.52))
+    >>> len(streets.data) > 0
     True
 
     """
