@@ -85,7 +85,7 @@ For merging, you should:
 3. Add a note to ``CHANGELOG.rst`` about the changes.
 
 Changelog Guideline
------------------------
+-------------------
 
 Guiding Principles
 ==================
