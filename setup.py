@@ -57,8 +57,10 @@ setup(
         "Topic :: Utilities",
     ],
     project_urls={
-        "Documentation": "https://dave_data.readthedocs.io",
-        "Changelog": "https://dave_data.readthedocs.ioen/latest/changelog.html",
+        "Documentation": "https://dave-data.readthedocs.io",
+        "Changelog": (
+            "https://dave-data.readthedocs.io/en/latest/changelog.html"
+        ),
         "Issue Tracker": "https://github.com/DaveFoss/DAVE_data/issues",
     },
     keywords=[
