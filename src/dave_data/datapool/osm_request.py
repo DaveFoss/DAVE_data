@@ -168,44 +168,6 @@ def osm_settings():
             "supermarket",
             "warehouse",
         ],
-        # --- assumptions at power grid generating:
-        # mv level
-        "mv_voltage": 20,
-        # hours per year
-        "h_per_a": 8760,
-        # power factors for loads
-        "cos_phi_residential": 0.95,  # induktiv
-        "cos_phi_industrial": 0.75,  # induktiv
-        "cos_phi_commercial": 0.75,  # induktiv
-        # avarage load values for ehv, hv, and mv loads
-        "residential_load": 2,  # in MW/km²
-        "industrial_load": 10,  # in MW/km²
-        "commercial_load": 3,  # in MW/km²
-        # --- assumptions at pandapower convert:
-        # lines standard types
-        # dummy value, must be changed
-        "mv_line_std_type": "NA2XS2Y 1x240 RM/25 12/20 kV",
-        "lv_line_std_type": "NAYY 4x150 SE",  # dummy value, must be changed
-        # trafo parameters for ehv/ehv and  ehv/hv. The dummy values are
-        # based on the pandapower
-        # standarttype "160 MVA 380/110 kV" which is the biggest model
-        "trafo_vkr_percent": 0.25,  # dummy value
-        "trafo_vk_percent": 12.2,  # dummy value
-        "trafo_pfe_kw": 60,  # dummy value
-        "trafo_i0_percent": 0.06,  # dummy value
-        # trafo standard types
-        # dummy value, must be changed
-        "hvmv_trafo_std_type": "63 MVA 110/20 kV",
-        # dummy value, must be changed
-        "mvlv_trafo_std_type": "0.63 MVA 20/0.4 kV",
-        # --- assumptions at gas grid generating:
-        # hp level
-        "hp_nodes_height_m": 1,  # dummy value, must be changed
-        # value based on shutterwald data, must be changed
-        "hp_pipes_k_mm": 0.1,
-        "hp_pipes_tfluid_k": 273.15,  # dummy value , must be changed
-        # --- assumptions at model utils:
-        "min_number_nodes": 4,
     }
     return settings
 
