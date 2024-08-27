@@ -1,9 +1,8 @@
-# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
-# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+from os import fsync
+from os import path
+from pathlib import Path
 
-from dave.settings import dave_settings
-from dave.toolbox import get_data_path
+import requests
 from geopandas import GeoDataFrame
 from geopandas import points_from_xy
 from pandas import HDFStore
@@ -13,6 +12,38 @@ from pandas import read_hdf
 from shapely.geometry import LineString
 from shapely.wkb import loads
 from xmlschema import XMLSchema
+
+from dave_data.settings import dave_settings
+
+
+def get_data_path(filename=None, dirname=None):
+    """
+    This function returns the full os path for a given directory (and filename)
+    """
+    data_path = (
+        path.join(dave_settings["dave_dir"], "datapool", dirname, filename)
+        if filename
+        else path.join(dave_settings["dave_dir"], "datapool", dirname)
+    )
+    return data_path
+
+
+def download_data(filename):
+    """
+    Download data from DAVE_data ownCloud storage
+    """
+    url = f"https://owncloud.fraunhofer.de/index.php/s/McrHKZ62ci0FxCN/download?path=%2F&files={filename}"
+    file_path = path.join(get_data_path(dirname="data"), filename)
+    r = requests.get(url, stream=True, timeout=10)
+    if r.ok:
+        with Path(file_path).open("wb") as f:
+            for chunk in r.iter_content(chunk_size=1024 * 8):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+                    fsync(f.fileno())
+    else:
+        print(f"Download failed: status code {r.status_code}\n{r.text}")
 
 
 def read_postal():
