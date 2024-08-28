@@ -113,9 +113,14 @@ def read_federal_states():
     return federalstatesger, meta_data
 
 
-def read_nuts_regions(year):
+def read_nuts_regions(year=2016):
     """
     Read nuts data from datapool for Europe and the years 2013, 2016 and 2021
+
+    Parameters
+    ----------
+    year : scalar(INT), optional(default=2016)
+          The year which forms the basis of the data set
 
     Returns
     -------
@@ -125,7 +130,7 @@ def read_nuts_regions(year):
     Examples
     --------
     import dave.datapool as data
-    postal = data.read_federal_states()
+    postal = data.read_nuts_regions(year=2013)
 
     >>> read_nuts_regions(year=2013)[0].empty
     False
@@ -136,31 +141,15 @@ def read_nuts_regions(year):
     >>> read_nuts_regions(year=2021)[0].empty
     False
     """
-
     # check if data is existing in datapool otherwise download it
     filename = "nuts_regions.h5"
     if not Path(get_data_path(filename, "data")).is_file():
         download_data(filename)
-    if year == "2013":
-        nuts_regions = read_hdf(
-            get_data_path("nuts_regions.h5", "data"), key="/nuts_2013"
-        )
-        nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(
-            nuts_regions, crs=dave_data_settings["crs_main"]
-        )
-    elif year == "2016":
-        nuts_regions = read_hdf(
-            get_data_path("nuts_regions.h5", "data"), key="/nuts_2016"
-        )
-        nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(
-            nuts_regions, crs=dave_data_settings["crs_main"]
-        )
-    elif year == "2021":
-        nuts_regions = read_hdf(
-            get_data_path("nuts_regions.h5", "data"), key="/nuts_2021"
-        )
+    # collect data
+    nuts_regions = read_hdf(
+        get_data_path("nuts_regions.h5", "data"), key=f"/nuts_{year}"
+    )
+    if not nuts_regions.empty:
         nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
         nuts_regions = GeoDataFrame(
             nuts_regions, crs=dave_data_settings["crs_main"]
