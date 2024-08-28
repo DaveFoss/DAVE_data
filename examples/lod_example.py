@@ -1,5 +1,5 @@
 """
-Description: This module retrieve the streets from osm and plot them with the osm background.
+This module retrieve LoD1 data from Niedersachsen using a polygon.
 License: MIT License.
 """
 
