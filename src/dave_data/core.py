@@ -22,7 +22,9 @@ class MetaData:
     source meta : dict
     """
 
-    def __init__(self, source_license, source_date, organisation=None):
+    def __init__(
+        self, source_license, source_date=None, organisation=None, source_url=None
+    ):
         self.license = source_license
         self.source_date = self._convert_date(source_date)
         self.fetch_date = datetime.datetime.now(tz=datetime.timezone.utc)
