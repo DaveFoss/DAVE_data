@@ -31,7 +31,7 @@ def download_data(filename):
     """
     Download data from DAVE_data ownCloud storage
     """
-    url = f"https://owncloud.fraunhofer.de/index.php/s/McrHKZ62ci0FxCN/download?path=%2F&files={filename}"
+    url = f"https://owncloud.fraunhofer.de/index.php/s/McrHKZ62ci0FxCN/data/download?path=%2F&files={filename}"
     file_path = path.join(get_data_path(dirname="data"), filename)
     r = requests.get(url, stream=True, timeout=10)
     if r.ok:
