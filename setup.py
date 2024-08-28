@@ -73,6 +73,7 @@ setup(
         "defusedxml",
         "six",
 	"requests",
+	"tables",
     ],
     extras_require={
         "examples": ["contextily", "shapely", "matplotlib"]
