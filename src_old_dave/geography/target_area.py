@@ -6,7 +6,6 @@
 from dave.archiv_io import archiv_inventory
 from dave.datapool.read_data import read_federal_states
 from dave.datapool.read_data import read_nuts_regions
-from dave.datapool.read_data import read_postal
 from dave.geography.osm_data import from_osm
 from dave.geography.osm_data import road_junctions
 from dave.io.file_io import from_json_string
@@ -18,27 +17,6 @@ from pandas import DataFrame
 from pandas import concat
 from shapely.geometry import Polygon
 from tqdm import tqdm
-
-
-def _target_by_postalcode(grid_data, postalcode):
-    """
-    This function filter the postalcode informations for the target area.
-    Multiple postalcode areas will be combinated.
-    """
-    postal, meta_data = read_postal()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    if len(postalcode) == 1 and postalcode[0].lower() == "all":
-        # in this case all postalcode areas will be choosen
-        target = postal
-    else:
-        target = postal[postal.postalcode.isin(postalcode)].reset_index(
-            drop=True
-        )
-        # sort postalcodes
-        postalcode.sort()
-    return target
 
 
 def _target_by_own_area(grid_data, own_area):
@@ -79,31 +57,6 @@ def _target_by_own_area(grid_data, own_area):
     # filter duplicated postal codes
     own_postal = postal_intersection["postalcode"].unique().tolist()
     return target, own_postal
-
-
-def _target_by_town_name(grid_data, town_name):
-    """
-    This function filter the postalcode informations for the target area.
-    Multiple town name areas will be combinated
-    """
-    postal, meta_data = read_postal()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    if len(town_name) == 1 and town_name[0].lower() == "all":
-        # in this case all city names will be choosen (same case as all postalcode areas)
-        target = postal
-    else:
-        # bring town names in right format and filter data
-        normalized_town_names = [town.lower() for town in town_name]
-        normalized_postal_town = postal.town.str.lower()
-        indexes = normalized_postal_town.isin(normalized_town_names)
-        target = postal[indexes].reset_index(drop=True)
-        if len(target.town.unique()) != len(town_name):
-            raise ValueError("town name wasn`t found. Please check your input")
-        # sort town names
-        town_name.sort()
-    return target, town_name
 
 
 def _target_by_federal_state(grid_data, federal_state):
