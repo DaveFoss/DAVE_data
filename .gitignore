@@ -1,5 +1,5 @@
 # DAVE_core files
-**/datapool/*.h5
+**/datapool/data/*.h5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
