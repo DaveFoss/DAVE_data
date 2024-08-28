@@ -72,6 +72,7 @@ setup(
         "geopandas",
         "defusedxml",
         "six",
+        "requests"
     ],
     extras_require={
         "examples": ["contextily", "shapely", "matplotlib"]
