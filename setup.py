@@ -74,6 +74,7 @@ setup(
         "six",
 	"requests",
 	"tables",
+	"openpyxl",
     ],
     extras_require={
         "examples": ["contextily", "shapely", "matplotlib"]

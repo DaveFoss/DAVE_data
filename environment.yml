@@ -9,3 +9,4 @@ dependencies:
   - six
   - requests
   - tables
+  - openpyxl
