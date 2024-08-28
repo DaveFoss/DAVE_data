@@ -59,47 +59,6 @@ def _target_by_own_area(grid_data, own_area):
     return target, own_postal
 
 
-def _target_by_federal_state(grid_data, federal_state):
-    """
-    This function filter the federal state informations for the target area.
-    Multiple federal state areas will be combinated.
-    """
-    states, meta_data = read_federal_states()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    if len(federal_state) == 1 and federal_state[0].lower() == "all":
-        # in this case all federal states will be choosen
-        target = states
-    else:
-        # bring federal state names in right format and filter data
-        federal_state = [
-            "-".join(list(map(lambda x: x.capitalize(), state.split("-"))))
-            for state in federal_state
-        ]
-        target = states[states["name"].isin(federal_state)].reset_index(
-            drop=True
-        )
-        if len(target) != len(federal_state):
-            raise ValueError(
-                "federal state name wasn`t found. Please check your input"
-            )
-        # sort federal state names
-        federal_state.sort()
-    # convert federal states into postal code areas for target_input
-    postal, meta_data = read_postal()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(
-        postal, target, remove_columns=False
-    )
-    # filter duplicated postal codes
-    federal_state_postal = postal_intersection["postalcode"].unique().tolist()
-    return target, federal_state, federal_state_postal
-
-
 def _target_by_nuts_region(grid_data, nuts_region):
     """
     This function filter the nuts region informations for the target area.
