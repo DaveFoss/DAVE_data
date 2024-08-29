@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Project config reader.
 Based on Steffen (https://github.com/steffenGit)
