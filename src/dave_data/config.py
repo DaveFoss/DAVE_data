@@ -38,7 +38,7 @@ def get_ini_filenames():
     local_path = Path(Path.home(), ".dave")
     if local_path.is_dir():
         paths.append(local_path)
-    logging.debug("Searching for .ini-files in the following paths %s" % paths)
+    logging.debug(f"Searching for .ini-files in the following paths {paths}")
     for p in paths:
         files.extend(list(p.glob("*.ini")))
     files = [f for f in files if f not in BLACKLIST]
@@ -105,9 +105,9 @@ def get_list(section, parameter, sep=",", string=False):
 
     except AttributeError:
         if string is True:
-            my_list = list((cfg.get(section, parameter),))
+            my_list = list(cfg.get(section, parameter))
         else:
-            my_list = list((get(section, parameter),))
+            my_list = list(get(section, parameter))
     return my_list
 
 
@@ -125,7 +125,7 @@ def get_dict_list(section, string=False):
     """
     load()
     dc = {}
-    for key, value in cfg.items(section):
+    for key, _value in cfg.items(section):
         dc[key] = get_list(section, key, string=string)
     return dc
 
