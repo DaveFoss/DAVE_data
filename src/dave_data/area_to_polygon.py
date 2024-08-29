@@ -26,8 +26,8 @@ def postalcode_to_polygon(postalcode):
     polygon_postal = postalcode_to_polygon(postalcode=['34225', '34117'])
 
     >>> from shapely.geometry import Polygon
-    >>> type(postalcode_to_polygon(postalcode=['34225']))
-    Polygon
+    >>> isinstance((postalcode_to_polygon(postalcode=['34225'])), Polygon)
+    True
     """
     # read postalcode data
     postal, meta_data = read_postal()
@@ -62,8 +62,8 @@ def town_to_polygon(town):
     polygon_town = town_to_polygon(postalcode=['Kassel'])
 
     >>> from shapely.geometry import Polygon
-    >>> type(town_to_polygon(postalcode=['Kassel']))
-    Polygon
+    >>> isinstance(town_to_polygon(town=['Kassel']), Polygon)
+    True
     """
     postal, meta_data = read_postal()
     if len(town) == 1 and town[0].lower() == "all":
@@ -101,8 +101,8 @@ def federal_state_to_polygon(federal_state):
     polygon_fed = federal_state_to_polygon(federal_state=['Hessen'])
 
     >>> from shapely.geometry import Polygon
-    >>> type(federal_state_to_polygon(federal_state=['Hessen']))
-    Polygon
+    >>> isinstance(federal_state_to_polygon(federal_state=['Hessen']), Polygon)
+    True
     """
     states, meta_data = read_federal_states()
     # add meta data
@@ -160,8 +160,8 @@ def nuts_to_polygon(nuts, year=2016):
     polygon_nuts = nuts_to_polygon(nuts=['DE1', 'DE22'], year=2013)
 
     >>> from shapely.geometry import Polygon
-    >>> type(federal_state_to_polygon(federal_state=['Hessen']))
-    Polygon
+    >>> isinstance(federal_state_to_polygon(federal_state=['Hessen']), Polygon)
+    True
     """
     # read nuts-3 areas
     nuts_all, meta_data = read_nuts_regions(year=year)
