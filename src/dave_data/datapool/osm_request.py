@@ -186,7 +186,6 @@ def osm_request(data_type, area):
     """
     data_param = osm_settings()["osm_tags"][data_type]
     request_data = GeoDataFrame([])
-    meta_data = None
     data = GeoDataFrame
     for osm_type in data_param[2]:
         # create tags

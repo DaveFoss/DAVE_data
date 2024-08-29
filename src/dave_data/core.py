@@ -9,31 +9,35 @@ class MetaData:
 
     Parameters
     ----------
-    source_license
-    source_date
+    source_license : str
+    source_date : datetime.date or None
 
 
     Attributes
     ----------
     license : str
     organisation : str
-    source_date : str
+    source_date : datetime.date or None
     fetch_date : datetime.date
     source meta : dict
     """
 
     def __init__(
-        self, source_license, source_date=None, organisation=None, source_url=None
+        self,
+        source_license,
+        source_date=None,
+        organisation=None,
+        source_url=None,
+        source_meta=None,
     ):
         self.license = source_license
-        self.source_date = self._convert_date(source_date)
+        self.source_date = source_date
         self.fetch_date = datetime.datetime.now(tz=datetime.timezone.utc)
-        self.source_url = None
+        self.source_url = source_url
         self.organisation = organisation
-        self.source_meta = None
-
-    def _convert_date(self, value):
-        return ""
+        if source_meta is None:
+            source_meta = {}
+        self.source_meta = source_meta
 
 
 class Data:
@@ -58,7 +62,7 @@ class Data:
         ----------
         data : geopandas.geoDataFrame
             Data table with the original data.
-        organ
+
         """
         self.name = name
         self.description = description

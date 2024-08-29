@@ -48,7 +48,7 @@ def get_lod(polygon, n_lod=1):
         description=f"LoD{n_lod}, {fs.name}",
         polygon=polygon,
         tags=cfg.get_list(f"lod{n_lod}", "tags"),
-        meta=meta
+        meta=meta,
     )
     for url in get_url_list(polygon, n_lod):
         file = url.split("/")[-1]
