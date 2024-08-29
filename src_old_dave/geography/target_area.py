@@ -1,14 +1,208 @@
+# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
+# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
+
 from dave.archiv_io import archiv_inventory
+from dave.datapool.read_data import read_federal_states
+from dave.datapool.read_data import read_nuts_regions
+from dave.datapool.read_data import read_postal
 from dave.geography.osm_data import from_osm
 from dave.geography.osm_data import road_junctions
 from dave.io.file_io import from_json_string
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 from geopandas import GeoDataFrame
+from geopandas import read_file
 from pandas import DataFrame
 from pandas import concat
 from shapely.geometry import Polygon
 from tqdm import tqdm
+
+
+def _target_by_postalcode(grid_data, postalcode):
+    """
+    This function filter the postalcode informations for the target area.
+    Multiple postalcode areas will be combinated.
+    """
+    postal, meta_data = read_postal()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    if len(postalcode) == 1 and postalcode[0].lower() == "all":
+        # in this case all postalcode areas will be choosen
+        target = postal
+    else:
+        target = postal[postal.postalcode.isin(postalcode)].reset_index(
+            drop=True
+        )
+        # sort postalcodes
+        postalcode.sort()
+    return target
+
+
+def _target_by_own_area(grid_data, own_area):
+    """
+    This function define the target area by a own area from the user. This could be a shapefile or
+    directly a polygon. Furthermore the function filter the postalcode informations for the target area.
+    """
+    if isinstance(own_area, str):
+        if own_area[-3:] == "shp":
+            target = read_file(own_area)
+        else:
+            target = from_json_string(own_area)
+        # check if the given shape file is empty
+        if target.empty:
+            print("The given shapefile includes no data")
+    elif isinstance(own_area, Polygon):
+        target = GeoDataFrame(
+            {"name": ["own area"], "geometry": [own_area]},
+            crs=dave_settings["crs_main"],
+        )
+    else:
+        print("The given format is unknown")
+
+    # check crs and project to the right one if needed
+    if (target.crs) and (target.crs != dave_settings["crs_main"]):
+        target = target.to_crs(dave_settings["crs_main"])
+    if "id" in target.keys():
+        target = target.drop(columns=["id"])
+    # convert own area into postal code areas for target_input
+    postal, meta_data = read_postal()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    # filter postal code areas which are within the target area
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
+    # filter duplicated postal codes
+    own_postal = postal_intersection["postalcode"].unique().tolist()
+    return target, own_postal
+
+
+def _target_by_town_name(grid_data, town_name):
+    """
+    This function filter the postalcode informations for the target area.
+    Multiple town name areas will be combinated
+    """
+    postal, meta_data = read_postal()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    if len(town_name) == 1 and town_name[0].lower() == "all":
+        # in this case all city names will be choosen (same case as all postalcode areas)
+        target = postal
+    else:
+        # bring town names in right format and filter data
+        normalized_town_names = [town.lower() for town in town_name]
+        normalized_postal_town = postal.town.str.lower()
+        indexes = normalized_postal_town.isin(normalized_town_names)
+        target = postal[indexes].reset_index(drop=True)
+        if len(target.town.unique()) != len(town_name):
+            raise ValueError("town name wasn`t found. Please check your input")
+        # sort town names
+        town_name.sort()
+    return target, town_name
+
+
+def _target_by_federal_state(grid_data, federal_state):
+    """
+    This function filter the federal state informations for the target area.
+    Multiple federal state areas will be combinated.
+    """
+    states, meta_data = read_federal_states()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    if len(federal_state) == 1 and federal_state[0].lower() == "all":
+        # in this case all federal states will be choosen
+        target = states
+    else:
+        # bring federal state names in right format and filter data
+        federal_state = [
+            "-".join(list(map(lambda x: x.capitalize(), state.split("-"))))
+            for state in federal_state
+        ]
+        target = states[states["name"].isin(federal_state)].reset_index(
+            drop=True
+        )
+        if len(target) != len(federal_state):
+            raise ValueError(
+                "federal state name wasn`t found. Please check your input"
+            )
+        # sort federal state names
+        federal_state.sort()
+    # convert federal states into postal code areas for target_input
+    postal, meta_data = read_postal()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    # filter postal code areas which are within the target area
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
+    # filter duplicated postal codes
+    federal_state_postal = postal_intersection["postalcode"].unique().tolist()
+    return target, federal_state, federal_state_postal
+
+
+def _target_by_nuts_region(grid_data, nuts_region):
+    """
+    This function filter the nuts region informations for the target area.
+    """
+    # check user input
+    if isinstance(nuts_region, list):
+        nuts_region = (nuts_region, "2016")  # default year
+    # read nuts-3 areas
+    nuts, meta_data = read_nuts_regions(year=nuts_region[1])
+    nuts_3 = nuts[nuts.LEVL_CODE == 3]
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    if len(nuts_region[0]) == 1 and nuts_region[0][0].lower() == "all":
+        # in this case all nuts_regions will be choosen
+        target = nuts_3
+    else:
+        # bring NUTS ID in right format
+        nuts_regions = list(
+            map(
+                lambda x: "".join(
+                    [
+                        letter.upper() if letter.isalpha() else letter
+                        for letter in list(x)
+                    ]
+                ),
+                nuts_region[0],
+            )
+        )
+        nuts_region = (nuts_regions, nuts_region[1])
+        for i, region in enumerate(nuts_region[0]):
+            # get area for nuts region
+            nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region)]
+            target = (
+                nuts_contains
+                if i == 0
+                else concat([target, nuts_contains], ignore_index=True)
+            )
+            if nuts_contains.empty:
+                raise ValueError(
+                    "nuts region name wasn`t found. Please check your input"
+                )
+    # filter duplicates
+    target.drop_duplicates(inplace=True)
+    # convert nuts regions into postal code areas for target_input
+    postal, meta_data = read_postal()
+    # add meta data
+    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
+        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
+    # filter postal code areas which are within the target area
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
+    # filter duplicated postal codes
+    nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
+    return target, nuts_region_postal
 
 
 def target_area(

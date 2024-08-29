@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid XML Studio 1.0.8.0 (http://www.liquid-technologies.com) -->
+<xsd:schema xmlns:framework="http://gaslib.zib.de/Framework"
+    xmlns="http://gaslib.zib.de/Framework" elementFormDefault="qualified"
+    targetNamespace="http://gaslib.zib.de/Gas"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:annotation>
+        <xsd:documentation> This XML-Schema has the single purpose to include all other XML-Schemas
+            which constitute a specification of the validation of a nomination on a gas network.
+            For the specification of XML-files defining a gas network together with its compressor stations
+            have a look into the specification of <a href="Gas_xsd.html">Gas.xsd</a> and into <a href="CompressorStations_xsd.html">CompressorStations.xsd</a>. The file format for
+            the definition of a nomination is given in <a href="Scenario_xsd.html">Scenario.xsd</a>. To learn how combined decisions are passed
+            to a solver please read the specification of <a href="CombinedDecisions_xsd.html">CombinedDecisions.xsd</a>.
+        </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:import namespace="http://gaslib.zib.de/CombinedDecisions"
+        schemaLocation="CombinedDecisions.xsd"/>
+    <xsd:include schemaLocation="Scenario.xsd"/>
+    <xsd:import namespace="http://gaslib.zib.de/CompressorStations"
+        schemaLocation="CompressorStations.xsd"/>
+    <xsd:include schemaLocation="Gas.xsd"/>
+
+</xsd:schema>
