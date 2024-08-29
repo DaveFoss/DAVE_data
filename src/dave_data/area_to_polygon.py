@@ -238,11 +238,6 @@ def file_to_polygon(filepath, layer=None):
     from dave_data.area_to_polygon import file_to_polygon
     polygon = file_to_polygon(filepath)
     """
-
-    """
-    This function define the target area by a own area from the user. This could be a shapefile or
-    directly a polygon. Furthermore the function filter the postalcode informations for the target area.
-    """
     # read file
     if filepath.split(".")[-1] in ["shp", "geojson"]:
         file_data = read_file(filepath)
