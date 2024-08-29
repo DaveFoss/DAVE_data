@@ -140,10 +140,16 @@ def tmp_set(section, key, value):
     return cfg.set(section, key, value)
 
 
-def get_base_path():
+def get_base_path(sub_dir=None):
     if get("path", "base") is None:
         base_path = Path(Path.home(), "dave_data")
-        base_path.mkdir(exist_ok=True)
-        return base_path
+        tmp_set("path", "base", str(base_path))
     else:
-        return Path(get("path", "base"))
+        base_path = Path(get("path", "base"))
+    if sub_dir is not None:
+        if sub_dir in get_list("path", "sub_dirs"):
+            base_path = Path(base_path, sub_dir)
+        else:
+            raise ValueError(f"Subdir {sub_dir} is not valid.")
+    base_path.mkdir(exist_ok=True, parents=True)
+    return base_path
