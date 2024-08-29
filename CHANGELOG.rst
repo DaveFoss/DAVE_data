@@ -7,6 +7,15 @@ These are new features and improvements of note in each release.
 Unreleased
 ==========
 
+Added
+-----
+
+* postalcode to polygon function
+* town to polygon function
+* federal state to polygon function
+* nuts to polygon function
+* file to polygon function
+
 Changed
 -------
 
@@ -15,6 +24,7 @@ Changed
 
 0.0.1 (August 21, 2024)
 =======================
+
 
 Added
 -----

@@ -72,6 +72,9 @@ setup(
         "geopandas",
         "defusedxml",
         "six",
+	"requests",
+	"tables",
+	"openpyxl",
     ],
     extras_require={
         "examples": ["contextily", "shapely", "matplotlib"]
