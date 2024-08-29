@@ -1,3 +1,9 @@
+"""
+Helper functions to get a polygon of specific regions
+
+License: MIT
+"""
+
 from geopandas import read_file
 from pandas import concat
 
