@@ -11,7 +11,7 @@ extensions = [
 ]
 source_suffix = ".rst"
 master_doc = "index"
-project = "DaveFoss"
+project = "DAVE_data"
 year = "2024"
 author = "DAVE_data Developers"
 copyright = f"{year}, {author}"
