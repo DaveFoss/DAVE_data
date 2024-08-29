@@ -14,6 +14,7 @@ Added
 * town to polygon function
 * federal state to polygon function
 * nuts to polygon function
+* file to polygon function
 
 Changed
 -------

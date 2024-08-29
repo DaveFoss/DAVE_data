@@ -5,7 +5,7 @@ from dave_data import osm_request
 from dave_data import postalcode_to_polygon
 
 # define area of interest by postalcode
-polygon = postalcode_to_polygon(["34225"])[0]
+polygon = postalcode_to_polygon(["34225"])
 print(polygon)
 
 # request streets for polygon

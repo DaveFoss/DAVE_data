@@ -1,120 +1,14 @@
-# Copyright (c) 2022-2024 by Fraunhofer Institute for Energy Economics and Energy System Technology (IEE)
-# Kassel and individual contributors (see AUTHORS file for details). All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
-
-
 from dave.archiv_io import archiv_inventory
-from dave.datapool.read_data import read_federal_states
-from dave.datapool.read_data import read_nuts_regions
 from dave.geography.osm_data import from_osm
 from dave.geography.osm_data import road_junctions
 from dave.io.file_io import from_json_string
 from dave.settings import dave_settings
 from dave.toolbox import intersection_with_area
 from geopandas import GeoDataFrame
-from geopandas import read_file
 from pandas import DataFrame
 from pandas import concat
 from shapely.geometry import Polygon
 from tqdm import tqdm
-
-
-def _target_by_own_area(grid_data, own_area):
-    """
-    This function define the target area by a own area from the user. This could be a shapefile or
-    directly a polygon. Furthermore the function filter the postalcode informations for the target area.
-    """
-    if isinstance(own_area, str):
-        if own_area[-3:] == "shp":
-            target = read_file(own_area)
-        else:
-            target = from_json_string(own_area)
-        # check if the given shape file is empty
-        if target.empty:
-            print("The given shapefile includes no data")
-    elif isinstance(own_area, Polygon):
-        target = GeoDataFrame(
-            {"name": ["own area"], "geometry": [own_area]},
-            crs=dave_settings["crs_main"],
-        )
-    else:
-        print("The given format is unknown")
-
-    # check crs and project to the right one if needed
-    if (target.crs) and (target.crs != dave_settings["crs_main"]):
-        target = target.to_crs(dave_settings["crs_main"])
-    if "id" in target.keys():
-        target = target.drop(columns=["id"])
-    # convert own area into postal code areas for target_input
-    postal, meta_data = read_postal()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(
-        postal, target, remove_columns=False
-    )
-    # filter duplicated postal codes
-    own_postal = postal_intersection["postalcode"].unique().tolist()
-    return target, own_postal
-
-
-def _target_by_nuts_region(grid_data, nuts_region):
-    """
-    This function filter the nuts region informations for the target area.
-    """
-    # check user input
-    if isinstance(nuts_region, list):
-        nuts_region = (nuts_region, "2016")  # default year
-    # read nuts-3 areas
-    nuts, meta_data = read_nuts_regions(year=nuts_region[1])
-    nuts_3 = nuts[nuts.LEVL_CODE == 3]
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    if len(nuts_region[0]) == 1 and nuts_region[0][0].lower() == "all":
-        # in this case all nuts_regions will be choosen
-        target = nuts_3
-    else:
-        # bring NUTS ID in right format
-        nuts_regions = list(
-            map(
-                lambda x: "".join(
-                    [
-                        letter.upper() if letter.isalpha() else letter
-                        for letter in list(x)
-                    ]
-                ),
-                nuts_region[0],
-            )
-        )
-        nuts_region = (nuts_regions, nuts_region[1])
-        for i, region in enumerate(nuts_region[0]):
-            # get area for nuts region
-            nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region)]
-            target = (
-                nuts_contains
-                if i == 0
-                else concat([target, nuts_contains], ignore_index=True)
-            )
-            if nuts_contains.empty:
-                raise ValueError(
-                    "nuts region name wasn`t found. Please check your input"
-                )
-    # filter duplicates
-    target.drop_duplicates(inplace=True)
-    # convert nuts regions into postal code areas for target_input
-    postal, meta_data = read_postal()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
-    # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(
-        postal, target, remove_columns=False
-    )
-    # filter duplicated postal codes
-    nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
-    return target, nuts_region_postal
 
 
 def target_area(

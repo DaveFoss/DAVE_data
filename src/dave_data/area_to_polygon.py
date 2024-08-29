@@ -1,8 +1,10 @@
+from geopandas import read_file
 from pandas import concat
 
 from dave_data.datapool.read_data import read_federal_states
 from dave_data.datapool.read_data import read_nuts_regions
 from dave_data.datapool.read_data import read_postal
+from dave_data.settings import dave_data_settings
 
 
 def postalcode_to_polygon(postalcode):
@@ -206,4 +208,65 @@ def nuts_to_polygon(nuts, year=2016):
     """
     # create polygon from nuts regions
     polygon = nuts_filtered.geometry.union_all()
+    return polygon
+
+
+def file_to_polygon(filepath, layer=None):
+    """
+    Create a polygon based on a file including geographical data
+
+    Parameters
+    ----------
+    filepath : scalar(Str)
+          Absolut Path to a file including geographical data. Possible datatypes are .shp, .gpkg and .geojson
+
+    layer : scalar(Str), optional(default=None)
+          The layer name of the data to be considered. Necessary for datatype .gpkg
+
+    Returns
+    -------
+    polygon : Shapely Polygon / MultiPolygon
+
+    Examples
+    --------
+    from dave_data.area_to_polygon import file_to_polygon
+    polygon = file_to_polygon(filepath)
+    """
+
+    """
+    This function define the target area by a own area from the user. This could be a shapefile or
+    directly a polygon. Furthermore the function filter the postalcode informations for the target area.
+    """
+    # read file
+    if filepath.split(".")[-1] in ["shp", "geojson"]:
+        file_data = read_file(filepath)
+    elif filepath.split(".")[-1] in ["gpkg"]:
+        if layer is None:
+            raise ValueError(
+                "At .gpkg files a layer specification is necessary"
+            )
+        file_data = read_file(filepath, layer=layer)
+    else:
+        raise ValueError("The given file is not in a supported format")
+    # check if the given file is empty
+    if file_data.empty:
+        raise ValueError("The given file includes no data")
+
+    # check crs and project to the right one if needed
+    if (file_data.crs) and (file_data.crs != dave_data_settings["crs_main"]):
+        file_data = file_data.to_crs(dave_data_settings["crs_main"])
+    if "id" in file_data.keys():
+        file_data = file_data.drop(columns=["id"])
+    """
+    # convert own area into postal code areas for target_input
+    postal, meta_data = read_postal()
+    # filter postal code areas which are within the target area
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
+    # filter duplicated postal codes
+    own_postal = postal_intersection["postalcode"].unique().tolist()
+    """
+    # create polygon from file data
+    polygon = file_data.geometry.union_all()
     return polygon
