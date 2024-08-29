@@ -1,4 +1,7 @@
+from pandas import concat
+
 from dave_data.datapool.read_data import read_federal_states
+from dave_data.datapool.read_data import read_nuts_regions
 from dave_data.datapool.read_data import read_postal
 
 
@@ -40,7 +43,7 @@ def postalcode_to_polygon(postalcode):
 
 def town_to_polygon(town):
     """
-    Creating a polygon based on town names
+    Create a polygon based on town names
 
     Parameters
     ----------
@@ -60,7 +63,6 @@ def town_to_polygon(town):
     >>> type(town_to_polygon(postalcode=['Kassel']))
     Polygon
     """
-
     postal, meta_data = read_postal()
     if len(town) == 1 and town[0].lower() == "all":
         # in this case all town names will be choosen
@@ -80,7 +82,7 @@ def town_to_polygon(town):
 
 def federal_state_to_polygon(federal_state):
     """
-    Creating a polygon based on federal states
+    Create a polygon based on federal states
 
     Parameters
     ----------
@@ -122,9 +124,6 @@ def federal_state_to_polygon(federal_state):
     """
     # convert federal states into postal code areas for target_input
     postal, meta_data = read_postal()
-    # add meta data
-    if f"{meta_data['Main'].Titel.loc[0]}" not in grid_data.meta_data.keys():
-        grid_data.meta_data[f"{meta_data['Main'].Titel.loc[0]}"] = meta_data
     # filter postal code areas which are within the target area
     postal_intersection = intersection_with_area(
         postal, target, remove_columns=False
@@ -134,4 +133,77 @@ def federal_state_to_polygon(federal_state):
     """
     # create polygon from federal states
     polygon = federal_state_filtered.geometry.union_all()
+    return polygon
+
+
+def nuts_to_polygon(nuts, year=2016):
+    """
+    Create a polygon based on nuts regions
+
+    Parameters
+    ----------
+    nuts : List(Str)
+          Nuts areas which define the polygon. Diffrent nuts levels can combined. It could also be choose ['ALL'] for all Nuts 3 areas in germany
+
+    year : scalar(INT), optional(default=2016)
+          The year which forms the basis of the data set
+
+    Returns
+    -------
+    polygon : Shapely Polygon / MultiPolygon
+
+    Examples
+    --------
+    from dave_data.area_to_polygon import nuts_to_polygon
+    polygon_nuts = nuts_to_polygon(nuts=['DE1', 'DE22'], year=2013)
+
+    >>> from shapely.geometry import Polygon
+    >>> type(federal_state_to_polygon(federal_state=['Hessen']))
+    Polygon
+    """
+    # read nuts-3 areas
+    nuts_all, meta_data = read_nuts_regions(year=year)
+    nuts_3 = nuts_all[nuts_all.LEVL_CODE == 3]
+    # filter nuts data
+    if len(nuts) == 1 and nuts[0].lower() == "all":
+        # in this case all nuts_regions will be choosen
+        nuts_filtered = nuts_3
+    else:
+        # bring NUTS ID in right format
+        nuts_regions = [
+            "".join(
+                [
+                    letter.upper() if letter.isalpha() else letter
+                    for letter in list(nuts_region)
+                ]
+            )
+            for nuts_region in nuts
+        ]
+        for region in nuts_regions:
+            # get area for the singel nuts region and concat them
+            nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region)]
+            nuts_filtered = (
+                nuts_contains
+                if region == nuts_regions[0]
+                else concat([nuts_filtered, nuts_contains], ignore_index=True)
+            )
+            if nuts_contains.empty:
+                raise ValueError(
+                    f"nuts name '{region}' wasn`t found. Please check your input"
+                )
+    # filter duplicates
+    nuts_filtered.drop_duplicates(inplace=True)
+
+    """
+    # convert nuts regions into postal code areas for target_input
+    postal, meta_data = read_postal()
+    # filter postal code areas which are within the target area
+    postal_intersection = intersection_with_area(
+        postal, target, remove_columns=False
+    )
+    # filter duplicated postal codes
+    nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
+    """
+    # create polygon from nuts regions
+    polygon = nuts_filtered.geometry.union_all()
     return polygon
