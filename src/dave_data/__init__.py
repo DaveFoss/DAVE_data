@@ -9,7 +9,7 @@ from dave_data.io.read_data import read_postal
 
 from .core import compute
 from .core import get_data
-from .datapool.osm_request import osm_request
+from dave_data.datapool.osm.osm_request import osm_request
 
 __all__ = [
     "postalcode_to_polygon",
