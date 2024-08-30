@@ -8,7 +8,11 @@ from pandas import read_excel
 from pandas import read_hdf
 from shapely.wkb import loads
 
-from dave_data.settings import dave_data_settings
+
+dave_data_settings = {
+    "dave_data_dir": Path(Path.home(), "dave_data"),
+    "crs_main": "EPSG:4326",
+}
 
 
 def get_data_path(filename=None, dirname=None):
@@ -31,7 +35,8 @@ def download_data(filename):
     """
     Download data from DAVE_data ownCloud storage
     """
-    url = f"https://owncloud.fraunhofer.de/index.php/s/McrHKZ62ci0FxCN/download?path=%2F&files=data/{filename}"
+    url = (f"https://owncloud.fraunhofer.de/index.php/s/McrHKZ62ci0FxCN/"
+           f"download?path=%2F&files=data/{filename}")
     file_path = path.join(get_data_path(dirname="data"), filename)
     r = requests.get(url, stream=True, timeout=10)
     if r.ok:
