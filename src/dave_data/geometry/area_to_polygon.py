@@ -25,9 +25,8 @@ def postalcode_to_polygon(postalcode):
 
     Examples
     --------
-    from dave_data.area_to_polygon import postalcode_to_polygon
-    polygon_postal = postalcode_to_polygon(postalcode=['34225', '34117'])
-
+    >>> from dave_data.geometry.area_to_polygon import postalcode_to_polygon
+    >>> polygon_postal = postalcode_to_polygon(postalcode=['34225', '34117'])
     >>> from shapely.geometry import Polygon
     >>> isinstance((postalcode_to_polygon(postalcode=['34225'])), Polygon)
     True
@@ -62,10 +61,9 @@ def town_to_polygon(town):
 
     Examples
     --------
-    from dave_data.area_to_polygon import town_to_polygon
-    polygon_town = town_to_polygon(postalcode=['Kassel'])
-
     >>> from shapely.geometry import Polygon
+    >>> from dave_data.geometry.area_to_polygon import town_to_polygon
+    >>> polygon_town = town_to_polygon(town=['Kassel'])
     >>> isinstance(town_to_polygon(town=['Kassel']), Polygon)
     True
     """
@@ -237,8 +235,8 @@ def file_to_polygon(filepath, layer=None):
 
     Examples
     --------
-    from dave_data.area_to_polygon import file_to_polygon
-    polygon = file_to_polygon(filepath)
+    >>> # from dave_data.geometry.area_to_polygon import file_to_polygon
+    >>> # polygon = file_to_polygon(filepath)
     """
     # read file
     if filepath.split(".")[-1] in ["shp", "geojson"]:
