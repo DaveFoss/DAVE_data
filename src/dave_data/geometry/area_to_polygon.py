@@ -2,9 +2,9 @@ import pandas as pd
 from geopandas import read_file
 from pandas import concat
 
-from dave_data.datapool.read_data import read_federal_states
-from dave_data.datapool.read_data import read_nuts_regions
-from dave_data.datapool.read_data import read_postal
+from dave_data.io.read_data import read_federal_states
+from dave_data.io.read_data import read_nuts_regions
+from dave_data.io.read_data import read_postal
 
 dave_data_settings = {"crs_main": "EPSG:4326"}
 
