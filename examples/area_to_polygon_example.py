@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
 
-from dave_data.area_to_polygon import federal_state_to_polygon
-from dave_data.area_to_polygon import file_to_polygon
-from dave_data.area_to_polygon import nuts_to_polygon
-from dave_data.area_to_polygon import postalcode_to_polygon
-from dave_data.area_to_polygon import town_to_polygon
+from dave_data.geometry.area_to_polygon import federal_state_to_polygon
+from dave_data.geometry.area_to_polygon import file_to_polygon
+from dave_data.geometry.area_to_polygon import nuts_to_polygon
+from dave_data.geometry.area_to_polygon import postalcode_to_polygon
+from dave_data.geometry.area_to_polygon import town_to_polygon
 
 # --- postalcode to polygon options
 # single postalcode

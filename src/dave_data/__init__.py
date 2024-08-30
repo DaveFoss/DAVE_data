@@ -1,8 +1,8 @@
 __version__ = "v0.0.1"
 
-from .area_to_polygon import federal_state_to_polygon
-from .area_to_polygon import postalcode_to_polygon
-from .area_to_polygon import town_to_polygon
+from dave_data.geometry.area_to_polygon import federal_state_to_polygon
+from dave_data.geometry.area_to_polygon import postalcode_to_polygon
+from dave_data.geometry.area_to_polygon import town_to_polygon
 from .core import compute
 from .core import get_data
 from .datapool.osm_request import osm_request

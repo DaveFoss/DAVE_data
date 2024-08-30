@@ -1,10 +1,12 @@
+import pandas as pd
 from geopandas import read_file
 from pandas import concat
 
 from dave_data.datapool.read_data import read_federal_states
 from dave_data.datapool.read_data import read_nuts_regions
 from dave_data.datapool.read_data import read_postal
-from dave_data.settings import dave_data_settings
+
+dave_data_settings = {"crs_main": "EPSG:4326"}
 
 
 def postalcode_to_polygon(postalcode):
@@ -14,7 +16,8 @@ def postalcode_to_polygon(postalcode):
     Parameters
     ----------
     postalcode : List(Str)
-          Postalcodes areas which define the polygon. It could also be choose ['ALL'] for all postalcode areas in germany
+          Postalcodes areas which define the polygon. Use ['ALL'] for all
+          postalcode areas in germany
 
     Returns
     -------
@@ -50,7 +53,8 @@ def town_to_polygon(town):
     Parameters
     ----------
     town : List(Str)
-          Town areas which define the polygon. It could also be choose ['ALL'] for all town areas in germany
+        Town areas which define the polygon. Use ['ALL'] for all town areas
+        in germany
 
     Returns
     -------
@@ -89,7 +93,8 @@ def federal_state_to_polygon(federal_state):
     Parameters
     ----------
     federal_state : List(Str)
-          Federal state areas which define the polygon. It could also be choose ['ALL'] for all Federal state areas in germany
+        Federal state areas which define the polygon. Use ['ALL'] for all
+        Federal state areas in germany
 
     Returns
     -------
@@ -97,9 +102,8 @@ def federal_state_to_polygon(federal_state):
 
     Examples
     --------
-    from dave_data.area_to_polygon import federal_state_to_polygon
-    polygon_fed = federal_state_to_polygon(federal_state=['Hessen'])
-
+    >>> from dave_data.geometry.area_to_polygon import federal_state_to_polygon
+    >>> polygon_fed = federal_state_to_polygon(federal_state=['Hessen'])
     >>> from shapely.geometry import Polygon
     >>> isinstance(federal_state_to_polygon(federal_state=['Hessen']), Polygon)
     True
@@ -145,7 +149,8 @@ def nuts_to_polygon(nuts, year=2016):
     Parameters
     ----------
     nuts : List(Str)
-          Nuts areas which define the polygon. Diffrent nuts levels can combined. It could also be choose ['ALL'] for all Nuts 3 areas in germany
+          Nuts areas which define the polygon. Diffrent nuts levels can
+          be combined. Use ['ALL'] for all Nuts 3 areas in germany
 
     year : scalar(INT), optional(default=2016)
           The year which forms the basis of the data set
@@ -156,9 +161,8 @@ def nuts_to_polygon(nuts, year=2016):
 
     Examples
     --------
-    from dave_data.area_to_polygon import nuts_to_polygon
-    polygon_nuts = nuts_to_polygon(nuts=['DE1', 'DE22'], year=2013)
-
+    >>> from dave_data.geometry.area_to_polygon import nuts_to_polygon
+    >>> polygon_nuts = nuts_to_polygon(nuts=['DE1', 'DE22'], year=2013)
     >>> from shapely.geometry import Polygon
     >>> isinstance(federal_state_to_polygon(federal_state=['Hessen']), Polygon)
     True
@@ -167,6 +171,7 @@ def nuts_to_polygon(nuts, year=2016):
     nuts_all, meta_data = read_nuts_regions(year=year)
     nuts_3 = nuts_all[nuts_all.LEVL_CODE == 3]
     # filter nuts data
+    nuts_filtered = pd.DataFrame()
     if len(nuts) == 1 and nuts[0].lower() == "all":
         # in this case all nuts_regions will be choosen
         nuts_filtered = nuts_3
@@ -191,7 +196,8 @@ def nuts_to_polygon(nuts, year=2016):
             )
             if nuts_contains.empty:
                 raise ValueError(
-                    f"nuts name '{region}' wasn`t found. Please check your input"
+                    f"nuts name '{region}' wasn`t found. Please check your "
+                    f"input."
                 )
     # filter duplicates
     nuts_filtered.drop_duplicates(inplace=True)
@@ -218,10 +224,12 @@ def file_to_polygon(filepath, layer=None):
     Parameters
     ----------
     filepath : scalar(Str)
-          Absolut Path to a file including geographical data. Possible datatypes are .shp, .gpkg and .geojson
+        Absolut Path to a file including geographical data. Possible datatypes
+        are .shp, .gpkg and .geojson
 
     layer : scalar(Str), optional(default=None)
-          The layer name of the data to be considered. Necessary for datatype .gpkg
+          The layer name of the data to be considered. Necessary for datatype
+          .gpkg
 
     Returns
     -------
@@ -248,7 +256,7 @@ def file_to_polygon(filepath, layer=None):
         raise ValueError("The given file includes no data")
 
     # check crs and project to the right one if needed
-    if (file_data.crs) and (file_data.crs != dave_data_settings["crs_main"]):
+    if file_data.crs and file_data.crs != dave_data_settings["crs_main"]:
         file_data = file_data.to_crs(dave_data_settings["crs_main"])
     if "id" in file_data.keys():
         file_data = file_data.drop(columns=["id"])
