@@ -321,7 +321,7 @@ def query_osm(
     """
     url = _build_url(typ, bbox, recurse, tags, meta)
     # add time delay because osm doesn't alowed more than 1 request per second.
-    time_delay = dave_data_settings["osm_time_delay"]
+    time_delay = osm_settings()["osm_time_delay"]
 
     # TODO: Raise on non-200 (or 400-599)
     # with urlopen(url) as response:
