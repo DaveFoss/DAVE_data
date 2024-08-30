@@ -15,7 +15,161 @@ from six import string_types
 
 from dave_data.core import Data
 from dave_data.core import MetaData
-from dave_data.settings import dave_data_settings
+
+
+def osm_settings():
+    """
+    This function returns a dictonary with the DaVe settings for used data and
+    assumptions
+    """
+    settings = {
+        # osm time delay (because osm doesn't alowed more than 1 request per
+        # second)
+        "osm_time_delay": 60,  # in seconds
+        # osm considered area (data for this area will be downloaded and
+        # impplemented in database)
+        "osm_area": "germany",
+        # osm tags: (type: (osm key, osm tags, osm type, parameter))
+        "osm_tags": {
+            "road": (
+                "highway",
+                [
+                    "secondary",
+                    "tertiary",
+                    "unclassified",
+                    "residential",
+                    "living_street",
+                    "footway",
+                    "track",
+                    "path",
+                ],
+                ["way"],
+                ["geometry", "name", "highway", "surface"],
+                "id",
+            ),
+            "road_plot": (
+                "highway",
+                ["motorway", "trunk", "primary"],
+                ["way"],
+                ["geometry", "name", "id", "surface"],
+            ),
+            "landuse": (
+                "landuse",
+                True,
+                ["way", "relation"],
+                ["landuse", "geometry", "name", "id", "surface"],
+            ),
+            "leisure": (
+                "leisure",
+                ["golf_course", "garden", "park"],
+                ["way", "relation"],
+                [
+                    "leisure",
+                    "landuse",
+                    "natural",
+                    "name",
+                    "geometry",
+                    "id",
+                    "surface",
+                ],
+            ),
+            "natural": (
+                "natural",
+                ["scrub", "grassland", "water", "wood"],
+                ["way", "relation"],
+                [
+                    "natural",
+                    "landuse",
+                    "leisure",
+                    "name",
+                    "geometry",
+                    "id",
+                    "surface",
+                ],
+            ),
+            "building": (
+                "building",
+                True,
+                ["way"],
+                [
+                    "addr:housenumber",
+                    "addr:street",
+                    "addr:suburb",
+                    "amenity",
+                    "building",
+                    "building:levels",
+                    "geometry",
+                    "name",
+                    "id",
+                ],
+            ),
+            "railway": (
+                "railway",
+                [
+                    "construction",
+                    "disused",
+                    "light_rail",
+                    "monorail",
+                    "narrow_gauge",
+                    "rail",
+                    "subway",
+                    "tram",
+                ],
+                ["way"],
+                [
+                    "name",
+                    "railway",
+                    "geometry",
+                    "tram",
+                    "train",
+                    "usage",
+                    "voltage",
+                    "id",
+                ],
+            ),
+            "waterway": (
+                "waterway",
+                [
+                    "river",
+                    "stream",
+                    "canal",
+                    "tidal_channel ",
+                    "pressurised",
+                    "drain",
+                ],
+                ["way"],
+                ["name", "waterway", "geometry", "depth", "width", "id"],
+            ),
+        },
+        # osm categories
+        "buildings_residential": [
+            "apartments",
+            "detached",
+            "dormitory",
+            "dwelling_house",
+            "farm",
+            "house",
+            "houseboat",
+            "residential",
+            "semidetached_house",
+            "static_caravan",
+            "terrace",
+            "yes",
+        ],
+        "buildings_commercial": [
+            "commercial",
+            "hall",
+            "industrial",
+            "kindergarten",
+            "kiosk",
+            "office",
+            "retail",
+            "school",
+            "supermarket",
+            "warehouse",
+        ],
+    }
+    return settings
 
 
 def osm_request(data_type, area):
@@ -30,7 +184,7 @@ def osm_request(data_type, area):
     True
 
     """
-    data_param = dave_data_settings["osm_tags"][data_type]
+    data_param = osm_settings()["osm_tags"][data_type]
     request_data = GeoDataFrame([])
     meta_data = None
     data = GeoDataFrame
