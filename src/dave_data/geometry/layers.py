@@ -4,11 +4,10 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 from geopandas import GeoDataFrame
-from pandas import read_hdf, read_excel
+from pandas import read_hdf
 from shapely.wkb import loads
 
 from dave_data import config as cfg
-
 from dave_data.io.remote import download
 
 

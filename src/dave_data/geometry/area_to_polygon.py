@@ -1,12 +1,8 @@
-import pandas as pd
 from geopandas import read_file
-from pandas import concat
 
+from dave_data.geometry.layers import get_federal_state_layer
 from dave_data.geometry.layers import get_nuts_layer
-from dave_data.geometry.layers import (
-    get_postcode_layer,
-    get_federal_state_layer,
-)
+from dave_data.geometry.layers import get_postcode_layer
 
 dave_data_settings = {"crs_main": "EPSG:4326"}
 
@@ -90,9 +86,7 @@ def town_to_polygon(town):
     """
     postal, meta_data = get_postcode_layer()
 
-    town = postal.loc[
-        postal["note"].str.lower().str.find(town.lower()) >= 0
-    ]
+    town = postal.loc[postal["note"].str.lower().str.find(town.lower()) >= 0]
 
     return town.union_all()
 
