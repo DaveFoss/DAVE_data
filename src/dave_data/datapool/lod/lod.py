@@ -37,6 +37,8 @@ def get_url_list(polygon, n_lod=1, column="zip"):
 
 def get_lod(polygon, n_lod=1):
     tiles = {}
+    polygon_parts = da.divide_between_federal_states(polygon)
+
     fs = da.get_name_federal_state(polygon)
     meta = MetaData(
         source_license=cfg.get(fs.code, "license"),
