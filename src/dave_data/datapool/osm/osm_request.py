@@ -195,7 +195,9 @@ def osm_request(data_type, area):
             else f"{data_param[0]}"
         )
         # get data from OSM directly via API query
-        data, meta_data = query_osm(osm_type, area, recurse="down", tags=tags)
+        data, meta_data = query_osm(
+            osm_type, area.convex_hull, recurse="down", tags=tags
+        )
         request_data = concat([request_data, data], ignore_index=True)
     meta = MetaData(
         source_license="ODBL", source_date=None, organisation="OpenStreetMap"
