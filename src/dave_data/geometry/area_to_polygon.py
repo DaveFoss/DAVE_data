@@ -2,9 +2,11 @@ import pandas as pd
 from geopandas import read_file
 from pandas import concat
 
-from dave_data.io.read_data import read_federal_states
-from dave_data.io.read_data import read_nuts_regions
-from dave_data.io.read_data import read_postal
+from dave_data.geometry.layers import get_nuts_layer
+from dave_data.geometry.layers import (
+    get_postcode_layer,
+    get_federal_state_layer,
+)
 
 dave_data_settings = {"crs_main": "EPSG:4326"}
 
@@ -15,7 +17,7 @@ def postalcode_to_polygon(postalcode):
 
     Parameters
     ----------
-    postalcode : List(Str)
+    postalcode : int, str, list of str, list of int
           Postalcodes areas which define the polygon. Use ['ALL'] for all
           postalcode areas in germany
 
@@ -26,23 +28,42 @@ def postalcode_to_polygon(postalcode):
     Examples
     --------
     >>> from dave_data.geometry.area_to_polygon import postalcode_to_polygon
+    >>> from shapely.geometry import MultiPolygon
     >>> polygon_postal = postalcode_to_polygon(postalcode=['34225', '34117'])
-    >>> from shapely.geometry import Polygon
-    >>> isinstance((postalcode_to_polygon(postalcode=['34225'])), Polygon)
+    >>> isinstance(polygon_postal, MultiPolygon)
     True
     """
-    # read postalcode data
-    postal, meta_data = read_postal()
-    if len(postalcode) == 1 and postalcode[0].lower() == "all":
-        # in this case all postalcode areas will be choosen
-        postal_filtered = postal
-    else:
-        postal_filtered = postal[
-            postal.postalcode.isin(postalcode)
-        ].reset_index(drop=True)
-    # create polygon from postalcodes
-    polygon = postal_filtered.geometry.union_all()
-    return polygon
+    # convert single values to list
+    if isinstance(postalcode, (int, str)):
+        postalcode = [str(postalcode).zfill(5)]
+
+    # convert all values to str and check if string values are valid numbers
+    postalcode = [str(int(p)).zfill(5) for p in postalcode]
+
+    # get postcode map
+    postal, meta_data = get_postcode_layer()
+
+    # return one polygon containing all postcode polygons
+    return postal.loc[postalcode].union_all()
+
+
+def ags2polygon(ags):
+    """
+    Returns the polygon of the given region.
+
+    Find the ags-code of any town in Germany:
+    https://www.statistikportal.de/de/gemeindeverzeichnis
+
+    Parameters
+    ----------
+    ags : str or int
+
+    Returns
+    -------
+    shapely.polygon : Outline of the given region
+
+    """
+    raise NotImplementedError("ags2polygon is not implemented so far.")
 
 
 def town_to_polygon(town):
@@ -51,7 +72,7 @@ def town_to_polygon(town):
 
     Parameters
     ----------
-    town : List(Str)
+    town : str
         Town areas which define the polygon. Use ['ALL'] for all town areas
         in germany
 
@@ -61,27 +82,19 @@ def town_to_polygon(town):
 
     Examples
     --------
-    >>> from shapely.geometry import Polygon
+    >>> from shapely.geometry import MultiPolygon
     >>> from dave_data.geometry.area_to_polygon import town_to_polygon
-    >>> polygon_town = town_to_polygon(town=['Kassel'])
-    >>> isinstance(town_to_polygon(town=['Kassel']), Polygon)
+    >>> polygon_town = town_to_polygon(town='Kassel')
+    >>> isinstance(polygon_town, MultiPolygon)
     True
     """
-    postal, meta_data = read_postal()
-    if len(town) == 1 and town[0].lower() == "all":
-        # in this case all town names will be choosen
-        town_filtered = postal
-    else:
-        # bring town names in right format and filter data
-        normalized_town_names = [town_name.lower() for town_name in town]
-        normalized_postal_town = postal.town.str.lower()
-        indexes = normalized_postal_town.isin(normalized_town_names)
-        town_filtered = postal[indexes].reset_index(drop=True)
-        if len(town_filtered.town.unique()) != len(town):
-            raise ValueError("town name wasn`t found. Please check your input")
-    # create polygon from postalcodes
-    polygon = town_filtered.geometry.union_all()
-    return polygon
+    postal, meta_data = get_postcode_layer()
+
+    town = postal.loc[
+        postal["note"].str.lower().str.find(town.lower()) >= 0
+    ]
+
+    return town.union_all()
 
 
 def federal_state_to_polygon(federal_state):
@@ -90,7 +103,7 @@ def federal_state_to_polygon(federal_state):
 
     Parameters
     ----------
-    federal_state : List(Str)
+    federal_state : str
         Federal state areas which define the polygon. Use ['ALL'] for all
         Federal state areas in germany
 
@@ -101,43 +114,17 @@ def federal_state_to_polygon(federal_state):
     Examples
     --------
     >>> from dave_data.geometry.area_to_polygon import federal_state_to_polygon
-    >>> polygon_fed = federal_state_to_polygon(federal_state=['Hessen'])
-    >>> from shapely.geometry import Polygon
-    >>> isinstance(federal_state_to_polygon(federal_state=['Hessen']), Polygon)
+    >>> from shapely.geometry import MultiPolygon, Polygon
+    >>> polygon_fed = federal_state_to_polygon(federal_state='Hessen')
+    >>> isinstance(polygon_fed, (MultiPolygon, Polygon))
     True
     """
-    states, meta_data = read_federal_states()
-    # add meta data
-    if len(federal_state) == 1 and federal_state[0].lower() == "all":
-        # in this case all federal states will be choosen
-        federal_state_filtered = states
-    else:
-        # bring federal state names in right format and filter data
-        federal_state = [
-            "-".join([part.capitalize() for part in state.split("-")])
-            for state in federal_state
-        ]
+    states, meta_data = get_federal_state_layer()
 
-        federal_state_filtered = states[
-            states["name"].isin(federal_state)
-        ].reset_index(drop=True)
-        if len(federal_state_filtered) != len(federal_state):
-            raise ValueError(
-                "federal state name wasn`t found. Please check your input"
-            )
-    """
-    # convert federal states into postal code areas for target_input
-    postal, meta_data = read_postal()
-    # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(
-        postal, target, remove_columns=False
-    )
-    # filter duplicated postal codes
-    federal_state_postal = postal_intersection["postalcode"].unique().tolist()
-    """
-    # create polygon from federal states
-    polygon = federal_state_filtered.geometry.union_all()
-    return polygon
+    state = states.loc[
+        states["name"].str.lower().str.find(federal_state.lower()) >= 0
+    ]
+    return state.union_all()
 
 
 def nuts_to_polygon(nuts, year=2016):
@@ -160,59 +147,18 @@ def nuts_to_polygon(nuts, year=2016):
     Examples
     --------
     >>> from dave_data.geometry.area_to_polygon import nuts_to_polygon
+    >>> from shapely.geometry import MultiPolygon
     >>> polygon_nuts = nuts_to_polygon(nuts=['DE1', 'DE22'], year=2013)
-    >>> from shapely.geometry import Polygon
-    >>> isinstance(federal_state_to_polygon(federal_state=['Hessen']), Polygon)
+    >>> isinstance(polygon_nuts, MultiPolygon)
     True
     """
     # read nuts-3 areas
-    nuts_all, meta_data = read_nuts_regions(year=year)
+    nuts_all, meta_data = get_nuts_layer(year=year)
     nuts_3 = nuts_all[nuts_all.LEVL_CODE == 3]
-    # filter nuts data
-    nuts_filtered = pd.DataFrame()
-    if len(nuts) == 1 and nuts[0].lower() == "all":
-        # in this case all nuts_regions will be choosen
-        nuts_filtered = nuts_3
-    else:
-        # bring NUTS ID in right format
-        nuts_regions = [
-            "".join(
-                [
-                    letter.upper() if letter.isalpha() else letter
-                    for letter in list(nuts_region)
-                ]
-            )
-            for nuts_region in nuts
-        ]
-        for region in nuts_regions:
-            # get area for the singel nuts region and concat them
-            nuts_contains = nuts_3[nuts_3["NUTS_ID"].str.contains(region)]
-            nuts_filtered = (
-                nuts_contains
-                if region == nuts_regions[0]
-                else concat([nuts_filtered, nuts_contains], ignore_index=True)
-            )
-            if nuts_contains.empty:
-                raise ValueError(
-                    f"nuts name '{region}' wasn`t found. Please check your "
-                    f"input."
-                )
-    # filter duplicates
-    nuts_filtered.drop_duplicates(inplace=True)
 
-    """
-    # convert nuts regions into postal code areas for target_input
-    postal, meta_data = read_postal()
-    # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(
-        postal, target, remove_columns=False
-    )
-    # filter duplicated postal codes
-    nuts_region_postal = postal_intersection["postalcode"].unique().tolist()
-    """
-    # create polygon from nuts regions
-    polygon = nuts_filtered.geometry.union_all()
-    return polygon
+    nuts_region = nuts_3.loc[nuts_3["NUTS_ID"].str.lower() == nuts.lower()]
+
+    return nuts_region.union_all()
 
 
 def file_to_polygon(filepath, layer=None):

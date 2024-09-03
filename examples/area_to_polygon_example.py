@@ -24,11 +24,11 @@ postalcode_multi = [
 # all postalcode in germany
 postalcode_all = ["ALL"]  # all postal code areas in germany
 # Now any of this variables can added to the postalcode_to_polygon function to get a suitable polygon
-polygon_postal = postalcode_to_polygon(postalcode_single)
+polygon_postal = postalcode_to_polygon(postalcode_multi)
 
 # --- town to polygon options
 # singel town
-town_single = ["Göttingen"]
+town_single = "Göttingen"
 # multiple towns
 town_multi = ["KAsSel", "Baunatal"]
 # all town names in germany
