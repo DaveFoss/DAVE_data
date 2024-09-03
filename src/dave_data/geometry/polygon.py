@@ -23,7 +23,7 @@ def postalcode_to_polygon(postalcode):
 
     Examples
     --------
-    >>> from dave_data.geometry.area_to_polygon import postalcode_to_polygon
+    >>> from dave_data.geometry.polygon import postalcode_to_polygon
     >>> from shapely.geometry import MultiPolygon
     >>> polygon_postal = postalcode_to_polygon(postalcode=['34225', '34117'])
     >>> isinstance(polygon_postal, MultiPolygon)
@@ -79,7 +79,7 @@ def town_to_polygon(town):
     Examples
     --------
     >>> from shapely.geometry import MultiPolygon
-    >>> from dave_data.geometry.area_to_polygon import town_to_polygon
+    >>> from dave_data.geometry.polygon import town_to_polygon
     >>> polygon_town = town_to_polygon(town='Kassel')
     >>> isinstance(polygon_town, MultiPolygon)
     True
@@ -107,7 +107,7 @@ def federal_state_to_polygon(federal_state):
 
     Examples
     --------
-    >>> from dave_data.geometry.area_to_polygon import federal_state_to_polygon
+    >>> from dave_data.geometry.polygon import federal_state_to_polygon
     >>> from shapely.geometry import MultiPolygon, Polygon
     >>> polygon_fed = federal_state_to_polygon(federal_state='Hessen')
     >>> isinstance(polygon_fed, (MultiPolygon, Polygon))
@@ -140,7 +140,7 @@ def nuts_to_polygon(nuts, year=2016):
 
     Examples
     --------
-    >>> from dave_data.geometry.area_to_polygon import nuts_to_polygon
+    >>> from dave_data.geometry.polygon import nuts_to_polygon
     >>> from shapely.geometry import Polygon
     >>> polygon_nuts = nuts_to_polygon(nuts="DE11B", year=2013)
     >>> isinstance(polygon_nuts, Polygon)
