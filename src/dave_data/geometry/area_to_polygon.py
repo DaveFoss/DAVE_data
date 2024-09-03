@@ -141,9 +141,9 @@ def nuts_to_polygon(nuts, year=2016):
     Examples
     --------
     >>> from dave_data.geometry.area_to_polygon import nuts_to_polygon
-    >>> from shapely.geometry import MultiPolygon
-    >>> polygon_nuts = nuts_to_polygon(nuts="DE22", year=2013)
-    >>> isinstance(polygon_nuts, MultiPolygon)
+    >>> from shapely.geometry import Polygon
+    >>> polygon_nuts = nuts_to_polygon(nuts="DE11B", year=2013)
+    >>> isinstance(polygon_nuts, Polygon)
     True
     """
     # read nuts-3 areas
