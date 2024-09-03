@@ -104,9 +104,7 @@ def get_nuts_layer(year=2016):
     nuts_regions = read_hdf(fn, key=f"/nuts_{year}")
     if not nuts_regions.empty:
         nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(
-            nuts_regions, crs=cfg.get("crs", "main")
-        )
+        nuts_regions = GeoDataFrame(nuts_regions, crs=cfg.get("crs", "main"))
     # read meta data
     meta_data = {}
     return nuts_regions, meta_data
