@@ -1,4 +1,4 @@
-from dave_data import compute
+from dave_data.core import compute
 
 
 def test_compute():
