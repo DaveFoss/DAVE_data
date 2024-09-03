@@ -105,7 +105,7 @@ def get_nuts_layer(year=2016):
     if not nuts_regions.empty:
         nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
         nuts_regions = GeoDataFrame(
-            nuts_regions, crs=dave_data_settings["crs_main"]
+            nuts_regions, crs=cfg.get("crs", "main")
         )
     # read meta data
     meta_data = {}
