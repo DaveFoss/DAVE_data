@@ -145,9 +145,13 @@ def get_base_path(sub_dir=None):
     else:
         base_path = Path(get("path", "base"))
     if sub_dir is not None:
-        if sub_dir in get_list("path", "sub_dirs"):
+        allowed = get_list("path", "sub_dirs")
+        if sub_dir in allowed:
             base_path = Path(base_path, sub_dir)
         else:
-            raise ValueError(f"Subdir {sub_dir} is not valid.")
+            raise ValueError(
+                f"Subdir {sub_dir} is not valid. Use one of the following "
+                f"subdirectories: {allowed}"
+            )
     base_path.mkdir(exist_ok=True, parents=True)
     return base_path
