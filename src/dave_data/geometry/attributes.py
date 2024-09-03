@@ -5,19 +5,21 @@ import geopandas as gpd
 from dave_data.geometry.layers import get_federal_state_layer
 
 
-def get_name_federal_state(polygon):
+def divide_between_federal_states(polygon):
+    """
+    Get the name and iso code of the underlying federal state for each part of
+    the given polygon.
+
+    Parameters
+    ----------
+    polygon : shapely.geometry
+        A valid shapely geometry.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+
+    """
     poly = gpd.GeoDataFrame(index=[0], crs="epsg:4326", geometry=[polygon])
-    Data = namedtuple("Data", "code name")
-    fs_map = get_federal_state_layer()
-    gdf = gpd.sjoin(fs_map, poly)
-    if len(gdf) > 1:
-        msg = (
-            f"The give polygon touches more than one federal state.\n"
-            f"This is not implemented so far.\n"
-            f"Please divide your polygon, so that each polygon is within\n"
-            f"just one fedral state.\n"
-            f"The following states are touched by your polygon: "
-            f"{gdf['name']}"
-        )
-        raise NotImplementedError(msg)
-    return Data(gdf["iso"].iloc[0], gdf["name"].iloc[0])
+    fs_map = get_federal_state_layer().layer
+    return fs_map.clip(poly)
