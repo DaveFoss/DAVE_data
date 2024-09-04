@@ -11,7 +11,6 @@ __all__ = [
     "get",
     "get_list",
     "get_dict",
-    "get_dict_list",
     "tmp_set",
     "init",
 ]

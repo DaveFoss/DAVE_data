@@ -11,6 +11,8 @@ def test_file_to_polygon():
     filename = "hertingshausen_test_dpo9z.geojson"
     file = Path(cfg.get_base_path(), filename)
     url = cfg.get("url", "owncloud") + filename
-    download(file, url, force=True)
+    file.unlink(missing_ok=True)
+    download(file, url)
     polygon_file = file_to_polygon(file)
     assert isinstance(polygon_file, Polygon)
+    file.unlink()
