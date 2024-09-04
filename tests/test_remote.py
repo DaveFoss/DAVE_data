@@ -38,7 +38,7 @@ def test_download_with_wrong_proxy():
     download(file, url)
     assert file.is_file()
     file.unlink()
-    assert ~file.is_file()
+    assert not file.is_file()
     cfg.tmp_set("proxy", "url", p_url)
     cfg.tmp_set("proxy", "port", port)
     cfg.tmp_set("proxy", "use_proxy", use)
