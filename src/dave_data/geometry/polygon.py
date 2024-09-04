@@ -173,41 +173,6 @@ def file_to_polygon(filepath, layer=None):
     -------
     polygon : Shapely Polygon / MultiPolygon
 
-    Examples
-    --------
-    >>> # from dave_data.geometry.area_to_polygon import file_to_polygon
-    >>> # polygon = file_to_polygon(filepath)
     """
-    # read file
-    if filepath.split(".")[-1] in ["shp", "geojson"]:
-        file_data = read_file(filepath)
-    elif filepath.split(".")[-1] in ["gpkg"]:
-        if layer is None:
-            raise ValueError(
-                "At .gpkg files a layer specification is necessary"
-            )
-        file_data = read_file(filepath, layer=layer)
-    else:
-        raise ValueError("The given file is not in a supported format")
-    # check if the given file is empty
-    if file_data.empty:
-        raise ValueError("The given file includes no data")
-
-    # check crs and project to the right one if needed
-    if file_data.crs and file_data.crs != dave_data_settings["crs_main"]:
-        file_data = file_data.to_crs(dave_data_settings["crs_main"])
-    if "id" in file_data.keys():
-        file_data = file_data.drop(columns=["id"])
-    """
-    # convert own area into postal code areas for target_input
-    postal, meta_data = read_postal()
-    # filter postal code areas which are within the target area
-    postal_intersection = intersection_with_area(
-        postal, target, remove_columns=False
-    )
-    # filter duplicated postal codes
-    own_postal = postal_intersection["postalcode"].unique().tolist()
-    """
-    # create polygon from file data
-    polygon = file_data.geometry.union_all()
-    return polygon
+    file_data = read_file(filepath, layer=layer)
+    return file_data.union_all()
