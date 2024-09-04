@@ -15,6 +15,8 @@ from six import string_types
 
 from dave_data.core import Data
 from dave_data.core import MetaData
+import dave_data.config as cfg
+from dave_data.io import remote
 
 
 def osm_settings():
@@ -184,6 +186,8 @@ def osm_request(data_type, area):
     True
 
     """
+    if cfg.get("proxy", "use_proxy") is True:
+        remote.set_proxy()
     data_param = osm_settings()["osm_tags"][data_type]
     request_data = GeoDataFrame([])
     meta_data = None
