@@ -24,9 +24,12 @@ def postalcode_to_polygon(postalcode):
     Examples
     --------
     >>> from dave_data.geometry.polygon import postalcode_to_polygon
-    >>> from shapely.geometry import MultiPolygon
+    >>> from shapely.geometry import MultiPolygon, Polygon
     >>> polygon_postal = postalcode_to_polygon(postalcode=['34225', '34117'])
     >>> isinstance(polygon_postal, MultiPolygon)
+    True
+    >>> polygon_postal = postalcode_to_polygon(postalcode=[34225])
+    >>> isinstance(polygon_postal, Polygon)
     True
     """
     # convert single values to list
