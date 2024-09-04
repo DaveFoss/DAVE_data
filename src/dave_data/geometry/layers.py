@@ -83,9 +83,6 @@ def get_nuts_layer(year=2016):
 
     Examples
     --------
-    import dave.datapool as data
-    postal = data.read_nuts_regions(year=2013)
-
     >>> get_nuts_layer(year=2013)[0].empty
     False
 
@@ -102,9 +99,8 @@ def get_nuts_layer(year=2016):
     download(fn, url)
     # collect data
     nuts_regions = read_hdf(fn, key=f"/nuts_{year}")
-    if not nuts_regions.empty:
-        nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-        nuts_regions = GeoDataFrame(nuts_regions, crs=cfg.get("crs", "main"))
+    nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
+    nuts_regions = GeoDataFrame(nuts_regions, crs=cfg.get("crs", "main"))
     # read meta data
     meta_data = {}
     return nuts_regions, meta_data
