@@ -18,15 +18,6 @@ def remove_proxy():
     del os.environ["https_proxy"]
 
 
-def list_server_dir(url, suffix):
-    response = requests.get(url, timeout=20)
-    files = []
-    for r in response.iter_lines():
-        if suffix in str(r):
-            files.append(str(r).split('"')[1])
-    return files
-
-
 def download(fn, url, force=False):
     """
     Download a file from a given url into a specific file if the file does not
@@ -63,7 +54,3 @@ def download(fn, url, force=False):
             logging.info("%s stored in %s.", fn.name, fn.parent)
     else:
         logging.debug("File '%s' exists. Download is skipped.", fn.name)
-
-
-if __name__ == "__main__":
-    pass
