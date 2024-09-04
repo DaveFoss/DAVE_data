@@ -8,16 +8,24 @@ from dave_data.io.remote import set_proxy
 
 
 def test_proxy_switch():
+    p_url = str(cfg.get("proxy", "url"))
+    port = str(cfg.get("proxy", "port"))
+    use = str(cfg.get("proxy", "use_proxy"))
     cfg.tmp_set("proxy", "url", "http://myprox.tester.de")
     cfg.tmp_set("proxy", "port", "76")
-    assert os.environ.get("http_proxy") is None
     set_proxy()
     assert os.environ.get("http_proxy") == "http://myprox.tester.de:76"
     remove_proxy()
     assert os.environ.get("http_proxy") is None
+    cfg.tmp_set("proxy", "url", p_url)
+    cfg.tmp_set("proxy", "port", port)
+    cfg.tmp_set("proxy", "use_proxy", use)
 
 
 def test_download_with_wrong_proxy():
+    p_url = str(cfg.get("proxy", "url"))
+    port = str(cfg.get("proxy", "port"))
+    use = str(cfg.get("proxy", "use_proxy"))
     cfg.tmp_set("proxy", "url", "http://myprox.tester.de")
     cfg.tmp_set("proxy", "port", "76")
     cfg.tmp_set("proxy", "use_proxy", "True")
@@ -31,3 +39,6 @@ def test_download_with_wrong_proxy():
     assert file.is_file()
     file.unlink()
     assert ~file.is_file()
+    cfg.tmp_set("proxy", "url", p_url)
+    cfg.tmp_set("proxy", "port", port)
+    cfg.tmp_set("proxy", "use_proxy", use)
