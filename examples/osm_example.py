@@ -11,6 +11,9 @@ from shapely import box
 
 from dave_data.datapool.osm import osm_request as osm
 
+# streets = osm.osm_request("road", box(13.409, 52.519, 13.41, 52.52))
+# print(len(streets.data) > 0)
+
 streets = osm.osm_request(
     "road",
     box(13.40, 52.51, 13.41, 52.52),

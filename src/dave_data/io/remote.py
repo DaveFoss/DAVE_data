@@ -54,17 +54,3 @@ def download(fn, url, force=False):
             logging.info("%s stored in %s.", fn.name, fn.parent)
     else:
         logging.debug("File '%s' exists. Download is skipped.", fn.name)
-
-
-cfg.tmp_set("proxy", "url", "http://myprox.tester.de")
-cfg.tmp_set("proxy", "port", "76")
-cfg.tmp_set("proxy", "use_proxy", "True")
-filename = "hertingshausen_test_dpo9z.geojson"
-file = Path(cfg.get_base_path(), filename)
-url = cfg.get("url", "owncloud") + filename
-download(file, url)
-assert file.is_file()
-download(file, url)
-assert file.is_file()
-file.unlink()
-assert ~file.is_file()
