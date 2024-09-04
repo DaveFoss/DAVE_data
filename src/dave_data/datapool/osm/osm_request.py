@@ -13,9 +13,9 @@ from shapely.geometry import LineString
 from shapely.geometry import Point
 from six import string_types
 
+import dave_data.config as cfg
 from dave_data.core import Data
 from dave_data.core import MetaData
-import dave_data.config as cfg
 from dave_data.io import remote
 
 
