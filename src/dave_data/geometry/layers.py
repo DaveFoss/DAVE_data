@@ -3,12 +3,20 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
-from geopandas import GeoDataFrame
-from pandas import read_hdf
-from shapely.wkb import loads
 
 from dave_data import config as cfg
 from dave_data.io.remote import download
+
+
+def get_layer(name, filename):
+    Layer = namedtuple("Layer", ("layer", "meta"))
+    fn = Path(cfg.get_base_path("layer"), filename)
+    url = cfg.get("url", "owncloud") + filename
+
+    # download file if file does not exist
+    download(fn, url)
+
+    return Layer(gpd.read_feather(fn), pd.Series(cfg.get_dict(name)))
 
 
 def get_federal_state_layer():
@@ -26,14 +34,9 @@ def get_federal_state_layer():
     >>> sorted(postal.layer["iso"])[:5]
     ['BB', 'BE', 'BW', 'BY', 'HB']
     """
-    Layer = namedtuple("FederalStateLayer", ("layer", "meta"))
-    layer_path = Path(cfg.get_base_path("layer"))
-    filename = cfg.get("file", "federal_states_layer")
-    fn = Path(layer_path, filename)
-    url = cfg.get("url", "owncloud") + filename
-    download(fn, url)
-    meta = {}
-    return Layer(gpd.read_file(fn), meta)
+    name = "federal_states_layer"
+    filename = cfg.get(name, "filename")
+    return get_layer(name, filename)
 
 
 def get_postcode_layer():
@@ -54,20 +57,12 @@ def get_postcode_layer():
     >>> get_postcode_layer()[0].empty
     False
     """
-    Layer = namedtuple("PostcodeLayer", ("layer", "meta"))
-    filename = "plz-5stellig.feather"
-    fn = Path(cfg.get_base_path("layer"), filename)
-    url = cfg.get("url", "owncloud") + filename
-
-    # download file if file does not exist
-    download(fn, url)
-
-    return Layer(
-        gpd.read_feather(fn), pd.Series(cfg.get_dict("postcode_layer"))
-    )
+    name = "postcode_layer"
+    filename = cfg.get("postcode_layer", "filename")
+    return get_layer(name, filename)
 
 
-def get_nuts_layer(year=2016):
+def get_nuts_layer(year=2021):
     """
     Read nuts data from datapool for Europe and the years 2013, 2016 and 2021
 
@@ -92,15 +87,6 @@ def get_nuts_layer(year=2016):
     >>> get_nuts_layer(year=2021)[0].empty
     False
     """
-    # check if data is existing in datapool otherwise download it
-    filename = "nuts_regions.h5"
-    url = cfg.get("url", "owncloud") + filename
-    fn = Path(cfg.get_base_path("layer"), filename)
-    download(fn, url)
-    # collect data
-    nuts_regions = read_hdf(fn, key=f"/nuts_{year}")
-    nuts_regions["geometry"] = nuts_regions.geometry.apply(loads)
-    nuts_regions = GeoDataFrame(nuts_regions, crs=cfg.get("crs", "main"))
-    # read meta data
-    meta_data = {}
-    return nuts_regions, meta_data
+    name = "nuts_layer"
+    filename = str(cfg.get("nuts_layer", "filename")).format(year=year)
+    return get_layer(name, filename)
