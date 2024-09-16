@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 import geopandas as gpd
 
 from dave_data.geometry.layers import get_federal_state_layer

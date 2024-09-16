@@ -73,8 +73,8 @@ setup(
         "defusedxml",
         "six",
         "requests",
+        "pyarrow",
         "tables",
-        "openpyxl",
     ],
     extras_require={
         "examples": ["contextily", "shapely", "matplotlib"]
