@@ -20,11 +20,13 @@ setup(
     version="0.0.1",
     license="MIT",
     description="Short Discription",
-    long_description="{}\n{}".format(
+     long_description="{}\n{}".format(
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
             "", read("README.rst")
         ),
-        re.sub(":[a-z]+:`~?(.*?)`", r"``\1``", "https://dave-data.readthedocs.io/en/latest/changelog.html"),
+        "CHANGELOG\n=========\n\n`Read the actual changelog at Readthedocs "
+        "<https://dave-data.readthedocs.io/en/stable/changelog.html>`_",
+        )
     ),
     long_description_content_type="text/x-rst",
     author="DAVE_data Developers",
