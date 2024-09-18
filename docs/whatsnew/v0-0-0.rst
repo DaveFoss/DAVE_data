@@ -1,0 +1,7 @@
+0.0.0 (August 09, 2024)
+=======================
+
+Event
+-----
+
+* Rebase code from DAVE_core as a base for the upcoming development

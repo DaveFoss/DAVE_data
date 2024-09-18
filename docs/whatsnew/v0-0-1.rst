@@ -1,0 +1,13 @@
+0.0.1 (August 21, 2024)
+=======================
+
+Added
+-----
+
+* Core classes
+* New costribution rules
+
+Removed
+-------
+
+* Some duplicated files

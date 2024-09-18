@@ -1,0 +1,18 @@
+0.0.1b1 (August 15, 2024)
+=========================
+
+Added
+-----
+
+* CI and pre commit actions
+* Example to request data from OpenStreetMap
+
+Changed
+-------
+
+* Moved DAVE_core code to seperated folder
+
+Fixed
+-----
+
+* requirements and setup config

@@ -1,0 +1,12 @@
+0.0.1b3 (August 16, 2024)
+=========================
+
+Added
+-----
+
+* A second Example to request data from OpenStreetMap
+
+Removed
+-------
+
+* Large datasets from the datapool to decrease size of the package
