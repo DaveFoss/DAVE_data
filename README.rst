@@ -12,11 +12,15 @@ Overview
     * - tests
       - |github-actions| |coveralls| |codecov|
     * - package
-      - |version| |wheel| |supported-versions| |supported-implementations| |commits-since|
+      - |version| |download| |wheel| |supported-versions| |supported-implementations| |commits-since|
 
 .. |version| image:: https://img.shields.io/pypi/v/dave_data.svg
     :alt: PyPI Package latest release
     :target: https://pypi.org/project/dave_data
+
+.. |download| image:: https://pepy.tech/badge/dave-data
+    :alt: pepy
+    :target: https://pepy.tech/project/dave-data
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/dave_data.svg
     :alt: PyPI Wheel
