@@ -1,0 +1,9 @@
+requests~=2.32.3
+pandas~=2.2.3
+geopandas~=1.0.1
+shapely~=2.0.6
+six~=1.16.0
+rasterio~=1.4.1
+matplotlib~=3.9.2
+OWSLib~=0.32.0
+contextily~=1.6.2
