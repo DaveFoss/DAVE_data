@@ -1,10 +1,10 @@
+import shutil
 from owslib.wms import WebMapService
 import rasterio
 from rasterio.features import shapes
 import geopandas as gpd
 from shapely.geometry import shape
 import os
-import matplotlib.pyplot as plt
 from shapely.geometry import box
 import warnings
 from rasterio.transform import from_bounds
@@ -86,6 +86,17 @@ def hotmaps_request(layer_name, bbox):
         print(f"Cannot process request: {layer.get('error', 'Invalid layer information')}")
         return
 
+    # Define the temporary directory and file path
+    directory = "temp"
+    original_file_name = "temp.tif"
+    georeferenced_file_name = "temp_proj.tif"
+    original_file_path = os.path.join(directory, original_file_name)
+    georeferenced_file_path = os.path.join(directory, georeferenced_file_name)
+    print("Temporary directory 'temp' is generated and raster file retrieved from the WMS is added to the folder.")
+
+    # Create the directory if it doesn't exist
+    os.makedirs(directory, exist_ok=True)
+
     url = 'https://geoserver.hotmaps.eu/geoserver/hotmaps/wms?service=WMS'
     wms = WebMapService(url)
     img = wms.getmap(layers=layer[0],
@@ -97,47 +108,53 @@ def hotmaps_request(layer_name, bbox):
                      srs='EPSG:4326',
                      transparent=True
                      )
-    out = open('temp.tif', 'wb')
+    out = open(original_file_path, 'wb')
     out.write(img.read())
     out.close()
 
-    transform_image('temp.tif', 'temp_proj.tif', "EPSG: 4326", bbox)
-    vector = raster_to_shape('temp_proj.tif', layer[1])
+    add_georeferencing(original_file_path, georeferenced_file_path, "EPSG: 4326", bbox)
+    vector = raster_to_shape(georeferenced_file_path, layer[1])
 
-    # Remove generated files
-    if os.path.exists('temp.tif'):
-        os.remove('temp.tif')
-    if os.path.exists('temp_proj.tif'):
-        os.remove('temp_proj.tif')
+    # Remove the directory and all its contents
+    try:
+        shutil.rmtree(directory)
+        print(f"Directory '{directory}' and all its contents removed.")
+    except OSError as e:
+        print(f"Error: {e}")
+
     return vector
 
 
-def transform_image(input_path: object, output_path: object, crs: object, bbox: object) -> object:
+def add_georeferencing(input_file, output_file, crs, bbox):
     # Supress the warning of NotGeoreferencedWarning: Dataset has no geotransform, gcps, or rpcs. The identity matrix
     # will be returned. dataset = DatasetReader(path, driver=driver, sharing=sharing, **kwargs), as WMS result is an
     # image without geo-reference inherently.
+    # This function is providing georeferencing for the raster file.
     warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
 
-    _transform = from_bounds(*bbox, width=256, height=256)
-    # Open the image and write it as a georeferenced raster
-    with rasterio.open(input_path) as src:
-        meta = src.meta.copy()
-        meta.update({
-            'driver': 'GTiff',
-            'height': src.height,
-            'width': src.width,
-            'count': src.count,
-            'crs': crs,
-            'transform': _transform,
-        })
-        with rasterio.open(output_path, 'w', **meta) as dst:
-            dst.write(src.read())
-    return output_path
+    transform = from_bounds(*bbox, width=256, height=256)
+    with rasterio.open(input_file) as src:
+        data = src.read()
+        profile = src.profile
+    # Update the profile with the new CRS and transform
+    profile.update({
+        'crs': crs,
+        'transform': transform
+    })
+
+    # Write the data to a new file with georeferencing
+    try:
+        with rasterio.open(output_file, 'w', **profile) as dst:
+            dst.write(data)
+            print("The retrieved raster file is georeferenced and added to the 'temp' directory.")
+    except Exception as e:
+        print(f"Error writing output file: {e}")
+    return output_file
 
 
 def raster_to_shape(raster, layer_name):
     with rasterio.open(raster) as src:
-        # Read the gitfirst band of the raster image
+        # Read the first band of the raster image
         image = src.read(1)
         # Create a mask for non-zero values
         mask = image != 0
@@ -162,5 +179,7 @@ def raster_to_shape(raster, layer_name):
         layer_path = layer_name + '.gpkg'
         # Save the Geo-dataframe as a Geopackage
         vector.to_file(layer_path, driver='GPKG')
+        print(
+            f"Vector file '{layer_path}' corresponding to the georeferenced raster file is generated and added to the root folder.")
 
     return vector
