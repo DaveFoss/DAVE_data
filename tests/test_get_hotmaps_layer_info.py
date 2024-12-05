@@ -1,4 +1,4 @@
-from DAVE_data.src.dave_data.datapool.hotmaps.hotmaps_request import get_hotmaps_layer_info
+from dave_data.datapool.hotmaps.hotmaps_request import get_hotmaps_layer_info
 
 
 def test_get_hotmaps_layer_info():
@@ -31,5 +31,3 @@ def test_get_hotmaps_layer_info():
         print(e)
 
 
-# Run the test
-test_get_hotmaps_layer_info()

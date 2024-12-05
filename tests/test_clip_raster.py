@@ -5,7 +5,7 @@ from rasterio.transform import from_origin
 from rasterio.mask import mask
 import geopandas as gpd
 
-from DAVE_data.src.dave_data.datapool.hotmaps.hotmaps_request import clip_raster
+from dave_data.datapool.hotmaps.hotmaps_request import clip_raster
 
 
 # Mocking rasterio.open
@@ -101,5 +101,4 @@ def test_clip_raster():
         mask = original_mask
 
 
-# Call the test function
-test_clip_raster()
+

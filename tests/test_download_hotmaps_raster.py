@@ -1,7 +1,7 @@
 import os
 import requests
 
-from DAVE_data.src.dave_data.datapool.hotmaps.hotmaps_request import download_hotmaps_raster
+from dave_data.datapool.hotmaps.hotmaps_request import download_hotmaps_raster
 
 
 def mock_requests_get(url):
@@ -52,5 +52,3 @@ def test_download_hotmaps_raster():
         requests.get = original_requests_get
 
 
-# Call the test function
-test_download_hotmaps_raster()

@@ -2,7 +2,7 @@
 Description: This module retrieve the total heat demand of buildings from HotMaps and plot them with the osm background.
 License: MIT License.
 """
-from DAVE_data.src.dave_data.datapool.hotmaps.hotmaps_request import hotmaps_request
+from dave_data.datapool.hotmaps.hotmaps_request import hotmaps_request
 
 hotmaps_result = hotmaps_request(
     "Heat density total",

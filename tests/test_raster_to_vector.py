@@ -2,7 +2,7 @@ import os
 import tempfile
 import geopandas as gpd
 
-from DAVE_data.src.dave_data.datapool.hotmaps.hotmaps_request import raster_to_vector
+from dave_data.datapool.hotmaps.hotmaps_request import raster_to_vector
 
 
 def test_raster_to_vector():
@@ -44,6 +44,3 @@ def test_raster_to_vector():
     os.remove(temp_raster_path)
     if os.path.exists(vector_path):
         os.remove(vector_path)
-
-# Run the test
-test_raster_to_vector()
