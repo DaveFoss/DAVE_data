@@ -20,9 +20,7 @@ The current available layer names are as below:
 License: MIT License.
 """
 
-from DAVE_data.src.dave_data.datapool.hotmaps.hotmaps_request import (
-    hotmaps_request,
-)
+from dave_data.datapool.hotmaps.hotmaps_request import hotmaps_request
 
 # from dave_data.datapool.hotmaps.hotmaps_request import hotmaps_request
 
